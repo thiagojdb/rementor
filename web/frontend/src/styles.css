@@ -1,0 +1,334 @@
+/* ============================================
+   REMENTOR — PRECISION INDUSTRIAL THEME
+   Swiss-design inspired, production-grade interface
+   ============================================ */
+
+@import "tailwindcss";
+
+/* ============================================
+   THEME CONFIGURATION
+   ============================================ */
+
+@theme {
+  /* Font families */
+  --font-sans: 'Geist', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', 'JetBrains Mono', monospace;
+
+  /* Animation keyframes */
+  --animate-fade-in: fade-in 0.2s ease-out;
+  --animate-slide-up: slide-up 0.3s ease-out;
+  --animate-pulse-glow: pulse-glow 2s ease-in-out infinite;
+  --animate-slide-in-right: slide-in-right 0.25s ease;
+  --animate-fade-out-right: fade-out-right 0.3s ease forwards;
+  --animate-modal-overlay: modal-overlay-enter 0.2s ease forwards;
+  --animate-modal-panel: modal-panel-enter 0.25s ease 0.05s forwards;
+  --animate-spin: spin 1s linear infinite;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(var(--accent-rgb), 0.3); }
+  50% { box-shadow: 0 0 15px rgba(var(--accent-rgb), 0.5); }
+}
+
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fade-out-right {
+  to { opacity: 0; transform: translateX(16px); }
+}
+
+@keyframes modal-overlay-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modal-panel-enter {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes modal-overlay-exit {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes modal-panel-exit {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(8px) scale(0.97); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   CSS CUSTOM PROPERTIES - DARK MODE (DEFAULT)
+   ============================================ */
+
+:root {
+  color-scheme: dark;
+
+  /* Backgrounds */
+  --bg-primary: #0d0f12;
+  --bg-secondary: #141720;
+  --bg-tertiary: #1c1f2a;
+  --bg-hover: #252932;
+
+  /* Borders */
+  --border-subtle: #2d3141;
+  --border-default: #343a4f;
+  --border-focus: #454d66;
+
+  /* Text */
+  --text-primary: #f5f5f5;
+  --text-secondary: #a3a3a3;
+  --text-tertiary: #737373;
+
+  /* Accent - Engineering Blue */
+  --accent-400: #93c5fd;   /* blue-300 — hover states */
+  --accent-500: #60a5fa;   /* blue-400 — primary interactive */
+  --accent-600: #3b82f6;   /* blue-500 — darker variant */
+  --accent-subtle: rgba(96, 165, 250, 0.12);
+  --accent-rgb: 96, 165, 250;
+
+  /* Status Colors */
+  --success: #4ade80;
+  --success-subtle: rgba(74, 222, 128, 0.12);
+  --error: #f87171;
+  --error-subtle: rgba(248, 113, 113, 0.12);
+  --warning: #fb923c;
+}
+
+/* ============================================
+   CSS CUSTOM PROPERTIES - LIGHT MODE
+   ============================================ */
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  /* Backgrounds */
+  --bg-primary: #f4f6fb;   /* blue-gray canvas — cards lift off this */
+  --bg-secondary: #ffffff; /* card surface — clearly elevated above canvas */
+  --bg-tertiary: #eef1f8;  /* recessed interior, input backgrounds */
+  --bg-hover: #e2e8f4;     /* hover state — clearly visible */
+
+  /* Borders */
+  --border-subtle: #dde3f0;
+  --border-default: #c4cde3;
+  --border-focus: #93a4d0;
+
+  /* Text */
+  --text-primary: #1c1917;
+  --text-secondary: #57534e;
+  --text-tertiary: #8896b0;  /* blue-tinted */
+
+  /* Accent - Engineering Blue (darker stops for light bg) */
+  --accent-400: #3b82f6;   /* blue-500 — hover states */
+  --accent-500: #2563eb;   /* blue-600 — primary interactive */
+  --accent-600: #1d4ed8;   /* blue-700 — darker variant */
+  --accent-subtle: rgba(37, 99, 235, 0.08);
+  --accent-rgb: 37, 99, 235;
+
+  /* Status Colors */
+  --success: #15803d;
+  --success-subtle: rgba(21, 128, 61, 0.10);
+  --error: #dc2626;
+  --error-subtle: rgba(220, 38, 38, 0.10);
+  --warning: #d97706;
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 17px;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.2s ease, color 0.15s ease;
+}
+
+/* Selection colors */
+::selection {
+  background: var(--accent-subtle);
+  color: inherit;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-focus);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Focus visible styles */
+:focus-visible {
+  outline: 2px solid var(--accent-400);
+  outline-offset: 2px;
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+/* Typography utilities */
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Status dot glow effects */
+.status-dot-success {
+  box-shadow: 0 0 0 3px var(--success-subtle);
+}
+
+.status-dot-error {
+  box-shadow: 0 0 0 3px var(--error-subtle);
+}
+
+/* Card status borders - uses accent in dark mode, same in light */
+.card-status-active {
+  border-left: 3px solid var(--accent-500);
+}
+
+.card-status-error {
+  border-left: 3px solid var(--error);
+}
+
+/* Switch component styles */
+.switch-thumb {
+  pointer-events: none;
+  display: block;
+  height: 18px;
+  width: 18px;
+  border-radius: 9999px;
+  background: white;
+  transition: transform 200ms ease;
+  margin: 0 2px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.switch-unchecked .switch-thumb {
+  transform: translateX(0);
+}
+
+.switch-checked .switch-thumb {
+  transform: translateX(20px);
+}
+
+/* Animation utilities */
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Grid pattern background */
+.grid-pattern {
+  background-image:
+    linear-gradient(var(--border-subtle) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px);
+  background-size: 24px 24px;
+  opacity: 0.5;
+}
+
+/* Truncate utility */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Monospace code styling */
+code, .mono {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+}
+
+/* Smooth transitions for theme switching */
+* {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.15s ease;
+}
+
+/* ============================================
+   TAILWIND CUSTOM PROPERTY MAPPING
+   ============================================ */
+
+/* Map Tailwind utility classes to CSS custom properties */
+.bg-primary { background-color: var(--bg-primary); }
+.bg-secondary { background-color: var(--bg-secondary); }
+.bg-tertiary { background-color: var(--bg-tertiary); }
+.bg-hover { background-color: var(--bg-hover); }
+
+.border-subtle { border-color: var(--border-subtle); }
+.border-default { border-color: var(--border-default); }
+.border-focus { border-color: var(--border-focus); }
+
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-tertiary { color: var(--text-tertiary); }
+
+.bg-accent-400 { background-color: var(--accent-400); }
+.bg-accent-500 { background-color: var(--accent-500); }
+.bg-accent-600 { background-color: var(--accent-600); }
+.bg-accent-subtle { background-color: var(--accent-subtle); }
+
+.text-accent { color: var(--accent-400); }
+.text-accent-hover { color: var(--accent-500); }
+
+.bg-success { background-color: var(--success); }
+.bg-success-subtle { background-color: var(--success-subtle); }
+.bg-error { background-color: var(--error); }
+.bg-error-subtle { background-color: var(--error-subtle); }
+
+.text-success { color: var(--success); }
+.text-error { color: var(--error); }

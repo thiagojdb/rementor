@@ -1,0 +1,255 @@
+syntax = "proto3";
+
+package rementor.v1;
+
+option go_package = "github.com/thiagojdb/rementor/internal/gen/rementor/v1;rementorv1";
+
+service ControlPlaneService {
+  rpc ListWorkspaces(ListWorkspacesRequest) returns (ListWorkspacesResponse);
+  rpc GetWorkspace(GetWorkspaceRequest) returns (GetWorkspaceResponse);
+  rpc CreateWorkspace(CreateWorkspaceRequest) returns (CreateWorkspaceResponse);
+  rpc UpdateWorkspace(UpdateWorkspaceRequest) returns (UpdateWorkspaceResponse);
+  rpc DeleteWorkspace(DeleteWorkspaceRequest) returns (DeleteWorkspaceResponse);
+
+  rpc ListApplications(ListApplicationsRequest) returns (ListApplicationsResponse);
+  rpc GetApplication(GetApplicationRequest) returns (GetApplicationResponse);
+  rpc UpsertApplication(UpsertApplicationRequest) returns (UpsertApplicationResponse);
+  rpc DeleteApplication(DeleteApplicationRequest) returns (DeleteApplicationResponse);
+  rpc ToggleApplication(ToggleApplicationRequest) returns (ToggleApplicationResponse);
+  rpc ToggleAllToRemote(ToggleAllToRemoteRequest) returns (ToggleAllToRemoteResponse);
+  rpc ToggleAllToLocal(ToggleAllToLocalRequest) returns (ToggleAllToLocalResponse);
+  rpc SyncWorkspaceRouting(SyncWorkspaceRoutingRequest) returns (SyncWorkspaceRoutingResponse);
+
+  rpc GetRoutePattern(GetRoutePatternRequest) returns (GetRoutePatternResponse);
+  rpc UpdateRoutePattern(UpdateRoutePatternRequest) returns (UpdateRoutePatternResponse);
+
+  rpc GetLoggers(GetLoggersRequest) returns (GetLoggersResponse);
+  rpc SetLoggerLevel(SetLoggerLevelRequest) returns (SetLoggerLevelResponse);
+
+  rpc WatchHealth(WatchHealthRequest) returns (stream WatchHealthResponse);
+}
+
+message Application {
+  string id = 1;
+  string name = 2;
+  string path = 3;
+  string domain = 4;
+  string remote_base_url = 5;
+  string context = 6;
+  int32 port = 7;
+  string health = 8;
+  bool active = 9;
+  string health_status = 10;
+  string remote_status = 11;
+  optional string route_pattern = 12;
+  optional LoggerConfig logger_config = 13;
+}
+
+message Workspace {
+  string id = 1;
+  string type = 2;
+  string name = 3;
+  string color = 4;
+  optional Routing routing = 5;
+  repeated Application applications = 6;
+}
+
+message Routing {
+  string mode = 1;
+  string local_domain = 2;
+  string default_remote_base_url = 3;
+}
+
+message LoggerConfig {
+  bool enabled = 1;
+  string endpoint = 2;
+  string auth_type = 3;
+  bool use_project_config = 4;
+}
+
+message Logger {
+  string name = 1;
+  string effective_level = 2;
+  string configured_level = 3;
+}
+
+message ApplicationConfigInput {
+  string id = 1;
+  string name = 2;
+  string path = 3;
+  string domain = 4;
+  string remote_base_url = 5;
+  int32 port = 6;
+  string health = 7;
+  string context = 8;
+}
+
+message ListWorkspacesRequest {}
+
+message ListWorkspacesResponse {
+  repeated Workspace workspaces = 1;
+}
+
+message GetWorkspaceRequest {
+  string workspace_id = 1;
+}
+
+message GetWorkspaceResponse {
+  Workspace workspace = 1;
+}
+
+message CreateWorkspaceRequest {
+  string id = 1;
+  string type = 2;
+  string name = 3;
+  string color = 4;
+  string local_domain = 5;
+  string default_remote_base_url = 6;
+  repeated ApplicationConfigInput applications = 7;
+}
+
+message CreateWorkspaceResponse {
+  Workspace workspace = 1;
+}
+
+message UpdateWorkspaceRequest {
+  string workspace_id = 1;
+  repeated ApplicationConfigInput applications = 2;
+  string local_domain = 3;
+  string default_remote_base_url = 4;
+}
+
+message UpdateWorkspaceResponse {
+  Workspace workspace = 1;
+}
+
+message DeleteWorkspaceRequest {
+  string workspace_id = 1;
+}
+
+message DeleteWorkspaceResponse {}
+
+message ListApplicationsRequest {
+  string workspace_id = 1;
+}
+
+message ListApplicationsResponse {
+  repeated Application applications = 1;
+}
+
+message GetApplicationRequest {
+  string workspace_id = 1;
+  string application_id = 2;
+}
+
+message GetApplicationResponse {
+  Application application = 1;
+}
+
+message UpsertApplicationRequest {
+  string workspace_id = 1;
+  ApplicationConfigInput application = 2;
+}
+
+message UpsertApplicationResponse {
+  Application application = 1;
+  bool created = 2;
+}
+
+message DeleteApplicationRequest {
+  string workspace_id = 1;
+  string application_id = 2;
+}
+
+message DeleteApplicationResponse {}
+
+message ToggleApplicationRequest {
+  string workspace_id = 1;
+  string application_id = 2;
+}
+
+message ToggleApplicationResponse {
+  Application application = 1;
+}
+
+message ToggleAllToRemoteRequest {
+  string workspace_id = 1;
+}
+
+message ToggleAllToRemoteResponse {
+  int32 success_count = 1;
+  int32 failure_count = 2;
+}
+
+message ToggleAllToLocalRequest {
+  string workspace_id = 1;
+}
+
+message ToggleAllToLocalResponse {
+  int32 success_count = 1;
+  int32 failure_count = 2;
+}
+
+message SyncWorkspaceRoutingRequest {
+  string workspace_id = 1;
+}
+
+message SyncWorkspaceRoutingResponse {
+  string status = 1;
+}
+
+message GetRoutePatternRequest {
+  string workspace_id = 1;
+  string application_id = 2;
+}
+
+message GetRoutePatternResponse {
+  optional string pattern = 1;
+}
+
+message UpdateRoutePatternRequest {
+  string workspace_id = 1;
+  string application_id = 2;
+  string pattern = 3;
+}
+
+message UpdateRoutePatternResponse {
+  Application application = 1;
+}
+
+message GetLoggersRequest {
+  string workspace_id = 1;
+  string application_id = 2;
+}
+
+message GetLoggersResponse {
+  repeated string levels = 1;
+  repeated Logger loggers = 2;
+}
+
+message SetLoggerLevelRequest {
+  string workspace_id = 1;
+  string application_id = 2;
+  string logger_name = 3;
+  string level = 4;
+}
+
+message SetLoggerLevelResponse {
+  string status = 1;
+  string logger = 2;
+  string level = 3;
+}
+
+message WatchHealthRequest {
+  string workspace_id = 1;
+}
+
+message WatchHealthResponse {
+  string type = 1;
+  string workspace_id = 2;
+  string application_name = 3;
+  bool local_ok = 4;
+  bool remote_ok = 5;
+  string local_checked = 6;
+  string remote_checked = 7;
+}

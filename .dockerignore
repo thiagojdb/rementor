@@ -1,0 +1,12 @@
+.git
+.github
+.claude
+.codex
+dist
+node_modules
+web/frontend/node_modules
+playwright-report
+test-results
+*.db
+*.db-shm
+*.db-wal
