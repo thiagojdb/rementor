@@ -31,11 +31,9 @@ route patterns in SQLite under the XDG data directory:
 ~/.local/share/rementor/rementor.db
 ```
 
-If logger authentication is configured, those credentials are stored in that
-local SQLite database. Rementor creates its app-specific XDG data, cache, and
-config directories with `0700` permissions and creates the SQLite database with
-`0600` permissions. Treat the database as sensitive, use low-privilege
-development credentials, and do not copy it into bug reports.
+Rementor creates its app-specific XDG data, cache, and config directories with
+`0700` permissions and creates the SQLite database with `0600` permissions.
+Treat the database as sensitive and do not copy it into bug reports.
 
 ## System Changes
 

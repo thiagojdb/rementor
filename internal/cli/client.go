@@ -184,35 +184,6 @@ func (c *Client) UpdateRoutePattern(ctx context.Context, workspaceID, appID stri
 	return applicationFromProto(res.Msg.GetApplication()), nil
 }
 
-func (c *Client) GetLoggers(ctx context.Context, workspaceID, appID string) (LoggersResponse, error) {
-	res, err := c.rpc.GetLoggers(ctx, connect.NewRequest(&rementorv1.GetLoggersRequest{WorkspaceId: workspaceID, ApplicationId: appID}))
-	if err != nil {
-		return LoggersResponse{}, apiError(err)
-	}
-	loggers := make([]LoggerDTO, 0, len(res.Msg.GetLoggers()))
-	for _, logger := range res.Msg.GetLoggers() {
-		loggers = append(loggers, LoggerDTO{
-			Name:            logger.GetName(),
-			EffectiveLevel:  logger.GetEffectiveLevel(),
-			ConfiguredLevel: logger.GetConfiguredLevel(),
-		})
-	}
-	return LoggersResponse{Levels: res.Msg.GetLevels(), Loggers: loggers}, nil
-}
-
-func (c *Client) SetLoggerLevel(ctx context.Context, workspaceID, appID, loggerName string, req SetLoggerLevelRequest) (map[string]string, error) {
-	res, err := c.rpc.SetLoggerLevel(ctx, connect.NewRequest(&rementorv1.SetLoggerLevelRequest{
-		WorkspaceId:   workspaceID,
-		ApplicationId: appID,
-		LoggerName:    loggerName,
-		Level:         req.Level,
-	}))
-	if err != nil {
-		return nil, apiError(err)
-	}
-	return map[string]string{"status": res.Msg.GetStatus(), "logger": res.Msg.GetLogger(), "level": res.Msg.GetLevel()}, nil
-}
-
 func apiError(err error) error {
 	if err == nil {
 		return nil

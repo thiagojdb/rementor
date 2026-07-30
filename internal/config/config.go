@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/thiagojdb/rementor/internal/models"
 	_ "modernc.org/sqlite"
@@ -13,7 +12,6 @@ import (
 
 // AppConfig holds the application configuration.
 type AppConfig struct {
-	LoggerAuth              string `json:"loggerAuth"`
 	NginxConfDir            string `json:"nginxConfDir"`
 	NginxBinary             string `json:"nginxBinary"`
 	HealthCheckIntervalSecs int64  `json:"healthCheckIntervalSecs"`
@@ -117,8 +115,22 @@ func Load() error {
 			return err
 		}
 	}
+	cfg = applyEnvironment(cfg)
 	Config = cfg
 	return nil
+}
+
+func applyEnvironment(cfg AppConfig) AppConfig {
+	if value := os.Getenv("REMENTOR_NGINX_CONF_DIR"); value != "" {
+		cfg.NginxConfDir = filepath.Clean(value)
+	}
+	if value := os.Getenv("REMENTOR_NGINX_BINARY"); value != "" {
+		cfg.NginxBinary = value
+	}
+	if value := os.Getenv("REMENTOR_DOMAIN"); value != "" {
+		cfg.RementorDomain = value
+	}
+	return cfg
 }
 
 func LoadWorkspaces() ([]*models.Workspace, error) {
@@ -218,6 +230,35 @@ func SaveState(workspaces []*models.Workspace) error {
 	return nil
 }
 
+// ReplaceWorkspaces atomically replaces the durable workspace projection.
+// Callers construct and validate the complete desired state before invoking it.
+func ReplaceWorkspaces(workspaces []*models.Workspace) error {
+	db, err := readyDB()
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	tx, err := db.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin workspace replacement: %w", err)
+	}
+	defer tx.Rollback()
+
+	if _, err := tx.Exec(`DELETE FROM workspaces`); err != nil {
+		return fmt.Errorf("failed to clear workspaces: %w", err)
+	}
+	for order, workspace := range workspaces {
+		if err := insertWorkspaceConfigTx(tx, workspaceConfigFromWorkspace(workspace), order); err != nil {
+			return err
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit workspace replacement: %w", err)
+	}
+	return nil
+}
+
 func AppendWorkspace(newConfig models.WorkspaceConfig) error {
 	db, err := readyDB()
 	if err != nil {
@@ -247,13 +288,10 @@ func UpdateWorkspaceApplications(wsID string, apps []models.ApplicationConfig, l
 		active       bool
 		routePattern *string
 		stripOrigin  bool
-		loggerConfig *models.LoggerConfig
 	}
 	oldStates := make(map[string]oldState)
 	rows, err := db.Query(`
-		SELECT id, active, route_pattern, strip_origin, logger_enabled, logger_endpoint,
-			logger_auth_type, logger_auth_username, logger_auth_password, logger_auth_token,
-			logger_use_project_config
+		SELECT id, active, route_pattern, strip_origin
 		FROM applications
 		WHERE workspace_id = ?
 	`, wsID)
@@ -265,32 +303,13 @@ func UpdateWorkspaceApplications(wsID string, apps []models.ApplicationConfig, l
 		var active int
 		var stripOrigin int
 		var routePattern sql.NullString
-		var loggerEnabled, loggerUseProjectConfig sql.NullInt64
-		var loggerEndpoint, loggerAuthType, loggerAuthUsername, loggerAuthPassword, loggerAuthToken sql.NullString
-		if err := rows.Scan(
-			&id, &active, &routePattern, &stripOrigin, &loggerEnabled, &loggerEndpoint,
-			&loggerAuthType, &loggerAuthUsername, &loggerAuthPassword, &loggerAuthToken,
-			&loggerUseProjectConfig,
-		); err != nil {
+		if err := rows.Scan(&id, &active, &routePattern, &stripOrigin); err != nil {
 			rows.Close()
 			return fmt.Errorf("failed to scan existing application state: %w", err)
 		}
-		var loggerConfig *models.LoggerConfig
-		if loggerEnabled.Valid || loggerEndpoint.Valid || loggerAuthType.Valid || loggerAuthUsername.Valid ||
-			loggerAuthPassword.Valid || loggerAuthToken.Valid || loggerUseProjectConfig.Valid {
-			loggerConfig = &models.LoggerConfig{
-				Enabled:          loggerEnabled.Valid && loggerEnabled.Int64 != 0,
-				Endpoint:         loggerEndpoint.String,
-				AuthType:         loggerAuthType.String,
-				AuthUsername:     loggerAuthUsername.String,
-				AuthPassword:     loggerAuthPassword.String,
-				AuthToken:        loggerAuthToken.String,
-				UseProjectConfig: loggerUseProjectConfig.Valid && loggerUseProjectConfig.Int64 != 0,
-			}
-		}
 		oldStates[id] = oldState{
 			active: active != 0, routePattern: nullStringPtr(routePattern),
-			stripOrigin: stripOrigin != 0, loggerConfig: loggerConfig,
+			stripOrigin: stripOrigin != 0,
 		}
 	}
 	if err := rows.Close(); err != nil {
@@ -321,9 +340,6 @@ func UpdateWorkspaceApplications(wsID string, apps []models.ApplicationConfig, l
 		if old, ok := oldStates[app.ID]; ok {
 			app.Active = old.active
 			app.StripOrigin = old.stripOrigin
-			if app.LoggerConfig == nil {
-				app.LoggerConfig = old.loggerConfig
-			}
 			if app.RoutePattern == nil {
 				app.RoutePattern = old.routePattern
 			}
@@ -415,7 +431,6 @@ func initDB(db *sql.DB) error {
 	stmts := []string{
 		`CREATE TABLE IF NOT EXISTS app_config (
 			id INTEGER PRIMARY KEY CHECK (id = 1),
-			logger_auth TEXT NOT NULL DEFAULT '',
 			nginx_conf_dir TEXT NOT NULL DEFAULT '',
 			nginx_binary TEXT NOT NULL DEFAULT '',
 			health_check_interval_secs INTEGER NOT NULL,
@@ -444,13 +459,6 @@ func initDB(db *sql.DB) error {
 			active INTEGER NOT NULL DEFAULT 0,
 			route_pattern TEXT,
 			context TEXT NOT NULL DEFAULT '',
-			logger_enabled INTEGER,
-			logger_endpoint TEXT,
-			logger_auth_type TEXT,
-			logger_auth_username TEXT,
-			logger_auth_password TEXT,
-			logger_auth_token TEXT,
-			logger_use_project_config INTEGER,
 			strip_origin INTEGER NOT NULL DEFAULT 0,
 			sort_order INTEGER NOT NULL DEFAULT 0,
 			PRIMARY KEY (workspace_id, id),
@@ -462,150 +470,7 @@ func initDB(db *sql.DB) error {
 			return fmt.Errorf("failed to initialize sqlite schema: %w", err)
 		}
 	}
-	for _, stmt := range []string{
-		`ALTER TABLE app_config ADD COLUMN nginx_conf_dir TEXT NOT NULL DEFAULT ''`,
-		`ALTER TABLE app_config ADD COLUMN nginx_binary TEXT NOT NULL DEFAULT ''`,
-	} {
-		if _, err := db.Exec(stmt); err != nil && !strings.Contains(err.Error(), "duplicate column name") {
-			return fmt.Errorf("failed to migrate app_config: %w", err)
-		}
-	}
-	if err := migrateAppConfigSchema(db); err != nil {
-		return err
-	}
-	if err := migrateWorkspaceRemoteBaseURL(db); err != nil {
-		return err
-	}
-	// Migrate: add strip_origin column for existing databases
-	if _, err := db.Exec(`ALTER TABLE applications ADD COLUMN strip_origin INTEGER NOT NULL DEFAULT 0`); err != nil {
-		if !strings.Contains(err.Error(), "duplicate column name") {
-			return fmt.Errorf("failed to migrate strip_origin column: %w", err)
-		}
-	}
 	return nil
-}
-
-func migrateWorkspaceRemoteBaseURL(db *sql.DB) error {
-	hasNew, err := tableHasColumn(db, "workspaces", "default_remote_base_url")
-	if err != nil {
-		return err
-	}
-	if hasNew {
-		return nil
-	}
-
-	legacyColumn := "production" + "_base"
-	hasOld, err := tableHasColumn(db, "workspaces", legacyColumn)
-	if err != nil {
-		return err
-	}
-	if !hasOld {
-		if _, err := db.Exec(`ALTER TABLE workspaces ADD COLUMN default_remote_base_url TEXT NOT NULL DEFAULT ''`); err != nil {
-			return fmt.Errorf("failed to add default remote base URL column: %w", err)
-		}
-		return nil
-	}
-
-	tx, err := db.Begin()
-	if err != nil {
-		return fmt.Errorf("failed to begin workspace remote URL migration: %w", err)
-	}
-	defer tx.Rollback()
-
-	if _, err := tx.Exec(`ALTER TABLE workspaces ADD COLUMN default_remote_base_url TEXT NOT NULL DEFAULT ''`); err != nil {
-		return fmt.Errorf("failed to add default remote base URL column: %w", err)
-	}
-	copyLegacySQL := fmt.Sprintf(`UPDATE workspaces SET default_remote_base_url = %s WHERE default_remote_base_url = ''`, legacyColumn)
-	if _, err := tx.Exec(copyLegacySQL); err != nil {
-		return fmt.Errorf("failed to copy legacy remote base URLs: %w", err)
-	}
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("failed to commit workspace remote URL migration: %w", err)
-	}
-	return nil
-}
-
-func migrateAppConfigSchema(db *sql.DB) error {
-	legacyColumn := "cad" + "dy_admin_url"
-	hasLegacy, err := tableHasColumn(db, "app_config", legacyColumn)
-	if err != nil {
-		return err
-	}
-	if !hasLegacy {
-		return nil
-	}
-
-	tx, err := db.Begin()
-	if err != nil {
-		return fmt.Errorf("failed to begin app_config migration: %w", err)
-	}
-	defer tx.Rollback()
-
-	if _, err := tx.Exec(`CREATE TABLE app_config_new (
-		id INTEGER PRIMARY KEY CHECK (id = 1),
-		logger_auth TEXT NOT NULL DEFAULT '',
-		nginx_conf_dir TEXT NOT NULL DEFAULT '',
-		nginx_binary TEXT NOT NULL DEFAULT '',
-		health_check_interval_secs INTEGER NOT NULL,
-		certificate_lifetime_days INTEGER NOT NULL,
-		rementor_domain TEXT NOT NULL
-	)`); err != nil {
-		return fmt.Errorf("failed to create migrated app_config table: %w", err)
-	}
-
-	if _, err := tx.Exec(`
-		INSERT INTO app_config_new (
-			id, logger_auth, nginx_conf_dir, nginx_binary, health_check_interval_secs, certificate_lifetime_days, rementor_domain
-		)
-		SELECT
-			id,
-			logger_auth,
-			COALESCE(NULLIF(nginx_conf_dir, ''), ?),
-			COALESCE(NULLIF(nginx_binary, ''), ?),
-			health_check_interval_secs,
-			certificate_lifetime_days,
-			rementor_domain
-		FROM app_config
-	`, GetNginxConfDir(), DefaultNginxBinary); err != nil {
-		return fmt.Errorf("failed to copy app_config rows: %w", err)
-	}
-
-	if _, err := tx.Exec(`DROP TABLE app_config`); err != nil {
-		return fmt.Errorf("failed to drop old app_config table: %w", err)
-	}
-	if _, err := tx.Exec(`ALTER TABLE app_config_new RENAME TO app_config`); err != nil {
-		return fmt.Errorf("failed to rename migrated app_config table: %w", err)
-	}
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("failed to commit app_config migration: %w", err)
-	}
-	return nil
-}
-
-func tableHasColumn(db *sql.DB, table, column string) (bool, error) {
-	rows, err := db.Query(fmt.Sprintf(`PRAGMA table_info(%s)`, table))
-	if err != nil {
-		return false, fmt.Errorf("failed to inspect table %q: %w", table, err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var cid int
-		var name, typ string
-		var notNull int
-		var defaultValue sql.NullString
-		var pk int
-		if err := rows.Scan(&cid, &name, &typ, &notNull, &defaultValue, &pk); err != nil {
-			return false, fmt.Errorf("failed to scan table info for %q: %w", table, err)
-		}
-		if name == column {
-			return true, nil
-		}
-	}
-	if err := rows.Err(); err != nil {
-		return false, fmt.Errorf("failed to iterate table info for %q: %w", table, err)
-	}
-	return false, nil
 }
 
 func ensureConfig(db *sql.DB) error {
@@ -622,10 +487,10 @@ func ensureConfig(db *sql.DB) error {
 func loadConfig(db *sql.DB) (AppConfig, error) {
 	var cfg AppConfig
 	err := db.QueryRow(`
-		SELECT logger_auth, nginx_conf_dir, nginx_binary, health_check_interval_secs, certificate_lifetime_days, rementor_domain
+		SELECT nginx_conf_dir, nginx_binary, health_check_interval_secs, certificate_lifetime_days, rementor_domain
 		FROM app_config
 		WHERE id = 1
-	`).Scan(&cfg.LoggerAuth, &cfg.NginxConfDir, &cfg.NginxBinary, &cfg.HealthCheckIntervalSecs, &cfg.CertificateLifetimeDays, &cfg.RementorDomain)
+	`).Scan(&cfg.NginxConfDir, &cfg.NginxBinary, &cfg.HealthCheckIntervalSecs, &cfg.CertificateLifetimeDays, &cfg.RementorDomain)
 	if err != nil {
 		return AppConfig{}, fmt.Errorf("failed to load sqlite config: %w", err)
 	}
@@ -635,16 +500,15 @@ func loadConfig(db *sql.DB) (AppConfig, error) {
 func saveConfig(db *sql.DB, cfg AppConfig) error {
 	_, err := db.Exec(`
 		INSERT INTO app_config (
-			id, logger_auth, nginx_conf_dir, nginx_binary, health_check_interval_secs, certificate_lifetime_days, rementor_domain
-		) VALUES (1, ?, ?, ?, ?, ?, ?)
+			id, nginx_conf_dir, nginx_binary, health_check_interval_secs, certificate_lifetime_days, rementor_domain
+		) VALUES (1, ?, ?, ?, ?, ?)
 		ON CONFLICT(id) DO UPDATE SET
-			logger_auth = excluded.logger_auth,
 			nginx_conf_dir = excluded.nginx_conf_dir,
 			nginx_binary = excluded.nginx_binary,
 			health_check_interval_secs = excluded.health_check_interval_secs,
 			certificate_lifetime_days = excluded.certificate_lifetime_days,
 			rementor_domain = excluded.rementor_domain
-	`, cfg.LoggerAuth, cfg.NginxConfDir, cfg.NginxBinary, cfg.HealthCheckIntervalSecs, cfg.CertificateLifetimeDays, cfg.RementorDomain)
+	`, cfg.NginxConfDir, cfg.NginxBinary, cfg.HealthCheckIntervalSecs, cfg.CertificateLifetimeDays, cfg.RementorDomain)
 	if err != nil {
 		return fmt.Errorf("failed to save sqlite config: %w", err)
 	}
@@ -653,7 +517,6 @@ func saveConfig(db *sql.DB, cfg AppConfig) error {
 
 func defaultConfig() AppConfig {
 	return AppConfig{
-		LoggerAuth:              "",
 		NginxConfDir:            GetNginxConfDir(),
 		NginxBinary:             DefaultNginxBinary,
 		HealthCheckIntervalSecs: DefaultHealthCheckIntervalSecs,
@@ -725,9 +588,7 @@ func loadWorkspacesFromDB(db *sql.DB) ([]*models.Workspace, error) {
 func loadApplicationConfigs(db *sql.DB, wsID string) ([]models.ApplicationConfig, error) {
 	rows, err := db.Query(`
 		SELECT
-			id, name, path, domain, remote_base_url, port, health, active, route_pattern, context,
-			logger_enabled, logger_endpoint, logger_auth_type, logger_auth_username, logger_auth_password,
-			logger_auth_token, logger_use_project_config, strip_origin
+			id, name, path, domain, remote_base_url, port, health, active, route_pattern, context, strip_origin
 		FROM applications
 		WHERE workspace_id = ?
 		ORDER BY sort_order, id
@@ -742,28 +603,14 @@ func loadApplicationConfigs(db *sql.DB, wsID string) ([]models.ApplicationConfig
 		var app models.ApplicationConfig
 		var active int
 		var routePattern sql.NullString
-		var loggerEnabled, loggerUseProjectConfig sql.NullInt64
-		var loggerEndpoint, loggerAuthType, loggerAuthUsername, loggerAuthPassword, loggerAuthToken sql.NullString
 		if err := rows.Scan(
 			&app.ID, &app.Name, &app.Path, &app.Domain, &app.RemoteBaseUrl, &app.Port, &app.Health, &active,
-			&routePattern, &app.Context, &loggerEnabled, &loggerEndpoint, &loggerAuthType, &loggerAuthUsername,
-			&loggerAuthPassword, &loggerAuthToken, &loggerUseProjectConfig, &app.StripOrigin,
+			&routePattern, &app.Context, &app.StripOrigin,
 		); err != nil {
 			return nil, fmt.Errorf("failed to scan sqlite application: %w", err)
 		}
 		app.Active = active != 0
 		app.RoutePattern = nullStringPtr(routePattern)
-		if loggerEnabled.Valid || loggerEndpoint.Valid || loggerAuthType.Valid || loggerAuthUsername.Valid || loggerAuthPassword.Valid || loggerAuthToken.Valid || loggerUseProjectConfig.Valid {
-			app.LoggerConfig = &models.LoggerConfig{
-				Enabled:          loggerEnabled.Valid && loggerEnabled.Int64 != 0,
-				Endpoint:         loggerEndpoint.String,
-				AuthType:         loggerAuthType.String,
-				AuthUsername:     loggerAuthUsername.String,
-				AuthPassword:     loggerAuthPassword.String,
-				AuthToken:        loggerAuthToken.String,
-				UseProjectConfig: loggerUseProjectConfig.Valid && loggerUseProjectConfig.Int64 != 0,
-			}
-		}
 		apps = append(apps, app)
 	}
 	if err := rows.Err(); err != nil {
@@ -800,6 +647,30 @@ func workspacesFromConfigs(configs []models.WorkspaceConfig) []*models.Workspace
 	return workspaces
 }
 
+func workspaceConfigFromWorkspace(workspace *models.Workspace) models.WorkspaceConfig {
+	config := models.WorkspaceConfig{
+		ID:           workspace.WorkspaceID,
+		Type:         workspace.GetType(),
+		Name:         workspace.NameOrID(),
+		Applications: make([]models.ApplicationConfig, 0, len(workspace.Applications)),
+	}
+	if workspace.Color != nil {
+		config.Color = *workspace.Color
+	}
+	if workspace.RoutingConfig != nil {
+		config.Routing = *workspace.RoutingConfig
+	}
+	for _, app := range workspace.Applications {
+		config.Applications = append(config.Applications, models.ApplicationConfig{
+			ID: app.ID, Name: app.Name, Path: app.Path, Domain: app.Domain,
+			RemoteBaseUrl: app.RemoteBaseUrl, Port: app.Port, Health: app.Health,
+			Active: app.Active, RoutePattern: app.RoutePattern, Context: app.Context,
+			StripOrigin: app.StripOrigin,
+		})
+	}
+	return config
+}
+
 func convertAppConfigs(configs []models.ApplicationConfig) []*models.Application {
 	var apps []*models.Application
 	for _, appConfig := range configs {
@@ -824,7 +695,6 @@ func convertAppConfigs(configs []models.ApplicationConfig) []*models.Application
 			Port:          appConfig.Port,
 			Active:        appConfig.Active,
 			RoutePattern:  appConfig.RoutePattern,
-			LoggerConfig:  appConfig.LoggerConfig,
 			StripOrigin:   appConfig.StripOrigin,
 		}
 		apps = append(apps, app)
@@ -877,27 +747,13 @@ func insertApplicationConfig(tx *sql.Tx, wsID string, app models.ApplicationConf
 		health = models.DefaultHealthEndpoint
 	}
 
-	var loggerEnabled, loggerUseProjectConfig any
-	var loggerEndpoint, loggerAuthType, loggerAuthUsername, loggerAuthPassword, loggerAuthToken any
-	if app.LoggerConfig != nil {
-		loggerEnabled = boolInt(app.LoggerConfig.Enabled)
-		loggerEndpoint = nullIfEmpty(app.LoggerConfig.Endpoint)
-		loggerAuthType = nullIfEmpty(app.LoggerConfig.AuthType)
-		loggerAuthUsername = nullIfEmpty(app.LoggerConfig.AuthUsername)
-		loggerAuthPassword = nullIfEmpty(app.LoggerConfig.AuthPassword)
-		loggerAuthToken = nullIfEmpty(app.LoggerConfig.AuthToken)
-		loggerUseProjectConfig = boolInt(app.LoggerConfig.UseProjectConfig)
-	}
-
 	_, err := tx.Exec(`
 		INSERT INTO applications (
 			workspace_id, id, name, path, domain, remote_base_url, port, health, active, route_pattern, context,
-			logger_enabled, logger_endpoint, logger_auth_type, logger_auth_username, logger_auth_password,
-			logger_auth_token, logger_use_project_config, strip_origin, sort_order
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			strip_origin, sort_order
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`, wsID, app.ID, app.Name, app.Path, app.Domain, app.RemoteBaseUrl, app.Port, health, boolInt(app.Active),
-		ptrValue(app.RoutePattern), app.Context, loggerEnabled, loggerEndpoint, loggerAuthType, loggerAuthUsername,
-		loggerAuthPassword, loggerAuthToken, loggerUseProjectConfig, boolInt(app.StripOrigin), order)
+		ptrValue(app.RoutePattern), app.Context, boolInt(app.StripOrigin), order)
 	if err != nil {
 		return fmt.Errorf("failed to insert application %s/%s: %w", wsID, app.ID, err)
 	}

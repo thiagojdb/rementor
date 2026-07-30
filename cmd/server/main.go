@@ -92,7 +92,7 @@ func main() {
 				if !nginxProvider.IsAvailable() {
 					log.Println("  Warning: nginx is not available or config validation failed")
 				} else {
-					log.Println("  nginx routing provider is available")
+					log.Println("  nginx executable and current configuration are valid")
 				}
 				registry.SetRoutingProvider(nginxProvider)
 				return registry.Load()
@@ -103,7 +103,8 @@ func main() {
 			Func: func(ctx context.Context) error {
 				log.Println("  Using .localhost domains (no DNS setup required)")
 				log.Println("  API domain: api.localhost (auto-resolves to 127.0.0.1)")
-				log.Printf("  Rementor UI: http://rementor.localhost/ (fallback: http://localhost:%d)", port)
+				log.Printf("  Rementor UI (direct): http://localhost:%d", port)
+				log.Printf("  Rementor UI (with nginx routing): http://%s/", config.Config.RementorDomain)
 				log.Println("  Path-based routing enabled")
 				return nil
 			},

@@ -23,9 +23,6 @@ service ControlPlaneService {
   rpc GetRoutePattern(GetRoutePatternRequest) returns (GetRoutePatternResponse);
   rpc UpdateRoutePattern(UpdateRoutePatternRequest) returns (UpdateRoutePatternResponse);
 
-  rpc GetLoggers(GetLoggersRequest) returns (GetLoggersResponse);
-  rpc SetLoggerLevel(SetLoggerLevelRequest) returns (SetLoggerLevelResponse);
-
   rpc WatchHealth(WatchHealthRequest) returns (stream WatchHealthResponse);
 }
 
@@ -42,7 +39,6 @@ message Application {
   string health_status = 10;
   string remote_status = 11;
   optional string route_pattern = 12;
-  optional LoggerConfig logger_config = 13;
 }
 
 message Workspace {
@@ -58,19 +54,6 @@ message Routing {
   string mode = 1;
   string local_domain = 2;
   string default_remote_base_url = 3;
-}
-
-message LoggerConfig {
-  bool enabled = 1;
-  string endpoint = 2;
-  string auth_type = 3;
-  bool use_project_config = 4;
-}
-
-message Logger {
-  string name = 1;
-  string effective_level = 2;
-  string configured_level = 3;
 }
 
 message ApplicationConfigInput {
@@ -215,29 +198,6 @@ message UpdateRoutePatternRequest {
 
 message UpdateRoutePatternResponse {
   Application application = 1;
-}
-
-message GetLoggersRequest {
-  string workspace_id = 1;
-  string application_id = 2;
-}
-
-message GetLoggersResponse {
-  repeated string levels = 1;
-  repeated Logger loggers = 2;
-}
-
-message SetLoggerLevelRequest {
-  string workspace_id = 1;
-  string application_id = 2;
-  string logger_name = 3;
-  string level = 4;
-}
-
-message SetLoggerLevelResponse {
-  string status = 1;
-  string logger = 2;
-  string level = 3;
 }
 
 message WatchHealthRequest {

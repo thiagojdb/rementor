@@ -78,12 +78,6 @@ const (
 	// ControlPlaneServiceUpdateRoutePatternProcedure is the fully-qualified name of the
 	// ControlPlaneService's UpdateRoutePattern RPC.
 	ControlPlaneServiceUpdateRoutePatternProcedure = "/rementor.v1.ControlPlaneService/UpdateRoutePattern"
-	// ControlPlaneServiceGetLoggersProcedure is the fully-qualified name of the ControlPlaneService's
-	// GetLoggers RPC.
-	ControlPlaneServiceGetLoggersProcedure = "/rementor.v1.ControlPlaneService/GetLoggers"
-	// ControlPlaneServiceSetLoggerLevelProcedure is the fully-qualified name of the
-	// ControlPlaneService's SetLoggerLevel RPC.
-	ControlPlaneServiceSetLoggerLevelProcedure = "/rementor.v1.ControlPlaneService/SetLoggerLevel"
 	// ControlPlaneServiceWatchHealthProcedure is the fully-qualified name of the ControlPlaneService's
 	// WatchHealth RPC.
 	ControlPlaneServiceWatchHealthProcedure = "/rementor.v1.ControlPlaneService/WatchHealth"
@@ -106,8 +100,6 @@ type ControlPlaneServiceClient interface {
 	SyncWorkspaceRouting(context.Context, *connect.Request[v1.SyncWorkspaceRoutingRequest]) (*connect.Response[v1.SyncWorkspaceRoutingResponse], error)
 	GetRoutePattern(context.Context, *connect.Request[v1.GetRoutePatternRequest]) (*connect.Response[v1.GetRoutePatternResponse], error)
 	UpdateRoutePattern(context.Context, *connect.Request[v1.UpdateRoutePatternRequest]) (*connect.Response[v1.UpdateRoutePatternResponse], error)
-	GetLoggers(context.Context, *connect.Request[v1.GetLoggersRequest]) (*connect.Response[v1.GetLoggersResponse], error)
-	SetLoggerLevel(context.Context, *connect.Request[v1.SetLoggerLevelRequest]) (*connect.Response[v1.SetLoggerLevelResponse], error)
 	WatchHealth(context.Context, *connect.Request[v1.WatchHealthRequest]) (*connect.ServerStreamForClient[v1.WatchHealthResponse], error)
 }
 
@@ -212,18 +204,6 @@ func NewControlPlaneServiceClient(httpClient connect.HTTPClient, baseURL string,
 			connect.WithSchema(controlPlaneServiceMethods.ByName("UpdateRoutePattern")),
 			connect.WithClientOptions(opts...),
 		),
-		getLoggers: connect.NewClient[v1.GetLoggersRequest, v1.GetLoggersResponse](
-			httpClient,
-			baseURL+ControlPlaneServiceGetLoggersProcedure,
-			connect.WithSchema(controlPlaneServiceMethods.ByName("GetLoggers")),
-			connect.WithClientOptions(opts...),
-		),
-		setLoggerLevel: connect.NewClient[v1.SetLoggerLevelRequest, v1.SetLoggerLevelResponse](
-			httpClient,
-			baseURL+ControlPlaneServiceSetLoggerLevelProcedure,
-			connect.WithSchema(controlPlaneServiceMethods.ByName("SetLoggerLevel")),
-			connect.WithClientOptions(opts...),
-		),
 		watchHealth: connect.NewClient[v1.WatchHealthRequest, v1.WatchHealthResponse](
 			httpClient,
 			baseURL+ControlPlaneServiceWatchHealthProcedure,
@@ -250,8 +230,6 @@ type controlPlaneServiceClient struct {
 	syncWorkspaceRouting *connect.Client[v1.SyncWorkspaceRoutingRequest, v1.SyncWorkspaceRoutingResponse]
 	getRoutePattern      *connect.Client[v1.GetRoutePatternRequest, v1.GetRoutePatternResponse]
 	updateRoutePattern   *connect.Client[v1.UpdateRoutePatternRequest, v1.UpdateRoutePatternResponse]
-	getLoggers           *connect.Client[v1.GetLoggersRequest, v1.GetLoggersResponse]
-	setLoggerLevel       *connect.Client[v1.SetLoggerLevelRequest, v1.SetLoggerLevelResponse]
 	watchHealth          *connect.Client[v1.WatchHealthRequest, v1.WatchHealthResponse]
 }
 
@@ -330,16 +308,6 @@ func (c *controlPlaneServiceClient) UpdateRoutePattern(ctx context.Context, req 
 	return c.updateRoutePattern.CallUnary(ctx, req)
 }
 
-// GetLoggers calls rementor.v1.ControlPlaneService.GetLoggers.
-func (c *controlPlaneServiceClient) GetLoggers(ctx context.Context, req *connect.Request[v1.GetLoggersRequest]) (*connect.Response[v1.GetLoggersResponse], error) {
-	return c.getLoggers.CallUnary(ctx, req)
-}
-
-// SetLoggerLevel calls rementor.v1.ControlPlaneService.SetLoggerLevel.
-func (c *controlPlaneServiceClient) SetLoggerLevel(ctx context.Context, req *connect.Request[v1.SetLoggerLevelRequest]) (*connect.Response[v1.SetLoggerLevelResponse], error) {
-	return c.setLoggerLevel.CallUnary(ctx, req)
-}
-
 // WatchHealth calls rementor.v1.ControlPlaneService.WatchHealth.
 func (c *controlPlaneServiceClient) WatchHealth(ctx context.Context, req *connect.Request[v1.WatchHealthRequest]) (*connect.ServerStreamForClient[v1.WatchHealthResponse], error) {
 	return c.watchHealth.CallServerStream(ctx, req)
@@ -362,8 +330,6 @@ type ControlPlaneServiceHandler interface {
 	SyncWorkspaceRouting(context.Context, *connect.Request[v1.SyncWorkspaceRoutingRequest]) (*connect.Response[v1.SyncWorkspaceRoutingResponse], error)
 	GetRoutePattern(context.Context, *connect.Request[v1.GetRoutePatternRequest]) (*connect.Response[v1.GetRoutePatternResponse], error)
 	UpdateRoutePattern(context.Context, *connect.Request[v1.UpdateRoutePatternRequest]) (*connect.Response[v1.UpdateRoutePatternResponse], error)
-	GetLoggers(context.Context, *connect.Request[v1.GetLoggersRequest]) (*connect.Response[v1.GetLoggersResponse], error)
-	SetLoggerLevel(context.Context, *connect.Request[v1.SetLoggerLevelRequest]) (*connect.Response[v1.SetLoggerLevelResponse], error)
 	WatchHealth(context.Context, *connect.Request[v1.WatchHealthRequest], *connect.ServerStream[v1.WatchHealthResponse]) error
 }
 
@@ -464,18 +430,6 @@ func NewControlPlaneServiceHandler(svc ControlPlaneServiceHandler, opts ...conne
 		connect.WithSchema(controlPlaneServiceMethods.ByName("UpdateRoutePattern")),
 		connect.WithHandlerOptions(opts...),
 	)
-	controlPlaneServiceGetLoggersHandler := connect.NewUnaryHandler(
-		ControlPlaneServiceGetLoggersProcedure,
-		svc.GetLoggers,
-		connect.WithSchema(controlPlaneServiceMethods.ByName("GetLoggers")),
-		connect.WithHandlerOptions(opts...),
-	)
-	controlPlaneServiceSetLoggerLevelHandler := connect.NewUnaryHandler(
-		ControlPlaneServiceSetLoggerLevelProcedure,
-		svc.SetLoggerLevel,
-		connect.WithSchema(controlPlaneServiceMethods.ByName("SetLoggerLevel")),
-		connect.WithHandlerOptions(opts...),
-	)
 	controlPlaneServiceWatchHealthHandler := connect.NewServerStreamHandler(
 		ControlPlaneServiceWatchHealthProcedure,
 		svc.WatchHealth,
@@ -514,10 +468,6 @@ func NewControlPlaneServiceHandler(svc ControlPlaneServiceHandler, opts ...conne
 			controlPlaneServiceGetRoutePatternHandler.ServeHTTP(w, r)
 		case ControlPlaneServiceUpdateRoutePatternProcedure:
 			controlPlaneServiceUpdateRoutePatternHandler.ServeHTTP(w, r)
-		case ControlPlaneServiceGetLoggersProcedure:
-			controlPlaneServiceGetLoggersHandler.ServeHTTP(w, r)
-		case ControlPlaneServiceSetLoggerLevelProcedure:
-			controlPlaneServiceSetLoggerLevelHandler.ServeHTTP(w, r)
 		case ControlPlaneServiceWatchHealthProcedure:
 			controlPlaneServiceWatchHealthHandler.ServeHTTP(w, r)
 		default:
@@ -587,14 +537,6 @@ func (UnimplementedControlPlaneServiceHandler) GetRoutePattern(context.Context, 
 
 func (UnimplementedControlPlaneServiceHandler) UpdateRoutePattern(context.Context, *connect.Request[v1.UpdateRoutePatternRequest]) (*connect.Response[v1.UpdateRoutePatternResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.UpdateRoutePattern is not implemented"))
-}
-
-func (UnimplementedControlPlaneServiceHandler) GetLoggers(context.Context, *connect.Request[v1.GetLoggersRequest]) (*connect.Response[v1.GetLoggersResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.GetLoggers is not implemented"))
-}
-
-func (UnimplementedControlPlaneServiceHandler) SetLoggerLevel(context.Context, *connect.Request[v1.SetLoggerLevelRequest]) (*connect.Response[v1.SetLoggerLevelResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.SetLoggerLevel is not implemented"))
 }
 
 func (UnimplementedControlPlaneServiceHandler) WatchHealth(context.Context, *connect.Request[v1.WatchHealthRequest], *connect.ServerStream[v1.WatchHealthResponse]) error {

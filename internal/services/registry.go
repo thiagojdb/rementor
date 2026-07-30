@@ -10,12 +10,18 @@ import (
 
 	"github.com/thiagojdb/rementor/internal/config"
 	"github.com/thiagojdb/rementor/internal/models"
+	"github.com/thiagojdb/rementor/internal/validation"
 )
 
-// Registry manages workspaces and applications
+// Registry manages the in-memory runtime projection of durable workspace data.
+// SQLite remains the source of durable truth for workspace definitions and
+// route state; the registry adds runtime-only state such as health results,
+// subscribers, streams, and the routing provider.
 type Registry struct {
 	workspaces       []*models.Workspace
 	workspacesMu     sync.RWMutex
+	mutationMu       sync.Mutex
+	store            WorkspaceStore
 	routingProvider  RoutingProvider
 	stopChan         chan struct{}
 	httpClient       *http.Client
@@ -42,6 +48,7 @@ var (
 func GetRegistry() *Registry {
 	registryOnce.Do(func() {
 		globalRegistry = &Registry{
+			store:         NewConfigWorkspaceStore(),
 			stopChan:      make(chan struct{}),
 			httpClient:    &http.Client{Timeout: 5 * time.Second},
 			subscribers:   make(map[string]int),
@@ -50,6 +57,13 @@ func GetRegistry() *Registry {
 		}
 	})
 	return globalRegistry
+}
+
+func (r *Registry) workspaceStore() WorkspaceStore {
+	if r.store == nil {
+		r.store = NewConfigWorkspaceStore()
+	}
+	return r.store
 }
 
 // SetRoutingProvider sets the routing provider
@@ -66,7 +80,7 @@ func (r *Registry) GetRoutingProvider() RoutingProvider {
 func (r *Registry) Load() error {
 	log.Println("Loading workspaces from config...")
 
-	workspaces, err := config.LoadWorkspaces()
+	workspaces, err := r.workspaceStore().LoadWorkspaces()
 	if err != nil {
 		return fmt.Errorf("failed to load workspaces: %w", err)
 	}
@@ -86,7 +100,7 @@ func (r *Registry) Load() error {
 	log.Println("Initialized application runtimes")
 
 	// Load state
-	if err := config.LoadState(r.workspaces); err != nil {
+	if err := r.workspaceStore().LoadState(r.workspaces); err != nil {
 		log.Printf("Warning: failed to load state: %v", err)
 	}
 
@@ -306,7 +320,8 @@ func (r *Registry) refreshAllHealth() {
 		checkType, wsNames, totalApps, elapsed)
 }
 
-// GetWorkspaces returns all workspaces
+// GetWorkspaces returns a shallow copy of the runtime projection. Callers must
+// treat returned workspaces as read-only.
 func (r *Registry) GetWorkspaces() []*models.Workspace {
 	r.workspacesMu.RLock()
 	defer r.workspacesMu.RUnlock()
@@ -379,9 +394,9 @@ func (r *Registry) publishHealth(update models.HealthUpdate) {
 	}
 }
 
-// SaveState saves the current state
+// SaveState persists the durable route state from the runtime projection.
 func (r *Registry) SaveState() error {
-	return config.SaveState(r.workspaces)
+	return r.workspaceStore().SaveState(r.workspaceSnapshot())
 }
 
 // Stop stops the registry
@@ -466,131 +481,77 @@ func (r *Registry) ShouldRunFullCheck() bool {
 	return false
 }
 
-// ToggleApp toggles an application between local and remote
+// ToggleApp toggles an application between local and remote.
 func (r *Registry) ToggleApp(wsID, appName string) (*models.Application, error) {
-	ws, app, err := r.FindApp(wsID, appName)
+	var result *models.Application
+	var workspace *models.Workspace
+	_, err := r.mutate(true, func(candidate *[]*models.Workspace) error {
+		ws, app, err := findApp(*candidate, wsID, appName)
+		if err != nil {
+			return err
+		}
+		if !ws.IsLocalApps() {
+			app.Active = !app.Active
+		}
+		result = app
+		workspace = ws
+		return nil
+	}, r.workspaceStore().SaveState)
 	if err != nil {
 		return nil, err
 	}
 
-	// local-apps workspaces have no toggle concept
-	if ws.IsLocalApps() {
-		return app, nil
-	}
-
-	// Toggle active state in-memory
-	app.Active = !app.Active
-
-	if err := r.reloadProxy(); err != nil {
-		app.Active = !app.Active
-		return nil, fmt.Errorf("apply routing: %w", err)
-	}
-	if err := config.SaveState(r.workspaces); err != nil {
-		app.Active = !app.Active
-		_ = r.reloadProxy()
-		return nil, fmt.Errorf("save state: %w", err)
-	}
-
-	// Update health status asynchronously to not block the response
-	go func() {
-		healthOk := CheckHealth(app.HealthURL())
-		var remoteOk bool
-		remoteBase := app.GetRemoteBaseUrl(ws)
-		if remoteBase != "" {
-			remoteOk = CheckHealth(app.RemoteHealthURL(remoteBase))
-		}
-		now := time.Now()
-		app.Runtime.UpdateBothStatuses(healthOk, &now, remoteOk, &now)
-	}()
-
-	return app, nil
-}
-
-// ToggleAllToRemote toggles all applications to remote
-func (r *Registry) ToggleAllToRemote(wsID string) (*ToggleResult, error) {
-	ws := r.FindWorkspace(wsID)
-	if ws == nil {
-		return nil, fmt.Errorf("workspace not found: %s", wsID)
-	}
-
-	if ws.IsLocalApps() {
-		return &ToggleResult{}, nil
-	}
-
-	changed := false
-	result := &ToggleResult{}
-	changedApps := make([]*models.Application, 0)
-	for _, app := range ws.Applications {
-		if app.Active && app.HasLocal() {
-			app.Active = false
-			changedApps = append(changedApps, app)
-			changed = true
-			result.SuccessCount++
-		}
-	}
-
-	if !changed {
-		return result, nil
-	}
-
-	if err := r.reloadProxy(); err != nil {
-		for _, app := range changedApps {
-			app.Active = true
-		}
-		return nil, fmt.Errorf("apply routing: %w", err)
-	}
-	if err := config.SaveState(r.workspaces); err != nil {
-		for _, app := range changedApps {
-			app.Active = true
-		}
-		_ = r.reloadProxy()
-		return nil, fmt.Errorf("save state: %w", err)
-	}
-
+	go r.checkApplicationHealth(result, workspace)
 	return result, nil
 }
 
-// ToggleAllToLocal toggles all applications to local
-func (r *Registry) ToggleAllToLocal(wsID string) (*ToggleResult, error) {
-	ws := r.FindWorkspace(wsID)
-	if ws == nil {
-		return nil, fmt.Errorf("workspace not found: %s", wsID)
-	}
-
-	if ws.IsLocalApps() {
-		return &ToggleResult{}, nil
-	}
-
-	changed := false
+// ToggleAllToRemote toggles all applications to remote.
+func (r *Registry) ToggleAllToRemote(wsID string) (*ToggleResult, error) {
 	result := &ToggleResult{}
-	changedApps := make([]*models.Application, 0)
-	for _, app := range ws.Applications {
-		if !app.Active && app.HasLocal() {
-			app.Active = true
-			changedApps = append(changedApps, app)
-			changed = true
-			result.SuccessCount++
+	_, err := r.mutate(true, func(candidate *[]*models.Workspace) error {
+		ws := findWorkspace(*candidate, wsID)
+		if ws == nil {
+			return fmt.Errorf("workspace not found: %s", wsID)
 		}
-	}
-
-	if !changed {
-		return result, nil
-	}
-
-	if err := r.reloadProxy(); err != nil {
-		for _, app := range changedApps {
-			app.Active = false
+		if ws.IsLocalApps() {
+			return nil
 		}
-		return nil, fmt.Errorf("apply routing: %w", err)
-	}
-	if err := config.SaveState(r.workspaces); err != nil {
-		for _, app := range changedApps {
-			app.Active = false
+		for _, app := range ws.Applications {
+			if app.Active && app.HasLocal() {
+				app.Active = false
+				result.SuccessCount++
+			}
 		}
-		_ = r.reloadProxy()
-		return nil, fmt.Errorf("save state: %w", err)
+		return nil
+	}, r.workspaceStore().SaveState)
+	if err != nil {
+		return nil, err
 	}
+	return result, nil
+}
 
+// ToggleAllToLocal toggles all applications to local.
+func (r *Registry) ToggleAllToLocal(wsID string) (*ToggleResult, error) {
+	result := &ToggleResult{}
+	_, err := r.mutate(true, func(candidate *[]*models.Workspace) error {
+		ws := findWorkspace(*candidate, wsID)
+		if ws == nil {
+			return fmt.Errorf("workspace not found: %s", wsID)
+		}
+		if ws.IsLocalApps() {
+			return nil
+		}
+		for _, app := range ws.Applications {
+			if !app.Active && app.HasLocal() {
+				app.Active = true
+				result.SuccessCount++
+			}
+		}
+		return nil
+	}, r.workspaceStore().SaveState)
+	if err != nil {
+		return nil, err
+	}
 	return result, nil
 }
 
@@ -599,141 +560,285 @@ func (r *Registry) SyncRouting() error {
 	return r.reloadProxy()
 }
 
-// UpdateWorkspaceApplications persists the new application list for a workspace and reloads it in-memory
+// UpdateWorkspaceApplications applies a complete candidate workspace before persisting it.
 func (r *Registry) UpdateWorkspaceApplications(wsID string, apps []models.ApplicationConfig, localDomain, defaultRemoteBaseURL string) error {
-	old := r.FindWorkspace(wsID)
-	if old == nil {
-		return fmt.Errorf("workspace not found: %s", wsID)
-	}
-	oldApps := applicationConfigs(old.Applications)
-	oldLocalDomain := old.GetLocalDomain()
-	oldRemoteBaseURL := old.GetDefaultRemoteBaseURL()
-
-	if err := config.UpdateWorkspaceApplications(wsID, apps, localDomain, defaultRemoteBaseURL); err != nil {
-		return err
-	}
-	workspaces, err := config.LoadWorkspaces()
-	if err != nil {
-		return err
-	}
-
-	r.workspacesMu.Lock()
-	for _, loaded := range workspaces {
-		if loaded.WorkspaceID == wsID {
-			for _, app := range loaded.Applications {
-				app.InitializeRuntime()
-			}
-			for i, ws := range r.workspaces {
-				if ws.WorkspaceID == wsID {
-					r.workspaces[i] = loaded
-					break
-				}
-			}
-			break
+	_, err := r.mutate(false, func(candidate *[]*models.Workspace) error {
+		workspace := findWorkspace(*candidate, wsID)
+		if workspace == nil {
+			return fmt.Errorf("workspace not found: %s", wsID)
 		}
-	}
-	r.workspacesMu.Unlock()
-
-	if err := r.reloadProxyIfAvailable(); err != nil {
-		_ = config.UpdateWorkspaceApplications(wsID, oldApps, oldLocalDomain, oldRemoteBaseURL)
-		r.workspacesMu.Lock()
-		for i, workspace := range r.workspaces {
-			if workspace.WorkspaceID == wsID {
-				r.workspaces[i] = old
-				break
+		workspace.Applications = applicationsFromConfigs(workspace, apps)
+		if !workspace.IsLocalApps() {
+			if workspace.RoutingConfig == nil {
+				workspace.RoutingConfig = &models.RoutingConfig{}
 			}
+			workspace.RoutingConfig.LocalDomain = localDomain
+			workspace.RoutingConfig.DefaultRemoteBaseURL = defaultRemoteBaseURL
 		}
-		r.workspacesMu.Unlock()
-		return fmt.Errorf("apply routing: %w", err)
-	}
-
-	return nil
+		workspace.SetDefaults()
+		for _, app := range workspace.Applications {
+			app.InitializeRuntime()
+		}
+		return nil
+	}, r.workspaceStore().ReplaceWorkspaces)
+	return err
 }
 
-// AddWorkspace adds a new workspace to the registry at runtime
-func (r *Registry) AddWorkspace(ws *models.Workspace) error {
-	r.workspacesMu.Lock()
-	r.workspaces = append(r.workspaces, ws)
-	r.workspacesMu.Unlock()
-
-	for _, app := range ws.Applications {
-		app.InitializeRuntime()
+// CreateWorkspace persists a workspace and adds it to the runtime projection.
+func (r *Registry) CreateWorkspace(wsConfig models.WorkspaceConfig) (*models.Workspace, error) {
+	ws := r.workspaceStore().WorkspaceFromConfig(wsConfig)
+	if ws == nil {
+		return nil, fmt.Errorf("initialize workspace")
 	}
-
-	if err := r.reloadProxyIfAvailable(); err != nil {
-		r.workspacesMu.Lock()
-		for i, candidate := range r.workspaces {
-			if candidate == ws {
-				r.workspaces = append(r.workspaces[:i], r.workspaces[i+1:]...)
-				break
-			}
+	var result *models.Workspace
+	_, err := r.mutate(false, func(candidate *[]*models.Workspace) error {
+		if findWorkspace(*candidate, wsConfig.ID) != nil {
+			return fmt.Errorf("workspace already exists: %s", wsConfig.ID)
 		}
-		r.workspacesMu.Unlock()
-		return fmt.Errorf("apply routing: %w", err)
+		result = cloneWorkspace(ws)
+		*candidate = append(*candidate, result)
+		return nil
+	}, r.workspaceStore().ReplaceWorkspaces)
+	if err != nil {
+		return nil, err
 	}
+	return result, nil
+}
 
-	return nil
+// AddWorkspace adds a workspace to the runtime projection and durable store.
+func (r *Registry) AddWorkspace(workspace *models.Workspace) error {
+	if workspace == nil {
+		return fmt.Errorf("workspace is required")
+	}
+	_, err := r.mutate(false, func(candidate *[]*models.Workspace) error {
+		if findWorkspace(*candidate, workspace.WorkspaceID) != nil {
+			return fmt.Errorf("workspace already exists: %s", workspace.WorkspaceID)
+		}
+		*candidate = append(*candidate, cloneWorkspace(workspace))
+		return nil
+	}, r.workspaceStore().ReplaceWorkspaces)
+	return err
 }
 
 // DeleteWorkspace removes a workspace from the registry and config
 func (r *Registry) DeleteWorkspace(wsID string) error {
-	ws := r.FindWorkspace(wsID)
-	if ws == nil {
-		return fmt.Errorf("workspace not found: %s", wsID)
-	}
-
-	// Remove from in-memory registry
-	r.workspacesMu.Lock()
-	for i, w := range r.workspaces {
-		if w.WorkspaceID == wsID {
-			r.workspaces = append(r.workspaces[:i], r.workspaces[i+1:]...)
-			break
+	_, err := r.mutate(false, func(candidate *[]*models.Workspace) error {
+		for i, workspace := range *candidate {
+			if workspace.WorkspaceID == wsID {
+				*candidate = append((*candidate)[:i], (*candidate)[i+1:]...)
+				return nil
+			}
 		}
+		return fmt.Errorf("workspace not found: %s", wsID)
+	}, r.workspaceStore().ReplaceWorkspaces)
+	if err != nil {
+		return err
 	}
-	r.workspacesMu.Unlock()
-
-	// Remove from subscribers
 	r.subscribersMu.Lock()
 	delete(r.subscribers, wsID)
 	r.subscribersMu.Unlock()
-
-	if err := r.reloadProxyIfAvailable(); err != nil {
-		r.workspacesMu.Lock()
-		r.workspaces = append(r.workspaces, ws)
-		r.workspacesMu.Unlock()
-		return fmt.Errorf("apply routing: %w", err)
-	}
-	if err := config.RemoveWorkspace(wsID); err != nil {
-		r.workspacesMu.Lock()
-		r.workspaces = append(r.workspaces, ws)
-		r.workspacesMu.Unlock()
-		_ = r.reloadProxyIfAvailable()
-		return err
-	}
-
 	return nil
 }
 
 // UpdateRoutePattern updates the route pattern for an application
 func (r *Registry) UpdateRoutePattern(wsID, appName string, pattern *string) (*models.Application, error) {
-	_, app, err := r.FindApp(wsID, appName)
+	var result *models.Application
+	_, err := r.mutate(true, func(candidate *[]*models.Workspace) error {
+		_, app, err := findApp(*candidate, wsID, appName)
+		if err != nil {
+			return err
+		}
+		app.RoutePattern = cloneStringPtr(pattern)
+		result = app
+		return nil
+	}, r.workspaceStore().SaveState)
 	if err != nil {
 		return nil, err
 	}
+	return result, nil
+}
 
-	oldPattern := app.RoutePattern
-	app.RoutePattern = pattern
-	if err := r.reloadProxy(); err != nil {
-		app.RoutePattern = oldPattern
+// mutate applies a change to a detached candidate snapshot. Routing is updated
+// before persistence; a persistence failure triggers a compensating proxy reload
+// from the previous snapshot. The runtime projection changes only after both
+// external steps succeed.
+func (r *Registry) mutate(requireRouting bool, change func(*[]*models.Workspace) error, persist func([]*models.Workspace) error) ([]*models.Workspace, error) {
+	r.mutationMu.Lock()
+	defer r.mutationMu.Unlock()
+
+	previous := r.workspaceSnapshot()
+	candidate := cloneWorkspaces(previous)
+	if err := change(&candidate); err != nil {
+		return nil, err
+	}
+	if err := validateWorkspaces(candidate); err != nil {
+		return nil, fmt.Errorf("validate workspace state: %w", err)
+	}
+	if err := r.applyRouting(candidate, requireRouting); err != nil {
 		return nil, fmt.Errorf("apply routing: %w", err)
 	}
-	if err := config.SaveState(r.workspaces); err != nil {
-		app.RoutePattern = oldPattern
-		_ = r.reloadProxy()
-		return nil, fmt.Errorf("save route pattern: %w", err)
+	if err := persist(candidate); err != nil {
+		if rollbackErr := r.applyRouting(previous, requireRouting); rollbackErr != nil {
+			return nil, fmt.Errorf("persist workspace state: %w; restore routing: %v", err, rollbackErr)
+		}
+		return nil, fmt.Errorf("persist workspace state: %w", err)
 	}
 
-	return app, nil
+	r.workspacesMu.Lock()
+	r.workspaces = candidate
+	r.workspacesMu.Unlock()
+	return candidate, nil
+}
+
+func (r *Registry) workspaceSnapshot() []*models.Workspace {
+	r.workspacesMu.RLock()
+	defer r.workspacesMu.RUnlock()
+	return cloneWorkspaces(r.workspaces)
+}
+
+func (r *Registry) checkApplicationHealth(app *models.Application, workspace *models.Workspace) {
+	if app == nil || workspace == nil {
+		return
+	}
+	localOK := CheckHealth(app.HealthURL())
+	remoteOK := false
+	if remoteBase := app.GetRemoteBaseUrl(workspace); remoteBase != "" {
+		remoteOK = CheckHealth(app.RemoteHealthURL(remoteBase))
+	}
+	now := time.Now()
+	app.Runtime.UpdateBothStatuses(localOK, &now, remoteOK, &now)
+}
+
+func findWorkspace(workspaces []*models.Workspace, wsID string) *models.Workspace {
+	for _, workspace := range workspaces {
+		if workspace.WorkspaceID == wsID {
+			return workspace
+		}
+	}
+	return nil
+}
+
+func validateWorkspaces(workspaces []*models.Workspace) error {
+	seen := make(map[string]struct{}, len(workspaces))
+	for _, workspace := range workspaces {
+		if _, exists := seen[workspace.WorkspaceID]; exists {
+			return fmt.Errorf("workspace %q is duplicated", workspace.WorkspaceID)
+		}
+		seen[workspace.WorkspaceID] = struct{}{}
+		if err := validation.Identifier("workspace ID", workspace.WorkspaceID); err != nil {
+			return err
+		}
+		if err := validation.Workspace(
+			workspace.GetType(), workspace.GetLocalDomain(), workspace.GetDefaultRemoteBaseURL(), applicationConfigs(workspace.Applications),
+		); err != nil {
+			return fmt.Errorf("workspace %q: %w", workspace.WorkspaceID, err)
+		}
+	}
+	return nil
+}
+
+func findApp(workspaces []*models.Workspace, wsID, appID string) (*models.Workspace, *models.Application, error) {
+	workspace := findWorkspace(workspaces, wsID)
+	if workspace == nil {
+		return nil, nil, fmt.Errorf("workspace not found: %s", wsID)
+	}
+	for _, app := range workspace.Applications {
+		if app.ID == appID {
+			return workspace, app, nil
+		}
+	}
+	return nil, nil, fmt.Errorf("application not found: %s/%s", wsID, appID)
+}
+
+func applicationsFromConfigs(workspace *models.Workspace, configs []models.ApplicationConfig) []*models.Application {
+	previous := make(map[string]*models.Application, len(workspace.Applications))
+	for _, app := range workspace.Applications {
+		previous[app.ID] = app
+	}
+	applications := make([]*models.Application, 0, len(configs))
+	for _, config := range configs {
+		app := &models.Application{
+			ID: config.ID, Name: config.Name, Path: config.Path, Domain: config.Domain,
+			RemoteBaseUrl: config.RemoteBaseUrl, Context: config.Context, Health: config.Health,
+			Port: config.Port, Active: config.Active, RoutePattern: cloneStringPtr(config.RoutePattern),
+			StripOrigin: config.StripOrigin,
+		}
+		if app.Health == "" {
+			app.Health = models.DefaultHealthEndpoint
+		}
+		if old := previous[app.ID]; old != nil {
+			app.Active = old.Active
+			app.StripOrigin = old.StripOrigin
+			if app.RoutePattern == nil {
+				app.RoutePattern = cloneStringPtr(old.RoutePattern)
+			}
+			copyRuntime(old, app)
+		}
+		applications = append(applications, app)
+	}
+	return applications
+}
+
+func cloneWorkspaces(workspaces []*models.Workspace) []*models.Workspace {
+	cloned := make([]*models.Workspace, 0, len(workspaces))
+	for _, workspace := range workspaces {
+		cloned = append(cloned, cloneWorkspace(workspace))
+	}
+	return cloned
+}
+
+func cloneWorkspace(source *models.Workspace) *models.Workspace {
+	clone := &models.Workspace{
+		WorkspaceID:  source.WorkspaceID,
+		Type:         source.Type,
+		Name:         cloneStringPtr(source.Name),
+		Color:        cloneStringPtr(source.Color),
+		Applications: make([]*models.Application, 0, len(source.Applications)),
+	}
+	if source.RoutingConfig != nil {
+		routing := *source.RoutingConfig
+		clone.RoutingConfig = &routing
+	}
+	for _, sourceApp := range source.Applications {
+		app := &models.Application{
+			ID: sourceApp.ID, Name: sourceApp.Name, Path: sourceApp.Path, Domain: sourceApp.Domain,
+			RemoteBaseUrl: sourceApp.RemoteBaseUrl, Context: sourceApp.Context, Health: sourceApp.Health,
+			Port: sourceApp.Port, Active: sourceApp.Active, RoutePattern: cloneStringPtr(sourceApp.RoutePattern),
+			StripOrigin: sourceApp.StripOrigin,
+		}
+		copyRuntime(sourceApp, app)
+		clone.Applications = append(clone.Applications, app)
+	}
+	clone.SetDefaults()
+	for _, app := range clone.Applications {
+		app.InitializeRuntime()
+	}
+	return clone
+}
+
+func cloneStringPtr(value *string) *string {
+	if value == nil {
+		return nil
+	}
+	clone := *value
+	return &clone
+}
+
+func copyRuntime(source, target *models.Application) {
+	localLast := source.Runtime.GetHealthLast()
+	remoteLast := source.Runtime.GetRemoteLast()
+	target.Runtime.UpdateBothStatuses(
+		source.Runtime.GetHealthOk(), cloneTimePtr(localLast),
+		source.Runtime.GetRemoteOk(), cloneTimePtr(remoteLast),
+	)
+}
+
+func cloneTimePtr(value *time.Time) *time.Time {
+	if value == nil {
+		return nil
+	}
+	clone := *value
+	return &clone
 }
 
 func applicationConfigs(apps []*models.Application) []models.ApplicationConfig {
@@ -743,7 +848,7 @@ func applicationConfigs(apps []*models.Application) []models.ApplicationConfig {
 			ID: app.ID, Name: app.Name, Path: app.Path, Domain: app.Domain,
 			RemoteBaseUrl: app.RemoteBaseUrl, Port: app.Port, Health: app.Health,
 			Active: app.Active, RoutePattern: app.RoutePattern, Context: app.Context,
-			LoggerConfig: app.LoggerConfig, StripOrigin: app.StripOrigin,
+			StripOrigin: app.StripOrigin,
 		})
 	}
 	return result
@@ -751,32 +856,28 @@ func applicationConfigs(apps []*models.Application) []models.ApplicationConfig {
 
 // reloadProxy generates the current desired config and pushes it to Proxy.
 func (r *Registry) reloadProxy() error {
-	provider := r.GetRoutingProvider()
-	if provider == nil {
-		return fmt.Errorf("routing provider not set")
-	}
-	if !provider.IsAvailable() {
-		return fmt.Errorf("routing provider is unavailable")
-	}
-
-	r.workspacesMu.RLock()
-	wsCopy := make([]*models.Workspace, len(r.workspaces))
-	copy(wsCopy, r.workspaces)
-	r.workspacesMu.RUnlock()
-
-	if err := r.loadProxyWithRetry(wsCopy); err != nil {
-		return err
-	}
-
-	return nil
+	return r.applyRouting(r.workspaceSnapshot(), true)
 }
 
 func (r *Registry) reloadProxyIfAvailable() error {
+	return r.applyRouting(r.workspaceSnapshot(), false)
+}
+
+func (r *Registry) applyRouting(workspaces []*models.Workspace, required bool) error {
 	provider := r.GetRoutingProvider()
-	if provider == nil || !provider.IsAvailable() {
+	if provider == nil {
+		if required {
+			return fmt.Errorf("routing provider not set")
+		}
 		return nil
 	}
-	return r.reloadProxy()
+	if !provider.IsAvailable() {
+		if required {
+			return fmt.Errorf("routing provider is unavailable")
+		}
+		return nil
+	}
+	return r.loadProxyWithRetry(workspaces)
 }
 
 // loadProxyWithRetry attempts to load the config into Proxy with exponential backoff.

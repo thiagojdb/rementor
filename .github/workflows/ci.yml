@@ -58,5 +58,5 @@ jobs:
       - name: Verify embedded frontend assets
         run: git diff --exit-code
 
-      - name: Build demo image
-        run: docker build -t rementor-ci .
+      - name: Test Docker demo routing workflow
+        run: ./scripts/test-demo.sh

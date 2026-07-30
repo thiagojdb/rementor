@@ -84,24 +84,6 @@ type ToggleResultResponse struct {
 	FailureCount int `json:"failureCount"`
 }
 
-// LoggerDTO is the CLI-friendly logger view.
-type LoggerDTO struct {
-	Name            string `json:"name"`
-	EffectiveLevel  string `json:"effectiveLevel"`
-	ConfiguredLevel string `json:"configuredLevel,omitempty"`
-}
-
-// LoggersResponse is the CLI-friendly loggers response.
-type LoggersResponse struct {
-	Levels  []string    `json:"levels"`
-	Loggers []LoggerDTO `json:"loggers"`
-}
-
-// SetLoggerLevelRequest is the CLI-friendly set-level input.
-type SetLoggerLevelRequest struct {
-	Level string `json:"level"`
-}
-
 // UpdateRoutePatternRequest is the CLI-friendly route-pattern input.
 type UpdateRoutePatternRequest struct {
 	Pattern string `json:"pattern"`

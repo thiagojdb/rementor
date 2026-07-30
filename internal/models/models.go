@@ -10,8 +10,6 @@ import (
 // Constants for the application
 const (
 	DefaultHealthEndpoint          = "actuator/health"
-	DefaultLoggersEndpoint         = "actuator/loggers"
-	FallbackLoggersEndpoint        = "loggers"
 	DefaultHealthCheckIntervalSecs = 30
 	DefaultHTTPPort                = 80
 	DefaultHTTPSPort               = 443
@@ -148,20 +146,19 @@ func (ar *AppRuntime) UpdateBothStatuses(healthOk bool, healthLast *time.Time, r
 
 // Application represents an application in a workspace
 type Application struct {
-	ID            string        `json:"id"`
-	Name          string        `json:"name,omitempty"`          // Display name
-	Path          string        `json:"path"`                    // URL path for routing (e.g., "/users")
-	Domain        string        `json:"domain,omitempty"`        // Per-app hostname for local-apps type
-	RemoteBaseUrl string        `json:"remoteBaseUrl,omitempty"` // Per-app remote base URL override
-	Context       string        `json:"context,omitempty"`       // Optional context path
-	Health        string        `json:"health"`
-	Port          int           `json:"port"`
-	Active        bool          `json:"active"`
-	RoutePattern  *string       `json:"routePattern,omitempty"`
-	LoggerConfig  *LoggerConfig `json:"loggerConfig,omitempty"`
-	StripOrigin   bool          `json:"stripOrigin,omitempty"` // Strip Origin header for local proxy (Quarkus Dev UI fix)
-	Runtime       AppRuntime    `json:"-"`
-	wsID          string        `json:"-"`
+	ID            string     `json:"id"`
+	Name          string     `json:"name,omitempty"`          // Display name
+	Path          string     `json:"path"`                    // URL path for routing (e.g., "/users")
+	Domain        string     `json:"domain,omitempty"`        // Per-app hostname for local-apps type
+	RemoteBaseUrl string     `json:"remoteBaseUrl,omitempty"` // Per-app remote base URL override
+	Context       string     `json:"context,omitempty"`       // Optional context path
+	Health        string     `json:"health"`
+	Port          int        `json:"port"`
+	Active        bool       `json:"active"`
+	RoutePattern  *string    `json:"routePattern,omitempty"`
+	StripOrigin   bool       `json:"stripOrigin,omitempty"` // Strip Origin header for local proxy (Quarkus Dev UI fix)
+	Runtime       AppRuntime `json:"-"`
+	wsID          string     `json:"-"`
 }
 
 // SetWsID sets the workspace ID for this application
@@ -207,72 +204,6 @@ func (a *Application) RemoteHealthURL(defaultRemoteBaseUrl string) string {
 		return fmt.Sprintf("%s/%s", strings.TrimRight(defaultRemoteBaseUrl, "/"), strings.TrimLeft(a.Health, "/"))
 	}
 	return fmt.Sprintf("%s/%s/%s", strings.TrimRight(defaultRemoteBaseUrl, "/"), context, strings.TrimLeft(a.Health, "/"))
-}
-
-// LoggerConfig represents the logger configuration for an application
-type LoggerConfig struct {
-	Enabled          bool   `json:"enabled"`
-	Endpoint         string `json:"endpoint,omitempty"`
-	AuthType         string `json:"authType,omitempty"` // "basic", "bearer", "none"
-	AuthUsername     string `json:"authUsername,omitempty"`
-	AuthPassword     string `json:"authPassword,omitempty"`
-	AuthToken        string `json:"authToken,omitempty"`
-	UseProjectConfig bool   `json:"useProjectConfig"`
-}
-
-// GetLoggersEndpoint returns the appropriate loggers endpoint
-func (a *Application) GetLoggersEndpoint() string {
-	if a.LoggerConfig != nil && a.LoggerConfig.Endpoint != "" {
-		return a.LoggerConfig.Endpoint
-	}
-	if a.Health == DefaultHealthEndpoint || (len(a.Health) >= 9 && a.Health[:9] == "actuator/") {
-		return DefaultLoggersEndpoint
-	}
-	return FallbackLoggersEndpoint
-}
-
-// LoggerAuthConfig holds the global logger configuration
-type LoggerAuthConfig struct {
-	Type     string `json:"type"` // "basic", "bearer", "none"
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Token    string `json:"token"`
-}
-
-// AppLoggerState represents the persisted state of a logger for an application
-type AppLoggerState struct {
-	Level     string    `json:"level"`
-	UpdatedAt time.Time `json:"updatedAt"`
-}
-
-// LoggersURL returns the local loggers URL
-func (a *Application) LoggersURL() string {
-	return fmt.Sprintf("%s://%s:%d%s/%s", ProtocolHTTP, Localhost, a.Port, a.Path, a.GetLoggersEndpoint())
-}
-
-// LoggersURLWithHost returns the loggers URL with the given host (path-based routing)
-func (a *Application) LoggersURLWithHost(defaultRemoteBaseUrl string) (string, error) {
-	if a.Active && a.HasLocal() {
-		return a.LoggersURL(), nil
-	}
-	if defaultRemoteBaseUrl != "" {
-		return fmt.Sprintf("%s%s/%s", defaultRemoteBaseUrl, a.Path, a.GetLoggersEndpoint()), nil
-	}
-	return "", fmt.Errorf("default remote base URL not available when application is not routed locally")
-}
-
-// LoggerURL returns the URL for a specific logger
-func (a *Application) LoggerURL(loggerName string) string {
-	return fmt.Sprintf("%s/%s", a.LoggersURL(), loggerName)
-}
-
-// LoggerURLWithHost returns the URL for a specific logger with the given host (path-based routing)
-func (a *Application) LoggerURLWithHost(loggerName string, defaultRemoteBaseUrl string) (string, error) {
-	baseURL, err := a.LoggersURLWithHost(defaultRemoteBaseUrl)
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("%s/%s", baseURL, loggerName), nil
 }
 
 // Workspace represents a workspace with its applications
@@ -363,18 +294,17 @@ type HealthUpdate struct {
 
 // ApplicationConfig represents a persisted application definition.
 type ApplicationConfig struct {
-	ID            string        `json:"id"`
-	Name          string        `json:"name,omitempty"`
-	Path          string        `json:"path"`
-	Domain        string        `json:"domain,omitempty"`
-	RemoteBaseUrl string        `json:"remoteBaseUrl,omitempty"` // Per-app remote base URL override
-	Port          int           `json:"port"`
-	Health        string        `json:"health,omitempty"`
-	Active        bool          `json:"active"`
-	RoutePattern  *string       `json:"routePattern,omitempty"`
-	Context       string        `json:"context,omitempty"`
-	LoggerConfig  *LoggerConfig `json:"loggerConfig,omitempty"`
-	StripOrigin   bool          `json:"stripOrigin,omitempty"` // Strip Origin header for local proxy (Quarkus Dev UI fix)
+	ID            string  `json:"id"`
+	Name          string  `json:"name,omitempty"`
+	Path          string  `json:"path"`
+	Domain        string  `json:"domain,omitempty"`
+	RemoteBaseUrl string  `json:"remoteBaseUrl,omitempty"` // Per-app remote base URL override
+	Port          int     `json:"port"`
+	Health        string  `json:"health,omitempty"`
+	Active        bool    `json:"active"`
+	RoutePattern  *string `json:"routePattern,omitempty"`
+	Context       string  `json:"context,omitempty"`
+	StripOrigin   bool    `json:"stripOrigin,omitempty"` // Strip Origin header for local proxy (Quarkus Dev UI fix)
 }
 
 // WorkspaceConfig represents a persisted workspace definition.

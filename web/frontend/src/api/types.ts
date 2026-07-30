@@ -1,10 +1,7 @@
 import type { PlainMessage } from '@bufbuild/protobuf'
 import type {
   Application,
-  GetLoggersResponse,
   GetRoutePatternResponse,
-  Logger,
-  LoggerConfig,
   ToggleAllToRemoteResponse,
   WatchHealthResponse,
 } from '../gen/rementor/v1/rementor_pb'
@@ -12,12 +9,9 @@ import type {
 export type HealthStatus = 'healthy' | 'unhealthy' | 'unknown'
 export type WorkspaceType = 'routing' | 'local-apps'
 
-export type LoggerConfigDTO = PlainMessage<LoggerConfig>
-
-export type ApplicationDTO = Omit<PlainMessage<Application>, 'healthStatus' | 'remoteStatus' | 'loggerConfig'> & {
+export type ApplicationDTO = Omit<PlainMessage<Application>, 'healthStatus' | 'remoteStatus'> & {
   healthStatus: HealthStatus
   remoteStatus?: HealthStatus
-  loggerConfig?: LoggerConfigDTO
 }
 
 export interface RoutingDTO {
@@ -35,8 +29,6 @@ export interface WorkspaceDTO {
   applications: ApplicationDTO[]
 }
 
-export type LoggerDTO = PlainMessage<Logger>
-export type LoggersResponseDTO = PlainMessage<GetLoggersResponse>
 export type RoutePatternDTO = PlainMessage<GetRoutePatternResponse>
 export type ToggleResultDTO = PlainMessage<ToggleAllToRemoteResponse>
 
@@ -69,10 +61,6 @@ export interface ApplicationConfigInput {
   port?: number
   health?: string
   context?: string
-}
-
-export interface SetLoggerLevelRequest {
-  level: string
 }
 
 export interface UpdateRoutePatternRequest {

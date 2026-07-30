@@ -279,10 +279,6 @@ func (s *mcpServer) handleToolCall(raw json.RawMessage) (any, error) {
 		return s.toolRoutePatternGet(params.Arguments)
 	case "rementor.route_pattern_set":
 		return s.toolRoutePatternSet(params.Arguments)
-	case "rementor.loggers":
-		return s.toolLoggers(params.Arguments)
-	case "rementor.logger_set_level":
-		return s.toolLoggerSetLevel(params.Arguments)
 	default:
 		return nil, fmt.Errorf("unknown tool: %s", params.Name)
 	}
@@ -523,22 +519,6 @@ func (s *mcpServer) toolRoutePatternSet(args map[string]any) (any, error) {
 	return toolResult("Route pattern updated", app), nil
 }
 
-func (s *mcpServer) toolLoggers(args map[string]any) (any, error) {
-	result, err := s.client.GetLoggers(context.Background(), requiredString(args, "workspace"), requiredString(args, "app"))
-	if err != nil {
-		return nil, err
-	}
-	return toolResult(fmt.Sprintf("Resolved %d logger(s)", len(result.Loggers)), result), nil
-}
-
-func (s *mcpServer) toolLoggerSetLevel(args map[string]any) (any, error) {
-	result, err := s.client.SetLoggerLevel(context.Background(), requiredString(args, "workspace"), requiredString(args, "app"), requiredString(args, "logger"), SetLoggerLevelRequest{Level: requiredString(args, "level")})
-	if err != nil {
-		return nil, err
-	}
-	return toolResult(fmt.Sprintf("Logger %s set to %s", result["logger"], result["level"]), result), nil
-}
-
 func (s *mcpServer) listWorkspaces() ([]WorkspaceDTO, error) {
 	return s.client.ListWorkspaces(context.Background())
 }
@@ -647,10 +627,6 @@ func mcpToolList() []map[string]any {
 		toolSchema("rementor.route_pattern_set", "Set or clear the route pattern for an application. Omit pattern or pass empty string to clear.", objectSchema(map[string]any{
 			"workspace": map[string]any{"type": "string"}, "app": map[string]any{"type": "string"}, "pattern": map[string]any{"type": "string"},
 		}, []string{"workspace", "app"})),
-		toolSchema("rementor.loggers", "List loggers for an application through its current local/remote route.", workspaceAppSchema()),
-		toolSchema("rementor.logger_set_level", "Set a logger level for an application.", objectSchema(map[string]any{
-			"workspace": map[string]any{"type": "string"}, "app": map[string]any{"type": "string"}, "logger": map[string]any{"type": "string"}, "level": map[string]any{"type": "string"},
-		}, []string{"workspace", "app", "logger", "level"})),
 	}
 }
 

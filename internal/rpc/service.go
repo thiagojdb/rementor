@@ -4,12 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/url"
 	"strings"
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/thiagojdb/rementor/internal/config"
 	rementorv1 "github.com/thiagojdb/rementor/internal/gen/rementor/v1"
 	"github.com/thiagojdb/rementor/internal/gen/rementor/v1/rementorv1connect"
 	"github.com/thiagojdb/rementor/internal/models"
@@ -89,18 +87,10 @@ func (s *ControlPlaneService) CreateWorkspace(ctx context.Context, req *connect.
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
-	if err := config.AppendWorkspace(wsConfig); err != nil {
-		log.Printf("Error saving workspace %s: %v", wsID, err)
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to save workspace: %w", err))
-	}
-	ws := config.WorkspaceFromConfig(wsConfig)
-	if ws == nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to initialize workspace"))
-	}
-	if err := s.registry.AddWorkspace(ws); err != nil {
-		_ = config.RemoveWorkspace(wsID)
-		log.Printf("Error adding workspace %s to registry: %v", wsID, err)
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("workspace saved but failed to load into registry: %w", err))
+	ws, err := s.registry.CreateWorkspace(wsConfig)
+	if err != nil {
+		log.Printf("Error creating workspace %s: %v", wsID, err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to create workspace: %w", err))
 	}
 
 	return connect.NewResponse(&rementorv1.CreateWorkspaceResponse{Workspace: toProtoWorkspace(ws)}), nil
@@ -180,7 +170,6 @@ func (s *ControlPlaneService) UpsertApplication(ctx context.Context, req *connec
 		created = false
 		appConfig.Active = apps[i].Active
 		appConfig.RoutePattern = apps[i].RoutePattern
-		appConfig.LoggerConfig = apps[i].LoggerConfig
 		appConfig.StripOrigin = apps[i].StripOrigin
 		apps[i] = appConfig
 		break
@@ -287,55 +276,6 @@ func (s *ControlPlaneService) UpdateRoutePattern(ctx context.Context, req *conne
 	return connect.NewResponse(&rementorv1.UpdateRoutePatternResponse{Application: toProtoApplication(app)}), nil
 }
 
-func (s *ControlPlaneService) GetLoggers(ctx context.Context, req *connect.Request[rementorv1.GetLoggersRequest]) (*connect.Response[rementorv1.GetLoggersResponse], error) {
-	ws, app, err := s.registry.FindApp(req.Msg.GetWorkspaceId(), req.Msg.GetApplicationId())
-	if err != nil {
-		return nil, connect.NewError(connect.CodeNotFound, err)
-	}
-	isLocal := app.Active && app.HasLocal()
-	remoteBase := app.GetRemoteBaseUrl(ws)
-	if !app.HasLocal() && remoteBase == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("application has no local port and no remote base URL configured"))
-	}
-	loggersResp, err := services.NewLoggerManager().GetLoggersWithState(req.Msg.GetWorkspaceId(), app, remoteBase, isLocal)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
-	}
-	loggers := make([]*rementorv1.Logger, 0, len(loggersResp.Loggers))
-	for name, detail := range loggersResp.Loggers {
-		loggers = append(loggers, &rementorv1.Logger{
-			Name:            name,
-			EffectiveLevel:  detail.EffectiveLevel,
-			ConfiguredLevel: detail.ConfiguredLevel,
-		})
-	}
-	return connect.NewResponse(&rementorv1.GetLoggersResponse{Levels: loggersResp.Levels, Loggers: loggers}), nil
-}
-
-func (s *ControlPlaneService) SetLoggerLevel(ctx context.Context, req *connect.Request[rementorv1.SetLoggerLevelRequest]) (*connect.Response[rementorv1.SetLoggerLevelResponse], error) {
-	msg := req.Msg
-	if msg.GetLevel() == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("level is required"))
-	}
-	loggerName := msg.GetLoggerName()
-	if decoded, err := url.QueryUnescape(loggerName); err == nil {
-		loggerName = decoded
-	}
-	if strings.TrimSpace(loggerName) == "" || strings.ContainsAny(loggerName, "/?#\r\n") {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid logger name"))
-	}
-	ws, app, err := s.registry.FindApp(msg.GetWorkspaceId(), msg.GetApplicationId())
-	if err != nil {
-		return nil, connect.NewError(connect.CodeNotFound, err)
-	}
-	isLocal := app.Active && app.HasLocal()
-	remoteBase := app.GetRemoteBaseUrl(ws)
-	if err := services.NewLoggerManager().SetLoggerLevelAndPersist(msg.GetWorkspaceId(), app, remoteBase, loggerName, msg.GetLevel(), isLocal); err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
-	}
-	return connect.NewResponse(&rementorv1.SetLoggerLevelResponse{Status: "ok", Logger: loggerName, Level: msg.GetLevel()}), nil
-}
-
 func (s *ControlPlaneService) WatchHealth(ctx context.Context, req *connect.Request[rementorv1.WatchHealthRequest], stream *connect.ServerStream[rementorv1.WatchHealthResponse]) error {
 	wsID := req.Msg.GetWorkspaceId()
 	if wsID != "" {
@@ -389,7 +329,7 @@ func applicationConfigsFromWorkspace(ws *models.Workspace) []models.ApplicationC
 			ID: app.ID, Name: app.Name, Path: app.Path, Domain: app.Domain,
 			RemoteBaseUrl: app.RemoteBaseUrl, Port: app.Port, Health: app.Health,
 			Active: app.Active, RoutePattern: app.RoutePattern, Context: app.Context,
-			LoggerConfig: app.LoggerConfig, StripOrigin: app.StripOrigin,
+			StripOrigin: app.StripOrigin,
 		})
 	}
 	return apps
@@ -443,15 +383,6 @@ func toProtoApplication(app *models.Application) *rementorv1.Application {
 			remoteStatus = "unhealthy"
 		}
 	}
-	var loggerConfig *rementorv1.LoggerConfig
-	if app.LoggerConfig != nil {
-		loggerConfig = &rementorv1.LoggerConfig{
-			Enabled:          app.LoggerConfig.Enabled,
-			Endpoint:         app.LoggerConfig.Endpoint,
-			AuthType:         app.LoggerConfig.AuthType,
-			UseProjectConfig: app.LoggerConfig.UseProjectConfig,
-		}
-	}
 	name := app.ID
 	if app.Name != "" {
 		name = app.Name
@@ -469,7 +400,6 @@ func toProtoApplication(app *models.Application) *rementorv1.Application {
 		HealthStatus:  healthStatus,
 		RemoteStatus:  remoteStatus,
 		RoutePattern:  app.RoutePattern,
-		LoggerConfig:  loggerConfig,
 	}
 }
 

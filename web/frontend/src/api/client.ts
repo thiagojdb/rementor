@@ -4,9 +4,7 @@ import { ControlPlaneService } from '../gen/rementor/v1/rementor_connect'
 import type {
   ApplicationDTO,
   CreateWorkspaceRequest,
-  LoggersResponseDTO,
   RoutePatternDTO,
-  SetLoggerLevelRequest,
   ToggleResultDTO,
   UpdateRoutePatternRequest,
   UpdateWorkspaceRequest,
@@ -102,26 +100,6 @@ export function updateRoutePattern(
 ): Promise<ApplicationDTO> {
   return call(async () =>
     (await client.updateRoutePattern({ workspaceId: wsId, applicationId: appId, pattern: req.pattern })).application as ApplicationDTO
-  )
-}
-
-export function getLoggers(wsId: string, appId: string): Promise<LoggersResponseDTO> {
-  return call(() => client.getLoggers({ workspaceId: wsId, applicationId: appId }) as Promise<LoggersResponseDTO>)
-}
-
-export async function setLoggerLevel(
-  wsId: string,
-  appId: string,
-  loggerName: string,
-  req: SetLoggerLevelRequest
-): Promise<void> {
-  await call(() =>
-    client.setLoggerLevel({
-      workspaceId: wsId,
-      applicationId: appId,
-      loggerName,
-      level: req.level,
-    })
   )
 }
 

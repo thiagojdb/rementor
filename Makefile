@@ -8,7 +8,7 @@ DIST_DIR       := dist
 
 GO_BUILD_FLAGS := -trimpath -ldflags="-s -w"
 
-.PHONY: all build build-server build-ctl frontend frontend-json generate setup dev run demo demo-down vet test test-race audit check clean rebuild install install-json help
+.PHONY: all build build-server build-ctl frontend frontend-json generate setup dev run demo demo-down demo-test vet test test-race audit check clean rebuild install install-json help
 
 all: frontend build
 
@@ -56,6 +56,9 @@ demo:
 
 demo-down:
 	docker compose down
+
+demo-test:
+	./scripts/test-demo.sh
 
 ## Quality
 
@@ -126,6 +129,7 @@ help:
 	@echo "  run          Build then run the server"
 	@echo "  demo         Run the isolated Docker demo on port 8080"
 	@echo "  demo-down    Stop and remove the Docker demo"
+	@echo "  demo-test    Verify remote/local routing against the Docker demo"
 	@echo ""
 	@echo "Quality:"
 	@echo "  vet          Run go vet"
