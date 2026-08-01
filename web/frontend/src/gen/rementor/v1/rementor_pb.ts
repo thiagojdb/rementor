@@ -70,6 +70,26 @@ export class Application extends Message<Application> {
    */
   routePattern?: string;
 
+  /**
+   * @generated from field: string app_id = 13;
+   */
+  appId = "";
+
+  /**
+   * @generated from field: string service_id = 14;
+   */
+  serviceId = "";
+
+  /**
+   * @generated from field: string repository = 15;
+   */
+  repository = "";
+
+  /**
+   * @generated from field: repeated string aliases = 16;
+   */
+  aliases: string[] = [];
+
   constructor(data?: PartialMessage<Application>) {
     super();
     proto3.util.initPartial(data, this);
@@ -90,6 +110,10 @@ export class Application extends Message<Application> {
     { no: 10, name: "health_status", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 11, name: "remote_status", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 12, name: "route_pattern", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 13, name: "app_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 14, name: "service_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 15, name: "repository", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 16, name: "aliases", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Application {
@@ -269,6 +293,26 @@ export class ApplicationConfigInput extends Message<ApplicationConfigInput> {
    */
   context = "";
 
+  /**
+   * @generated from field: string app_id = 9;
+   */
+  appId = "";
+
+  /**
+   * @generated from field: string service_id = 10;
+   */
+  serviceId = "";
+
+  /**
+   * @generated from field: string repository = 11;
+   */
+  repository = "";
+
+  /**
+   * @generated from field: repeated string aliases = 12;
+   */
+  aliases: string[] = [];
+
   constructor(data?: PartialMessage<ApplicationConfigInput>) {
     super();
     proto3.util.initPartial(data, this);
@@ -285,6 +329,10 @@ export class ApplicationConfigInput extends Message<ApplicationConfigInput> {
     { no: 6, name: "port", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 7, name: "health", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 8, name: "context", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 9, name: "app_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 10, name: "service_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 11, name: "repository", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 12, name: "aliases", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ApplicationConfigInput {
@@ -867,6 +915,172 @@ export class GetApplicationResponse extends Message<GetApplicationResponse> {
 
   static equals(a: GetApplicationResponse | PlainMessage<GetApplicationResponse> | undefined, b: GetApplicationResponse | PlainMessage<GetApplicationResponse> | undefined): boolean {
     return proto3.util.equals(GetApplicationResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.ResolveApplicationRequest
+ */
+export class ResolveApplicationRequest extends Message<ResolveApplicationRequest> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  /**
+   * @generated from field: string application_ref = 2;
+   */
+  applicationRef = "";
+
+  constructor(data?: PartialMessage<ResolveApplicationRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.ResolveApplicationRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "application_ref", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ResolveApplicationRequest {
+    return new ResolveApplicationRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ResolveApplicationRequest {
+    return new ResolveApplicationRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ResolveApplicationRequest {
+    return new ResolveApplicationRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ResolveApplicationRequest | PlainMessage<ResolveApplicationRequest> | undefined, b: ResolveApplicationRequest | PlainMessage<ResolveApplicationRequest> | undefined): boolean {
+    return proto3.util.equals(ResolveApplicationRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.ResolveApplicationResponse
+ */
+export class ResolveApplicationResponse extends Message<ResolveApplicationResponse> {
+  /**
+   * @generated from field: rementor.v1.Application application = 1;
+   */
+  application?: Application;
+
+  constructor(data?: PartialMessage<ResolveApplicationResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.ResolveApplicationResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "application", kind: "message", T: Application },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ResolveApplicationResponse {
+    return new ResolveApplicationResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ResolveApplicationResponse {
+    return new ResolveApplicationResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ResolveApplicationResponse {
+    return new ResolveApplicationResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ResolveApplicationResponse | PlainMessage<ResolveApplicationResponse> | undefined, b: ResolveApplicationResponse | PlainMessage<ResolveApplicationResponse> | undefined): boolean {
+    return proto3.util.equals(ResolveApplicationResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.RegisterApplicationAliasRequest
+ */
+export class RegisterApplicationAliasRequest extends Message<RegisterApplicationAliasRequest> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  /**
+   * @generated from field: string application_ref = 2;
+   */
+  applicationRef = "";
+
+  /**
+   * @generated from field: string alias = 3;
+   */
+  alias = "";
+
+  constructor(data?: PartialMessage<RegisterApplicationAliasRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.RegisterApplicationAliasRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "application_ref", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "alias", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RegisterApplicationAliasRequest {
+    return new RegisterApplicationAliasRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): RegisterApplicationAliasRequest {
+    return new RegisterApplicationAliasRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): RegisterApplicationAliasRequest {
+    return new RegisterApplicationAliasRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: RegisterApplicationAliasRequest | PlainMessage<RegisterApplicationAliasRequest> | undefined, b: RegisterApplicationAliasRequest | PlainMessage<RegisterApplicationAliasRequest> | undefined): boolean {
+    return proto3.util.equals(RegisterApplicationAliasRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.RegisterApplicationAliasResponse
+ */
+export class RegisterApplicationAliasResponse extends Message<RegisterApplicationAliasResponse> {
+  /**
+   * @generated from field: rementor.v1.Application application = 1;
+   */
+  application?: Application;
+
+  constructor(data?: PartialMessage<RegisterApplicationAliasResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.RegisterApplicationAliasResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "application", kind: "message", T: Application },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RegisterApplicationAliasResponse {
+    return new RegisterApplicationAliasResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): RegisterApplicationAliasResponse {
+    return new RegisterApplicationAliasResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): RegisterApplicationAliasResponse {
+    return new RegisterApplicationAliasResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: RegisterApplicationAliasResponse | PlainMessage<RegisterApplicationAliasResponse> | undefined, b: RegisterApplicationAliasResponse | PlainMessage<RegisterApplicationAliasResponse> | undefined): boolean {
+    return proto3.util.equals(RegisterApplicationAliasResponse, a, b);
   }
 }
 

@@ -219,6 +219,31 @@ See [SECURITY.md](SECURITY.md) for operational guidance and reporting.
 
 ## Development
 
+### Canonical application identities
+
+Each registered application has a stable `appId` and `serviceId`. The legacy
+`id` field remains an alias for `appId`, so existing workspace files continue to
+load unchanged. A single identity can be bound in multiple environments while
+keeping environment-specific route metadata separate:
+
+```text
+appId: rtc
+serviceId: reforma-tributaria-consumo
+aliases: [reforma-tributaria-consumo, front-giss-v2]
+workspace: desenvolvimento  -> /rtc
+workspace: qualidade        -> /rtc
+```
+
+Aliases are normalized (case, whitespace, and separators), and collisions are
+rejected instead of selecting an arbitrary application. Resolve or register an
+alias with the CLI:
+
+```bash
+rementorctl app resolve desenvolvimento front-giss-v2
+rementorctl app alias desenvolvimento rtc front-giss-v2
+```
+
+
 Prerequisites:
 
 - Go 1.25

@@ -261,6 +261,10 @@ func (s *mcpServer) handleToolCall(raw json.RawMessage) (any, error) {
 		return s.toolApps(params.Arguments)
 	case "rementor.app_get":
 		return s.toolAppGet(params.Arguments)
+	case "rementor.app_resolve":
+		return s.toolAppResolve(params.Arguments)
+	case "rementor.app_alias":
+		return s.toolAppAlias(params.Arguments)
 	case "rementor.app_register":
 		return s.toolAppRegister(params.Arguments)
 	case "rementor.app_announce":
@@ -388,6 +392,27 @@ func (s *mcpServer) toolAppGet(args map[string]any) (any, error) {
 		return nil, err
 	}
 	return toolResult(fmt.Sprintf("App %s is routed %s", app.ID, routeOf(app)), app), nil
+}
+
+func (s *mcpServer) toolAppResolve(args map[string]any) (any, error) {
+	workspace := requiredString(args, "workspace")
+	ref := requiredString(args, "app")
+	app, err := s.client.ResolveApplication(context.Background(), workspace, ref)
+	if err != nil {
+		return nil, err
+	}
+	return toolResult(fmt.Sprintf("Resolved %s to app %s", ref, app.ID), app), nil
+}
+
+func (s *mcpServer) toolAppAlias(args map[string]any) (any, error) {
+	workspace := requiredString(args, "workspace")
+	ref := requiredString(args, "app")
+	alias := requiredString(args, "alias")
+	app, err := s.client.RegisterApplicationAlias(context.Background(), workspace, ref, alias)
+	if err != nil {
+		return nil, err
+	}
+	return toolResult(fmt.Sprintf("Alias %s registered for app %s", alias, app.ID), app), nil
 }
 
 func (s *mcpServer) toolAppRegister(args map[string]any) (any, error) {
@@ -616,6 +641,10 @@ func mcpToolList() []map[string]any {
 		}, []string{"workspace"})),
 		toolSchema("rementor.apps", "List applications in a workspace in compact form.", workspaceSchema()),
 		toolSchema("rementor.app_get", "Get full application details.", workspaceAppSchema()),
+		toolSchema("rementor.app_resolve", "Resolve a canonical application ID or alias in a workspace.", workspaceAppSchema()),
+		toolSchema("rementor.app_alias", "Register an unambiguous normalized alias for an application identity.", objectSchema(map[string]any{
+			"workspace": map[string]any{"type": "string"}, "app": map[string]any{"type": "string"}, "alias": map[string]any{"type": "string"},
+		}, []string{"workspace", "app", "alias"})),
 		toolSchema("rementor.app_register", "Upsert application metadata without changing its current local/remote route.", appMetadataSchema(false)),
 		toolSchema("rementor.app_announce", "Ensure workspace/app exists and activate local routing unless no_activate is true.", appMetadataSchema(true)),
 		toolSchema("rementor.app_unregister", "Remove an application from a workspace.", workspaceAppSchema()),
@@ -665,6 +694,10 @@ func appMetadataSchema(announce bool) map[string]any {
 		"context":         map[string]any{"type": "string"},
 		"name":            map[string]any{"type": "string"},
 		"health":          map[string]any{"type": "string"},
+		"app_id":          map[string]any{"type": "string"},
+		"service_id":      map[string]any{"type": "string"},
+		"repository":      map[string]any{"type": "string"},
+		"aliases":         map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
 	}
 	if announce {
 		props["type"] = map[string]any{"type": "string", "enum": []string{"routing", "local-apps"}, "default": "routing"}
@@ -740,6 +773,10 @@ func requiredRoute(args map[string]any) string {
 func appInputFromArgs(appID string, args map[string]any) ApplicationConfigInput {
 	return ApplicationConfigInput{
 		ID:            appID,
+		AppID:         optionalString(args, "app_id"),
+		ServiceID:     optionalString(args, "service_id"),
+		Repository:    optionalString(args, "repository"),
+		Aliases:       optionalStrings(args, "aliases"),
 		Name:          optionalString(args, "name"),
 		Path:          optionalString(args, "path"),
 		Domain:        optionalString(args, "domain"),
@@ -748,6 +785,20 @@ func appInputFromArgs(appID string, args map[string]any) ApplicationConfigInput 
 		Health:        optionalString(args, "health"),
 		Context:       optionalString(args, "context"),
 	}
+}
+
+func optionalStrings(args map[string]any, name string) []string {
+	values, _ := args[name].([]any)
+	if len(values) == 0 {
+		return nil
+	}
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		if text, ok := value.(string); ok && strings.TrimSpace(text) != "" {
+			result = append(result, text)
+		}
+	}
+	return result
 }
 
 func compactWorkspace(ws WorkspaceDTO) mcpCompactWorkspace {

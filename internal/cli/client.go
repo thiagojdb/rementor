@@ -111,6 +111,22 @@ func (c *Client) GetApplication(ctx context.Context, workspaceID, appID string) 
 	return applicationFromProto(res.Msg.GetApplication()), nil
 }
 
+func (c *Client) ResolveApplication(ctx context.Context, workspaceID, applicationRef string) (ApplicationDTO, error) {
+	res, err := c.rpc.ResolveApplication(ctx, connect.NewRequest(&rementorv1.ResolveApplicationRequest{WorkspaceId: workspaceID, ApplicationRef: applicationRef}))
+	if err != nil {
+		return ApplicationDTO{}, apiError(err)
+	}
+	return applicationFromProto(res.Msg.GetApplication()), nil
+}
+
+func (c *Client) RegisterApplicationAlias(ctx context.Context, workspaceID, applicationRef, alias string) (ApplicationDTO, error) {
+	res, err := c.rpc.RegisterApplicationAlias(ctx, connect.NewRequest(&rementorv1.RegisterApplicationAliasRequest{WorkspaceId: workspaceID, ApplicationRef: applicationRef, Alias: alias}))
+	if err != nil {
+		return ApplicationDTO{}, apiError(err)
+	}
+	return applicationFromProto(res.Msg.GetApplication()), nil
+}
+
 func (c *Client) UpsertApplication(ctx context.Context, workspaceID string, input ApplicationConfigInput) (UpsertApplicationResponse, error) {
 	res, err := c.rpc.UpsertApplication(ctx, connect.NewRequest(&rementorv1.UpsertApplicationRequest{
 		WorkspaceId: workspaceID,
@@ -203,6 +219,8 @@ func httpStatusFromCode(code connect.Code) int {
 		return http.StatusNotFound
 	case connect.CodeAlreadyExists:
 		return http.StatusConflict
+	case connect.CodeFailedPrecondition:
+		return http.StatusPreconditionFailed
 	case connect.CodePermissionDenied, connect.CodeUnauthenticated:
 		return http.StatusForbidden
 	case connect.CodeUnavailable:
@@ -257,6 +275,10 @@ func applicationFromProto(app *rementorv1.Application) ApplicationDTO {
 	}
 	return ApplicationDTO{
 		ID:            app.GetId(),
+		AppID:         app.GetAppId(),
+		ServiceID:     app.GetServiceId(),
+		Repository:    app.GetRepository(),
+		Aliases:       append([]string(nil), app.GetAliases()...),
 		Name:          app.GetName(),
 		Path:          app.GetPath(),
 		Domain:        app.GetDomain(),
@@ -281,7 +303,7 @@ func applicationInputsToProto(inputs []ApplicationConfigInput) []*rementorv1.App
 
 func applicationInputToProto(input ApplicationConfigInput) *rementorv1.ApplicationConfigInput {
 	return &rementorv1.ApplicationConfigInput{
-		Id: input.ID, Name: input.Name, Path: input.Path, Domain: input.Domain,
+		Id: input.ID, AppId: input.AppID, ServiceId: input.ServiceID, Repository: input.Repository, Aliases: input.Aliases, Name: input.Name, Path: input.Path, Domain: input.Domain,
 		RemoteBaseUrl: input.RemoteBaseUrl, Port: int32(input.Port),
 		Health: input.Health, Context: input.Context,
 	}

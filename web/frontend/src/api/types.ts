@@ -54,6 +54,10 @@ export interface UpdateWorkspaceRequest {
 
 export interface ApplicationConfigInput {
   id: string
+  appId?: string
+  serviceId?: string
+  repository?: string
+  aliases?: string[]
   name: string
   path: string
   domain?: string

@@ -54,6 +54,12 @@ const (
 	// ControlPlaneServiceGetApplicationProcedure is the fully-qualified name of the
 	// ControlPlaneService's GetApplication RPC.
 	ControlPlaneServiceGetApplicationProcedure = "/rementor.v1.ControlPlaneService/GetApplication"
+	// ControlPlaneServiceResolveApplicationProcedure is the fully-qualified name of the
+	// ControlPlaneService's ResolveApplication RPC.
+	ControlPlaneServiceResolveApplicationProcedure = "/rementor.v1.ControlPlaneService/ResolveApplication"
+	// ControlPlaneServiceRegisterApplicationAliasProcedure is the fully-qualified name of the
+	// ControlPlaneService's RegisterApplicationAlias RPC.
+	ControlPlaneServiceRegisterApplicationAliasProcedure = "/rementor.v1.ControlPlaneService/RegisterApplicationAlias"
 	// ControlPlaneServiceUpsertApplicationProcedure is the fully-qualified name of the
 	// ControlPlaneService's UpsertApplication RPC.
 	ControlPlaneServiceUpsertApplicationProcedure = "/rementor.v1.ControlPlaneService/UpsertApplication"
@@ -92,6 +98,8 @@ type ControlPlaneServiceClient interface {
 	DeleteWorkspace(context.Context, *connect.Request[v1.DeleteWorkspaceRequest]) (*connect.Response[v1.DeleteWorkspaceResponse], error)
 	ListApplications(context.Context, *connect.Request[v1.ListApplicationsRequest]) (*connect.Response[v1.ListApplicationsResponse], error)
 	GetApplication(context.Context, *connect.Request[v1.GetApplicationRequest]) (*connect.Response[v1.GetApplicationResponse], error)
+	ResolveApplication(context.Context, *connect.Request[v1.ResolveApplicationRequest]) (*connect.Response[v1.ResolveApplicationResponse], error)
+	RegisterApplicationAlias(context.Context, *connect.Request[v1.RegisterApplicationAliasRequest]) (*connect.Response[v1.RegisterApplicationAliasResponse], error)
 	UpsertApplication(context.Context, *connect.Request[v1.UpsertApplicationRequest]) (*connect.Response[v1.UpsertApplicationResponse], error)
 	DeleteApplication(context.Context, *connect.Request[v1.DeleteApplicationRequest]) (*connect.Response[v1.DeleteApplicationResponse], error)
 	ToggleApplication(context.Context, *connect.Request[v1.ToggleApplicationRequest]) (*connect.Response[v1.ToggleApplicationResponse], error)
@@ -156,6 +164,18 @@ func NewControlPlaneServiceClient(httpClient connect.HTTPClient, baseURL string,
 			connect.WithSchema(controlPlaneServiceMethods.ByName("GetApplication")),
 			connect.WithClientOptions(opts...),
 		),
+		resolveApplication: connect.NewClient[v1.ResolveApplicationRequest, v1.ResolveApplicationResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceResolveApplicationProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("ResolveApplication")),
+			connect.WithClientOptions(opts...),
+		),
+		registerApplicationAlias: connect.NewClient[v1.RegisterApplicationAliasRequest, v1.RegisterApplicationAliasResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceRegisterApplicationAliasProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("RegisterApplicationAlias")),
+			connect.WithClientOptions(opts...),
+		),
 		upsertApplication: connect.NewClient[v1.UpsertApplicationRequest, v1.UpsertApplicationResponse](
 			httpClient,
 			baseURL+ControlPlaneServiceUpsertApplicationProcedure,
@@ -215,22 +235,24 @@ func NewControlPlaneServiceClient(httpClient connect.HTTPClient, baseURL string,
 
 // controlPlaneServiceClient implements ControlPlaneServiceClient.
 type controlPlaneServiceClient struct {
-	listWorkspaces       *connect.Client[v1.ListWorkspacesRequest, v1.ListWorkspacesResponse]
-	getWorkspace         *connect.Client[v1.GetWorkspaceRequest, v1.GetWorkspaceResponse]
-	createWorkspace      *connect.Client[v1.CreateWorkspaceRequest, v1.CreateWorkspaceResponse]
-	updateWorkspace      *connect.Client[v1.UpdateWorkspaceRequest, v1.UpdateWorkspaceResponse]
-	deleteWorkspace      *connect.Client[v1.DeleteWorkspaceRequest, v1.DeleteWorkspaceResponse]
-	listApplications     *connect.Client[v1.ListApplicationsRequest, v1.ListApplicationsResponse]
-	getApplication       *connect.Client[v1.GetApplicationRequest, v1.GetApplicationResponse]
-	upsertApplication    *connect.Client[v1.UpsertApplicationRequest, v1.UpsertApplicationResponse]
-	deleteApplication    *connect.Client[v1.DeleteApplicationRequest, v1.DeleteApplicationResponse]
-	toggleApplication    *connect.Client[v1.ToggleApplicationRequest, v1.ToggleApplicationResponse]
-	toggleAllToRemote    *connect.Client[v1.ToggleAllToRemoteRequest, v1.ToggleAllToRemoteResponse]
-	toggleAllToLocal     *connect.Client[v1.ToggleAllToLocalRequest, v1.ToggleAllToLocalResponse]
-	syncWorkspaceRouting *connect.Client[v1.SyncWorkspaceRoutingRequest, v1.SyncWorkspaceRoutingResponse]
-	getRoutePattern      *connect.Client[v1.GetRoutePatternRequest, v1.GetRoutePatternResponse]
-	updateRoutePattern   *connect.Client[v1.UpdateRoutePatternRequest, v1.UpdateRoutePatternResponse]
-	watchHealth          *connect.Client[v1.WatchHealthRequest, v1.WatchHealthResponse]
+	listWorkspaces           *connect.Client[v1.ListWorkspacesRequest, v1.ListWorkspacesResponse]
+	getWorkspace             *connect.Client[v1.GetWorkspaceRequest, v1.GetWorkspaceResponse]
+	createWorkspace          *connect.Client[v1.CreateWorkspaceRequest, v1.CreateWorkspaceResponse]
+	updateWorkspace          *connect.Client[v1.UpdateWorkspaceRequest, v1.UpdateWorkspaceResponse]
+	deleteWorkspace          *connect.Client[v1.DeleteWorkspaceRequest, v1.DeleteWorkspaceResponse]
+	listApplications         *connect.Client[v1.ListApplicationsRequest, v1.ListApplicationsResponse]
+	getApplication           *connect.Client[v1.GetApplicationRequest, v1.GetApplicationResponse]
+	resolveApplication       *connect.Client[v1.ResolveApplicationRequest, v1.ResolveApplicationResponse]
+	registerApplicationAlias *connect.Client[v1.RegisterApplicationAliasRequest, v1.RegisterApplicationAliasResponse]
+	upsertApplication        *connect.Client[v1.UpsertApplicationRequest, v1.UpsertApplicationResponse]
+	deleteApplication        *connect.Client[v1.DeleteApplicationRequest, v1.DeleteApplicationResponse]
+	toggleApplication        *connect.Client[v1.ToggleApplicationRequest, v1.ToggleApplicationResponse]
+	toggleAllToRemote        *connect.Client[v1.ToggleAllToRemoteRequest, v1.ToggleAllToRemoteResponse]
+	toggleAllToLocal         *connect.Client[v1.ToggleAllToLocalRequest, v1.ToggleAllToLocalResponse]
+	syncWorkspaceRouting     *connect.Client[v1.SyncWorkspaceRoutingRequest, v1.SyncWorkspaceRoutingResponse]
+	getRoutePattern          *connect.Client[v1.GetRoutePatternRequest, v1.GetRoutePatternResponse]
+	updateRoutePattern       *connect.Client[v1.UpdateRoutePatternRequest, v1.UpdateRoutePatternResponse]
+	watchHealth              *connect.Client[v1.WatchHealthRequest, v1.WatchHealthResponse]
 }
 
 // ListWorkspaces calls rementor.v1.ControlPlaneService.ListWorkspaces.
@@ -266,6 +288,16 @@ func (c *controlPlaneServiceClient) ListApplications(ctx context.Context, req *c
 // GetApplication calls rementor.v1.ControlPlaneService.GetApplication.
 func (c *controlPlaneServiceClient) GetApplication(ctx context.Context, req *connect.Request[v1.GetApplicationRequest]) (*connect.Response[v1.GetApplicationResponse], error) {
 	return c.getApplication.CallUnary(ctx, req)
+}
+
+// ResolveApplication calls rementor.v1.ControlPlaneService.ResolveApplication.
+func (c *controlPlaneServiceClient) ResolveApplication(ctx context.Context, req *connect.Request[v1.ResolveApplicationRequest]) (*connect.Response[v1.ResolveApplicationResponse], error) {
+	return c.resolveApplication.CallUnary(ctx, req)
+}
+
+// RegisterApplicationAlias calls rementor.v1.ControlPlaneService.RegisterApplicationAlias.
+func (c *controlPlaneServiceClient) RegisterApplicationAlias(ctx context.Context, req *connect.Request[v1.RegisterApplicationAliasRequest]) (*connect.Response[v1.RegisterApplicationAliasResponse], error) {
+	return c.registerApplicationAlias.CallUnary(ctx, req)
 }
 
 // UpsertApplication calls rementor.v1.ControlPlaneService.UpsertApplication.
@@ -322,6 +354,8 @@ type ControlPlaneServiceHandler interface {
 	DeleteWorkspace(context.Context, *connect.Request[v1.DeleteWorkspaceRequest]) (*connect.Response[v1.DeleteWorkspaceResponse], error)
 	ListApplications(context.Context, *connect.Request[v1.ListApplicationsRequest]) (*connect.Response[v1.ListApplicationsResponse], error)
 	GetApplication(context.Context, *connect.Request[v1.GetApplicationRequest]) (*connect.Response[v1.GetApplicationResponse], error)
+	ResolveApplication(context.Context, *connect.Request[v1.ResolveApplicationRequest]) (*connect.Response[v1.ResolveApplicationResponse], error)
+	RegisterApplicationAlias(context.Context, *connect.Request[v1.RegisterApplicationAliasRequest]) (*connect.Response[v1.RegisterApplicationAliasResponse], error)
 	UpsertApplication(context.Context, *connect.Request[v1.UpsertApplicationRequest]) (*connect.Response[v1.UpsertApplicationResponse], error)
 	DeleteApplication(context.Context, *connect.Request[v1.DeleteApplicationRequest]) (*connect.Response[v1.DeleteApplicationResponse], error)
 	ToggleApplication(context.Context, *connect.Request[v1.ToggleApplicationRequest]) (*connect.Response[v1.ToggleApplicationResponse], error)
@@ -380,6 +414,18 @@ func NewControlPlaneServiceHandler(svc ControlPlaneServiceHandler, opts ...conne
 		ControlPlaneServiceGetApplicationProcedure,
 		svc.GetApplication,
 		connect.WithSchema(controlPlaneServiceMethods.ByName("GetApplication")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceResolveApplicationHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceResolveApplicationProcedure,
+		svc.ResolveApplication,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("ResolveApplication")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceRegisterApplicationAliasHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceRegisterApplicationAliasProcedure,
+		svc.RegisterApplicationAlias,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("RegisterApplicationAlias")),
 		connect.WithHandlerOptions(opts...),
 	)
 	controlPlaneServiceUpsertApplicationHandler := connect.NewUnaryHandler(
@@ -452,6 +498,10 @@ func NewControlPlaneServiceHandler(svc ControlPlaneServiceHandler, opts ...conne
 			controlPlaneServiceListApplicationsHandler.ServeHTTP(w, r)
 		case ControlPlaneServiceGetApplicationProcedure:
 			controlPlaneServiceGetApplicationHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceResolveApplicationProcedure:
+			controlPlaneServiceResolveApplicationHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceRegisterApplicationAliasProcedure:
+			controlPlaneServiceRegisterApplicationAliasHandler.ServeHTTP(w, r)
 		case ControlPlaneServiceUpsertApplicationProcedure:
 			controlPlaneServiceUpsertApplicationHandler.ServeHTTP(w, r)
 		case ControlPlaneServiceDeleteApplicationProcedure:
@@ -505,6 +555,14 @@ func (UnimplementedControlPlaneServiceHandler) ListApplications(context.Context,
 
 func (UnimplementedControlPlaneServiceHandler) GetApplication(context.Context, *connect.Request[v1.GetApplicationRequest]) (*connect.Response[v1.GetApplicationResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.GetApplication is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) ResolveApplication(context.Context, *connect.Request[v1.ResolveApplicationRequest]) (*connect.Response[v1.ResolveApplicationResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.ResolveApplication is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) RegisterApplicationAlias(context.Context, *connect.Request[v1.RegisterApplicationAliasRequest]) (*connect.Response[v1.RegisterApplicationAliasResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.RegisterApplicationAlias is not implemented"))
 }
 
 func (UnimplementedControlPlaneServiceHandler) UpsertApplication(context.Context, *connect.Request[v1.UpsertApplicationRequest]) (*connect.Response[v1.UpsertApplicationResponse], error) {

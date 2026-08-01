@@ -30,3 +30,14 @@ func TestApplicationRemoteHealthURLFallsBackToPath(t *testing.T) {
 		t.Fatalf("expected remote health URL %q, got %q", want, got)
 	}
 }
+
+func TestNormalizeIdentityTokenAndAliases(t *testing.T) {
+	app := Application{ID: "rtc", Aliases: []string{" Front_GISS-V2 ", "rtc", "front-giss-v2"}}
+	if got, want := NormalizeIdentityToken(" Reforma Tributaria_Consumo "), "reforma-tributaria-consumo"; got != want {
+		t.Fatalf("normalized identity = %q, want %q", got, want)
+	}
+	aliases := app.NormalizedAliases()
+	if len(aliases) != 1 || aliases[0] != "front-giss-v2" {
+		t.Fatalf("normalized aliases = %#v", aliases)
+	}
+}

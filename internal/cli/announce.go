@@ -21,6 +21,10 @@ func AnnounceCmd(client *Client, jsonOutput bool, args []string) {
 	context := fs.String("context", "", "application context path")
 	name := fs.String("name", "", "display name for the application")
 	health := fs.String("health", "", "health endpoint")
+	appIdentityID := fs.String("app-id", "", "canonical application identity (defaults to --app)")
+	serviceID := fs.String("service-id", "", "canonical service identity")
+	repository := fs.String("repository", "", "source repository identity")
+	aliases := fs.String("aliases", "", "comma-separated application aliases")
 	noActivate := fs.Bool("no-activate", false, "skip toggling app to local/active after registration")
 	if err := parseFlags(fs, args); err != nil {
 		Die("%v", err)
@@ -57,6 +61,10 @@ func AnnounceCmd(client *Client, jsonOutput bool, args []string) {
 
 	input := ApplicationConfigInput{
 		ID:            *appID,
+		AppID:         *appIdentityID,
+		ServiceID:     *serviceID,
+		Repository:    *repository,
+		Aliases:       splitAliases(*aliases),
 		Name:          *name,
 		Path:          resolvedPath,
 		Domain:        resolvedDomain,
@@ -190,6 +198,10 @@ Options:
   --context <path>       application context path
   --name <name>          display name for the application
   --health <endpoint>    health endpoint
+  --app-id <id>          canonical application identity
+  --service-id <id>      canonical service identity
+  --repository <name>    source repository identity
+  --aliases <a,b>        comma-separated aliases
   --no-activate          skip toggling app to local/active`)
 	os.Exit(1)
 }

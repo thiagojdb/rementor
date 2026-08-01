@@ -464,11 +464,41 @@ func initDB(db *sql.DB) error {
 			PRIMARY KEY (workspace_id, id),
 			FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE
 		)`,
+		`CREATE TABLE IF NOT EXISTS application_identities (
+			app_id TEXT PRIMARY KEY,
+			service_id TEXT NOT NULL,
+			repository TEXT NOT NULL DEFAULT '',
+			created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE TABLE IF NOT EXISTS application_aliases (
+			alias TEXT PRIMARY KEY,
+			app_id TEXT NOT NULL,
+			created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (app_id) REFERENCES application_identities(app_id) ON DELETE CASCADE
+		)`,
 	}
 	for _, stmt := range stmts {
 		if _, err := db.Exec(stmt); err != nil {
 			return fmt.Errorf("failed to initialize sqlite schema: %w", err)
 		}
+	}
+	return backfillApplicationIdentities(db)
+}
+
+// backfillApplicationIdentities makes existing workspace-scoped application
+// rows first-class identities without requiring a manual database migration.
+func backfillApplicationIdentities(db *sql.DB) error {
+	_, err := db.Exec(`
+		INSERT INTO application_identities (app_id, service_id)
+		SELECT DISTINCT id, id
+		FROM applications
+		WHERE id <> ''
+		  AND NOT EXISTS (
+			SELECT 1 FROM application_identities identities WHERE identities.app_id = applications.id
+		  )
+	`)
+	if err != nil {
+		return fmt.Errorf("failed to backfill application identities: %w", err)
 	}
 	return nil
 }
@@ -588,10 +618,12 @@ func loadWorkspacesFromDB(db *sql.DB) ([]*models.Workspace, error) {
 func loadApplicationConfigs(db *sql.DB, wsID string) ([]models.ApplicationConfig, error) {
 	rows, err := db.Query(`
 		SELECT
-			id, name, path, domain, remote_base_url, port, health, active, route_pattern, context, strip_origin
-		FROM applications
-		WHERE workspace_id = ?
-		ORDER BY sort_order, id
+			a.id, a.name, a.path, a.domain, a.remote_base_url, a.port, a.health, a.active, a.route_pattern, a.context, a.strip_origin,
+			COALESCE(i.app_id, a.id), COALESCE(i.service_id, a.id), COALESCE(i.repository, '')
+		FROM applications a
+		LEFT JOIN application_identities i ON i.app_id = a.id
+		WHERE a.workspace_id = ?
+		ORDER BY a.sort_order, a.id
 	`, wsID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load sqlite applications for %q: %w", wsID, err)
@@ -605,7 +637,7 @@ func loadApplicationConfigs(db *sql.DB, wsID string) ([]models.ApplicationConfig
 		var routePattern sql.NullString
 		if err := rows.Scan(
 			&app.ID, &app.Name, &app.Path, &app.Domain, &app.RemoteBaseUrl, &app.Port, &app.Health, &active,
-			&routePattern, &app.Context, &app.StripOrigin,
+			&routePattern, &app.Context, &app.StripOrigin, &app.AppID, &app.ServiceID, &app.Repository,
 		); err != nil {
 			return nil, fmt.Errorf("failed to scan sqlite application: %w", err)
 		}
@@ -616,7 +648,36 @@ func loadApplicationConfigs(db *sql.DB, wsID string) ([]models.ApplicationConfig
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("failed to iterate sqlite applications: %w", err)
 	}
+	if err := rows.Close(); err != nil {
+		return nil, fmt.Errorf("failed to close sqlite applications for %q: %w", wsID, err)
+	}
+	for i := range apps {
+		apps[i].Aliases, err = loadApplicationAliases(db, apps[i].AppID)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return apps, nil
+}
+
+func loadApplicationAliases(db *sql.DB, appID string) ([]string, error) {
+	rows, err := db.Query(`SELECT alias FROM application_aliases WHERE app_id = ? ORDER BY alias`, appID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load aliases for %q: %w", appID, err)
+	}
+	defer rows.Close()
+	var aliases []string
+	for rows.Next() {
+		var alias string
+		if err := rows.Scan(&alias); err != nil {
+			return nil, fmt.Errorf("failed to scan alias for %q: %w", appID, err)
+		}
+		aliases = append(aliases, alias)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to iterate aliases for %q: %w", appID, err)
+	}
+	return aliases, nil
 }
 
 func workspacesFromConfigs(configs []models.WorkspaceConfig) []*models.Workspace {
@@ -662,7 +723,7 @@ func workspaceConfigFromWorkspace(workspace *models.Workspace) models.WorkspaceC
 	}
 	for _, app := range workspace.Applications {
 		config.Applications = append(config.Applications, models.ApplicationConfig{
-			ID: app.ID, Name: app.Name, Path: app.Path, Domain: app.Domain,
+			ID: app.ID, AppID: app.CanonicalAppID(), ServiceID: app.ServiceID, Repository: app.Repository, Aliases: app.NormalizedAliases(), Name: app.Name, Path: app.Path, Domain: app.Domain,
 			RemoteBaseUrl: app.RemoteBaseUrl, Port: app.Port, Health: app.Health,
 			Active: app.Active, RoutePattern: app.RoutePattern, Context: app.Context,
 			StripOrigin: app.StripOrigin,
@@ -674,6 +735,11 @@ func workspaceConfigFromWorkspace(workspace *models.Workspace) models.WorkspaceC
 func convertAppConfigs(configs []models.ApplicationConfig) []*models.Application {
 	var apps []*models.Application
 	for _, appConfig := range configs {
+		canonical := models.NormalizeIdentityToken(appConfig.CanonicalAppID())
+		serviceID := models.NormalizeIdentityToken(appConfig.ServiceID)
+		if serviceID == "" {
+			serviceID = canonical
+		}
 		health := appConfig.Health
 		if health == "" {
 			health = models.DefaultHealthEndpoint
@@ -685,7 +751,11 @@ func convertAppConfigs(configs []models.ApplicationConfig) []*models.Application
 		}
 
 		app := &models.Application{
-			ID:            appConfig.ID,
+			ID:            canonical,
+			AppID:         canonical,
+			ServiceID:     serviceID,
+			Repository:    appConfig.Repository,
+			Aliases:       appConfig.Aliases,
 			Name:          appConfig.Name,
 			Path:          path,
 			Domain:        appConfig.Domain,
@@ -742,6 +812,17 @@ func insertWorkspaceConfigTx(tx *sql.Tx, ws models.WorkspaceConfig, order int) e
 }
 
 func insertApplicationConfig(tx *sql.Tx, wsID string, app models.ApplicationConfig, order int) error {
+	appID := models.NormalizeIdentityToken(app.CanonicalAppID())
+	if appID == "" {
+		return fmt.Errorf("application %s/%s: canonical app ID is required", wsID, app.ID)
+	}
+	serviceID := models.NormalizeIdentityToken(app.ServiceID)
+	if serviceID == "" {
+		serviceID = appID
+	}
+	if err := ensureApplicationIdentityTx(tx, appID, serviceID, app.Repository, app.Aliases); err != nil {
+		return fmt.Errorf("failed to persist identity for %s/%s: %w", wsID, appID, err)
+	}
 	health := app.Health
 	if health == "" {
 		health = models.DefaultHealthEndpoint
@@ -752,10 +833,64 @@ func insertApplicationConfig(tx *sql.Tx, wsID string, app models.ApplicationConf
 			workspace_id, id, name, path, domain, remote_base_url, port, health, active, route_pattern, context,
 			strip_origin, sort_order
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-	`, wsID, app.ID, app.Name, app.Path, app.Domain, app.RemoteBaseUrl, app.Port, health, boolInt(app.Active),
+	`, wsID, appID, app.Name, app.Path, app.Domain, app.RemoteBaseUrl, app.Port, health, boolInt(app.Active),
 		ptrValue(app.RoutePattern), app.Context, boolInt(app.StripOrigin), order)
 	if err != nil {
-		return fmt.Errorf("failed to insert application %s/%s: %w", wsID, app.ID, err)
+		return fmt.Errorf("failed to insert application %s/%s: %w", wsID, appID, err)
+	}
+	return nil
+}
+
+func ensureApplicationIdentityTx(tx *sql.Tx, appID, serviceID, repository string, aliases []string) error {
+	appID = models.NormalizeIdentityToken(appID)
+	serviceID = models.NormalizeIdentityToken(serviceID)
+	if appID == "" || serviceID == "" {
+		return fmt.Errorf("application and service IDs must not be empty")
+	}
+	var existingService, existingRepository string
+	err := tx.QueryRow(`SELECT service_id, repository FROM application_identities WHERE app_id = ?`, appID).Scan(&existingService, &existingRepository)
+	switch {
+	case err == nil:
+		if existingService != serviceID {
+			return fmt.Errorf("application %q already uses service ID %q", appID, existingService)
+		}
+		if repository == "" {
+			repository = existingRepository
+		}
+		if _, err := tx.Exec(`UPDATE application_identities SET repository = ? WHERE app_id = ?`, repository, appID); err != nil {
+			return err
+		}
+	case err == sql.ErrNoRows:
+		if _, err := tx.Exec(`INSERT INTO application_identities (app_id, service_id, repository) VALUES (?, ?, ?)`, appID, serviceID, repository); err != nil {
+			return err
+		}
+	default:
+		return err
+	}
+	for _, rawAlias := range aliases {
+		alias := models.NormalizeIdentityToken(rawAlias)
+		if alias == "" || alias == appID {
+			continue
+		}
+		var owner string
+		err := tx.QueryRow(`SELECT app_id FROM application_aliases WHERE alias = ?`, alias).Scan(&owner)
+		if err == nil && owner != appID {
+			return &models.AliasConflictError{Alias: alias, ExistingAppID: owner, RequestedAppID: appID}
+		}
+		if err != nil && err != sql.ErrNoRows {
+			return err
+		}
+		var canonicalOwner string
+		err = tx.QueryRow(`SELECT app_id FROM application_identities WHERE app_id = ?`, alias).Scan(&canonicalOwner)
+		if err == nil && canonicalOwner != appID {
+			return &models.AliasConflictError{Alias: alias, ExistingAppID: canonicalOwner, RequestedAppID: appID}
+		}
+		if err != nil && err != sql.ErrNoRows {
+			return err
+		}
+		if _, err := tx.Exec(`INSERT INTO application_aliases (alias, app_id) VALUES (?, ?) ON CONFLICT(alias) DO UPDATE SET app_id = excluded.app_id`, alias, appID); err != nil {
+			return err
+		}
 	}
 	return nil
 }

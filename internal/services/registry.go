@@ -345,20 +345,70 @@ func (r *Registry) FindWorkspace(wsID string) *models.Workspace {
 	return nil
 }
 
-// FindApp finds an application by workspace ID and application name
+// FindApp finds an application by workspace ID and canonical ID or alias.
 func (r *Registry) FindApp(wsID, appName string) (*models.Workspace, *models.Application, error) {
 	ws := r.FindWorkspace(wsID)
 	if ws == nil {
 		return nil, nil, fmt.Errorf("workspace not found: %s", wsID)
 	}
+	return findAppInWorkspace(ws, appName)
+}
 
-	for _, app := range ws.Applications {
-		if app.ID == appName {
-			return ws, app, nil
-		}
+// RegisterApplicationAlias adds an unambiguous normalized alias to an app
+// identity and propagates it to every workspace binding for that identity.
+func (r *Registry) RegisterApplicationAlias(wsID, appRef, alias string) (*models.Application, error) {
+	rawAlias := alias
+	alias = models.NormalizeIdentityToken(alias)
+	if alias == "" {
+		return nil, fmt.Errorf("application alias is required")
 	}
-
-	return nil, nil, fmt.Errorf("application not found: %s/%s", wsID, appName)
+	if err := validation.IdentityIdentifier("application alias", rawAlias); err != nil {
+		return nil, err
+	}
+	var result *models.Application
+	_, err := r.mutate(false, func(candidate *[]*models.Workspace) error {
+		_, app, err := findApp(*candidate, wsID, appRef)
+		if err != nil {
+			return err
+		}
+		canonical := app.CanonicalAppID()
+		for _, workspace := range *candidate {
+			for _, binding := range workspace.Applications {
+				bindingCanonical := binding.CanonicalAppID()
+				if models.NormalizeIdentityToken(bindingCanonical) == alias && bindingCanonical != canonical {
+					return &models.AliasConflictError{Alias: alias, ExistingAppID: bindingCanonical, RequestedAppID: canonical}
+				}
+				for _, existing := range binding.NormalizedAliases() {
+					if existing == alias && bindingCanonical != canonical {
+						return &models.AliasConflictError{Alias: alias, ExistingAppID: bindingCanonical, RequestedAppID: canonical}
+					}
+				}
+			}
+		}
+		for _, workspace := range *candidate {
+			for _, binding := range workspace.Applications {
+				if binding.CanonicalAppID() != canonical {
+					continue
+				}
+				already := false
+				for _, existing := range binding.NormalizedAliases() {
+					if existing == alias {
+						already = true
+						break
+					}
+				}
+				if !already {
+					binding.Aliases = append(binding.Aliases, alias)
+				}
+				result = binding
+			}
+		}
+		return nil
+	}, r.workspaceStore().ReplaceWorkspaces)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // SubscribeHealth creates an independent event stream so every client receives
@@ -742,12 +792,35 @@ func findApp(workspaces []*models.Workspace, wsID, appID string) (*models.Worksp
 	if workspace == nil {
 		return nil, nil, fmt.Errorf("workspace not found: %s", wsID)
 	}
+	return findAppInWorkspace(workspace, appID)
+}
+
+func findAppInWorkspace(workspace *models.Workspace, reference string) (*models.Workspace, *models.Application, error) {
+	normalized := models.NormalizeIdentityToken(reference)
+	var matches []*models.Application
 	for _, app := range workspace.Applications {
-		if app.ID == appID {
-			return workspace, app, nil
+		if models.NormalizeIdentityToken(app.CanonicalAppID()) == normalized {
+			matches = append(matches, app)
+			continue
+		}
+		for _, alias := range app.NormalizedAliases() {
+			if alias == normalized {
+				matches = append(matches, app)
+				break
+			}
 		}
 	}
-	return nil, nil, fmt.Errorf("application not found: %s/%s", wsID, appID)
+	if len(matches) == 1 {
+		return workspace, matches[0], nil
+	}
+	if len(matches) > 1 {
+		ids := make([]string, 0, len(matches))
+		for _, app := range matches {
+			ids = append(ids, app.CanonicalAppID())
+		}
+		return nil, nil, &models.AmbiguousApplicationError{Reference: reference, Matches: ids}
+	}
+	return nil, nil, fmt.Errorf("application not found: %s/%s", workspace.WorkspaceID, reference)
 }
 
 func applicationsFromConfigs(workspace *models.Workspace, configs []models.ApplicationConfig) []*models.Application {
@@ -757,8 +830,27 @@ func applicationsFromConfigs(workspace *models.Workspace, configs []models.Appli
 	}
 	applications := make([]*models.Application, 0, len(configs))
 	for _, config := range configs {
+		if old := previous[config.CanonicalAppID()]; old != nil {
+			if config.AppID == "" {
+				config.AppID = old.CanonicalAppID()
+			}
+			if config.ServiceID == "" {
+				config.ServiceID = old.ServiceID
+			}
+			if config.Repository == "" {
+				config.Repository = old.Repository
+			}
+			if len(config.Aliases) == 0 {
+				config.Aliases = old.NormalizedAliases()
+			}
+		}
+		canonical := models.NormalizeIdentityToken(config.CanonicalAppID())
+		serviceID := models.NormalizeIdentityToken(config.ServiceID)
+		if serviceID == "" {
+			serviceID = canonical
+		}
 		app := &models.Application{
-			ID: config.ID, Name: config.Name, Path: config.Path, Domain: config.Domain,
+			ID: canonical, AppID: canonical, ServiceID: serviceID, Repository: config.Repository, Aliases: append([]string(nil), config.Aliases...), Name: config.Name, Path: config.Path, Domain: config.Domain,
 			RemoteBaseUrl: config.RemoteBaseUrl, Context: config.Context, Health: config.Health,
 			Port: config.Port, Active: config.Active, RoutePattern: cloneStringPtr(config.RoutePattern),
 			StripOrigin: config.StripOrigin,
@@ -801,7 +893,7 @@ func cloneWorkspace(source *models.Workspace) *models.Workspace {
 	}
 	for _, sourceApp := range source.Applications {
 		app := &models.Application{
-			ID: sourceApp.ID, Name: sourceApp.Name, Path: sourceApp.Path, Domain: sourceApp.Domain,
+			ID: sourceApp.ID, AppID: sourceApp.CanonicalAppID(), ServiceID: sourceApp.ServiceID, Repository: sourceApp.Repository, Aliases: append([]string(nil), sourceApp.Aliases...), Name: sourceApp.Name, Path: sourceApp.Path, Domain: sourceApp.Domain,
 			RemoteBaseUrl: sourceApp.RemoteBaseUrl, Context: sourceApp.Context, Health: sourceApp.Health,
 			Port: sourceApp.Port, Active: sourceApp.Active, RoutePattern: cloneStringPtr(sourceApp.RoutePattern),
 			StripOrigin: sourceApp.StripOrigin,
@@ -845,7 +937,7 @@ func applicationConfigs(apps []*models.Application) []models.ApplicationConfig {
 	result := make([]models.ApplicationConfig, 0, len(apps))
 	for _, app := range apps {
 		result = append(result, models.ApplicationConfig{
-			ID: app.ID, Name: app.Name, Path: app.Path, Domain: app.Domain,
+			ID: app.ID, AppID: app.CanonicalAppID(), ServiceID: app.ServiceID, Repository: app.Repository, Aliases: app.NormalizedAliases(), Name: app.Name, Path: app.Path, Domain: app.Domain,
 			RemoteBaseUrl: app.RemoteBaseUrl, Port: app.Port, Health: app.Health,
 			Active: app.Active, RoutePattern: app.RoutePattern, Context: app.Context,
 			StripOrigin: app.StripOrigin,

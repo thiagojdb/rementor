@@ -167,6 +167,41 @@ func TestLoadWorkspacesPreservesApplicationRemoteBaseURL(t *testing.T) {
 	}
 }
 
+func TestApplicationIdentityAndAliasesPersistAcrossWorkspaces(t *testing.T) {
+	t.Setenv("XDG_DATA_HOME", filepath.Join(t.TempDir(), "data"))
+
+	identity := models.ApplicationConfig{
+		ID: "rtc", AppID: "rtc", ServiceID: "reforma-tributaria-consumo", Repository: "front-giss-v2",
+		Aliases: []string{"reforma-tributaria-consumo", "front_giss_v2"}, Path: "/rtc", Port: 8080,
+	}
+	for _, workspaceID := range []string{"desenvolvimento", "qualidade"} {
+		if err := AppendWorkspace(models.WorkspaceConfig{
+			ID: workspaceID, Type: models.WorkspaceTypeRouting,
+			Routing:      models.RoutingConfig{LocalDomain: workspaceID + ".localhost"},
+			Applications: []models.ApplicationConfig{identity},
+		}); err != nil {
+			t.Fatalf("AppendWorkspace(%s) failed: %v", workspaceID, err)
+		}
+	}
+
+	workspaces, err := LoadWorkspaces()
+	if err != nil {
+		t.Fatalf("LoadWorkspaces failed: %v", err)
+	}
+	if len(workspaces) != 2 {
+		t.Fatalf("expected two workspaces, got %d", len(workspaces))
+	}
+	for _, workspace := range workspaces {
+		app := workspace.Applications[0]
+		if app.CanonicalAppID() != "rtc" || app.ServiceID != "reforma-tributaria-consumo" || app.Repository != "front-giss-v2" {
+			t.Fatalf("identity did not persist in %s: %#v", workspace.WorkspaceID, app)
+		}
+		if len(app.Aliases) != 2 || app.Aliases[0] != "front-giss-v2" || app.Aliases[1] != "reforma-tributaria-consumo" {
+			t.Fatalf("aliases did not persist in %s: %#v", workspace.WorkspaceID, app.Aliases)
+		}
+	}
+}
+
 func TestSaveStatePersistsActiveAndRoutePatternInSQLite(t *testing.T) {
 	t.Setenv("XDG_DATA_HOME", filepath.Join(t.TempDir(), "data"))
 	t.Setenv("XDG_CACHE_HOME", filepath.Join(t.TempDir(), "cache"))
