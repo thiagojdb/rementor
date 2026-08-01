@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	"connectrpc.com/connect"
 	rementorv1 "github.com/thiagojdb/rementor/internal/gen/rementor/v1"
@@ -16,6 +18,7 @@ import (
 type APIError struct {
 	StatusCode int
 	Message    string
+	Code       string
 }
 
 func (e *APIError) Error() string {
@@ -70,11 +73,14 @@ func (c *Client) CreateWorkspace(ctx context.Context, req CreateWorkspaceRequest
 		LocalDomain:          req.LocalDomain,
 		DefaultRemoteBaseUrl: req.DefaultRemoteBaseURL,
 		Applications:         applicationInputsToProto(req.Applications),
+		CorrelationId:        req.CorrelationID,
 	}))
 	if err != nil {
 		return WorkspaceDTO{}, apiError(err)
 	}
-	return workspaceFromProto(res.Msg.GetWorkspace()), nil
+	workspace := workspaceFromProto(res.Msg.GetWorkspace())
+	workspace.Operation = operationFromProto(res.Msg.GetOperation())
+	return workspace, nil
 }
 
 func (c *Client) UpdateWorkspace(ctx context.Context, workspaceID string, req UpdateWorkspaceRequest) (WorkspaceDTO, error) {
@@ -83,16 +89,27 @@ func (c *Client) UpdateWorkspace(ctx context.Context, workspaceID string, req Up
 		Applications:         applicationInputsToProto(req.Applications),
 		LocalDomain:          req.LocalDomain,
 		DefaultRemoteBaseUrl: req.DefaultRemoteBaseURL,
+		CorrelationId:        req.CorrelationID,
 	}))
 	if err != nil {
 		return WorkspaceDTO{}, apiError(err)
 	}
-	return workspaceFromProto(res.Msg.GetWorkspace()), nil
+	workspace := workspaceFromProto(res.Msg.GetWorkspace())
+	workspace.Operation = operationFromProto(res.Msg.GetOperation())
+	return workspace, nil
 }
 
 func (c *Client) DeleteWorkspace(ctx context.Context, workspaceID string) error {
-	_, err := c.rpc.DeleteWorkspace(ctx, connect.NewRequest(&rementorv1.DeleteWorkspaceRequest{WorkspaceId: workspaceID}))
-	return apiError(err)
+	_, err := c.DeleteWorkspaceWithMetadata(ctx, workspaceID)
+	return err
+}
+
+func (c *Client) DeleteWorkspaceWithMetadata(ctx context.Context, workspaceID string) (*OperationMetadataDTO, error) {
+	res, err := c.rpc.DeleteWorkspace(ctx, connect.NewRequest(&rementorv1.DeleteWorkspaceRequest{WorkspaceId: workspaceID}))
+	if err != nil {
+		return nil, apiError(err)
+	}
+	return operationFromProto(res.Msg.GetOperation()), nil
 }
 
 func (c *Client) ListApplications(ctx context.Context, workspaceID string) ([]ApplicationDTO, error) {
@@ -124,7 +141,9 @@ func (c *Client) RegisterApplicationAlias(ctx context.Context, workspaceID, appl
 	if err != nil {
 		return ApplicationDTO{}, apiError(err)
 	}
-	return applicationFromProto(res.Msg.GetApplication()), nil
+	app := applicationFromProto(res.Msg.GetApplication())
+	app.Operation = operationFromProto(res.Msg.GetOperation())
+	return app, nil
 }
 
 func (c *Client) UpsertApplication(ctx context.Context, workspaceID string, input ApplicationConfigInput) (UpsertApplicationResponse, error) {
@@ -135,17 +154,25 @@ func (c *Client) UpsertApplication(ctx context.Context, workspaceID string, inpu
 	if err != nil {
 		return UpsertApplicationResponse{}, apiError(err)
 	}
-	return UpsertApplicationResponse{
-		Application: applicationFromProto(res.Msg.GetApplication()),
-		Created:     res.Msg.GetCreated(),
-	}, nil
+	operation := operationFromProto(res.Msg.GetOperation())
+	app := applicationFromProto(res.Msg.GetApplication())
+	app.Operation = operation
+	return UpsertApplicationResponse{Application: app, Created: res.Msg.GetCreated(), Operation: operation}, nil
 }
 
 func (c *Client) DeleteApplication(ctx context.Context, workspaceID, appID string) error {
-	_, err := c.rpc.DeleteApplication(ctx, connect.NewRequest(&rementorv1.DeleteApplicationRequest{
+	_, err := c.DeleteApplicationWithMetadata(ctx, workspaceID, appID)
+	return err
+}
+
+func (c *Client) DeleteApplicationWithMetadata(ctx context.Context, workspaceID, appID string) (*OperationMetadataDTO, error) {
+	res, err := c.rpc.DeleteApplication(ctx, connect.NewRequest(&rementorv1.DeleteApplicationRequest{
 		WorkspaceId: workspaceID, ApplicationId: appID,
 	}))
-	return apiError(err)
+	if err != nil {
+		return nil, apiError(err)
+	}
+	return operationFromProto(res.Msg.GetOperation()), nil
 }
 
 func (c *Client) ToggleApplication(ctx context.Context, workspaceID, appID string) (ApplicationDTO, error) {
@@ -153,7 +180,9 @@ func (c *Client) ToggleApplication(ctx context.Context, workspaceID, appID strin
 	if err != nil {
 		return ApplicationDTO{}, apiError(err)
 	}
-	return applicationFromProto(res.Msg.GetApplication()), nil
+	app := applicationFromProto(res.Msg.GetApplication())
+	app.Operation = operationFromProto(res.Msg.GetOperation())
+	return app, nil
 }
 
 func (c *Client) ToggleAllToRemote(ctx context.Context, workspaceID string) (ToggleResultResponse, error) {
@@ -161,7 +190,7 @@ func (c *Client) ToggleAllToRemote(ctx context.Context, workspaceID string) (Tog
 	if err != nil {
 		return ToggleResultResponse{}, apiError(err)
 	}
-	return ToggleResultResponse{SuccessCount: int(res.Msg.GetSuccessCount()), FailureCount: int(res.Msg.GetFailureCount())}, nil
+	return ToggleResultResponse{SuccessCount: int(res.Msg.GetSuccessCount()), FailureCount: int(res.Msg.GetFailureCount()), Operation: operationFromProto(res.Msg.GetOperation())}, nil
 }
 
 func (c *Client) ToggleAllToLocal(ctx context.Context, workspaceID string) (ToggleResultResponse, error) {
@@ -169,7 +198,7 @@ func (c *Client) ToggleAllToLocal(ctx context.Context, workspaceID string) (Togg
 	if err != nil {
 		return ToggleResultResponse{}, apiError(err)
 	}
-	return ToggleResultResponse{SuccessCount: int(res.Msg.GetSuccessCount()), FailureCount: int(res.Msg.GetFailureCount())}, nil
+	return ToggleResultResponse{SuccessCount: int(res.Msg.GetSuccessCount()), FailureCount: int(res.Msg.GetFailureCount()), Operation: operationFromProto(res.Msg.GetOperation())}, nil
 }
 
 func (c *Client) SyncWorkspaceRouting(ctx context.Context, workspaceID string) (map[string]string, error) {
@@ -177,7 +206,13 @@ func (c *Client) SyncWorkspaceRouting(ctx context.Context, workspaceID string) (
 	if err != nil {
 		return nil, apiError(err)
 	}
-	return map[string]string{"status": res.Msg.GetStatus()}, nil
+	result := map[string]string{"status": res.Msg.GetStatus()}
+	if operation := operationFromProto(res.Msg.GetOperation()); operation != nil {
+		result["operationId"] = operation.OperationID
+		result["correlationId"] = operation.CorrelationID
+		result["routeVersion"] = strconv.FormatUint(operation.RouteVersion, 10)
+	}
+	return result, nil
 }
 
 func (c *Client) GetRoutePattern(ctx context.Context, workspaceID, appID string) (RoutePatternResponse, error) {
@@ -193,11 +228,14 @@ func (c *Client) UpdateRoutePattern(ctx context.Context, workspaceID, appID stri
 		WorkspaceId:   workspaceID,
 		ApplicationId: appID,
 		Pattern:       req.Pattern,
+		CorrelationId: req.CorrelationID,
 	}))
 	if err != nil {
 		return ApplicationDTO{}, apiError(err)
 	}
-	return applicationFromProto(res.Msg.GetApplication()), nil
+	app := applicationFromProto(res.Msg.GetApplication())
+	app.Operation = operationFromProto(res.Msg.GetOperation())
+	return app, nil
 }
 
 func apiError(err error) error {
@@ -206,7 +244,21 @@ func apiError(err error) error {
 	}
 	var connectErr *connect.Error
 	if errors.As(err, &connectErr) {
-		return &APIError{StatusCode: httpStatusFromCode(connectErr.Code()), Message: connectErr.Message()}
+		apiErr := &APIError{StatusCode: httpStatusFromCode(connectErr.Code()), Message: connectErr.Message()}
+		for _, detail := range connectErr.Details() {
+			message, detailErr := detail.Value()
+			if detailErr != nil {
+				continue
+			}
+			if structured, ok := message.(*rementorv1.StructuredError); ok {
+				apiErr.Code = structured.GetCode().String()
+				if structured.GetMessage() != "" {
+					apiErr.Message = structured.GetMessage()
+				}
+				break
+			}
+		}
+		return apiErr
 	}
 	return &APIError{StatusCode: http.StatusInternalServerError, Message: err.Error()}
 }
@@ -251,6 +303,12 @@ func workspaceFromProto(workspace *rementorv1.Workspace) WorkspaceDTO {
 			DefaultRemoteBaseURL: workspace.GetRouting().GetDefaultRemoteBaseUrl(),
 		}
 	}
+	environment := environmentFromProto(workspace.GetEnvironment())
+	if environment.WorkspaceID == "" {
+		environment.WorkspaceID = workspace.GetId()
+		environment.Environment = workspace.GetId()
+		environment.LegacyID = workspace.GetId()
+	}
 	return WorkspaceDTO{
 		ID:           workspace.GetId(),
 		Type:         workspace.GetType(),
@@ -258,6 +316,8 @@ func workspaceFromProto(workspace *rementorv1.Workspace) WorkspaceDTO {
 		Color:        workspace.GetColor(),
 		Routing:      routing,
 		Applications: apps,
+		Environment:  environment,
+		Route:        routeFromProto(workspace.GetRoute()),
 	}
 }
 
@@ -272,6 +332,15 @@ func applicationsFromProto(apps []*rementorv1.Application) []ApplicationDTO {
 func applicationFromProto(app *rementorv1.Application) ApplicationDTO {
 	if app == nil {
 		return ApplicationDTO{}
+	}
+	identity := identityFromProto(app.GetIdentity())
+	if identity.AppID == "" {
+		identity.AppID = app.GetAppId()
+		identity.ServiceID = app.GetServiceId()
+		identity.Repository = app.GetRepository()
+		if app.GetId() != app.GetAppId() {
+			identity.LegacyID = app.GetId()
+		}
 	}
 	return ApplicationDTO{
 		ID:            app.GetId(),
@@ -290,6 +359,91 @@ func applicationFromProto(app *rementorv1.Application) ApplicationDTO {
 		HealthStatus:  app.GetHealthStatus(),
 		RemoteStatus:  app.GetRemoteStatus(),
 		RoutePattern:  app.RoutePattern,
+		Identity:      identity,
+		Environment:   environmentFromProto(app.GetEnvironment()),
+		Route:         routeFromProto(app.GetRoute()),
+	}
+}
+
+func identityFromProto(identity *rementorv1.CanonicalApplicationRef) CanonicalApplicationRefDTO {
+	if identity == nil {
+		return CanonicalApplicationRefDTO{}
+	}
+	return CanonicalApplicationRefDTO{AppID: identity.GetAppId(), ServiceID: identity.GetServiceId(), Repository: identity.GetRepository(), Aliases: append([]string(nil), identity.GetAliases()...), LegacyID: identity.GetLegacyId()}
+}
+
+func environmentFromProto(environment *rementorv1.WorkspaceEnvironmentRef) WorkspaceEnvironmentRefDTO {
+	if environment == nil {
+		return WorkspaceEnvironmentRefDTO{}
+	}
+	return WorkspaceEnvironmentRefDTO{WorkspaceID: environment.GetWorkspaceId(), Environment: environment.GetEnvironment(), LegacyID: environment.GetLegacyId()}
+}
+
+func routeFromProto(route *rementorv1.RouteState) *RouteStateDTO {
+	if route == nil {
+		return nil
+	}
+	var version uint64
+	if route.GetVersion() != nil {
+		version = route.GetVersion().GetValue()
+	}
+	var verifiedAt *time.Time
+	if timestamp := route.GetVerifiedAt(); timestamp != nil {
+		value := timestamp.AsTime()
+		verifiedAt = &value
+	}
+	return &RouteStateDTO{
+		DesiredMode: routeModeFromProto(route.GetDesiredMode()), EffectiveMode: routeModeFromProto(route.GetEffectiveMode()), Target: route.GetTarget(), LocalTarget: route.GetLocalTarget(), RemoteTarget: route.GetRemoteTarget(), RemoteFallback: route.GetRemoteFallback(), ProxyHealth: route.GetProxyHealth(), RouteVersion: version, OperationID: route.GetOperationId(), VerifiedAt: verifiedAt,
+	}
+}
+
+func routeModeFromProto(mode rementorv1.RouteMode) string {
+	switch mode {
+	case rementorv1.RouteMode_ROUTE_MODE_LOCAL:
+		return "local"
+	case rementorv1.RouteMode_ROUTE_MODE_REMOTE:
+		return "remote"
+	case rementorv1.RouteMode_ROUTE_MODE_FALLBACK:
+		return "fallback"
+	default:
+		return ""
+	}
+}
+
+func operationFromProto(operation *rementorv1.OperationMetadata) *OperationMetadataDTO {
+	if operation == nil {
+		return nil
+	}
+	var routeVersion uint64
+	if operation.GetRouteVersion() != nil {
+		routeVersion = operation.GetRouteVersion().GetValue()
+	}
+	var createdAt, completedAt time.Time
+	if operation.GetCreatedAt() != nil {
+		createdAt = operation.GetCreatedAt().AsTime()
+	}
+	if operation.GetCompletedAt() != nil {
+		completedAt = operation.GetCompletedAt().AsTime()
+	}
+	return &OperationMetadataDTO{OperationID: operation.GetOperationId(), CorrelationID: operation.GetCorrelationId(), RouteVersion: routeVersion, CreatedAt: createdAt, CompletedAt: completedAt, Kind: operationKindFromProto(operation.GetKind())}
+}
+
+func operationKindFromProto(kind rementorv1.RouteOperationKind) string {
+	switch kind {
+	case rementorv1.RouteOperationKind_ROUTE_OPERATION_KIND_TOGGLE:
+		return "toggle"
+	case rementorv1.RouteOperationKind_ROUTE_OPERATION_KIND_TOGGLE_ALL:
+		return "toggle-all"
+	case rementorv1.RouteOperationKind_ROUTE_OPERATION_KIND_SYNC:
+		return "sync"
+	case rementorv1.RouteOperationKind_ROUTE_OPERATION_KIND_UPDATE_PATTERN:
+		return "update-pattern"
+	case rementorv1.RouteOperationKind_ROUTE_OPERATION_KIND_UPSERT:
+		return "upsert"
+	case rementorv1.RouteOperationKind_ROUTE_OPERATION_KIND_DELETE:
+		return "delete"
+	default:
+		return ""
 	}
 }
 
