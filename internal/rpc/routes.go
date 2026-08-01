@@ -1,0 +1,338 @@
+package rpc
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"strings"
+
+	"connectrpc.com/connect"
+	rementorv1 "github.com/thiagojdb/rementor/internal/gen/rementor/v1"
+	"github.com/thiagojdb/rementor/internal/services"
+)
+
+func (s *ControlPlaneService) GetRoute(ctx context.Context, req *connect.Request[rementorv1.GetRouteRequest]) (*connect.Response[rementorv1.GetRouteResponse], error) {
+	wsID := req.Msg.GetWorkspaceId()
+	routes, version, warnings, conflicts, err := s.registry.GetRoutes(wsID)
+	if err != nil {
+		return nil, newRPCError(classifyRegistryError(err), err)
+	}
+	ws := s.registry.FindWorkspace(wsID)
+	response := &rementorv1.GetRouteResponse{
+		WorkspaceId:  wsID,
+		Environment:  wsID,
+		RouteVersion: &rementorv1.RouteVersion{Value: version},
+		Routes:       routeListToProto(routes),
+		Warnings:     routeWarningsToProto(warnings),
+		Conflicts:    routeConflictsToProto(conflicts),
+	}
+	if ws != nil {
+		response.Environment = ws.WorkspaceID
+	}
+	return connect.NewResponse(response), nil
+}
+
+func (s *ControlPlaneService) ResolveRoute(ctx context.Context, req *connect.Request[rementorv1.ResolveRouteRequest]) (*connect.Response[rementorv1.ResolveRouteResponse], error) {
+	resolution, err := s.registry.ResolveRoute(req.Msg.GetWorkspaceId(), req.Msg.GetHost(), req.Msg.GetPath())
+	if err != nil {
+		return nil, newRPCError(classifyRegistryError(err), err)
+	}
+	return connect.NewResponse(&rementorv1.ResolveRouteResponse{Resolution: routeResolutionToProto(resolution)}), nil
+}
+
+func (s *ControlPlaneService) PlanRoute(ctx context.Context, req *connect.Request[rementorv1.PlanRouteRequest]) (*connect.Response[rementorv1.PlanRouteResponse], error) {
+	mode, err := routeModeString(req.Msg.GetDesiredMode())
+	if err != nil {
+		return nil, newRPCError(connect.CodeInvalidArgument, err)
+	}
+	var pattern *string
+	if req.Msg.RoutePattern != nil {
+		value := req.Msg.GetRoutePattern()
+		pattern = &value
+	}
+	plan, err := s.registry.PlanRoute(req.Msg.GetWorkspaceId(), req.Msg.GetApplicationRef(), mode, pattern)
+	if err != nil {
+		return nil, newRPCError(classifyRegistryError(err), err)
+	}
+	var expected uint64
+	if req.Msg.GetExpectedRouteVersion() != nil {
+		expected = req.Msg.GetExpectedRouteVersion().GetValue()
+	}
+	if expected == 0 {
+		expected = req.Msg.GetExpectedVersion()
+	}
+	if expected != 0 && expected != plan.BaseRouteVersion {
+		return nil, newRPCErrorWithStructured(connect.CodeFailedPrecondition, &services.RouteVersionConflictError{WorkspaceID: plan.WorkspaceID, Expected: expected, Actual: plan.BaseRouteVersion}, rementorv1.ErrorCode_ERROR_CODE_CONFLICT)
+	}
+	return connect.NewResponse(&rementorv1.PlanRouteResponse{Plan: routePlanToProto(plan)}), nil
+}
+
+func (s *ControlPlaneService) ApplyRoute(ctx context.Context, req *connect.Request[rementorv1.ApplyRouteRequest]) (*connect.Response[rementorv1.ApplyRouteResponse], error) {
+	wsID := req.Msg.GetWorkspaceId()
+	var plan services.RoutePlan
+	var err error
+	if req.Msg.GetPlan() != nil {
+		plan, err = routePlanFromProto(req.Msg.GetPlan())
+		if err != nil {
+			return nil, newRPCError(connect.CodeInvalidArgument, err)
+		}
+	} else {
+		mode, modeErr := routeModeString(req.Msg.GetDesiredMode())
+		if modeErr != nil {
+			return nil, newRPCError(connect.CodeInvalidArgument, modeErr)
+		}
+		var pattern *string
+		if req.Msg.RoutePattern != nil {
+			value := req.Msg.GetRoutePattern()
+			pattern = &value
+		}
+		plan, err = s.registry.PlanRoute(wsID, req.Msg.GetApplicationRef(), mode, pattern)
+		if err != nil {
+			return nil, newRPCError(classifyRegistryError(err), err)
+		}
+	}
+	var expected uint64
+	if req.Msg.GetExpectedRouteVersion() != nil {
+		expected = req.Msg.GetExpectedRouteVersion().GetValue()
+	}
+	if expected == 0 {
+		expected = req.Msg.GetExpectedVersion()
+	}
+	result, err := s.registry.ApplyRoutePlan(wsID, plan, expected, req.Msg.GetIdempotencyKey(), correlationID(req.Msg.GetCorrelationId(), req.Header()))
+	if err != nil {
+		code := classifyRegistryError(err)
+		if errors.Is(err, services.ErrRouteVersionConflict) || errors.Is(err, services.ErrRouteIdempotencyConflict) || strings.Contains(strings.ToLower(err.Error()), "route conflict") {
+			code = connect.CodeFailedPrecondition
+		}
+		errorCode := structuredErrorCode(code)
+		if errors.Is(err, services.ErrRouteVersionConflict) || errors.Is(err, services.ErrRouteIdempotencyConflict) {
+			errorCode = rementorv1.ErrorCode_ERROR_CODE_CONFLICT
+		}
+		return nil, newRPCErrorWithStructured(code, err, errorCode)
+	}
+	return connect.NewResponse(&rementorv1.ApplyRouteResponse{
+		Changed:            result.Changed,
+		Plan:               routePlanToProto(result.Plan),
+		Routes:             routeListToProto(result.Routes),
+		Operation:          toProtoOperation(result.Operation),
+		Verified:           result.Verified,
+		VerificationStatus: result.Verification,
+	}), nil
+}
+
+func (s *ControlPlaneService) SyncRoute(ctx context.Context, req *connect.Request[rementorv1.SyncRouteRequest]) (*connect.Response[rementorv1.SyncRouteResponse], error) {
+	// Sync is a repair operation by default. An explicit repair=false performs
+	// a read-only drift check.
+	repair := true
+	if req.Msg.Repair != nil {
+		repair = req.Msg.GetRepair()
+	}
+	result, err := s.registry.SyncRoute(req.Msg.GetWorkspaceId(), correlationID(req.Msg.GetCorrelationId(), req.Header()), repair)
+	if err != nil {
+		return nil, newRPCError(classifyRegistryError(err), err)
+	}
+	return connect.NewResponse(&rementorv1.SyncRouteResponse{
+		WorkspaceId:           result.WorkspaceID,
+		Changed:               result.Changed,
+		Verified:              result.Verified,
+		Status:                result.Status,
+		DesiredRouteVersion:   &rementorv1.RouteVersion{Value: result.DesiredRouteVersion},
+		EffectiveRouteVersion: &rementorv1.RouteVersion{Value: result.EffectiveRouteVersion},
+		Routes:                routeListToProto(result.Routes),
+		Warnings:              routeWarningsToProto(result.Warnings),
+		Operation:             toProtoOperation(result.Operation),
+	}), nil
+}
+
+func routeModeString(mode rementorv1.RouteMode) (string, error) {
+	switch mode {
+	case rementorv1.RouteMode_ROUTE_MODE_LOCAL:
+		return "local", nil
+	case rementorv1.RouteMode_ROUTE_MODE_REMOTE:
+		return "remote", nil
+	default:
+		return "", fmt.Errorf("desired route mode must be local or remote")
+	}
+}
+
+func routeModeProto(mode string) rementorv1.RouteMode {
+	switch strings.ToLower(strings.TrimSpace(mode)) {
+	case "local":
+		return rementorv1.RouteMode_ROUTE_MODE_LOCAL
+	case "remote":
+		return rementorv1.RouteMode_ROUTE_MODE_REMOTE
+	case "fallback":
+		return rementorv1.RouteMode_ROUTE_MODE_FALLBACK
+	default:
+		return rementorv1.RouteMode_ROUTE_MODE_UNSPECIFIED
+	}
+}
+
+func routeToProto(route services.Route) *rementorv1.NormalizedRoute {
+	return &rementorv1.NormalizedRoute{
+		WorkspaceId:      route.WorkspaceID,
+		Environment:      route.Environment,
+		PublicHost:       route.PublicHost,
+		Pattern:          route.Pattern,
+		CanonicalAppId:   route.CanonicalAppID,
+		ServiceId:        route.ServiceID,
+		Repository:       route.Repository,
+		DesiredMode:      routeModeProto(route.DesiredMode),
+		EffectiveMode:    routeModeProto(route.EffectiveMode),
+		Target:           route.Target,
+		LocalTarget:      route.LocalTarget,
+		RemoteTarget:     route.RemoteTarget,
+		RemoteFallback:   route.RemoteFallback,
+		UpstreamContext:  route.UpstreamContext,
+		Precedence:       int32(route.Precedence),
+		PrecedenceReason: route.PrecedenceReason,
+		Exact:            route.Exact,
+	}
+}
+
+func routeListToProto(routes []services.Route) []*rementorv1.NormalizedRoute {
+	result := make([]*rementorv1.NormalizedRoute, 0, len(routes))
+	for _, route := range routes {
+		result = append(result, routeToProto(route))
+	}
+	return result
+}
+
+func routeWarningToProto(warning services.RouteWarning) *rementorv1.RouteWarning {
+	return &rementorv1.RouteWarning{Code: warning.Code, Message: warning.Message}
+}
+
+func routeWarningsToProto(warnings []services.RouteWarning) []*rementorv1.RouteWarning {
+	result := make([]*rementorv1.RouteWarning, 0, len(warnings))
+	for _, warning := range warnings {
+		result = append(result, routeWarningToProto(warning))
+	}
+	return result
+}
+
+func routeConflictToProto(conflict services.RouteConflict) *rementorv1.RouteConflict {
+	return &rementorv1.RouteConflict{WorkspaceId: conflict.WorkspaceID, Environment: conflict.Environment, PublicHost: conflict.PublicHost, Pattern: conflict.Pattern, AppId: conflict.AppID, ConflictingAppId: conflict.ConflictingAppID, WinningAppId: conflict.WinningAppID, Reason: conflict.Reason}
+}
+
+func routeConflictsToProto(conflicts []services.RouteConflict) []*rementorv1.RouteConflict {
+	result := make([]*rementorv1.RouteConflict, 0, len(conflicts))
+	for _, conflict := range conflicts {
+		result = append(result, routeConflictToProto(conflict))
+	}
+	return result
+}
+
+func routeChangeToProto(change services.RouteChange) *rementorv1.RouteChange {
+	result := &rementorv1.RouteChange{ApplicationId: change.ApplicationID}
+	if change.Before != nil {
+		result.Before = routeToProto(*change.Before)
+	}
+	if change.After != nil {
+		result.After = routeToProto(*change.After)
+	}
+	return result
+}
+
+func routePlanToProto(plan services.RoutePlan) *rementorv1.RoutePlan {
+	result := &rementorv1.RoutePlan{
+		WorkspaceId:      plan.WorkspaceID,
+		Environment:      plan.Environment,
+		BaseRouteVersion: &rementorv1.RouteVersion{Value: plan.BaseRouteVersion},
+		BaseVersion:      plan.BaseRouteVersion,
+		ApplicationId:    plan.ApplicationID,
+		DesiredMode:      routeModeProto(plan.DesiredMode),
+		BeforeRoutes:     routeListToProto(plan.Before),
+		AfterRoutes:      routeListToProto(plan.After),
+		Fingerprint:      plan.Fingerprint,
+	}
+	if plan.RoutePattern != nil {
+		value := *plan.RoutePattern
+		result.RoutePattern = &value
+	}
+	for _, change := range plan.Changes {
+		result.Changes = append(result.Changes, routeChangeToProto(change))
+	}
+	result.Warnings = routeWarningsToProto(plan.Warnings)
+	result.Conflicts = routeConflictsToProto(plan.Conflicts)
+	return result
+}
+
+func normalizedRouteFromProto(route *rementorv1.NormalizedRoute) services.Route {
+	if route == nil {
+		return services.Route{}
+	}
+	return services.Route{WorkspaceID: route.GetWorkspaceId(), Environment: route.GetEnvironment(), PublicHost: route.GetPublicHost(), Pattern: route.GetPattern(), CanonicalAppID: route.GetCanonicalAppId(), ServiceID: route.GetServiceId(), Repository: route.GetRepository(), DesiredMode: routeModeStringUnsafe(route.GetDesiredMode()), EffectiveMode: routeModeStringUnsafe(route.GetEffectiveMode()), Target: route.GetTarget(), LocalTarget: route.GetLocalTarget(), RemoteTarget: route.GetRemoteTarget(), RemoteFallback: route.GetRemoteFallback(), UpstreamContext: route.GetUpstreamContext(), Precedence: int(route.GetPrecedence()), PrecedenceReason: route.GetPrecedenceReason(), Exact: route.GetExact()}
+}
+
+func routeModeStringUnsafe(mode rementorv1.RouteMode) string {
+	switch mode {
+	case rementorv1.RouteMode_ROUTE_MODE_LOCAL:
+		return "local"
+	case rementorv1.RouteMode_ROUTE_MODE_REMOTE:
+		return "remote"
+	case rementorv1.RouteMode_ROUTE_MODE_FALLBACK:
+		return "fallback"
+	default:
+		return ""
+	}
+}
+
+func routePlanFromProto(plan *rementorv1.RoutePlan) (services.RoutePlan, error) {
+	if plan == nil {
+		return services.RoutePlan{}, fmt.Errorf("route plan is required")
+	}
+	mode, err := routeModeString(plan.GetDesiredMode())
+	if err != nil {
+		return services.RoutePlan{}, err
+	}
+	result := services.RoutePlan{WorkspaceID: plan.GetWorkspaceId(), Environment: plan.GetEnvironment(), ApplicationID: plan.GetApplicationId(), DesiredMode: mode, Fingerprint: plan.GetFingerprint()}
+	if plan.GetBaseRouteVersion() != nil {
+		result.BaseRouteVersion = plan.GetBaseRouteVersion().GetValue()
+	} else {
+		result.BaseRouteVersion = plan.GetBaseVersion()
+	}
+	if plan.RoutePattern != nil {
+		value := plan.GetRoutePattern()
+		result.RoutePattern = &value
+	}
+	for _, route := range plan.GetBeforeRoutes() {
+		result.Before = append(result.Before, normalizedRouteFromProto(route))
+	}
+	for _, route := range plan.GetAfterRoutes() {
+		result.After = append(result.After, normalizedRouteFromProto(route))
+	}
+	for _, warning := range plan.GetWarnings() {
+		result.Warnings = append(result.Warnings, services.RouteWarning{Code: warning.GetCode(), Message: warning.GetMessage()})
+	}
+	for _, conflict := range plan.GetConflicts() {
+		result.Conflicts = append(result.Conflicts, services.RouteConflict{WorkspaceID: conflict.GetWorkspaceId(), Environment: conflict.GetEnvironment(), PublicHost: conflict.GetPublicHost(), Pattern: conflict.GetPattern(), AppID: conflict.GetAppId(), ConflictingAppID: conflict.GetConflictingAppId(), WinningAppID: conflict.GetWinningAppId(), Reason: conflict.GetReason()})
+	}
+	return result, nil
+}
+
+func routeResolutionToProto(resolution services.RouteResolution) *rementorv1.RouteResolution {
+	result := &rementorv1.RouteResolution{WorkspaceId: resolution.WorkspaceID, Environment: resolution.Environment, Host: resolution.Host, Path: resolution.Path, MatchingPattern: resolution.MatchingPattern, CanonicalAppId: resolution.CanonicalAppID, ServiceId: resolution.ServiceID, Target: resolution.Target, Precedence: int32(resolution.Precedence), PrecedenceReason: resolution.PrecedenceReason}
+	if resolution.Route != nil {
+		result.Route = routeToProto(*resolution.Route)
+	}
+	return result
+}
+
+func newRPCErrorWithStructured(code connect.Code, err error, structuredCode rementorv1.ErrorCode) *connect.Error {
+	if err == nil {
+		err = fmt.Errorf("request failed")
+	}
+	rpcErr := connect.NewError(code, err)
+	metadata := map[string]string{}
+	var versionConflict *services.RouteVersionConflictError
+	if errors.As(err, &versionConflict) {
+		metadata["workspaceId"] = versionConflict.WorkspaceID
+		metadata["expectedVersion"] = fmt.Sprintf("%d", versionConflict.Expected)
+		metadata["actualVersion"] = fmt.Sprintf("%d", versionConflict.Actual)
+	}
+	detail, detailErr := connect.NewErrorDetail(&rementorv1.StructuredError{Code: structuredCode, Message: err.Error(), Metadata: metadata})
+	if detailErr == nil {
+		rpcErr.AddDetail(detail)
+	}
+	return rpcErr
+}

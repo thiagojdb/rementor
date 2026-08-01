@@ -84,6 +84,16 @@ export enum RouteOperationKind {
    * @generated from enum value: ROUTE_OPERATION_KIND_DELETE = 6;
    */
   DELETE = 6,
+
+  /**
+   * @generated from enum value: ROUTE_OPERATION_KIND_ROUTE_APPLY = 7;
+   */
+  ROUTE_APPLY = 7,
+
+  /**
+   * @generated from enum value: ROUTE_OPERATION_KIND_ROUTE_SYNC = 8;
+   */
+  ROUTE_SYNC = 8,
 }
 // Retrieve enum metadata with: proto3.getEnumType(RouteOperationKind)
 proto3.util.setEnumType(RouteOperationKind, "rementor.v1.RouteOperationKind", [
@@ -94,6 +104,8 @@ proto3.util.setEnumType(RouteOperationKind, "rementor.v1.RouteOperationKind", [
   { no: 4, name: "ROUTE_OPERATION_KIND_UPDATE_PATTERN" },
   { no: 5, name: "ROUTE_OPERATION_KIND_UPSERT" },
   { no: 6, name: "ROUTE_OPERATION_KIND_DELETE" },
+  { no: 7, name: "ROUTE_OPERATION_KIND_ROUTE_APPLY" },
+  { no: 8, name: "ROUTE_OPERATION_KIND_ROUTE_SYNC" },
 ]);
 
 /**
@@ -2417,6 +2429,1106 @@ export class UpdateRoutePatternResponse extends Message<UpdateRoutePatternRespon
 
   static equals(a: UpdateRoutePatternResponse | PlainMessage<UpdateRoutePatternResponse> | undefined, b: UpdateRoutePatternResponse | PlainMessage<UpdateRoutePatternResponse> | undefined): boolean {
     return proto3.util.equals(UpdateRoutePatternResponse, a, b);
+  }
+}
+
+/**
+ * NormalizedRoute is the canonical route entry used by the route lifecycle
+ * operations. Pattern retains the wildcard notation understood by Rementor
+ * (for example /users/*); precedence is higher for exact and longer matches.
+ *
+ * @generated from message rementor.v1.NormalizedRoute
+ */
+export class NormalizedRoute extends Message<NormalizedRoute> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  /**
+   * @generated from field: string environment = 2;
+   */
+  environment = "";
+
+  /**
+   * @generated from field: string public_host = 3;
+   */
+  publicHost = "";
+
+  /**
+   * @generated from field: string pattern = 4;
+   */
+  pattern = "";
+
+  /**
+   * @generated from field: string canonical_app_id = 5;
+   */
+  canonicalAppId = "";
+
+  /**
+   * @generated from field: string service_id = 6;
+   */
+  serviceId = "";
+
+  /**
+   * @generated from field: string repository = 7;
+   */
+  repository = "";
+
+  /**
+   * @generated from field: rementor.v1.RouteMode desired_mode = 8;
+   */
+  desiredMode = RouteMode.UNSPECIFIED;
+
+  /**
+   * @generated from field: rementor.v1.RouteMode effective_mode = 9;
+   */
+  effectiveMode = RouteMode.UNSPECIFIED;
+
+  /**
+   * @generated from field: string target = 10;
+   */
+  target = "";
+
+  /**
+   * @generated from field: string local_target = 11;
+   */
+  localTarget = "";
+
+  /**
+   * @generated from field: string remote_target = 12;
+   */
+  remoteTarget = "";
+
+  /**
+   * @generated from field: bool remote_fallback = 13;
+   */
+  remoteFallback = false;
+
+  /**
+   * @generated from field: string upstream_context = 14;
+   */
+  upstreamContext = "";
+
+  /**
+   * @generated from field: int32 precedence = 15;
+   */
+  precedence = 0;
+
+  /**
+   * @generated from field: string precedence_reason = 16;
+   */
+  precedenceReason = "";
+
+  /**
+   * @generated from field: bool exact = 17;
+   */
+  exact = false;
+
+  constructor(data?: PartialMessage<NormalizedRoute>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.NormalizedRoute";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "environment", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "public_host", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "pattern", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "canonical_app_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "service_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "repository", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 8, name: "desired_mode", kind: "enum", T: proto3.getEnumType(RouteMode) },
+    { no: 9, name: "effective_mode", kind: "enum", T: proto3.getEnumType(RouteMode) },
+    { no: 10, name: "target", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 11, name: "local_target", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 12, name: "remote_target", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 13, name: "remote_fallback", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 14, name: "upstream_context", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 15, name: "precedence", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 16, name: "precedence_reason", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 17, name: "exact", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): NormalizedRoute {
+    return new NormalizedRoute().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): NormalizedRoute {
+    return new NormalizedRoute().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): NormalizedRoute {
+    return new NormalizedRoute().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: NormalizedRoute | PlainMessage<NormalizedRoute> | undefined, b: NormalizedRoute | PlainMessage<NormalizedRoute> | undefined): boolean {
+    return proto3.util.equals(NormalizedRoute, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.RouteWarning
+ */
+export class RouteWarning extends Message<RouteWarning> {
+  /**
+   * @generated from field: string code = 1;
+   */
+  code = "";
+
+  /**
+   * @generated from field: string message = 2;
+   */
+  message = "";
+
+  constructor(data?: PartialMessage<RouteWarning>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.RouteWarning";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "code", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RouteWarning {
+    return new RouteWarning().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): RouteWarning {
+    return new RouteWarning().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): RouteWarning {
+    return new RouteWarning().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: RouteWarning | PlainMessage<RouteWarning> | undefined, b: RouteWarning | PlainMessage<RouteWarning> | undefined): boolean {
+    return proto3.util.equals(RouteWarning, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.RouteConflict
+ */
+export class RouteConflict extends Message<RouteConflict> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  /**
+   * @generated from field: string environment = 2;
+   */
+  environment = "";
+
+  /**
+   * @generated from field: string public_host = 3;
+   */
+  publicHost = "";
+
+  /**
+   * @generated from field: string pattern = 4;
+   */
+  pattern = "";
+
+  /**
+   * @generated from field: string app_id = 5;
+   */
+  appId = "";
+
+  /**
+   * @generated from field: string conflicting_app_id = 6;
+   */
+  conflictingAppId = "";
+
+  /**
+   * @generated from field: string winning_app_id = 7;
+   */
+  winningAppId = "";
+
+  /**
+   * @generated from field: string reason = 8;
+   */
+  reason = "";
+
+  constructor(data?: PartialMessage<RouteConflict>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.RouteConflict";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "environment", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "public_host", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "pattern", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "app_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "conflicting_app_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "winning_app_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 8, name: "reason", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RouteConflict {
+    return new RouteConflict().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): RouteConflict {
+    return new RouteConflict().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): RouteConflict {
+    return new RouteConflict().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: RouteConflict | PlainMessage<RouteConflict> | undefined, b: RouteConflict | PlainMessage<RouteConflict> | undefined): boolean {
+    return proto3.util.equals(RouteConflict, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.RouteChange
+ */
+export class RouteChange extends Message<RouteChange> {
+  /**
+   * @generated from field: string application_id = 1;
+   */
+  applicationId = "";
+
+  /**
+   * @generated from field: rementor.v1.NormalizedRoute before = 2;
+   */
+  before?: NormalizedRoute;
+
+  /**
+   * @generated from field: rementor.v1.NormalizedRoute after = 3;
+   */
+  after?: NormalizedRoute;
+
+  constructor(data?: PartialMessage<RouteChange>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.RouteChange";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "application_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "before", kind: "message", T: NormalizedRoute },
+    { no: 3, name: "after", kind: "message", T: NormalizedRoute },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RouteChange {
+    return new RouteChange().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): RouteChange {
+    return new RouteChange().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): RouteChange {
+    return new RouteChange().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: RouteChange | PlainMessage<RouteChange> | undefined, b: RouteChange | PlainMessage<RouteChange> | undefined): boolean {
+    return proto3.util.equals(RouteChange, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.RoutePlan
+ */
+export class RoutePlan extends Message<RoutePlan> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  /**
+   * @generated from field: string environment = 2;
+   */
+  environment = "";
+
+  /**
+   * @generated from field: rementor.v1.RouteVersion base_route_version = 3;
+   */
+  baseRouteVersion?: RouteVersion;
+
+  /**
+   * @generated from field: string application_id = 4;
+   */
+  applicationId = "";
+
+  /**
+   * @generated from field: rementor.v1.RouteMode desired_mode = 5;
+   */
+  desiredMode = RouteMode.UNSPECIFIED;
+
+  /**
+   * @generated from field: optional string route_pattern = 6;
+   */
+  routePattern?: string;
+
+  /**
+   * @generated from field: repeated rementor.v1.NormalizedRoute before_routes = 7;
+   */
+  beforeRoutes: NormalizedRoute[] = [];
+
+  /**
+   * @generated from field: repeated rementor.v1.NormalizedRoute after_routes = 8;
+   */
+  afterRoutes: NormalizedRoute[] = [];
+
+  /**
+   * @generated from field: repeated rementor.v1.RouteChange changes = 9;
+   */
+  changes: RouteChange[] = [];
+
+  /**
+   * @generated from field: repeated rementor.v1.RouteWarning warnings = 10;
+   */
+  warnings: RouteWarning[] = [];
+
+  /**
+   * @generated from field: repeated rementor.v1.RouteConflict conflicts = 11;
+   */
+  conflicts: RouteConflict[] = [];
+
+  /**
+   * @generated from field: string fingerprint = 12;
+   */
+  fingerprint = "";
+
+  /**
+   * @generated from field: uint64 base_version = 13;
+   */
+  baseVersion = protoInt64.zero;
+
+  constructor(data?: PartialMessage<RoutePlan>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.RoutePlan";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "environment", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "base_route_version", kind: "message", T: RouteVersion },
+    { no: 4, name: "application_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "desired_mode", kind: "enum", T: proto3.getEnumType(RouteMode) },
+    { no: 6, name: "route_pattern", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 7, name: "before_routes", kind: "message", T: NormalizedRoute, repeated: true },
+    { no: 8, name: "after_routes", kind: "message", T: NormalizedRoute, repeated: true },
+    { no: 9, name: "changes", kind: "message", T: RouteChange, repeated: true },
+    { no: 10, name: "warnings", kind: "message", T: RouteWarning, repeated: true },
+    { no: 11, name: "conflicts", kind: "message", T: RouteConflict, repeated: true },
+    { no: 12, name: "fingerprint", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 13, name: "base_version", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RoutePlan {
+    return new RoutePlan().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): RoutePlan {
+    return new RoutePlan().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): RoutePlan {
+    return new RoutePlan().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: RoutePlan | PlainMessage<RoutePlan> | undefined, b: RoutePlan | PlainMessage<RoutePlan> | undefined): boolean {
+    return proto3.util.equals(RoutePlan, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.RouteResolution
+ */
+export class RouteResolution extends Message<RouteResolution> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  /**
+   * @generated from field: string environment = 2;
+   */
+  environment = "";
+
+  /**
+   * @generated from field: string host = 3;
+   */
+  host = "";
+
+  /**
+   * @generated from field: string path = 4;
+   */
+  path = "";
+
+  /**
+   * @generated from field: rementor.v1.NormalizedRoute route = 5;
+   */
+  route?: NormalizedRoute;
+
+  /**
+   * @generated from field: string matching_pattern = 6;
+   */
+  matchingPattern = "";
+
+  /**
+   * @generated from field: string canonical_app_id = 7;
+   */
+  canonicalAppId = "";
+
+  /**
+   * @generated from field: string service_id = 8;
+   */
+  serviceId = "";
+
+  /**
+   * @generated from field: string target = 9;
+   */
+  target = "";
+
+  /**
+   * @generated from field: int32 precedence = 10;
+   */
+  precedence = 0;
+
+  /**
+   * @generated from field: string precedence_reason = 11;
+   */
+  precedenceReason = "";
+
+  constructor(data?: PartialMessage<RouteResolution>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.RouteResolution";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "environment", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "host", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "path", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "route", kind: "message", T: NormalizedRoute },
+    { no: 6, name: "matching_pattern", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "canonical_app_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 8, name: "service_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 9, name: "target", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 10, name: "precedence", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 11, name: "precedence_reason", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RouteResolution {
+    return new RouteResolution().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): RouteResolution {
+    return new RouteResolution().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): RouteResolution {
+    return new RouteResolution().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: RouteResolution | PlainMessage<RouteResolution> | undefined, b: RouteResolution | PlainMessage<RouteResolution> | undefined): boolean {
+    return proto3.util.equals(RouteResolution, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.GetRouteRequest
+ */
+export class GetRouteRequest extends Message<GetRouteRequest> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  constructor(data?: PartialMessage<GetRouteRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.GetRouteRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetRouteRequest {
+    return new GetRouteRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetRouteRequest {
+    return new GetRouteRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetRouteRequest {
+    return new GetRouteRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetRouteRequest | PlainMessage<GetRouteRequest> | undefined, b: GetRouteRequest | PlainMessage<GetRouteRequest> | undefined): boolean {
+    return proto3.util.equals(GetRouteRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.GetRouteResponse
+ */
+export class GetRouteResponse extends Message<GetRouteResponse> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  /**
+   * @generated from field: string environment = 2;
+   */
+  environment = "";
+
+  /**
+   * @generated from field: rementor.v1.RouteVersion route_version = 3;
+   */
+  routeVersion?: RouteVersion;
+
+  /**
+   * @generated from field: repeated rementor.v1.NormalizedRoute routes = 4;
+   */
+  routes: NormalizedRoute[] = [];
+
+  /**
+   * @generated from field: repeated rementor.v1.RouteWarning warnings = 5;
+   */
+  warnings: RouteWarning[] = [];
+
+  /**
+   * @generated from field: repeated rementor.v1.RouteConflict conflicts = 6;
+   */
+  conflicts: RouteConflict[] = [];
+
+  constructor(data?: PartialMessage<GetRouteResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.GetRouteResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "environment", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "route_version", kind: "message", T: RouteVersion },
+    { no: 4, name: "routes", kind: "message", T: NormalizedRoute, repeated: true },
+    { no: 5, name: "warnings", kind: "message", T: RouteWarning, repeated: true },
+    { no: 6, name: "conflicts", kind: "message", T: RouteConflict, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetRouteResponse {
+    return new GetRouteResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetRouteResponse {
+    return new GetRouteResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetRouteResponse {
+    return new GetRouteResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetRouteResponse | PlainMessage<GetRouteResponse> | undefined, b: GetRouteResponse | PlainMessage<GetRouteResponse> | undefined): boolean {
+    return proto3.util.equals(GetRouteResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.ResolveRouteRequest
+ */
+export class ResolveRouteRequest extends Message<ResolveRouteRequest> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  /**
+   * @generated from field: string host = 2;
+   */
+  host = "";
+
+  /**
+   * @generated from field: string path = 3;
+   */
+  path = "";
+
+  constructor(data?: PartialMessage<ResolveRouteRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.ResolveRouteRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "host", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "path", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ResolveRouteRequest {
+    return new ResolveRouteRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ResolveRouteRequest {
+    return new ResolveRouteRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ResolveRouteRequest {
+    return new ResolveRouteRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ResolveRouteRequest | PlainMessage<ResolveRouteRequest> | undefined, b: ResolveRouteRequest | PlainMessage<ResolveRouteRequest> | undefined): boolean {
+    return proto3.util.equals(ResolveRouteRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.ResolveRouteResponse
+ */
+export class ResolveRouteResponse extends Message<ResolveRouteResponse> {
+  /**
+   * @generated from field: rementor.v1.RouteResolution resolution = 1;
+   */
+  resolution?: RouteResolution;
+
+  constructor(data?: PartialMessage<ResolveRouteResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.ResolveRouteResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "resolution", kind: "message", T: RouteResolution },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ResolveRouteResponse {
+    return new ResolveRouteResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ResolveRouteResponse {
+    return new ResolveRouteResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ResolveRouteResponse {
+    return new ResolveRouteResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ResolveRouteResponse | PlainMessage<ResolveRouteResponse> | undefined, b: ResolveRouteResponse | PlainMessage<ResolveRouteResponse> | undefined): boolean {
+    return proto3.util.equals(ResolveRouteResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.PlanRouteRequest
+ */
+export class PlanRouteRequest extends Message<PlanRouteRequest> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  /**
+   * @generated from field: string application_ref = 2;
+   */
+  applicationRef = "";
+
+  /**
+   * @generated from field: rementor.v1.RouteMode desired_mode = 3;
+   */
+  desiredMode = RouteMode.UNSPECIFIED;
+
+  /**
+   * @generated from field: optional string route_pattern = 4;
+   */
+  routePattern?: string;
+
+  /**
+   * @generated from field: rementor.v1.RouteVersion expected_route_version = 5;
+   */
+  expectedRouteVersion?: RouteVersion;
+
+  /**
+   * @generated from field: string correlation_id = 6;
+   */
+  correlationId = "";
+
+  /**
+   * @generated from field: uint64 expected_version = 7;
+   */
+  expectedVersion = protoInt64.zero;
+
+  constructor(data?: PartialMessage<PlanRouteRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.PlanRouteRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "application_ref", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "desired_mode", kind: "enum", T: proto3.getEnumType(RouteMode) },
+    { no: 4, name: "route_pattern", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 5, name: "expected_route_version", kind: "message", T: RouteVersion },
+    { no: 6, name: "correlation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "expected_version", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PlanRouteRequest {
+    return new PlanRouteRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PlanRouteRequest {
+    return new PlanRouteRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PlanRouteRequest {
+    return new PlanRouteRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: PlanRouteRequest | PlainMessage<PlanRouteRequest> | undefined, b: PlanRouteRequest | PlainMessage<PlanRouteRequest> | undefined): boolean {
+    return proto3.util.equals(PlanRouteRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.PlanRouteResponse
+ */
+export class PlanRouteResponse extends Message<PlanRouteResponse> {
+  /**
+   * @generated from field: rementor.v1.RoutePlan plan = 1;
+   */
+  plan?: RoutePlan;
+
+  constructor(data?: PartialMessage<PlanRouteResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.PlanRouteResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "plan", kind: "message", T: RoutePlan },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PlanRouteResponse {
+    return new PlanRouteResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PlanRouteResponse {
+    return new PlanRouteResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PlanRouteResponse {
+    return new PlanRouteResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: PlanRouteResponse | PlainMessage<PlanRouteResponse> | undefined, b: PlanRouteResponse | PlainMessage<PlanRouteResponse> | undefined): boolean {
+    return proto3.util.equals(PlanRouteResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.ApplyRouteRequest
+ */
+export class ApplyRouteRequest extends Message<ApplyRouteRequest> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  /**
+   * @generated from field: rementor.v1.RoutePlan plan = 2;
+   */
+  plan?: RoutePlan;
+
+  /**
+   * @generated from field: rementor.v1.RouteVersion expected_route_version = 3;
+   */
+  expectedRouteVersion?: RouteVersion;
+
+  /**
+   * @generated from field: string idempotency_key = 4;
+   */
+  idempotencyKey = "";
+
+  /**
+   * @generated from field: string correlation_id = 5;
+   */
+  correlationId = "";
+
+  /**
+   * @generated from field: string application_ref = 6;
+   */
+  applicationRef = "";
+
+  /**
+   * @generated from field: rementor.v1.RouteMode desired_mode = 7;
+   */
+  desiredMode = RouteMode.UNSPECIFIED;
+
+  /**
+   * @generated from field: optional string route_pattern = 8;
+   */
+  routePattern?: string;
+
+  /**
+   * @generated from field: uint64 expected_version = 9;
+   */
+  expectedVersion = protoInt64.zero;
+
+  constructor(data?: PartialMessage<ApplyRouteRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.ApplyRouteRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "plan", kind: "message", T: RoutePlan },
+    { no: 3, name: "expected_route_version", kind: "message", T: RouteVersion },
+    { no: 4, name: "idempotency_key", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "correlation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "application_ref", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "desired_mode", kind: "enum", T: proto3.getEnumType(RouteMode) },
+    { no: 8, name: "route_pattern", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 9, name: "expected_version", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ApplyRouteRequest {
+    return new ApplyRouteRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ApplyRouteRequest {
+    return new ApplyRouteRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ApplyRouteRequest {
+    return new ApplyRouteRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ApplyRouteRequest | PlainMessage<ApplyRouteRequest> | undefined, b: ApplyRouteRequest | PlainMessage<ApplyRouteRequest> | undefined): boolean {
+    return proto3.util.equals(ApplyRouteRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.ApplyRouteResponse
+ */
+export class ApplyRouteResponse extends Message<ApplyRouteResponse> {
+  /**
+   * @generated from field: bool changed = 1;
+   */
+  changed = false;
+
+  /**
+   * @generated from field: rementor.v1.RoutePlan plan = 2;
+   */
+  plan?: RoutePlan;
+
+  /**
+   * @generated from field: repeated rementor.v1.NormalizedRoute routes = 3;
+   */
+  routes: NormalizedRoute[] = [];
+
+  /**
+   * @generated from field: rementor.v1.OperationMetadata operation = 4;
+   */
+  operation?: OperationMetadata;
+
+  /**
+   * @generated from field: bool verified = 5;
+   */
+  verified = false;
+
+  /**
+   * @generated from field: string verification_status = 6;
+   */
+  verificationStatus = "";
+
+  constructor(data?: PartialMessage<ApplyRouteResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.ApplyRouteResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "changed", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 2, name: "plan", kind: "message", T: RoutePlan },
+    { no: 3, name: "routes", kind: "message", T: NormalizedRoute, repeated: true },
+    { no: 4, name: "operation", kind: "message", T: OperationMetadata },
+    { no: 5, name: "verified", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 6, name: "verification_status", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ApplyRouteResponse {
+    return new ApplyRouteResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ApplyRouteResponse {
+    return new ApplyRouteResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ApplyRouteResponse {
+    return new ApplyRouteResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ApplyRouteResponse | PlainMessage<ApplyRouteResponse> | undefined, b: ApplyRouteResponse | PlainMessage<ApplyRouteResponse> | undefined): boolean {
+    return proto3.util.equals(ApplyRouteResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.SyncRouteRequest
+ */
+export class SyncRouteRequest extends Message<SyncRouteRequest> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  /**
+   * @generated from field: string correlation_id = 2;
+   */
+  correlationId = "";
+
+  /**
+   * @generated from field: optional bool repair = 3;
+   */
+  repair?: boolean;
+
+  constructor(data?: PartialMessage<SyncRouteRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.SyncRouteRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "correlation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "repair", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SyncRouteRequest {
+    return new SyncRouteRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SyncRouteRequest {
+    return new SyncRouteRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SyncRouteRequest {
+    return new SyncRouteRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: SyncRouteRequest | PlainMessage<SyncRouteRequest> | undefined, b: SyncRouteRequest | PlainMessage<SyncRouteRequest> | undefined): boolean {
+    return proto3.util.equals(SyncRouteRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.SyncRouteResponse
+ */
+export class SyncRouteResponse extends Message<SyncRouteResponse> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  /**
+   * @generated from field: bool changed = 2;
+   */
+  changed = false;
+
+  /**
+   * @generated from field: bool verified = 3;
+   */
+  verified = false;
+
+  /**
+   * @generated from field: string status = 4;
+   */
+  status = "";
+
+  /**
+   * @generated from field: rementor.v1.RouteVersion desired_route_version = 5;
+   */
+  desiredRouteVersion?: RouteVersion;
+
+  /**
+   * @generated from field: rementor.v1.RouteVersion effective_route_version = 6;
+   */
+  effectiveRouteVersion?: RouteVersion;
+
+  /**
+   * @generated from field: repeated rementor.v1.NormalizedRoute routes = 7;
+   */
+  routes: NormalizedRoute[] = [];
+
+  /**
+   * @generated from field: repeated rementor.v1.RouteWarning warnings = 8;
+   */
+  warnings: RouteWarning[] = [];
+
+  /**
+   * @generated from field: rementor.v1.OperationMetadata operation = 9;
+   */
+  operation?: OperationMetadata;
+
+  constructor(data?: PartialMessage<SyncRouteResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.SyncRouteResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "changed", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 3, name: "verified", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 4, name: "status", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "desired_route_version", kind: "message", T: RouteVersion },
+    { no: 6, name: "effective_route_version", kind: "message", T: RouteVersion },
+    { no: 7, name: "routes", kind: "message", T: NormalizedRoute, repeated: true },
+    { no: 8, name: "warnings", kind: "message", T: RouteWarning, repeated: true },
+    { no: 9, name: "operation", kind: "message", T: OperationMetadata },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SyncRouteResponse {
+    return new SyncRouteResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SyncRouteResponse {
+    return new SyncRouteResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SyncRouteResponse {
+    return new SyncRouteResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: SyncRouteResponse | PlainMessage<SyncRouteResponse> | undefined, b: SyncRouteResponse | PlainMessage<SyncRouteResponse> | undefined): boolean {
+    return proto3.util.equals(SyncRouteResponse, a, b);
   }
 }
 

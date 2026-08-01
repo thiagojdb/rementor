@@ -297,11 +297,11 @@ func (s *ControlPlaneService) SyncWorkspaceRouting(ctx context.Context, req *con
 	if s.registry.FindWorkspace(req.Msg.GetWorkspaceId()) == nil {
 		return nil, newRPCError(connect.CodeNotFound, fmt.Errorf("workspace not found"))
 	}
-	operation, err := s.registry.SyncRoutingWithMetadata(correlationID(req.Msg.GetCorrelationId(), req.Header()))
+	result, err := s.registry.SyncRoute(req.Msg.GetWorkspaceId(), correlationID(req.Msg.GetCorrelationId(), req.Header()), true)
 	if err != nil {
 		return nil, newRPCError(classifyRegistryError(err), err)
 	}
-	return connect.NewResponse(&rementorv1.SyncWorkspaceRoutingResponse{Status: "ok", Operation: toProtoOperation(operation)}), nil
+	return connect.NewResponse(&rementorv1.SyncWorkspaceRoutingResponse{Status: "ok", Operation: toProtoOperation(result.Operation)}), nil
 }
 
 func (s *ControlPlaneService) GetRoutePattern(ctx context.Context, req *connect.Request[rementorv1.GetRoutePatternRequest]) (*connect.Response[rementorv1.GetRoutePatternResponse], error) {
@@ -542,6 +542,10 @@ func operationKind(kind string) rementorv1.RouteOperationKind {
 		return rementorv1.RouteOperationKind_ROUTE_OPERATION_KIND_UPSERT
 	case "delete":
 		return rementorv1.RouteOperationKind_ROUTE_OPERATION_KIND_DELETE
+	case "route-apply":
+		return rementorv1.RouteOperationKind_ROUTE_OPERATION_KIND_ROUTE_APPLY
+	case "route-sync":
+		return rementorv1.RouteOperationKind_ROUTE_OPERATION_KIND_ROUTE_SYNC
 	default:
 		return rementorv1.RouteOperationKind_ROUTE_OPERATION_KIND_UNSPECIFIED
 	}
@@ -569,8 +573,8 @@ func toProtoOperation(operation *models.OperationMetadata) *rementorv1.Operation
 		OperationId:   operation.OperationID,
 		CorrelationId: operation.CorrelationID,
 		RouteVersion:  &rementorv1.RouteVersion{Value: operation.RouteVersion},
-		CreatedAt:      createdAt,
-		CompletedAt:    completedAt,
+		CreatedAt:     createdAt,
+		CompletedAt:   completedAt,
 		Kind:          operationKind(operation.Kind),
 	}
 }
