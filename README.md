@@ -204,6 +204,16 @@ Rementor writes generated routes to that XDG directory and verifies with
 before reloading. It does not edit `/etc/nginx/nginx.conf`, install sudoers
 rules, modify `/etc/hosts`, or configure DNS.
 
+Every generated proxy location adds `X-Rementor-*` response proof headers for
+the canonical app/service, workspace and environment, effective mode (`local`,
+`remote`, or `fallback`), route version, operation ID, and a validated
+correlation/request ID. Upstream copies of those headers are hidden before the
+Rementor values are added, and the proof headers are exposed to local browser
+origins through CORS. Send `X-Correlation-ID` or `X-Request-ID` to preserve a
+safe correlation value; otherwise nginx generates one. The
+`/__rementor/trace` path returns a small request-inspection payload through the
+control plane for debugging stale proxy projections.
+
 The container demo and the user-owned host nginx follow the same privilege
 boundary. Do not make a privileged nginx master load files from a directory
 writable by untrusted users.

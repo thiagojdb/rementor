@@ -37,7 +37,27 @@ type Location struct {
 	PassHeaders   bool
 	StripOrigin   bool
 	ProxyRequests bool
+	Proof         ResponseProof
+	Trace         bool
 }
+
+// ResponseProof is the immutable route metadata emitted by nginx. The values
+// are rendered into the generated configuration so a response proves which
+// route projection served it, even when that projection is stale.
+type ResponseProof struct {
+	AppID         string
+	ServiceID     string
+	Workspace     string
+	Environment   string
+	EffectiveMode string
+	RouteVersion  string
+	OperationID   string
+}
+
+const (
+	TracePath      = "/__rementor/trace"
+	traceAliasPath = "/_rementor/trace"
+)
 
 type Proxy struct {
 	Scheme         string
@@ -100,6 +120,7 @@ func buildConfig(workspaces []*models.Workspace, rementorDomain string) Config {
 			Proxy:       localProxy(models.DefaultRementorPort, false, ""),
 			AddCORS:     true,
 			PassHeaders: true,
+			Proof:       controlPlaneProof(),
 		}},
 	}}
 
@@ -109,15 +130,18 @@ func buildConfig(workspaces []*models.Workspace, rementorDomain string) Config {
 				if app.Domain == "" || app.Port == 0 {
 					continue
 				}
+				locations := traceLocations(ws)
+				locations = append(locations, Location{
+					Pattern:     "/",
+					Proxy:       localProxy(app.Port, false, ""),
+					AddCORS:     true,
+					PassHeaders: true,
+					Proof:       routeProof(ws, app, "local"),
+				})
 				servers = append(servers, Server{
-					Name:   app.Domain,
-					Listen: listen,
-					Locations: []Location{{
-						Pattern:     "/",
-						Proxy:       localProxy(app.Port, false, ""),
-						AddCORS:     true,
-						PassHeaders: true,
-					}},
+					Name:      app.Domain,
+					Listen:    listen,
+					Locations: locations,
 				})
 			}
 			continue
@@ -136,7 +160,7 @@ func buildConfig(workspaces []*models.Workspace, rementorDomain string) Config {
 }
 
 func routingServer(serverName string, ws *models.Workspace, domainApp *models.Application, listen []string) Server {
-	locations := make([]Location, 0)
+	locations := traceLocations(ws)
 	defaultRemoteBaseUrl := ws.GetDefaultRemoteBaseURL()
 
 	if domainApp == nil {
@@ -149,7 +173,7 @@ func routingServer(serverName string, ws *models.Workspace, domainApp *models.Ap
 			}
 		}
 		for _, app := range ws.Applications {
-			if app.Domain != "" || app.Active {
+			if app.Domain != "" || (app.Active && app.Port > 0) {
 				continue
 			}
 			remoteBase := app.RemoteBaseUrl
@@ -159,7 +183,8 @@ func routingServer(serverName string, ws *models.Workspace, domainApp *models.Ap
 			if remoteBase == "" {
 				continue
 			}
-			locations = append(locations, remoteAppLocations(ws, appWithRemoteBase(app, remoteBase))...)
+			routingApp := appWithRemoteBase(app, remoteBase)
+			locations = append(locations, remoteAppLocationsWithMode(ws, routingApp, remoteEffectiveMode(app))...)
 		}
 		locations = append(locations, fallbackLocation(ws, nil))
 	} else {
@@ -178,17 +203,58 @@ func routingServer(serverName string, ws *models.Workspace, domainApp *models.Ap
 			if remoteBase == "" {
 				continue
 			}
-			locations = append(locations, remoteAppLocations(ws, appWithRemoteBase(app, remoteBase))...)
+			routingApp := appWithRemoteBase(app, remoteBase)
+			locations = append(locations, remoteAppLocationsWithMode(ws, routingApp, remoteEffectiveMode(app))...)
 		}
 		if domainApp.Active && domainApp.Port > 0 {
 			locations = append(locations, localAppLocations(ws, domainApp)...)
 		} else if domainApp.RemoteBaseUrl != "" {
-			locations = append(locations, remoteAppLocations(ws, domainApp)...)
+			locations = append(locations, remoteAppLocationsWithMode(ws, domainApp, remoteEffectiveMode(domainApp))...)
 		}
 		locations = append(locations, fallbackLocation(ws, domainApp))
 	}
 
 	return Server{Name: serverName, Listen: listen, Locations: dedupeLocations(locations)}
+}
+
+func controlPlaneProof() ResponseProof {
+	return ResponseProof{
+		AppID:         "rementor",
+		ServiceID:     "rementor-control-plane",
+		Workspace:     "control-plane",
+		Environment:   "control-plane",
+		EffectiveMode: "local",
+		RouteVersion:  "0",
+		OperationID:   "none",
+	}
+}
+
+func traceLocation(ws *models.Workspace) Location {
+	proof := controlPlaneProof()
+	if ws != nil {
+		proof.Workspace = ws.WorkspaceID
+		proof.Environment = ws.WorkspaceID
+		proof.RouteVersion = routeVersion(ws.Route.RouteVersion)
+		if ws.Route.OperationID != "" {
+			proof.OperationID = ws.Route.OperationID
+		}
+	}
+	return Location{
+		Modifier:    "=",
+		Pattern:     TracePath,
+		Proxy:       localProxy(models.DefaultRementorPort, false, ""),
+		AddCORS:     true,
+		PassHeaders: true,
+		Proof:       proof,
+		Trace:       true,
+	}
+}
+
+func traceLocations(ws *models.Workspace) []Location {
+	primary := traceLocation(ws)
+	alias := primary
+	alias.Pattern = traceAliasPath
+	return []Location{primary, alias}
 }
 
 func listenDirectives() []string {
@@ -244,35 +310,54 @@ func appWithRemoteBase(app *models.Application, remoteBase string) *models.Appli
 		Active:        app.Active,
 		RoutePattern:  app.RoutePattern,
 		StripOrigin:   app.StripOrigin,
+		Route:         app.Route,
+		LastOperation: app.LastOperation,
 	}
 }
 
 func localAppLocations(ws *models.Workspace, app *models.Application) []Location {
+	proof := routeProof(ws, app, "local")
 	if app.Path == "/" && app.Context != "" && app.Context != "/" {
 		context := cleanPath(app.Context)
 		return []Location{
-			{Modifier: "=", Pattern: "/", Proxy: localProxy(app.Port, false, ""), AddCORS: true, PassHeaders: true, StripOrigin: app.StripOrigin},
-			{Modifier: "=", Pattern: context, Redirect: context + "/"},
-			{Pattern: context + "/", Proxy: localProxy(app.Port, true, ""), AddCORS: true, PassHeaders: true, StripOrigin: app.StripOrigin},
+			{Modifier: "=", Pattern: "/", Proxy: localProxy(app.Port, false, ""), AddCORS: true, PassHeaders: true, StripOrigin: app.StripOrigin, Proof: proof},
+			{Modifier: "=", Pattern: context, Redirect: context + "/", AddCORS: true, Proof: proof},
+			{Pattern: context + "/", Proxy: localProxy(app.Port, true, ""), AddCORS: true, PassHeaders: true, StripOrigin: app.StripOrigin, Proof: proof},
 		}
 	}
-	return locationsForPatterns(routePathPatterns(ws, app), localProxy(app.Port, false, ""), app.StripOrigin)
+	return locationsForPatternsWithProof(routePathPatterns(ws, app), localProxy(app.Port, false, ""), app.StripOrigin, proof)
 }
 
 func remoteAppLocations(ws *models.Workspace, app *models.Application) []Location {
+	return remoteAppLocationsWithMode(ws, app, "remote")
+}
+
+func remoteAppLocationsWithMode(ws *models.Workspace, app *models.Application, effectiveMode string) []Location {
+	proof := routeProof(ws, app, effectiveMode)
 	if app.Path == "/" && app.Context != "" && app.Context != "/" {
 		context := cleanPath(app.Context)
 		proxy := remoteProxy(app.RemoteBaseUrl)
 		return []Location{
-			{Modifier: "=", Pattern: "/", Rewrite: context + "/home", Proxy: proxy, AddCORS: true, PassHeaders: true},
-			{Modifier: "=", Pattern: context, Proxy: proxy, AddCORS: true, PassHeaders: true},
-			{Pattern: context + "/", Proxy: proxy, AddCORS: true, PassHeaders: true},
+			{Modifier: "=", Pattern: "/", Rewrite: context + "/home", Proxy: proxy, AddCORS: true, PassHeaders: true, Proof: proof},
+			{Modifier: "=", Pattern: context, Proxy: proxy, AddCORS: true, PassHeaders: true, Proof: proof},
+			{Pattern: context + "/", Proxy: proxy, AddCORS: true, PassHeaders: true, Proof: proof},
 		}
 	}
-	return locationsForPatterns(routePathPatterns(ws, app), remoteProxy(app.RemoteBaseUrl), false)
+	return locationsForPatternsWithProof(routePathPatterns(ws, app), remoteProxy(app.RemoteBaseUrl), false, proof)
+}
+
+func remoteEffectiveMode(app *models.Application) string {
+	if app != nil && app.Active && app.Port == 0 {
+		return "fallback"
+	}
+	return "remote"
 }
 
 func locationsForPatterns(patterns []string, proxy Proxy, stripOrigin bool) []Location {
+	return locationsForPatternsWithProof(patterns, proxy, stripOrigin, ResponseProof{})
+}
+
+func locationsForPatternsWithProof(patterns []string, proxy Proxy, stripOrigin bool, proof ResponseProof) []Location {
 	locations := make([]Location, 0, len(patterns))
 	for _, pattern := range patterns {
 		modifier, nginxPattern := nginxLocationPattern(pattern)
@@ -283,6 +368,7 @@ func locationsForPatterns(patterns []string, proxy Proxy, stripOrigin bool) []Lo
 			AddCORS:     true,
 			PassHeaders: true,
 			StripOrigin: stripOrigin,
+			Proof:       proof,
 		})
 	}
 	return locations
@@ -306,11 +392,16 @@ func fallbackLocation(ws *models.Workspace, domainApp *models.Application) Locat
 			AddCORS:     true,
 			PassHeaders: true,
 			StripOrigin: rootApp.StripOrigin,
+			Proof:       routeProof(ws, rootApp, "local"),
 		}
 	}
 
 	remoteBase := ws.GetDefaultRemoteBaseURL()
 	var rewrite string
+	// This location is the catch-all projection. Keep it distinct from an
+	// application's explicit remote route so callers can tell that nginx used
+	// the fallback rather than the requested service route.
+	mode := "fallback"
 	if rootApp != nil && rootApp.RemoteBaseUrl != "" {
 		remoteBase = rootApp.RemoteBaseUrl
 		if rootApp.Context != "" && rootApp.Context != "/" {
@@ -323,7 +414,50 @@ func fallbackLocation(ws *models.Workspace, domainApp *models.Application) Locat
 		Proxy:       remoteProxy(remoteBase),
 		AddCORS:     true,
 		PassHeaders: true,
+		Proof:       routeProof(ws, rootApp, mode),
 	}
+}
+
+func routeProof(ws *models.Workspace, app *models.Application, effectiveMode string) ResponseProof {
+	proof := ResponseProof{
+		AppID:         "unknown",
+		ServiceID:     "unknown",
+		Workspace:     "unknown",
+		Environment:   "unknown",
+		EffectiveMode: effectiveMode,
+		RouteVersion:  "0",
+		OperationID:   "none",
+	}
+	if ws != nil {
+		proof.Workspace = ws.WorkspaceID
+		proof.Environment = ws.WorkspaceID
+		proof.RouteVersion = routeVersion(ws.Route.RouteVersion)
+		if ws.Route.OperationID != "" {
+			proof.OperationID = ws.Route.OperationID
+		}
+	}
+	if app != nil {
+		proof.AppID = app.CanonicalAppID()
+		proof.ServiceID = app.ServiceID
+		if proof.ServiceID == "" {
+			proof.ServiceID = proof.AppID
+		}
+		if proof.RouteVersion == "0" && app.Route.RouteVersion != 0 {
+			proof.RouteVersion = routeVersion(app.Route.RouteVersion)
+		} else if proof.RouteVersion == "0" && app.LastOperation != nil && app.LastOperation.RouteVersion != 0 {
+			proof.RouteVersion = routeVersion(app.LastOperation.RouteVersion)
+		}
+		if proof.OperationID == "none" && app.Route.OperationID != "" {
+			proof.OperationID = app.Route.OperationID
+		} else if proof.OperationID == "none" && app.LastOperation != nil && app.LastOperation.OperationID != "" {
+			proof.OperationID = app.LastOperation.OperationID
+		}
+	}
+	return proof
+}
+
+func routeVersion(version uint64) string {
+	return strconv.FormatUint(version, 10)
 }
 
 func localProxy(port int, stripPrefix bool, passURI string) Proxy {
@@ -445,7 +579,9 @@ func locationRank(loc Location) int {
 	return 2
 }
 
-var nginxTemplate = template.Must(template.New("nginx").Parse(`# Generated by rementor. Do not edit manually.
+var nginxTemplate = template.Must(template.New("nginx").Funcs(template.FuncMap{
+	"nginxHeader": nginxHeaderValue,
+}).Parse(`# Generated by rementor. Do not edit manually.
 {{- range .Servers }}
 
 server {
@@ -462,18 +598,74 @@ server {
         set $rementor_cors_origin $http_origin;
     }
 
+    # Keep a caller supplied correlation ID only when it is safe for a header
+    # value; otherwise use nginx's per-request ID. The order gives the explicit
+    # Rementor header highest precedence while accepting common tracing headers.
+    set $rementor_correlation_id $request_id;
+    if ($http_traceparent ~* "^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$") {
+        set $rementor_correlation_id $http_traceparent;
+    }
+    if ($http_x_request_id ~* "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$") {
+        set $rementor_correlation_id $http_x_request_id;
+    }
+    if ($http_x_correlation_id ~* "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$") {
+        set $rementor_correlation_id $http_x_correlation_id;
+    }
+    if ($http_x_rementor_correlation_id ~* "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$") {
+        set $rementor_correlation_id $http_x_rementor_correlation_id;
+    }
+
     add_header Access-Control-Allow-Origin $rementor_cors_origin always;
     add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, PATCH, OPTIONS" always;
     add_header Access-Control-Allow-Headers "*" always;
     add_header Access-Control-Max-Age 86400 always;
+    add_header Access-Control-Expose-Headers "X-Rementor-App-ID, X-Rementor-Service-ID, X-Rementor-Workspace, X-Rementor-Environment, X-Rementor-Effective-Mode, X-Rementor-Route-Version, X-Rementor-Operation-ID, X-Rementor-Correlation-ID, X-Rementor-Request-ID, X-Correlation-ID, X-Request-ID" always;
     add_header Vary "Origin" always;
 
-    if ($request_method = OPTIONS) {
-        return 204;
-    }
 {{- range .Locations }}
 
     location {{ if .Modifier }}{{ .Modifier }} {{ end }}{{ .Pattern }} {
+{{- if .AddCORS }}
+        proxy_hide_header Access-Control-Allow-Origin;
+        proxy_hide_header Access-Control-Allow-Methods;
+        proxy_hide_header Access-Control-Allow-Headers;
+        proxy_hide_header Access-Control-Max-Age;
+        proxy_hide_header Access-Control-Expose-Headers;
+        add_header Access-Control-Allow-Origin $rementor_cors_origin always;
+        add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, PATCH, OPTIONS" always;
+        add_header Access-Control-Allow-Headers "*" always;
+        add_header Access-Control-Max-Age 86400 always;
+        add_header Access-Control-Expose-Headers "X-Rementor-App-ID, X-Rementor-Service-ID, X-Rementor-Workspace, X-Rementor-Environment, X-Rementor-Effective-Mode, X-Rementor-Route-Version, X-Rementor-Operation-ID, X-Rementor-Correlation-ID, X-Rementor-Request-ID, X-Correlation-ID, X-Request-ID" always;
+        add_header Vary "Origin" always;
+{{- end }}
+        # Rementor owns the proof values. Hide upstream copies before adding
+        # the generated route metadata so stale or malicious upstreams cannot
+        # spoof the response origin.
+        proxy_hide_header X-Rementor-App-ID;
+        proxy_hide_header X-Rementor-Service-ID;
+        proxy_hide_header X-Rementor-Workspace;
+        proxy_hide_header X-Rementor-Environment;
+        proxy_hide_header X-Rementor-Effective-Mode;
+        proxy_hide_header X-Rementor-Route-Version;
+        proxy_hide_header X-Rementor-Operation-ID;
+        proxy_hide_header X-Rementor-Correlation-ID;
+        proxy_hide_header X-Rementor-Request-ID;
+        proxy_hide_header X-Correlation-ID;
+        proxy_hide_header X-Request-ID;
+        add_header X-Rementor-App-ID {{ nginxHeader .Proof.AppID }} always;
+        add_header X-Rementor-Service-ID {{ nginxHeader .Proof.ServiceID }} always;
+        add_header X-Rementor-Workspace {{ nginxHeader .Proof.Workspace }} always;
+        add_header X-Rementor-Environment {{ nginxHeader .Proof.Environment }} always;
+        add_header X-Rementor-Effective-Mode {{ nginxHeader .Proof.EffectiveMode }} always;
+        add_header X-Rementor-Route-Version {{ nginxHeader .Proof.RouteVersion }} always;
+        add_header X-Rementor-Operation-ID {{ nginxHeader .Proof.OperationID }} always;
+        add_header X-Rementor-Correlation-ID $rementor_correlation_id always;
+        add_header X-Rementor-Request-ID $rementor_correlation_id always;
+        add_header X-Correlation-ID $rementor_correlation_id always;
+        add_header X-Request-ID $rementor_correlation_id always;
+        if ($request_method = OPTIONS) {
+            return 204;
+        }
 {{- if .Redirect }}
         return 301 {{ .Redirect }};
 {{- else }}
@@ -491,19 +683,21 @@ server {
 {{- if .Proxy.ForwardedProto }}
         proxy_set_header X-Forwarded-Proto {{ .Proxy.ForwardedProto }};
 {{- end }}
+        proxy_set_header X-Request-ID $rementor_correlation_id;
+        proxy_set_header X-Correlation-ID $rementor_correlation_id;
+{{- if .Trace }}
+        proxy_set_header X-Rementor-App-ID {{ nginxHeader .Proof.AppID }};
+        proxy_set_header X-Rementor-Service-ID {{ nginxHeader .Proof.ServiceID }};
+        proxy_set_header X-Rementor-Workspace {{ nginxHeader .Proof.Workspace }};
+        proxy_set_header X-Rementor-Environment {{ nginxHeader .Proof.Environment }};
+        proxy_set_header X-Rementor-Effective-Mode {{ nginxHeader .Proof.EffectiveMode }};
+        proxy_set_header X-Rementor-Route-Version {{ nginxHeader .Proof.RouteVersion }};
+        proxy_set_header X-Rementor-Operation-ID {{ nginxHeader .Proof.OperationID }};
+        proxy_set_header X-Rementor-Correlation-ID $rementor_correlation_id;
+        proxy_set_header X-Rementor-Request-ID $rementor_correlation_id;
+{{- end }}
 {{- if .Proxy.SSLServerName }}
         proxy_ssl_server_name on;
-{{- end }}
-{{- if .AddCORS }}
-        proxy_hide_header Access-Control-Allow-Origin;
-        proxy_hide_header Access-Control-Allow-Methods;
-        proxy_hide_header Access-Control-Allow-Headers;
-        proxy_hide_header Access-Control-Max-Age;
-        add_header Access-Control-Allow-Origin $rementor_cors_origin always;
-        add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, PATCH, OPTIONS" always;
-        add_header Access-Control-Allow-Headers "*" always;
-        add_header Access-Control-Max-Age 86400 always;
-        add_header Vary "Origin" always;
 {{- end }}
         proxy_pass {{ .Proxy.Scheme }}://{{ .Proxy.Host }}:{{ .Proxy.Port }}{{ .Proxy.PassURI }};
 {{- end }}
@@ -512,3 +706,17 @@ server {
 }
 {{- end }}
 `))
+
+func nginxHeaderValue(value string) string {
+	var builder strings.Builder
+	builder.WriteByte('"')
+	for _, r := range value {
+		if r == '\\' || r == '"' || r == '$' || r == '{' || r == '}' || r == ';' || r == '\r' || r == '\n' || r < 0x20 || r == 0x7f {
+			builder.WriteByte('_')
+			continue
+		}
+		builder.WriteRune(r)
+	}
+	builder.WriteByte('"')
+	return builder.String()
+}
