@@ -301,7 +301,7 @@ func (s *ControlPlaneService) SyncWorkspaceRouting(ctx context.Context, req *con
 	if err != nil {
 		return nil, newRPCError(classifyRegistryError(err), err)
 	}
-	return connect.NewResponse(&rementorv1.SyncWorkspaceRoutingResponse{Status: "ok", Operation: toProtoOperation(result.Operation)}), nil
+	return connect.NewResponse(&rementorv1.SyncWorkspaceRoutingResponse{Status: result.Status, Operation: toProtoOperation(result.Operation)}), nil
 }
 
 func (s *ControlPlaneService) GetRoutePattern(ctx context.Context, req *connect.Request[rementorv1.GetRoutePatternRequest]) (*connect.Response[rementorv1.GetRoutePatternResponse], error) {
