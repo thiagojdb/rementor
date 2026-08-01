@@ -12,9 +12,10 @@ tmp/
 *.key
 playwright-report/
 test-results/
+
+# Generated build output.
 dist/
-!cmd/server/dist/
-!cmd/server/dist/**
+build/
 web/dist/
 /rementorctl
 /server

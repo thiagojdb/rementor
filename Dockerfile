@@ -12,7 +12,6 @@ WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-COPY --from=frontend /src/cmd/server/dist cmd/server/dist
 RUN CGO_ENABLED=0 go build -trimpath -o /out/rementor ./cmd/server \
  && CGO_ENABLED=0 go build -trimpath -o /out/rementorctl ./cmd/rementorctl \
  && CGO_ENABLED=0 go build -trimpath -o /out/mock-stack ./examples/mock-stack
@@ -22,6 +21,7 @@ RUN apk add --no-cache nginx
 COPY --from=build /out/rementor /usr/local/bin/rementor
 COPY --from=build /out/rementorctl /usr/local/bin/rementorctl
 COPY --from=build /out/mock-stack /usr/local/bin/mock-stack
+COPY --from=frontend /src/cmd/server/dist /usr/local/share/rementor/dist
 COPY examples/docker/nginx.conf /etc/nginx/nginx.conf
 COPY examples/docker/entrypoint.sh /usr/local/bin/rementor-demo
 RUN adduser -D -u 10001 rementor \
@@ -31,6 +31,7 @@ USER rementor
 ENV XDG_DATA_HOME=/var/lib \
     XDG_CACHE_HOME=/var/cache \
     XDG_CONFIG_HOME=/var/config \
+    REMENTOR_FRONTEND_DIST=/usr/local/share/rementor/dist \
     REMENTOR_NGINX_LISTEN_HOST=0.0.0.0 \
     REMENTOR_NGINX_LISTEN_PORTS=8080
 EXPOSE 8080

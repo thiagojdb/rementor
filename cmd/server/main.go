@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"embed"
 	"flag"
 	"fmt"
 	"io/fs"
@@ -26,8 +25,28 @@ import (
 	"github.com/thiagojdb/rementor/internal/systemd"
 )
 
-//go:embed all:dist
-var distFS embed.FS
+const (
+	frontendDistEnv     = "REMENTOR_FRONTEND_DIST"
+	defaultFrontendDist = "cmd/server/dist"
+)
+
+func frontendDistPath() string {
+	if path := strings.TrimSpace(os.Getenv(frontendDistEnv)); path != "" {
+		return path
+	}
+	return defaultFrontendDist
+}
+
+func loadFrontendAssets(distPath, csrfToken string) (fs.FS, []byte, error) {
+	assetFS := os.DirFS(distPath)
+	indexData, err := fs.ReadFile(assetFS, "index.html")
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to read frontend assets from %q: %w (run `make frontend` or set %s)", distPath, err, frontendDistEnv)
+	}
+
+	indexData = []byte(strings.ReplaceAll(string(indexData), "%REMENTOR_CSRF_TOKEN%", csrfToken))
+	return assetFS, indexData, nil
+}
 
 // InitStep represents a single initialization step
 type InitStep struct {
@@ -142,22 +161,18 @@ func main() {
 					return c.NoContent(http.StatusOK)
 				})
 
-				// Serve embedded SPA static assets
-				distSub, err := fs.Sub(distFS, "dist")
+				// Serve the generated SPA assets from the build output directory.
+				// The frontend bundle is intentionally not committed to source control.
+				frontendFS, indexData, err := loadFrontendAssets(frontendDistPath(), csrfToken)
 				if err != nil {
-					return fmt.Errorf("failed to sub dist FS: %w", err)
+					return err
 				}
-				assetFS := http.FS(distSub)
+				assetFS := http.FS(frontendFS)
 
-				// Serve /assets/* directly from embedded FS
+				// Serve /assets/* directly from the generated frontend FS.
 				e.GET("/assets/*", echo.WrapHandler(http.StripPrefix("/", http.FileServer(assetFS))))
 
-				// SPA catch-all: serve index.html for any unmatched route
-				indexData, err := distFS.ReadFile("dist/index.html")
-				if err != nil {
-					return fmt.Errorf("failed to read embedded index.html: %w", err)
-				}
-				indexData = []byte(strings.ReplaceAll(string(indexData), "%REMENTOR_CSRF_TOKEN%", csrfToken))
+				// SPA catch-all: serve index.html for any unmatched route.
 				e.GET("/*", func(c echo.Context) error {
 					return c.HTMLBlob(http.StatusOK, indexData)
 				})
