@@ -62,6 +62,8 @@ func main() {
 		cli.NginxCmd(rest)
 	case "route":
 		cli.RouteCmd(client, jsonOutput, rest)
+	case "url", "rementor_url":
+		cli.URLCmd(client, jsonOutput, rest)
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: %s\n\n", cmd)
 		usage()
@@ -98,4 +100,5 @@ Commands:
 	fmt.Fprintln(os.Stderr, "  mcp")
 	fmt.Fprintln(os.Stderr, "  nginx load-routes")
 	fmt.Fprintln(os.Stderr, "  route get|resolve|plan|apply|sync")
+	fmt.Fprintln(os.Stderr, "  url --workspace <id> --app <app-or-alias>")
 }

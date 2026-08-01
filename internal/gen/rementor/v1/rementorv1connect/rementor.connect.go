@@ -57,6 +57,9 @@ const (
 	// ControlPlaneServiceResolveApplicationProcedure is the fully-qualified name of the
 	// ControlPlaneService's ResolveApplication RPC.
 	ControlPlaneServiceResolveApplicationProcedure = "/rementor.v1.ControlPlaneService/ResolveApplication"
+	// ControlPlaneServiceResolveBrowserURLProcedure is the fully-qualified name of the
+	// ControlPlaneService's ResolveBrowserURL RPC.
+	ControlPlaneServiceResolveBrowserURLProcedure = "/rementor.v1.ControlPlaneService/ResolveBrowserURL"
 	// ControlPlaneServiceRegisterApplicationAliasProcedure is the fully-qualified name of the
 	// ControlPlaneService's RegisterApplicationAlias RPC.
 	ControlPlaneServiceRegisterApplicationAliasProcedure = "/rementor.v1.ControlPlaneService/RegisterApplicationAlias"
@@ -114,6 +117,7 @@ type ControlPlaneServiceClient interface {
 	ListApplications(context.Context, *connect.Request[v1.ListApplicationsRequest]) (*connect.Response[v1.ListApplicationsResponse], error)
 	GetApplication(context.Context, *connect.Request[v1.GetApplicationRequest]) (*connect.Response[v1.GetApplicationResponse], error)
 	ResolveApplication(context.Context, *connect.Request[v1.ResolveApplicationRequest]) (*connect.Response[v1.ResolveApplicationResponse], error)
+	ResolveBrowserURL(context.Context, *connect.Request[v1.ResolveBrowserURLRequest]) (*connect.Response[v1.ResolveBrowserURLResponse], error)
 	RegisterApplicationAlias(context.Context, *connect.Request[v1.RegisterApplicationAliasRequest]) (*connect.Response[v1.RegisterApplicationAliasResponse], error)
 	UpsertApplication(context.Context, *connect.Request[v1.UpsertApplicationRequest]) (*connect.Response[v1.UpsertApplicationResponse], error)
 	DeleteApplication(context.Context, *connect.Request[v1.DeleteApplicationRequest]) (*connect.Response[v1.DeleteApplicationResponse], error)
@@ -188,6 +192,12 @@ func NewControlPlaneServiceClient(httpClient connect.HTTPClient, baseURL string,
 			httpClient,
 			baseURL+ControlPlaneServiceResolveApplicationProcedure,
 			connect.WithSchema(controlPlaneServiceMethods.ByName("ResolveApplication")),
+			connect.WithClientOptions(opts...),
+		),
+		resolveBrowserURL: connect.NewClient[v1.ResolveBrowserURLRequest, v1.ResolveBrowserURLResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceResolveBrowserURLProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("ResolveBrowserURL")),
 			connect.WithClientOptions(opts...),
 		),
 		registerApplicationAlias: connect.NewClient[v1.RegisterApplicationAliasRequest, v1.RegisterApplicationAliasResponse](
@@ -293,6 +303,7 @@ type controlPlaneServiceClient struct {
 	listApplications         *connect.Client[v1.ListApplicationsRequest, v1.ListApplicationsResponse]
 	getApplication           *connect.Client[v1.GetApplicationRequest, v1.GetApplicationResponse]
 	resolveApplication       *connect.Client[v1.ResolveApplicationRequest, v1.ResolveApplicationResponse]
+	resolveBrowserURL        *connect.Client[v1.ResolveBrowserURLRequest, v1.ResolveBrowserURLResponse]
 	registerApplicationAlias *connect.Client[v1.RegisterApplicationAliasRequest, v1.RegisterApplicationAliasResponse]
 	upsertApplication        *connect.Client[v1.UpsertApplicationRequest, v1.UpsertApplicationResponse]
 	deleteApplication        *connect.Client[v1.DeleteApplicationRequest, v1.DeleteApplicationResponse]
@@ -348,6 +359,11 @@ func (c *controlPlaneServiceClient) GetApplication(ctx context.Context, req *con
 // ResolveApplication calls rementor.v1.ControlPlaneService.ResolveApplication.
 func (c *controlPlaneServiceClient) ResolveApplication(ctx context.Context, req *connect.Request[v1.ResolveApplicationRequest]) (*connect.Response[v1.ResolveApplicationResponse], error) {
 	return c.resolveApplication.CallUnary(ctx, req)
+}
+
+// ResolveBrowserURL calls rementor.v1.ControlPlaneService.ResolveBrowserURL.
+func (c *controlPlaneServiceClient) ResolveBrowserURL(ctx context.Context, req *connect.Request[v1.ResolveBrowserURLRequest]) (*connect.Response[v1.ResolveBrowserURLResponse], error) {
+	return c.resolveBrowserURL.CallUnary(ctx, req)
 }
 
 // RegisterApplicationAlias calls rementor.v1.ControlPlaneService.RegisterApplicationAlias.
@@ -435,6 +451,7 @@ type ControlPlaneServiceHandler interface {
 	ListApplications(context.Context, *connect.Request[v1.ListApplicationsRequest]) (*connect.Response[v1.ListApplicationsResponse], error)
 	GetApplication(context.Context, *connect.Request[v1.GetApplicationRequest]) (*connect.Response[v1.GetApplicationResponse], error)
 	ResolveApplication(context.Context, *connect.Request[v1.ResolveApplicationRequest]) (*connect.Response[v1.ResolveApplicationResponse], error)
+	ResolveBrowserURL(context.Context, *connect.Request[v1.ResolveBrowserURLRequest]) (*connect.Response[v1.ResolveBrowserURLResponse], error)
 	RegisterApplicationAlias(context.Context, *connect.Request[v1.RegisterApplicationAliasRequest]) (*connect.Response[v1.RegisterApplicationAliasResponse], error)
 	UpsertApplication(context.Context, *connect.Request[v1.UpsertApplicationRequest]) (*connect.Response[v1.UpsertApplicationResponse], error)
 	DeleteApplication(context.Context, *connect.Request[v1.DeleteApplicationRequest]) (*connect.Response[v1.DeleteApplicationResponse], error)
@@ -505,6 +522,12 @@ func NewControlPlaneServiceHandler(svc ControlPlaneServiceHandler, opts ...conne
 		ControlPlaneServiceResolveApplicationProcedure,
 		svc.ResolveApplication,
 		connect.WithSchema(controlPlaneServiceMethods.ByName("ResolveApplication")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceResolveBrowserURLHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceResolveBrowserURLProcedure,
+		svc.ResolveBrowserURL,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("ResolveBrowserURL")),
 		connect.WithHandlerOptions(opts...),
 	)
 	controlPlaneServiceRegisterApplicationAliasHandler := connect.NewUnaryHandler(
@@ -615,6 +638,8 @@ func NewControlPlaneServiceHandler(svc ControlPlaneServiceHandler, opts ...conne
 			controlPlaneServiceGetApplicationHandler.ServeHTTP(w, r)
 		case ControlPlaneServiceResolveApplicationProcedure:
 			controlPlaneServiceResolveApplicationHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceResolveBrowserURLProcedure:
+			controlPlaneServiceResolveBrowserURLHandler.ServeHTTP(w, r)
 		case ControlPlaneServiceRegisterApplicationAliasProcedure:
 			controlPlaneServiceRegisterApplicationAliasHandler.ServeHTTP(w, r)
 		case ControlPlaneServiceUpsertApplicationProcedure:
@@ -684,6 +709,10 @@ func (UnimplementedControlPlaneServiceHandler) GetApplication(context.Context, *
 
 func (UnimplementedControlPlaneServiceHandler) ResolveApplication(context.Context, *connect.Request[v1.ResolveApplicationRequest]) (*connect.Response[v1.ResolveApplicationResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.ResolveApplication is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) ResolveBrowserURL(context.Context, *connect.Request[v1.ResolveBrowserURLRequest]) (*connect.Response[v1.ResolveBrowserURLResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.ResolveBrowserURL is not implemented"))
 }
 
 func (UnimplementedControlPlaneServiceHandler) RegisterApplicationAlias(context.Context, *connect.Request[v1.RegisterApplicationAliasRequest]) (*connect.Response[v1.RegisterApplicationAliasResponse], error) {

@@ -59,6 +59,27 @@ func TestSharedContractRoundTripsIdentityRouteAndOperationMetadata(t *testing.T)
 	}
 }
 
+func TestBrowserURLContractRoundTripsStableEntryAndTargetMetadata(t *testing.T) {
+	want := &rementorv1.BrowserURLResolution{
+		WorkspaceId: "desenvolvimento", Environment: "desenvolvimento", ApplicationRef: "front-giss-v2",
+		CanonicalAppId: "rtc", PublicHost: "desenvolvimento.giss.localhost", PublicPath: "/rtc",
+		Url: "http://desenvolvimento.giss.localhost/rtc", BrowserUrl: "http://desenvolvimento.giss.localhost/rtc",
+		Target: "http://localhost:8080", RemoteTarget: "https://remote.example.test", EffectiveMode: rementorv1.RouteMode_ROUTE_MODE_LOCAL,
+		RouteVersion: &rementorv1.RouteVersion{Value: 9}, OperationId: "op-9", CorrelationId: "corr-9",
+	}
+	data, err := proto.Marshal(want)
+	if err != nil {
+		t.Fatalf("marshal browser URL resolution: %v", err)
+	}
+	var got rementorv1.BrowserURLResolution
+	if err := proto.Unmarshal(data, &got); err != nil {
+		t.Fatalf("unmarshal browser URL resolution: %v", err)
+	}
+	if !proto.Equal(want, &got) {
+		t.Fatalf("browser URL contract changed across serialization:\nwant %s\ngot %s", want, &got)
+	}
+}
+
 func TestStructuredErrorUsesStableCodeAndHumanMessage(t *testing.T) {
 	err := newRPCError(connect.CodeNotFound, errSentinel("orders not found"))
 	if got, want := connect.CodeOf(err), connect.CodeNotFound; got != want {

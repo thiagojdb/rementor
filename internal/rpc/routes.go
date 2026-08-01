@@ -8,6 +8,7 @@ import (
 
 	"connectrpc.com/connect"
 	rementorv1 "github.com/thiagojdb/rementor/internal/gen/rementor/v1"
+	"github.com/thiagojdb/rementor/internal/models"
 	"github.com/thiagojdb/rementor/internal/services"
 )
 
@@ -344,6 +345,17 @@ func newRPCErrorWithStructured(code connect.Code, err error, structuredCode reme
 		metadata["workspaceId"] = versionConflict.WorkspaceID
 		metadata["expectedVersion"] = fmt.Sprintf("%d", versionConflict.Expected)
 		metadata["actualVersion"] = fmt.Sprintf("%d", versionConflict.Actual)
+	}
+	var bindingErr *services.BrowserURLBindingError
+	if errors.As(err, &bindingErr) {
+		metadata["workspaceId"] = bindingErr.WorkspaceID
+		metadata["applicationId"] = bindingErr.AppID
+		metadata["field"] = bindingErr.Field
+	}
+	var ambiguousErr *models.AmbiguousApplicationError
+	if errors.As(err, &ambiguousErr) {
+		metadata["reference"] = ambiguousErr.Reference
+		metadata["matches"] = strings.Join(ambiguousErr.Matches, ",")
 	}
 	var transactionErr *services.RouteTransactionError
 	if errors.As(err, &transactionErr) {
