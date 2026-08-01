@@ -146,3 +146,124 @@ type UpdateRoutePatternRequest struct {
 	Pattern       string `json:"pattern"`
 	CorrelationID string `json:"-"`
 }
+
+type NormalizedRouteDTO struct {
+	WorkspaceID      string `json:"workspaceId"`
+	Environment      string `json:"environment"`
+	PublicHost       string `json:"publicHost"`
+	Pattern          string `json:"pattern"`
+	CanonicalAppID   string `json:"appId,omitempty"`
+	ServiceID        string `json:"serviceId,omitempty"`
+	Repository       string `json:"repository,omitempty"`
+	DesiredMode      string `json:"desiredMode"`
+	EffectiveMode    string `json:"effectiveMode"`
+	Target           string `json:"target,omitempty"`
+	LocalTarget      string `json:"localTarget,omitempty"`
+	RemoteTarget     string `json:"remoteTarget,omitempty"`
+	RemoteFallback   bool   `json:"remoteFallback"`
+	UpstreamContext  string `json:"upstreamContext,omitempty"`
+	Precedence       int    `json:"precedence"`
+	PrecedenceReason string `json:"precedenceReason"`
+	Exact            bool   `json:"exact"`
+}
+
+type RouteWarningDTO struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
+type RouteConflictDTO struct {
+	WorkspaceID      string `json:"workspaceId"`
+	Environment      string `json:"environment"`
+	PublicHost       string `json:"publicHost"`
+	Pattern          string `json:"pattern"`
+	AppID            string `json:"appId"`
+	ConflictingAppID string `json:"conflictingAppId"`
+	WinningAppID     string `json:"winningAppId"`
+	Reason           string `json:"reason"`
+}
+
+type RouteChangeDTO struct {
+	ApplicationID string              `json:"applicationId"`
+	Before        *NormalizedRouteDTO `json:"before,omitempty"`
+	After         *NormalizedRouteDTO `json:"after,omitempty"`
+}
+
+type RoutePlanDTO struct {
+	WorkspaceID      string               `json:"workspaceId"`
+	Environment      string               `json:"environment"`
+	BaseRouteVersion uint64               `json:"baseRouteVersion"`
+	ApplicationID    string               `json:"applicationId,omitempty"`
+	DesiredMode      string               `json:"desiredMode,omitempty"`
+	RoutePattern     *string              `json:"routePattern,omitempty"`
+	BeforeRoutes     []NormalizedRouteDTO `json:"beforeRoutes"`
+	AfterRoutes      []NormalizedRouteDTO `json:"afterRoutes"`
+	Changes          []RouteChangeDTO     `json:"changes"`
+	Warnings         []RouteWarningDTO    `json:"warnings"`
+	Conflicts        []RouteConflictDTO   `json:"conflicts"`
+	Fingerprint      string               `json:"fingerprint"`
+}
+
+type RouteGetResponse struct {
+	WorkspaceID  string               `json:"workspaceId"`
+	Environment  string               `json:"environment"`
+	RouteVersion uint64               `json:"routeVersion"`
+	Routes       []NormalizedRouteDTO `json:"routes"`
+	Warnings     []RouteWarningDTO    `json:"warnings"`
+	Conflicts    []RouteConflictDTO   `json:"conflicts"`
+}
+
+type RouteResolutionDTO struct {
+	WorkspaceID      string              `json:"workspaceId"`
+	Environment      string              `json:"environment"`
+	Host             string              `json:"host"`
+	Path             string              `json:"path"`
+	Route            *NormalizedRouteDTO `json:"route"`
+	MatchingPattern  string              `json:"matchingPattern"`
+	CanonicalAppID   string              `json:"appId,omitempty"`
+	ServiceID        string              `json:"serviceId,omitempty"`
+	Target           string              `json:"target,omitempty"`
+	Precedence       int                 `json:"precedence"`
+	PrecedenceReason string              `json:"precedenceReason"`
+}
+
+type RouteApplyResponse struct {
+	Changed            bool                  `json:"changed"`
+	Plan               RoutePlanDTO          `json:"plan"`
+	Routes             []NormalizedRouteDTO  `json:"routes"`
+	Operation          *OperationMetadataDTO `json:"operation,omitempty"`
+	Verified           bool                  `json:"verified"`
+	VerificationStatus string                `json:"verificationStatus"`
+}
+
+type RouteSyncResponse struct {
+	WorkspaceID           string                `json:"workspaceId"`
+	Changed               bool                  `json:"changed"`
+	Verified              bool                  `json:"verified"`
+	Status                string                `json:"status"`
+	DesiredRouteVersion   uint64                `json:"desiredRouteVersion"`
+	EffectiveRouteVersion uint64                `json:"effectiveRouteVersion"`
+	Routes                []NormalizedRouteDTO  `json:"routes"`
+	Warnings              []RouteWarningDTO     `json:"warnings"`
+	Operation             *OperationMetadataDTO `json:"operation,omitempty"`
+}
+
+type PlanRouteRequest struct {
+	WorkspaceID     string
+	ApplicationRef  string
+	DesiredMode     string
+	RoutePattern    *string
+	ExpectedVersion uint64
+	CorrelationID   string
+}
+
+type ApplyRouteRequest struct {
+	WorkspaceID     string
+	Plan            *RoutePlanDTO
+	ApplicationRef  string
+	DesiredMode     string
+	RoutePattern    *string
+	ExpectedVersion uint64
+	IdempotencyKey  string
+	CorrelationID   string
+}

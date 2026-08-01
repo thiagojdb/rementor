@@ -84,6 +84,21 @@ const (
 	// ControlPlaneServiceUpdateRoutePatternProcedure is the fully-qualified name of the
 	// ControlPlaneService's UpdateRoutePattern RPC.
 	ControlPlaneServiceUpdateRoutePatternProcedure = "/rementor.v1.ControlPlaneService/UpdateRoutePattern"
+	// ControlPlaneServiceGetRouteProcedure is the fully-qualified name of the ControlPlaneService's
+	// GetRoute RPC.
+	ControlPlaneServiceGetRouteProcedure = "/rementor.v1.ControlPlaneService/GetRoute"
+	// ControlPlaneServiceResolveRouteProcedure is the fully-qualified name of the ControlPlaneService's
+	// ResolveRoute RPC.
+	ControlPlaneServiceResolveRouteProcedure = "/rementor.v1.ControlPlaneService/ResolveRoute"
+	// ControlPlaneServicePlanRouteProcedure is the fully-qualified name of the ControlPlaneService's
+	// PlanRoute RPC.
+	ControlPlaneServicePlanRouteProcedure = "/rementor.v1.ControlPlaneService/PlanRoute"
+	// ControlPlaneServiceApplyRouteProcedure is the fully-qualified name of the ControlPlaneService's
+	// ApplyRoute RPC.
+	ControlPlaneServiceApplyRouteProcedure = "/rementor.v1.ControlPlaneService/ApplyRoute"
+	// ControlPlaneServiceSyncRouteProcedure is the fully-qualified name of the ControlPlaneService's
+	// SyncRoute RPC.
+	ControlPlaneServiceSyncRouteProcedure = "/rementor.v1.ControlPlaneService/SyncRoute"
 	// ControlPlaneServiceWatchHealthProcedure is the fully-qualified name of the ControlPlaneService's
 	// WatchHealth RPC.
 	ControlPlaneServiceWatchHealthProcedure = "/rementor.v1.ControlPlaneService/WatchHealth"
@@ -108,6 +123,11 @@ type ControlPlaneServiceClient interface {
 	SyncWorkspaceRouting(context.Context, *connect.Request[v1.SyncWorkspaceRoutingRequest]) (*connect.Response[v1.SyncWorkspaceRoutingResponse], error)
 	GetRoutePattern(context.Context, *connect.Request[v1.GetRoutePatternRequest]) (*connect.Response[v1.GetRoutePatternResponse], error)
 	UpdateRoutePattern(context.Context, *connect.Request[v1.UpdateRoutePatternRequest]) (*connect.Response[v1.UpdateRoutePatternResponse], error)
+	GetRoute(context.Context, *connect.Request[v1.GetRouteRequest]) (*connect.Response[v1.GetRouteResponse], error)
+	ResolveRoute(context.Context, *connect.Request[v1.ResolveRouteRequest]) (*connect.Response[v1.ResolveRouteResponse], error)
+	PlanRoute(context.Context, *connect.Request[v1.PlanRouteRequest]) (*connect.Response[v1.PlanRouteResponse], error)
+	ApplyRoute(context.Context, *connect.Request[v1.ApplyRouteRequest]) (*connect.Response[v1.ApplyRouteResponse], error)
+	SyncRoute(context.Context, *connect.Request[v1.SyncRouteRequest]) (*connect.Response[v1.SyncRouteResponse], error)
 	WatchHealth(context.Context, *connect.Request[v1.WatchHealthRequest]) (*connect.ServerStreamForClient[v1.WatchHealthResponse], error)
 }
 
@@ -224,6 +244,36 @@ func NewControlPlaneServiceClient(httpClient connect.HTTPClient, baseURL string,
 			connect.WithSchema(controlPlaneServiceMethods.ByName("UpdateRoutePattern")),
 			connect.WithClientOptions(opts...),
 		),
+		getRoute: connect.NewClient[v1.GetRouteRequest, v1.GetRouteResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceGetRouteProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("GetRoute")),
+			connect.WithClientOptions(opts...),
+		),
+		resolveRoute: connect.NewClient[v1.ResolveRouteRequest, v1.ResolveRouteResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceResolveRouteProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("ResolveRoute")),
+			connect.WithClientOptions(opts...),
+		),
+		planRoute: connect.NewClient[v1.PlanRouteRequest, v1.PlanRouteResponse](
+			httpClient,
+			baseURL+ControlPlaneServicePlanRouteProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("PlanRoute")),
+			connect.WithClientOptions(opts...),
+		),
+		applyRoute: connect.NewClient[v1.ApplyRouteRequest, v1.ApplyRouteResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceApplyRouteProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("ApplyRoute")),
+			connect.WithClientOptions(opts...),
+		),
+		syncRoute: connect.NewClient[v1.SyncRouteRequest, v1.SyncRouteResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceSyncRouteProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("SyncRoute")),
+			connect.WithClientOptions(opts...),
+		),
 		watchHealth: connect.NewClient[v1.WatchHealthRequest, v1.WatchHealthResponse](
 			httpClient,
 			baseURL+ControlPlaneServiceWatchHealthProcedure,
@@ -252,6 +302,11 @@ type controlPlaneServiceClient struct {
 	syncWorkspaceRouting     *connect.Client[v1.SyncWorkspaceRoutingRequest, v1.SyncWorkspaceRoutingResponse]
 	getRoutePattern          *connect.Client[v1.GetRoutePatternRequest, v1.GetRoutePatternResponse]
 	updateRoutePattern       *connect.Client[v1.UpdateRoutePatternRequest, v1.UpdateRoutePatternResponse]
+	getRoute                 *connect.Client[v1.GetRouteRequest, v1.GetRouteResponse]
+	resolveRoute             *connect.Client[v1.ResolveRouteRequest, v1.ResolveRouteResponse]
+	planRoute                *connect.Client[v1.PlanRouteRequest, v1.PlanRouteResponse]
+	applyRoute               *connect.Client[v1.ApplyRouteRequest, v1.ApplyRouteResponse]
+	syncRoute                *connect.Client[v1.SyncRouteRequest, v1.SyncRouteResponse]
 	watchHealth              *connect.Client[v1.WatchHealthRequest, v1.WatchHealthResponse]
 }
 
@@ -340,6 +395,31 @@ func (c *controlPlaneServiceClient) UpdateRoutePattern(ctx context.Context, req 
 	return c.updateRoutePattern.CallUnary(ctx, req)
 }
 
+// GetRoute calls rementor.v1.ControlPlaneService.GetRoute.
+func (c *controlPlaneServiceClient) GetRoute(ctx context.Context, req *connect.Request[v1.GetRouteRequest]) (*connect.Response[v1.GetRouteResponse], error) {
+	return c.getRoute.CallUnary(ctx, req)
+}
+
+// ResolveRoute calls rementor.v1.ControlPlaneService.ResolveRoute.
+func (c *controlPlaneServiceClient) ResolveRoute(ctx context.Context, req *connect.Request[v1.ResolveRouteRequest]) (*connect.Response[v1.ResolveRouteResponse], error) {
+	return c.resolveRoute.CallUnary(ctx, req)
+}
+
+// PlanRoute calls rementor.v1.ControlPlaneService.PlanRoute.
+func (c *controlPlaneServiceClient) PlanRoute(ctx context.Context, req *connect.Request[v1.PlanRouteRequest]) (*connect.Response[v1.PlanRouteResponse], error) {
+	return c.planRoute.CallUnary(ctx, req)
+}
+
+// ApplyRoute calls rementor.v1.ControlPlaneService.ApplyRoute.
+func (c *controlPlaneServiceClient) ApplyRoute(ctx context.Context, req *connect.Request[v1.ApplyRouteRequest]) (*connect.Response[v1.ApplyRouteResponse], error) {
+	return c.applyRoute.CallUnary(ctx, req)
+}
+
+// SyncRoute calls rementor.v1.ControlPlaneService.SyncRoute.
+func (c *controlPlaneServiceClient) SyncRoute(ctx context.Context, req *connect.Request[v1.SyncRouteRequest]) (*connect.Response[v1.SyncRouteResponse], error) {
+	return c.syncRoute.CallUnary(ctx, req)
+}
+
 // WatchHealth calls rementor.v1.ControlPlaneService.WatchHealth.
 func (c *controlPlaneServiceClient) WatchHealth(ctx context.Context, req *connect.Request[v1.WatchHealthRequest]) (*connect.ServerStreamForClient[v1.WatchHealthResponse], error) {
 	return c.watchHealth.CallServerStream(ctx, req)
@@ -364,6 +444,11 @@ type ControlPlaneServiceHandler interface {
 	SyncWorkspaceRouting(context.Context, *connect.Request[v1.SyncWorkspaceRoutingRequest]) (*connect.Response[v1.SyncWorkspaceRoutingResponse], error)
 	GetRoutePattern(context.Context, *connect.Request[v1.GetRoutePatternRequest]) (*connect.Response[v1.GetRoutePatternResponse], error)
 	UpdateRoutePattern(context.Context, *connect.Request[v1.UpdateRoutePatternRequest]) (*connect.Response[v1.UpdateRoutePatternResponse], error)
+	GetRoute(context.Context, *connect.Request[v1.GetRouteRequest]) (*connect.Response[v1.GetRouteResponse], error)
+	ResolveRoute(context.Context, *connect.Request[v1.ResolveRouteRequest]) (*connect.Response[v1.ResolveRouteResponse], error)
+	PlanRoute(context.Context, *connect.Request[v1.PlanRouteRequest]) (*connect.Response[v1.PlanRouteResponse], error)
+	ApplyRoute(context.Context, *connect.Request[v1.ApplyRouteRequest]) (*connect.Response[v1.ApplyRouteResponse], error)
+	SyncRoute(context.Context, *connect.Request[v1.SyncRouteRequest]) (*connect.Response[v1.SyncRouteResponse], error)
 	WatchHealth(context.Context, *connect.Request[v1.WatchHealthRequest], *connect.ServerStream[v1.WatchHealthResponse]) error
 }
 
@@ -476,6 +561,36 @@ func NewControlPlaneServiceHandler(svc ControlPlaneServiceHandler, opts ...conne
 		connect.WithSchema(controlPlaneServiceMethods.ByName("UpdateRoutePattern")),
 		connect.WithHandlerOptions(opts...),
 	)
+	controlPlaneServiceGetRouteHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceGetRouteProcedure,
+		svc.GetRoute,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("GetRoute")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceResolveRouteHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceResolveRouteProcedure,
+		svc.ResolveRoute,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("ResolveRoute")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServicePlanRouteHandler := connect.NewUnaryHandler(
+		ControlPlaneServicePlanRouteProcedure,
+		svc.PlanRoute,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("PlanRoute")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceApplyRouteHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceApplyRouteProcedure,
+		svc.ApplyRoute,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("ApplyRoute")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceSyncRouteHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceSyncRouteProcedure,
+		svc.SyncRoute,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("SyncRoute")),
+		connect.WithHandlerOptions(opts...),
+	)
 	controlPlaneServiceWatchHealthHandler := connect.NewServerStreamHandler(
 		ControlPlaneServiceWatchHealthProcedure,
 		svc.WatchHealth,
@@ -518,6 +633,16 @@ func NewControlPlaneServiceHandler(svc ControlPlaneServiceHandler, opts ...conne
 			controlPlaneServiceGetRoutePatternHandler.ServeHTTP(w, r)
 		case ControlPlaneServiceUpdateRoutePatternProcedure:
 			controlPlaneServiceUpdateRoutePatternHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceGetRouteProcedure:
+			controlPlaneServiceGetRouteHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceResolveRouteProcedure:
+			controlPlaneServiceResolveRouteHandler.ServeHTTP(w, r)
+		case ControlPlaneServicePlanRouteProcedure:
+			controlPlaneServicePlanRouteHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceApplyRouteProcedure:
+			controlPlaneServiceApplyRouteHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceSyncRouteProcedure:
+			controlPlaneServiceSyncRouteHandler.ServeHTTP(w, r)
 		case ControlPlaneServiceWatchHealthProcedure:
 			controlPlaneServiceWatchHealthHandler.ServeHTTP(w, r)
 		default:
@@ -595,6 +720,26 @@ func (UnimplementedControlPlaneServiceHandler) GetRoutePattern(context.Context, 
 
 func (UnimplementedControlPlaneServiceHandler) UpdateRoutePattern(context.Context, *connect.Request[v1.UpdateRoutePatternRequest]) (*connect.Response[v1.UpdateRoutePatternResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.UpdateRoutePattern is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) GetRoute(context.Context, *connect.Request[v1.GetRouteRequest]) (*connect.Response[v1.GetRouteResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.GetRoute is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) ResolveRoute(context.Context, *connect.Request[v1.ResolveRouteRequest]) (*connect.Response[v1.ResolveRouteResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.ResolveRoute is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) PlanRoute(context.Context, *connect.Request[v1.PlanRouteRequest]) (*connect.Response[v1.PlanRouteResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.PlanRoute is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) ApplyRoute(context.Context, *connect.Request[v1.ApplyRouteRequest]) (*connect.Response[v1.ApplyRouteResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.ApplyRoute is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) SyncRoute(context.Context, *connect.Request[v1.SyncRouteRequest]) (*connect.Response[v1.SyncRouteResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.SyncRoute is not implemented"))
 }
 
 func (UnimplementedControlPlaneServiceHandler) WatchHealth(context.Context, *connect.Request[v1.WatchHealthRequest], *connect.ServerStream[v1.WatchHealthResponse]) error {

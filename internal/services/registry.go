@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -20,20 +21,42 @@ import (
 // route state; the registry adds runtime-only state such as health results,
 // subscribers, streams, and the routing provider.
 type Registry struct {
-	workspaces       []*models.Workspace
-	workspacesMu     sync.RWMutex
-	mutationMu       sync.Mutex
-	store            WorkspaceStore
-	routingProvider  RoutingProvider
-	stopChan         chan struct{}
-	httpClient       *http.Client
-	subscribers      map[string]int // workspaceID -> count of active subscribers
-	subscribersMu    sync.RWMutex
-	healthStreams    map[uint64]healthStream
-	healthStreamsMu  sync.RWMutex
-	nextHealthStream uint64
-	lastFullCheck    time.Time
-	nextRouteVersion uint64
+	workspaces        []*models.Workspace
+	workspacesMu      sync.RWMutex
+	mutationMu        sync.Mutex
+	store             WorkspaceStore
+	routingProvider   RoutingProvider
+	stopChan          chan struct{}
+	httpClient        *http.Client
+	subscribers       map[string]int // workspaceID -> count of active subscribers
+	subscribersMu     sync.RWMutex
+	healthStreams     map[uint64]healthStream
+	healthStreamsMu   sync.RWMutex
+	nextHealthStream  uint64
+	lastFullCheck     time.Time
+	nextRouteVersion  uint64
+	routingStateMu    sync.RWMutex
+	effectiveRoutes   map[string][]Route
+	effectiveHashes   map[string]string
+	effectiveVersions map[string]uint64
+	idempotencyMu     sync.Mutex
+	routeIdempotency  map[string]routeApplyRecord
+}
+
+type routeApplyRecord struct {
+	Fingerprint string
+	Result      RouteApplyResult
+}
+
+// RouteApplyResult is returned by ApplyRoutePlan. It is kept in the service
+// package so RPC, CLI, and MCP adapters all consume the same result shape.
+type RouteApplyResult struct {
+	Changed      bool                      `json:"changed"`
+	Plan         RoutePlan                 `json:"plan"`
+	Routes       []Route                   `json:"routes"`
+	Verified     bool                      `json:"verified"`
+	Verification string                    `json:"verificationStatus"`
+	Operation    *models.OperationMetadata `json:"operation,omitempty"`
 }
 
 type healthStream struct {
@@ -51,12 +74,16 @@ var (
 func GetRegistry() *Registry {
 	registryOnce.Do(func() {
 		globalRegistry = &Registry{
-			store:         NewConfigWorkspaceStore(),
-			stopChan:      make(chan struct{}),
-			httpClient:    &http.Client{Timeout: 5 * time.Second},
-			subscribers:   make(map[string]int),
-			healthStreams: make(map[uint64]healthStream),
-			lastFullCheck: time.Time{},
+			store:             NewConfigWorkspaceStore(),
+			stopChan:          make(chan struct{}),
+			httpClient:        &http.Client{Timeout: 5 * time.Second},
+			subscribers:       make(map[string]int),
+			healthStreams:     make(map[uint64]healthStream),
+			lastFullCheck:     time.Time{},
+			effectiveRoutes:   make(map[string][]Route),
+			effectiveHashes:   make(map[string]string),
+			effectiveVersions: make(map[string]uint64),
+			routeIdempotency:  make(map[string]routeApplyRecord),
 		}
 	})
 	return globalRegistry
@@ -367,6 +394,246 @@ func (r *Registry) FindApp(wsID, appName string) (*models.Workspace, *models.App
 		return nil, nil, fmt.Errorf("workspace not found: %s", wsID)
 	}
 	return findAppInWorkspace(ws, appName)
+}
+
+// GetRoutes returns the normalized desired routes for a workspace. The
+// representation is shared by all control-plane surfaces and is independent
+// of whether nginx is installed on the host.
+func (r *Registry) GetRoutes(wsID string) ([]Route, uint64, []RouteWarning, []RouteConflict, error) {
+	ws := r.FindWorkspace(wsID)
+	if ws == nil {
+		return nil, 0, nil, nil, fmt.Errorf("workspace not found: %s", wsID)
+	}
+	snapshot := cloneWorkspace(ws)
+	routes := buildNormalizedRoutes(snapshot)
+	conflicts := conflictsForRoutes(routes)
+	warnings := make([]RouteWarning, 0, 1)
+	if len(conflicts) > 0 {
+		warnings = append(warnings, RouteWarning{Code: "ROUTE_CONFLICT", Message: "one or more routes compete for the same host and pattern"})
+	}
+	return routes, snapshot.Route.RouteVersion, warnings, conflicts, nil
+}
+
+// ResolveRoute resolves a host/path request with nginx-compatible precedence.
+func (r *Registry) ResolveRoute(wsID, host, path string) (RouteResolution, error) {
+	ws := r.FindWorkspace(wsID)
+	if ws == nil {
+		return RouteResolution{}, fmt.Errorf("workspace not found: %s", wsID)
+	}
+	if strings.TrimSpace(host) == "" {
+		if ws.IsLocalApps() {
+			for _, app := range ws.Applications {
+				if app.Domain != "" {
+					host = app.Domain
+					break
+				}
+			}
+		} else {
+			host = ws.GetLocalDomain()
+		}
+	}
+	return resolveRoutes(buildNormalizedRoutes(cloneWorkspace(ws)), wsID, host, path)
+}
+
+// PlanRoute creates a deterministic, non-mutating route plan.
+func (r *Registry) PlanRoute(wsID, application, desiredMode string, routePattern *string) (RoutePlan, error) {
+	return r.planRoute(routePlanInput{WorkspaceID: wsID, Application: application, DesiredMode: desiredMode, RoutePattern: routePattern})
+}
+
+// ApplyRoutePlan applies a previously generated plan. It performs all checks
+// while holding the same mutation lock used by legacy operations, so a plan
+// cannot become stale between its version check and proxy reload.
+func (r *Registry) ApplyRoutePlan(wsID string, plan RoutePlan, expectedVersion uint64, idempotencyKey, correlationID string) (RouteApplyResult, error) {
+	if strings.TrimSpace(plan.WorkspaceID) == "" {
+		plan.WorkspaceID = wsID
+	}
+	if plan.WorkspaceID != wsID {
+		return RouteApplyResult{}, fmt.Errorf("route plan workspace %q does not match request workspace %q", plan.WorkspaceID, wsID)
+	}
+	if strings.TrimSpace(plan.ApplicationID) == "" {
+		return RouteApplyResult{}, fmt.Errorf("route plan application is required")
+	}
+	if strings.TrimSpace(plan.DesiredMode) == "" {
+		return RouteApplyResult{}, fmt.Errorf("route plan desired mode is required")
+	}
+	mode, err := normalizeMode(plan.DesiredMode)
+	if err != nil {
+		return RouteApplyResult{}, err
+	}
+	plan.DesiredMode = mode
+	planFingerprint := plan.Fingerprint
+	if planFingerprint == "" {
+		// Direct callers may omit the optional fingerprint. Keep idempotency
+		// keys safe for those requests without treating the incomplete plan as
+		// authoritative during canonical-state validation below.
+		planFingerprint = fingerprintPlan(plan)
+	}
+
+	key := strings.TrimSpace(idempotencyKey)
+	if key != "" {
+		r.ensureRouteState()
+		r.idempotencyMu.Lock()
+		if record, ok := r.routeIdempotency[wsID+"\x00"+key]; ok {
+			if record.Fingerprint != planFingerprint {
+				r.idempotencyMu.Unlock()
+				return RouteApplyResult{}, &RouteIdempotencyConflictError{Key: key}
+			}
+			result := record.Result
+			result.Changed = false
+			result.Verification = "unchanged"
+			r.idempotencyMu.Unlock()
+			return result, nil
+		}
+		r.idempotencyMu.Unlock()
+	}
+
+	r.mutationMu.Lock()
+	defer r.mutationMu.Unlock()
+	previous := r.workspaceSnapshot()
+	ws := findWorkspace(previous, wsID)
+	if ws == nil {
+		return RouteApplyResult{}, fmt.Errorf("workspace not found: %s", wsID)
+	}
+	currentVersion := ws.Route.RouteVersion
+	if expectedVersion == 0 {
+		expectedVersion = plan.BaseRouteVersion
+	}
+	canonical, err := planForWorkspace(ws, routePlanInput{WorkspaceID: wsID, Application: plan.ApplicationID, DesiredMode: mode, RoutePattern: plan.RoutePattern})
+	if err != nil {
+		return RouteApplyResult{}, err
+	}
+	versionConflict := expectedVersion != currentVersion || (plan.BaseRouteVersion != 0 && plan.BaseRouteVersion != currentVersion)
+	if versionConflict {
+		// A retried request for a desired state that is already present is safe
+		// to treat as an idempotent no-op. A stale plan that asks for a different
+		// state still fails before touching the proxy or durable state.
+		_, currentApp, findErr := findAppInWorkspace(ws, plan.ApplicationID)
+		if findErr != nil || !desiredStateMatches(currentApp, mode, plan.RoutePattern) {
+			expected := expectedVersion
+			if plan.BaseRouteVersion != 0 {
+				expected = plan.BaseRouteVersion
+			}
+			return RouteApplyResult{}, &RouteVersionConflictError{WorkspaceID: wsID, Expected: expected, Actual: currentVersion}
+		}
+		result := RouteApplyResult{Changed: false, Plan: canonical, Routes: cloneRoutes(canonical.After), Verified: r.routesAreEffective(wsID, canonical.After), Verification: "unchanged"}
+		if key != "" {
+			r.idempotencyMu.Lock()
+			r.routeIdempotency[wsID+"\x00"+key] = routeApplyRecord{Fingerprint: planFingerprint, Result: result}
+			r.idempotencyMu.Unlock()
+		}
+		return result, nil
+	}
+	if plan.Fingerprint != "" && plan.Fingerprint != canonical.Fingerprint {
+		return RouteApplyResult{}, fmt.Errorf("route plan fingerprint does not match current desired state")
+	}
+	if len(canonical.Conflicts) > 0 {
+		return RouteApplyResult{}, fmt.Errorf("route plan contains %d route conflict(s)", len(canonical.Conflicts))
+	}
+	if len(canonical.Changes) == 0 {
+		result := RouteApplyResult{Changed: false, Plan: canonical, Routes: cloneRoutes(canonical.After), Verified: r.routesAreEffective(wsID, canonical.After), Verification: "unchanged"}
+		if key != "" {
+			r.idempotencyMu.Lock()
+			r.routeIdempotency[wsID+"\x00"+key] = routeApplyRecord{Fingerprint: planFingerprint, Result: result}
+			r.idempotencyMu.Unlock()
+		}
+		return result, nil
+	}
+
+	candidate := cloneWorkspaces(previous)
+	candidateWS := findWorkspace(candidate, wsID)
+	_, candidateApp, err := findAppInWorkspace(candidateWS, plan.ApplicationID)
+	if err != nil {
+		return RouteApplyResult{}, err
+	}
+	if mode == "local" {
+		candidateApp.Active = true
+	} else {
+		candidateApp.Active = false
+	}
+	if plan.RoutePattern != nil {
+		if strings.TrimSpace(*plan.RoutePattern) == "" {
+			candidateApp.RoutePattern = nil
+		} else {
+			pattern := normalizeRequestPath(*plan.RoutePattern)
+			candidateApp.RoutePattern = &pattern
+		}
+	}
+	operation := r.beginOperation("route-apply", correlationID)
+	r.applyOperation(candidateWS, candidateApp, operation)
+	candidateWS.SetDefaults()
+	if err := validateWorkspaces(candidate); err != nil {
+		return RouteApplyResult{}, fmt.Errorf("validate route plan: %w", err)
+	}
+	if err := r.applyRouting(candidate, true); err != nil {
+		return RouteApplyResult{}, fmt.Errorf("apply route plan: %w", err)
+	}
+	if err := r.workspaceStore().SaveState(candidate); err != nil {
+		if rollbackErr := r.applyRouting(previous, true); rollbackErr != nil {
+			return RouteApplyResult{}, fmt.Errorf("persist route plan: %w; restore routing: %v", err, rollbackErr)
+		}
+		return RouteApplyResult{}, fmt.Errorf("persist route plan: %w", err)
+	}
+	r.workspacesMu.Lock()
+	r.workspaces = candidate
+	r.workspacesMu.Unlock()
+	after := buildNormalizedRoutes(candidateWS)
+	result := RouteApplyResult{Changed: true, Plan: canonical, Routes: after, Verified: r.routesAreEffective(wsID, after), Verification: "applied", Operation: operation}
+	if key != "" {
+		r.idempotencyMu.Lock()
+		r.routeIdempotency[wsID+"\x00"+key] = routeApplyRecord{Fingerprint: planFingerprint, Result: result}
+		r.idempotencyMu.Unlock()
+	}
+	return result, nil
+}
+
+// SyncRoute reconciles the desired normalized routes with the last successful
+// proxy projection. The provider abstraction intentionally remains optional;
+// when nginx is unavailable the operation fails without claiming verification.
+func (r *Registry) SyncRoute(wsID, correlationID string, repair bool) (RouteSyncResult, error) {
+	r.mutationMu.Lock()
+	defer r.mutationMu.Unlock()
+	previous := r.workspaceSnapshot()
+	ws := findWorkspace(previous, wsID)
+	if ws == nil {
+		return RouteSyncResult{}, fmt.Errorf("workspace not found: %s", wsID)
+	}
+	desired := buildNormalizedRoutes(ws)
+	desiredHash := fingerprintRoutes(desired)
+	warnings := make([]RouteWarning, 0)
+	if len(conflictsForRoutes(desired)) > 0 {
+		warnings = append(warnings, RouteWarning{Code: "ROUTE_CONFLICT", Message: "one or more routes compete for the same host and pattern"})
+	}
+	if r.routesAreEffectiveHash(wsID, desiredHash) && r.effectiveVersion(wsID) == ws.Route.RouteVersion {
+		return RouteSyncResult{WorkspaceID: wsID, Changed: false, Verified: true, Status: "in-sync", DesiredRouteVersion: ws.Route.RouteVersion, EffectiveRouteVersion: r.effectiveVersion(wsID), Routes: desired, Warnings: warnings}, nil
+	}
+	if !repair {
+		return RouteSyncResult{WorkspaceID: wsID, Changed: false, Verified: false, Status: "drift", DesiredRouteVersion: ws.Route.RouteVersion, EffectiveRouteVersion: r.effectiveVersion(wsID), Routes: desired, Warnings: warnings}, nil
+	}
+	candidate := cloneWorkspaces(previous)
+	candidateWS := findWorkspace(candidate, wsID)
+	operation := r.beginOperation("route-sync", correlationID)
+	r.applyOperation(candidateWS, nil, operation)
+	for _, app := range candidateWS.Applications {
+		app.LastOperation = cloneOperation(operation)
+		app.Route.RouteVersion = operation.RouteVersion
+		app.Route.OperationID = operation.OperationID
+		app.RefreshRouteState(candidateWS, &operation.CompletedAt)
+		app.Route.RouteVersion = operation.RouteVersion
+		app.Route.OperationID = operation.OperationID
+	}
+	if err := r.applyRouting(candidate, true); err != nil {
+		return RouteSyncResult{}, fmt.Errorf("sync routes: %w", err)
+	}
+	if err := r.workspaceStore().SaveState(candidate); err != nil {
+		if rollbackErr := r.applyRouting(previous, true); rollbackErr != nil {
+			return RouteSyncResult{}, fmt.Errorf("persist route sync: %w; restore routing: %v", err, rollbackErr)
+		}
+		return RouteSyncResult{}, fmt.Errorf("persist route sync: %w", err)
+	}
+	r.workspacesMu.Lock()
+	r.workspaces = candidate
+	r.workspacesMu.Unlock()
+	return RouteSyncResult{WorkspaceID: wsID, Changed: true, Verified: r.routesAreEffectiveHash(wsID, desiredHash), Status: "repaired", DesiredRouteVersion: operation.RouteVersion, EffectiveRouteVersion: operation.RouteVersion, Routes: buildNormalizedRoutes(candidateWS), Warnings: warnings, Operation: operation}, nil
 }
 
 // RegisterApplicationAlias adds an unambiguous normalized alias to an app
@@ -1178,6 +1445,58 @@ func (r *Registry) reloadProxyIfAvailable() error {
 	return r.applyRouting(r.workspaceSnapshot(), false)
 }
 
+func (r *Registry) ensureRouteState() {
+	r.routingStateMu.Lock()
+	if r.effectiveRoutes == nil {
+		r.effectiveRoutes = make(map[string][]Route)
+	}
+	if r.effectiveHashes == nil {
+		r.effectiveHashes = make(map[string]string)
+	}
+	if r.effectiveVersions == nil {
+		r.effectiveVersions = make(map[string]uint64)
+	}
+	r.routingStateMu.Unlock()
+	r.idempotencyMu.Lock()
+	if r.routeIdempotency == nil {
+		r.routeIdempotency = make(map[string]routeApplyRecord)
+	}
+	r.idempotencyMu.Unlock()
+}
+
+func (r *Registry) recordEffectiveRoutes(workspaces []*models.Workspace) {
+	r.ensureRouteState()
+	r.routingStateMu.Lock()
+	defer r.routingStateMu.Unlock()
+	for _, ws := range workspaces {
+		if ws == nil {
+			continue
+		}
+		routes := buildNormalizedRoutes(ws)
+		r.effectiveRoutes[ws.WorkspaceID] = cloneRoutes(routes)
+		r.effectiveHashes[ws.WorkspaceID] = fingerprintRoutes(routes)
+		r.effectiveVersions[ws.WorkspaceID] = ws.Route.RouteVersion
+	}
+}
+
+func (r *Registry) routesAreEffectiveHash(wsID, hash string) bool {
+	r.ensureRouteState()
+	r.routingStateMu.RLock()
+	defer r.routingStateMu.RUnlock()
+	return hash != "" && r.effectiveHashes[wsID] == hash
+}
+
+func (r *Registry) routesAreEffective(wsID string, routes []Route) bool {
+	return r.routesAreEffectiveHash(wsID, fingerprintRoutes(routes))
+}
+
+func (r *Registry) effectiveVersion(wsID string) uint64 {
+	r.ensureRouteState()
+	r.routingStateMu.RLock()
+	defer r.routingStateMu.RUnlock()
+	return r.effectiveVersions[wsID]
+}
+
 func (r *Registry) applyRouting(workspaces []*models.Workspace, required bool) error {
 	provider := r.GetRoutingProvider()
 	if provider == nil {
@@ -1192,7 +1511,11 @@ func (r *Registry) applyRouting(workspaces []*models.Workspace, required bool) e
 		}
 		return nil
 	}
-	return r.loadProxyWithRetry(workspaces)
+	if err := r.loadProxyWithRetry(workspaces); err != nil {
+		return err
+	}
+	r.recordEffectiveRoutes(workspaces)
+	return nil
 }
 
 // loadProxyWithRetry attempts to load the config into Proxy with exponential backoff.
