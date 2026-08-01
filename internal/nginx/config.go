@@ -12,6 +12,7 @@ import (
 	"text/template"
 
 	"github.com/thiagojdb/rementor/internal/models"
+	"github.com/thiagojdb/rementor/internal/services"
 	"github.com/thiagojdb/rementor/internal/validation"
 )
 
@@ -144,7 +145,7 @@ func routingServer(serverName string, ws *models.Workspace, domainApp *models.Ap
 				continue
 			}
 			if app.Active && app.Port > 0 {
-				locations = append(locations, localAppLocations(app)...)
+				locations = append(locations, localAppLocations(ws, app)...)
 			}
 		}
 		for _, app := range ws.Applications {
@@ -158,7 +159,7 @@ func routingServer(serverName string, ws *models.Workspace, domainApp *models.Ap
 			if remoteBase == "" {
 				continue
 			}
-			locations = append(locations, remoteAppLocations(appWithRemoteBase(app, remoteBase))...)
+			locations = append(locations, remoteAppLocations(ws, appWithRemoteBase(app, remoteBase))...)
 		}
 		locations = append(locations, fallbackLocation(ws, nil))
 	} else {
@@ -167,7 +168,7 @@ func routingServer(serverName string, ws *models.Workspace, domainApp *models.Ap
 				continue
 			}
 			if app.Active && app.Port > 0 {
-				locations = append(locations, localAppLocations(app)...)
+				locations = append(locations, localAppLocations(ws, app)...)
 				continue
 			}
 			remoteBase := app.RemoteBaseUrl
@@ -177,12 +178,12 @@ func routingServer(serverName string, ws *models.Workspace, domainApp *models.Ap
 			if remoteBase == "" {
 				continue
 			}
-			locations = append(locations, remoteAppLocations(appWithRemoteBase(app, remoteBase))...)
+			locations = append(locations, remoteAppLocations(ws, appWithRemoteBase(app, remoteBase))...)
 		}
 		if domainApp.Active && domainApp.Port > 0 {
-			locations = append(locations, localAppLocations(domainApp)...)
+			locations = append(locations, localAppLocations(ws, domainApp)...)
 		} else if domainApp.RemoteBaseUrl != "" {
-			locations = append(locations, remoteAppLocations(domainApp)...)
+			locations = append(locations, remoteAppLocations(ws, domainApp)...)
 		}
 		locations = append(locations, fallbackLocation(ws, domainApp))
 	}
@@ -229,6 +230,10 @@ func listenDirectives() []string {
 func appWithRemoteBase(app *models.Application, remoteBase string) *models.Application {
 	return &models.Application{
 		ID:            app.ID,
+		AppID:         app.AppID,
+		ServiceID:     app.ServiceID,
+		Repository:    app.Repository,
+		Aliases:       append([]string(nil), app.Aliases...),
 		Name:          app.Name,
 		Path:          app.Path,
 		Domain:        app.Domain,
@@ -242,7 +247,7 @@ func appWithRemoteBase(app *models.Application, remoteBase string) *models.Appli
 	}
 }
 
-func localAppLocations(app *models.Application) []Location {
+func localAppLocations(ws *models.Workspace, app *models.Application) []Location {
 	if app.Path == "/" && app.Context != "" && app.Context != "/" {
 		context := cleanPath(app.Context)
 		return []Location{
@@ -251,10 +256,10 @@ func localAppLocations(app *models.Application) []Location {
 			{Pattern: context + "/", Proxy: localProxy(app.Port, true, ""), AddCORS: true, PassHeaders: true, StripOrigin: app.StripOrigin},
 		}
 	}
-	return locationsForPatterns(routePathPatterns(app), localProxy(app.Port, false, ""), app.StripOrigin)
+	return locationsForPatterns(routePathPatterns(ws, app), localProxy(app.Port, false, ""), app.StripOrigin)
 }
 
-func remoteAppLocations(app *models.Application) []Location {
+func remoteAppLocations(ws *models.Workspace, app *models.Application) []Location {
 	if app.Path == "/" && app.Context != "" && app.Context != "/" {
 		context := cleanPath(app.Context)
 		proxy := remoteProxy(app.RemoteBaseUrl)
@@ -264,7 +269,7 @@ func remoteAppLocations(app *models.Application) []Location {
 			{Pattern: context + "/", Proxy: proxy, AddCORS: true, PassHeaders: true},
 		}
 	}
-	return locationsForPatterns(routePathPatterns(app), remoteProxy(app.RemoteBaseUrl), false)
+	return locationsForPatterns(routePathPatterns(ws, app), remoteProxy(app.RemoteBaseUrl), false)
 }
 
 func locationsForPatterns(patterns []string, proxy Proxy, stripOrigin bool) []Location {
@@ -364,7 +369,12 @@ func remoteProxy(rawURL string) Proxy {
 	}
 }
 
-func routePathPatterns(app *models.Application) []string {
+func routePathPatterns(ws *models.Workspace, app *models.Application) []string {
+	if patterns := services.RoutePatterns(ws, app); len(patterns) > 0 {
+		return patterns
+	}
+	// Keep a defensive fallback for partially initialized workspaces. Normal
+	// registry/config paths always provide the shared normalized projection.
 	if app.RoutePattern != nil && *app.RoutePattern != "" {
 		return []string{*app.RoutePattern}
 	}

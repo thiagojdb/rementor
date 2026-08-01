@@ -60,6 +60,8 @@ func main() {
 		cli.MCPCmd(client, url)
 	case "nginx":
 		cli.NginxCmd(rest)
+	case "route":
+		cli.RouteCmd(client, jsonOutput, rest)
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: %s\n\n", cmd)
 		usage()
@@ -95,4 +97,5 @@ Commands:
            [--health <endpoint>] [--no-activate]`)
 	fmt.Fprintln(os.Stderr, "  mcp")
 	fmt.Fprintln(os.Stderr, "  nginx load-routes")
+	fmt.Fprintln(os.Stderr, "  route get|resolve|plan|apply|sync")
 }

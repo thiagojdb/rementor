@@ -27,6 +27,12 @@ service ControlPlaneService {
   rpc GetRoutePattern(GetRoutePatternRequest) returns (GetRoutePatternResponse);
   rpc UpdateRoutePattern(UpdateRoutePatternRequest) returns (UpdateRoutePatternResponse);
 
+  rpc GetRoute(GetRouteRequest) returns (GetRouteResponse);
+  rpc ResolveRoute(ResolveRouteRequest) returns (ResolveRouteResponse);
+  rpc PlanRoute(PlanRouteRequest) returns (PlanRouteResponse);
+  rpc ApplyRoute(ApplyRouteRequest) returns (ApplyRouteResponse);
+  rpc SyncRoute(SyncRouteRequest) returns (SyncRouteResponse);
+
   rpc WatchHealth(WatchHealthRequest) returns (stream WatchHealthResponse);
 }
 
@@ -51,6 +57,8 @@ enum RouteOperationKind {
   ROUTE_OPERATION_KIND_UPDATE_PATTERN = 4;
   ROUTE_OPERATION_KIND_UPSERT = 5;
   ROUTE_OPERATION_KIND_DELETE = 6;
+  ROUTE_OPERATION_KIND_ROUTE_APPLY = 7;
+  ROUTE_OPERATION_KIND_ROUTE_SYNC = 8;
 }
 
 // ErrorCode is the stable, machine-readable error vocabulary shared by RPC,
@@ -356,6 +364,157 @@ message UpdateRoutePatternRequest {
 message UpdateRoutePatternResponse {
   Application application = 1;
   OperationMetadata operation = 2;
+}
+
+// NormalizedRoute is the canonical route entry used by the route lifecycle
+// operations. Pattern retains the wildcard notation understood by Rementor
+// (for example /users/*); precedence is higher for exact and longer matches.
+message NormalizedRoute {
+  string workspace_id = 1;
+  string environment = 2;
+  string public_host = 3;
+  string pattern = 4;
+  string canonical_app_id = 5;
+  string service_id = 6;
+  string repository = 7;
+  RouteMode desired_mode = 8;
+  RouteMode effective_mode = 9;
+  string target = 10;
+  string local_target = 11;
+  string remote_target = 12;
+  bool remote_fallback = 13;
+  string upstream_context = 14;
+  int32 precedence = 15;
+  string precedence_reason = 16;
+  bool exact = 17;
+}
+
+message RouteWarning {
+  string code = 1;
+  string message = 2;
+}
+
+message RouteConflict {
+  string workspace_id = 1;
+  string environment = 2;
+  string public_host = 3;
+  string pattern = 4;
+  string app_id = 5;
+  string conflicting_app_id = 6;
+  string winning_app_id = 7;
+  string reason = 8;
+}
+
+message RouteChange {
+  string application_id = 1;
+  NormalizedRoute before = 2;
+  NormalizedRoute after = 3;
+}
+
+message RoutePlan {
+  string workspace_id = 1;
+  string environment = 2;
+  RouteVersion base_route_version = 3;
+  string application_id = 4;
+  RouteMode desired_mode = 5;
+  optional string route_pattern = 6;
+  repeated NormalizedRoute before_routes = 7;
+  repeated NormalizedRoute after_routes = 8;
+  repeated RouteChange changes = 9;
+  repeated RouteWarning warnings = 10;
+  repeated RouteConflict conflicts = 11;
+  string fingerprint = 12;
+  uint64 base_version = 13;
+}
+
+message RouteResolution {
+  string workspace_id = 1;
+  string environment = 2;
+  string host = 3;
+  string path = 4;
+  NormalizedRoute route = 5;
+  string matching_pattern = 6;
+  string canonical_app_id = 7;
+  string service_id = 8;
+  string target = 9;
+  int32 precedence = 10;
+  string precedence_reason = 11;
+}
+
+message GetRouteRequest {
+  string workspace_id = 1;
+}
+
+message GetRouteResponse {
+  string workspace_id = 1;
+  string environment = 2;
+  RouteVersion route_version = 3;
+  repeated NormalizedRoute routes = 4;
+  repeated RouteWarning warnings = 5;
+  repeated RouteConflict conflicts = 6;
+}
+
+message ResolveRouteRequest {
+  string workspace_id = 1;
+  string host = 2;
+  string path = 3;
+}
+
+message ResolveRouteResponse {
+  RouteResolution resolution = 1;
+}
+
+message PlanRouteRequest {
+  string workspace_id = 1;
+  string application_ref = 2;
+  RouteMode desired_mode = 3;
+  optional string route_pattern = 4;
+  RouteVersion expected_route_version = 5;
+  string correlation_id = 6;
+  uint64 expected_version = 7;
+}
+
+message PlanRouteResponse {
+  RoutePlan plan = 1;
+}
+
+message ApplyRouteRequest {
+  string workspace_id = 1;
+  RoutePlan plan = 2;
+  RouteVersion expected_route_version = 3;
+  string idempotency_key = 4;
+  string correlation_id = 5;
+  string application_ref = 6;
+  RouteMode desired_mode = 7;
+  optional string route_pattern = 8;
+  uint64 expected_version = 9;
+}
+
+message ApplyRouteResponse {
+  bool changed = 1;
+  RoutePlan plan = 2;
+  repeated NormalizedRoute routes = 3;
+  OperationMetadata operation = 4;
+  bool verified = 5;
+  string verification_status = 6;
+}
+
+message SyncRouteRequest {
+  string workspace_id = 1;
+  string correlation_id = 2;
+  optional bool repair = 3;
+}
+
+message SyncRouteResponse {
+  string workspace_id = 1;
+  bool changed = 2;
+  bool verified = 3;
+  string status = 4;
+  RouteVersion desired_route_version = 5;
+  RouteVersion effective_route_version = 6;
+  repeated NormalizedRoute routes = 7;
+  repeated RouteWarning warnings = 8;
+  OperationMetadata operation = 9;
 }
 
 message WatchHealthRequest {

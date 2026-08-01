@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateWorkspaceRequest, CreateWorkspaceResponse, DeleteApplicationRequest, DeleteApplicationResponse, DeleteWorkspaceRequest, DeleteWorkspaceResponse, GetApplicationRequest, GetApplicationResponse, GetRoutePatternRequest, GetRoutePatternResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListApplicationsRequest, ListApplicationsResponse, ListWorkspacesRequest, ListWorkspacesResponse, RegisterApplicationAliasRequest, RegisterApplicationAliasResponse, ResolveApplicationRequest, ResolveApplicationResponse, SyncWorkspaceRoutingRequest, SyncWorkspaceRoutingResponse, ToggleAllToLocalRequest, ToggleAllToLocalResponse, ToggleAllToRemoteRequest, ToggleAllToRemoteResponse, ToggleApplicationRequest, ToggleApplicationResponse, UpdateRoutePatternRequest, UpdateRoutePatternResponse, UpdateWorkspaceRequest, UpdateWorkspaceResponse, UpsertApplicationRequest, UpsertApplicationResponse, WatchHealthRequest, WatchHealthResponse } from "./rementor_pb.js";
+import { ApplyRouteRequest, ApplyRouteResponse, CreateWorkspaceRequest, CreateWorkspaceResponse, DeleteApplicationRequest, DeleteApplicationResponse, DeleteWorkspaceRequest, DeleteWorkspaceResponse, GetApplicationRequest, GetApplicationResponse, GetRoutePatternRequest, GetRoutePatternResponse, GetRouteRequest, GetRouteResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListApplicationsRequest, ListApplicationsResponse, ListWorkspacesRequest, ListWorkspacesResponse, PlanRouteRequest, PlanRouteResponse, RegisterApplicationAliasRequest, RegisterApplicationAliasResponse, ResolveApplicationRequest, ResolveApplicationResponse, ResolveRouteRequest, ResolveRouteResponse, SyncRouteRequest, SyncRouteResponse, SyncWorkspaceRoutingRequest, SyncWorkspaceRoutingResponse, ToggleAllToLocalRequest, ToggleAllToLocalResponse, ToggleAllToRemoteRequest, ToggleAllToRemoteResponse, ToggleApplicationRequest, ToggleApplicationResponse, UpdateRoutePatternRequest, UpdateRoutePatternResponse, UpdateWorkspaceRequest, UpdateWorkspaceResponse, UpsertApplicationRequest, UpsertApplicationResponse, WatchHealthRequest, WatchHealthResponse } from "./rementor_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -163,6 +163,51 @@ export const ControlPlaneService = {
       name: "UpdateRoutePattern",
       I: UpdateRoutePatternRequest,
       O: UpdateRoutePatternResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.GetRoute
+     */
+    getRoute: {
+      name: "GetRoute",
+      I: GetRouteRequest,
+      O: GetRouteResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.ResolveRoute
+     */
+    resolveRoute: {
+      name: "ResolveRoute",
+      I: ResolveRouteRequest,
+      O: ResolveRouteResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.PlanRoute
+     */
+    planRoute: {
+      name: "PlanRoute",
+      I: PlanRouteRequest,
+      O: PlanRouteResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.ApplyRoute
+     */
+    applyRoute: {
+      name: "ApplyRoute",
+      I: ApplyRouteRequest,
+      O: ApplyRouteResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.SyncRoute
+     */
+    syncRoute: {
+      name: "SyncRoute",
+      I: SyncRouteRequest,
+      O: SyncRouteResponse,
       kind: MethodKind.Unary,
     },
     /**

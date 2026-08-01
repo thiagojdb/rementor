@@ -142,6 +142,13 @@ make build-ctl
 
 ./dist/rementorctl app toggle demo orders-api
 ./dist/rementorctl --json app list demo
+
+# Inspect, plan, apply, and verify normalized routes.
+./dist/rementorctl route get demo
+./dist/rementorctl route resolve demo --host api.localhost --path /orders/42
+./dist/rementorctl route plan demo orders-api --mode local
+./dist/rementorctl route apply demo orders-api --mode local --idempotency-key orders-local
+./dist/rementorctl route sync demo
 ```
 
 Flags may appear before or after positional arguments.

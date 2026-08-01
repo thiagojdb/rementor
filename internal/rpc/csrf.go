@@ -26,6 +26,8 @@ var mutatingProcedures = map[string]struct{}{
 	rementorv1connect.ControlPlaneServiceToggleAllToLocalProcedure:     {},
 	rementorv1connect.ControlPlaneServiceSyncWorkspaceRoutingProcedure: {},
 	rementorv1connect.ControlPlaneServiceUpdateRoutePatternProcedure:   {},
+	rementorv1connect.ControlPlaneServiceApplyRouteProcedure:           {},
+	rementorv1connect.ControlPlaneServiceSyncRouteProcedure:            {},
 }
 
 type CSRFGuard struct {
