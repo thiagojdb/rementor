@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/thiagojdb/rementor/internal/models"
 )
@@ -120,6 +121,48 @@ func TestOpenDBCreatesPrivateDirectoryAndDatabaseFile(t *testing.T) {
 	}
 	if got := dbInfo.Mode().Perm(); got != 0o600 {
 		t.Fatalf("expected sqlite permissions 0600, got %04o", got)
+	}
+}
+
+func TestRouteOperationJournalPersistsAndUpdates(t *testing.T) {
+	t.Setenv("XDG_DATA_HOME", filepath.Join(t.TempDir(), "data"))
+
+	created := time.Now().UTC().Truncate(time.Microsecond)
+	operation := models.RouteOperationJournal{
+		OperationID:     "op-test",
+		WorkspaceID:     "demo",
+		IdempotencyKey:  "request-1",
+		Fingerprint:     "fingerprint",
+		CorrelationID:   "corr-1",
+		ExpectedVersion: 3,
+		RouteVersion:    4,
+		Phase:           "prepared",
+		Status:          "prepared",
+		CreatedAt:       created,
+		UpdatedAt:       created,
+		Result:          []byte(`{"status":"committed"}`),
+	}
+	if err := BeginRouteOperation(operation); err != nil {
+		t.Fatalf("BeginRouteOperation failed: %v", err)
+	}
+	operation.Phase = "committed"
+	operation.Status = "committed"
+	operation.RollbackStatus = "not-needed"
+	operation.UpdatedAt = created.Add(time.Second)
+	if err := UpdateRouteOperation(operation); err != nil {
+		t.Fatalf("UpdateRouteOperation failed: %v", err)
+	}
+
+	operations, err := LoadRouteOperations()
+	if err != nil {
+		t.Fatalf("LoadRouteOperations failed: %v", err)
+	}
+	if len(operations) != 1 {
+		t.Fatalf("journal entries = %d, want 1", len(operations))
+	}
+	got := operations[0]
+	if got.Status != "committed" || got.RollbackStatus != "not-needed" || got.RouteVersion != 4 || string(got.Result) != string(operation.Result) {
+		t.Fatalf("journal entry = %#v", got)
 	}
 }
 
