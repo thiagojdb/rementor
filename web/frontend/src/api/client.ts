@@ -4,6 +4,7 @@ import { ControlPlaneService } from '../gen/rementor/v1/rementor_connect'
 import { StructuredError } from '../gen/rementor/v1/rementor_pb'
 import type {
   ApplicationDTO,
+  BrowserURLResolutionDTO,
   CreateWorkspaceRequest,
   OperationMetadataDTO,
   RoutePatternDTO,
@@ -90,6 +91,13 @@ export function getApplication(wsId: string, appId: string): Promise<Application
 export function resolveApplication(wsId: string, applicationRef: string): Promise<ApplicationDTO> {
   return call(async () => (await client.resolveApplication({ workspaceId: wsId, applicationRef })).application as ApplicationDTO)
 }
+
+export function resolveBrowserURL(wsId: string, applicationRef: string): Promise<BrowserURLResolutionDTO> {
+  return call(async () => (await client.resolveBrowserURL({ workspaceId: wsId, applicationRef })).resolution as BrowserURLResolutionDTO)
+}
+
+export const resolveURL = resolveBrowserURL
+export const resolveApplicationURL = resolveBrowserURL
 
 export function registerApplicationAlias(wsId: string, applicationRef: string, alias: string): Promise<ApplicationDTO> {
   return call(async () => {

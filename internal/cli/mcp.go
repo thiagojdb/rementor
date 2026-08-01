@@ -282,6 +282,8 @@ func (s *mcpServer) handleToolCall(raw json.RawMessage) (any, error) {
 		return s.toolAppGet(params.Arguments)
 	case "rementor.app_resolve":
 		return s.toolAppResolve(params.Arguments)
+	case "rementor_url", "rementor.url", "rementor.app_url", "rementor.url_resolve":
+		return s.toolBrowserURL(params.Arguments)
 	case "rementor.app_alias":
 		return s.toolAppAlias(params.Arguments)
 	case "rementor.app_register":
@@ -402,7 +404,15 @@ func (s *mcpServer) toolApps(args map[string]any) (any, error) {
 				unhealthyLocal++
 			}
 		}
-		apps = append(apps, compactApplication(workspace, app))
+		compact := compactApplication(workspace, app)
+		appRef := app.AppID
+		if appRef == "" {
+			appRef = app.ID
+		}
+		if resolved, resolveErr := s.client.ResolveBrowserURL(context.Background(), workspace.ID, appRef); resolveErr == nil {
+			compact.URL = resolved.URL
+		}
+		apps = append(apps, compact)
 	}
 	return toolResult(fmt.Sprintf("Resolved %d app(s): %d local, %d remote", len(apps), local, len(apps)-local), map[string]any{
 		"summary": map[string]int{
@@ -431,6 +441,16 @@ func (s *mcpServer) toolAppResolve(args map[string]any) (any, error) {
 		return nil, err
 	}
 	return toolResult(fmt.Sprintf("Resolved %s to app %s", ref, app.ID), app), nil
+}
+
+func (s *mcpServer) toolBrowserURL(args map[string]any) (any, error) {
+	workspace := requiredString(args, "workspace")
+	ref := requiredString(args, "app")
+	result, err := s.client.ResolveBrowserURL(context.Background(), workspace, ref)
+	if err != nil {
+		return nil, err
+	}
+	return toolResult(fmt.Sprintf("Resolved %s to %s", ref, result.URL), result), nil
 }
 
 func (s *mcpServer) toolAppAlias(args map[string]any) (any, error) {
@@ -491,12 +511,21 @@ func (s *mcpServer) toolAppAnnounce(args map[string]any) (any, error) {
 			operation = set.Operation
 		}
 	}
+	appRef := application.AppID
+	if appRef == "" {
+		appRef = application.ID
+	}
+	resolved, resolveErr := s.client.ResolveBrowserURL(context.Background(), workspaceID, appRef)
+	if resolveErr != nil {
+		return nil, resolveErr
+	}
+	stableURL := resolved.URL
 	result := mcpAnnounceResult{
 		Workspace:   workspaceID,
 		App:         appID,
 		Status:      registered.Status,
 		Activated:   activated,
-		URL:         buildMCPAppURL(workspace, path, domain),
+		URL:         stableURL,
 		Application: application,
 		Operation:   operation,
 	}
@@ -759,6 +788,10 @@ func mcpToolList() []map[string]any {
 		toolSchema("rementor.apps", "List applications in a workspace in compact form.", workspaceSchema()),
 		toolSchema("rementor.app_get", "Get full application details.", workspaceAppSchema()),
 		toolSchema("rementor.app_resolve", "Resolve a canonical application ID or alias in a workspace.", workspaceAppSchema()),
+		toolSchema("rementor_url", "Resolve the stable browser URL for a canonical application ID or alias.", workspaceAppSchema()),
+		toolSchema("rementor.url", "Resolve the stable browser URL for a canonical application ID or alias.", workspaceAppSchema()),
+		toolSchema("rementor.app_url", "Resolve the stable browser URL for a canonical application ID or alias.", workspaceAppSchema()),
+		toolSchema("rementor.url_resolve", "Resolve the stable browser URL for a canonical application ID or alias.", workspaceAppSchema()),
 		toolSchema("rementor.app_alias", "Register an unambiguous normalized alias for an application identity.", objectSchema(map[string]any{
 			"workspace": map[string]any{"type": "string"}, "app": map[string]any{"type": "string"}, "alias": map[string]any{"type": "string"},
 		}, []string{"workspace", "app", "alias"})),
