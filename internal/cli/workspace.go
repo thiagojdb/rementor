@@ -110,12 +110,13 @@ func workspaceDelete(client *Client, jsonOutput bool, args []string) {
 	}
 	id := fs.Arg(0)
 
-	if err := client.DeleteWorkspace(context.Background(), id); err != nil {
+	operation, err := client.DeleteWorkspaceWithMetadata(context.Background(), id)
+	if err != nil {
 		Die("%v", err)
 	}
 
 	if jsonOutput {
-		PrintJSON(map[string]string{"status": "deleted", "workspace": id})
+		PrintJSON(map[string]any{"status": "deleted", "workspace": id, "operation": operation})
 		return
 	}
 	fmt.Printf("workspace %q deleted\n", id)

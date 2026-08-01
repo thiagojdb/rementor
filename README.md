@@ -243,6 +243,22 @@ rementorctl app resolve desenvolvimento front-giss-v2
 rementorctl app alias desenvolvimento rtc front-giss-v2
 ```
 
+### Shared routing contract
+
+The generated protobuf contract is the source of truth for RPC, CLI, MCP, and
+the browser. Responses include an explicit `identity` reference, an
+`environment` reference, and a typed `route` projection alongside the legacy
+`id`, `active`, and timestamp-string fields. Route-affecting mutations return
+`operationId`, `routeVersion`, typed creation/completion timestamps, and a
+`correlationId`; callers may supply a correlation ID in the request or let
+Rementor generate one.
+
+Existing workspace files and RPC clients remain compatible: `id` is treated as
+the legacy alias for `appId`, `workspaceId` remains the environment key, and
+the old boolean/string fields are retained while clients migrate to the typed
+messages. RPC failures keep their Connect status and human-readable message,
+and carry a `StructuredError` detail with a stable machine-readable code.
+
 
 Prerequisites:
 

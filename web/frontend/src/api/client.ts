@@ -1,9 +1,11 @@
 import { ConnectError, createClient, type CallOptions, type Interceptor } from '@connectrpc/connect'
 import { createConnectTransport } from '@connectrpc/connect-web'
 import { ControlPlaneService } from '../gen/rementor/v1/rementor_connect'
+import { StructuredError } from '../gen/rementor/v1/rementor_pb'
 import type {
   ApplicationDTO,
   CreateWorkspaceRequest,
+  OperationMetadataDTO,
   RoutePatternDTO,
   ToggleResultDTO,
   UpdateRoutePatternRequest,
@@ -13,7 +15,12 @@ import type {
 
 function normalizeError(error: unknown): Error {
   const connectError = ConnectError.from(error)
-  return new Error(connectError.rawMessage || connectError.message)
+  const detail = connectError.findDetails(StructuredError)[0]
+  const normalized = new Error(detail?.message || connectError.rawMessage || connectError.message)
+  if (detail) {
+    Object.assign(normalized, { code: detail.code, metadata: detail.metadata })
+  }
+  return normalized
 }
 
 function csrfToken(): string {
@@ -54,15 +61,22 @@ export function getWorkspace(wsId: string): Promise<WorkspaceDTO> {
 }
 
 export function createWorkspace(req: CreateWorkspaceRequest): Promise<WorkspaceDTO> {
-  return call(async () => (await client.createWorkspace(req)).workspace as WorkspaceDTO)
+  return call(async () => {
+    const response = await client.createWorkspace(req)
+    return { ...response.workspace, operation: response.operation } as WorkspaceDTO
+  })
 }
 
 export function updateWorkspace(wsId: string, req: UpdateWorkspaceRequest): Promise<WorkspaceDTO> {
-  return call(async () => (await client.updateWorkspace({ ...req, workspaceId: wsId })).workspace as WorkspaceDTO)
+  return call(async () => {
+    const response = await client.updateWorkspace({ ...req, workspaceId: wsId })
+    return { ...response.workspace, operation: response.operation } as WorkspaceDTO
+  })
 }
 
-export async function deleteWorkspace(wsId: string): Promise<void> {
-  await call(() => client.deleteWorkspace({ workspaceId: wsId }))
+export async function deleteWorkspace(wsId: string): Promise<OperationMetadataDTO | undefined> {
+  const response = await call(() => client.deleteWorkspace({ workspaceId: wsId }))
+  return response.operation
 }
 
 export function listApplications(wsId: string): Promise<ApplicationDTO[]> {
@@ -78,11 +92,24 @@ export function resolveApplication(wsId: string, applicationRef: string): Promis
 }
 
 export function registerApplicationAlias(wsId: string, applicationRef: string, alias: string): Promise<ApplicationDTO> {
-  return call(async () => (await client.registerApplicationAlias({ workspaceId: wsId, applicationRef, alias })).application as ApplicationDTO)
+  return call(async () => {
+    const response = await client.registerApplicationAlias({ workspaceId: wsId, applicationRef, alias })
+    return { ...response.application, operation: response.operation } as ApplicationDTO
+  })
+}
+
+export function deleteApplication(wsId: string, appId: string): Promise<OperationMetadataDTO | undefined> {
+  return call(async () => {
+    const response = await client.deleteApplication({ workspaceId: wsId, applicationId: appId })
+    return response.operation
+  })
 }
 
 export function toggleApplication(wsId: string, appId: string): Promise<ApplicationDTO> {
-  return call(async () => (await client.toggleApplication({ workspaceId: wsId, applicationId: appId })).application as ApplicationDTO)
+  return call(async () => {
+    const response = await client.toggleApplication({ workspaceId: wsId, applicationId: appId })
+    return { ...response.application, operation: response.operation } as ApplicationDTO
+  })
 }
 
 export function toggleAllToRemote(wsId: string): Promise<ToggleResultDTO> {
@@ -93,8 +120,11 @@ export function toggleAllToLocal(wsId: string): Promise<ToggleResultDTO> {
   return call(() => client.toggleAllToLocal({ workspaceId: wsId }) as Promise<ToggleResultDTO>)
 }
 
-export function syncWorkspaceRouting(wsId: string): Promise<{ status: string }> {
-  return call(() => client.syncWorkspaceRouting({ workspaceId: wsId }))
+export function syncWorkspaceRouting(wsId: string): Promise<{ status: string; operation?: OperationMetadataDTO }> {
+  return call(async () => {
+    const response = await client.syncWorkspaceRouting({ workspaceId: wsId })
+    return { status: response.status, operation: response.operation }
+  })
 }
 
 export function getRoutePattern(wsId: string, appId: string): Promise<RoutePatternDTO> {
@@ -106,9 +136,10 @@ export function updateRoutePattern(
   appId: string,
   req: UpdateRoutePatternRequest
 ): Promise<ApplicationDTO> {
-  return call(async () =>
-    (await client.updateRoutePattern({ workspaceId: wsId, applicationId: appId, pattern: req.pattern })).application as ApplicationDTO
-  )
+  return call(async () => {
+    const response = await client.updateRoutePattern({ workspaceId: wsId, applicationId: appId, pattern: req.pattern, correlationId: req.correlationId })
+    return { ...response.application, operation: response.operation } as ApplicationDTO
+  })
 }
 
 export function watchHealth(wsId: string, options?: CallOptions) {

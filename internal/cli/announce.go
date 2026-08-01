@@ -109,6 +109,7 @@ func AnnounceCmd(client *Client, jsonOutput bool, args []string) {
 			"status":    regStatus,
 			"activated": activated,
 			"url":       appURL,
+			"operation": upserted.Operation,
 		})
 		return
 	}

@@ -59,6 +59,34 @@ type ApplicationBinding struct {
 	UpstreamContext string `json:"upstreamContext,omitempty"`
 }
 
+// OperationMetadata identifies a successful control-plane mutation. The
+// generated protobuf contract mirrors these fields for RPC/CLI/MCP/browser
+// consumers while the model keeps time values native to Go.
+type OperationMetadata struct {
+	OperationID   string    `json:"operationId"`
+	CorrelationID string    `json:"correlationId"`
+	RouteVersion  uint64    `json:"routeVersion"`
+	Kind          string    `json:"kind"`
+	CreatedAt     time.Time `json:"createdAt"`
+	CompletedAt   time.Time `json:"completedAt"`
+}
+
+// RouteState is the normalized route projection exposed by every control
+// surface. DesiredMode and EffectiveMode intentionally remain strings in the
+// domain model; the RPC adapter maps them to the typed protobuf enum.
+type RouteState struct {
+	DesiredMode    string     `json:"desiredMode"`
+	EffectiveMode  string     `json:"effectiveMode"`
+	Target         string     `json:"target,omitempty"`
+	LocalTarget    string     `json:"localTarget,omitempty"`
+	RemoteTarget   string     `json:"remoteTarget,omitempty"`
+	RemoteFallback bool       `json:"remoteFallback"`
+	ProxyHealth    string     `json:"proxyHealth,omitempty"`
+	RouteVersion   uint64     `json:"routeVersion"`
+	OperationID    string     `json:"operationId,omitempty"`
+	VerifiedAt     *time.Time `json:"verifiedAt,omitempty"`
+}
+
 // AppRuntime holds runtime health status information
 type AppRuntime struct {
 	sync.RWMutex
@@ -170,23 +198,25 @@ type Application struct {
 	// ID is retained as the wire-compatible canonical application identifier.
 	// AppID is the explicit identity field used by new callers; both values are
 	// kept in sync when configurations are loaded or registered.
-	ID            string     `json:"id"`
-	AppID         string     `json:"appId,omitempty"`
-	ServiceID     string     `json:"serviceId,omitempty"`
-	Repository    string     `json:"repository,omitempty"`
-	Aliases       []string   `json:"aliases,omitempty"`
-	Name          string     `json:"name,omitempty"`          // Display name
-	Path          string     `json:"path"`                    // URL path for routing (e.g., "/users")
-	Domain        string     `json:"domain,omitempty"`        // Per-app hostname for local-apps type
-	RemoteBaseUrl string     `json:"remoteBaseUrl,omitempty"` // Per-app remote base URL override
-	Context       string     `json:"context,omitempty"`       // Optional context path
-	Health        string     `json:"health"`
-	Port          int        `json:"port"`
-	Active        bool       `json:"active"`
-	RoutePattern  *string    `json:"routePattern,omitempty"`
-	StripOrigin   bool       `json:"stripOrigin,omitempty"` // Strip Origin header for local proxy (Quarkus Dev UI fix)
-	Runtime       AppRuntime `json:"-"`
-	wsID          string     `json:"-"`
+	ID            string             `json:"id"`
+	AppID         string             `json:"appId,omitempty"`
+	ServiceID     string             `json:"serviceId,omitempty"`
+	Repository    string             `json:"repository,omitempty"`
+	Aliases       []string           `json:"aliases,omitempty"`
+	Name          string             `json:"name,omitempty"`          // Display name
+	Path          string             `json:"path"`                    // URL path for routing (e.g., "/users")
+	Domain        string             `json:"domain,omitempty"`        // Per-app hostname for local-apps type
+	RemoteBaseUrl string             `json:"remoteBaseUrl,omitempty"` // Per-app remote base URL override
+	Context       string             `json:"context,omitempty"`       // Optional context path
+	Health        string             `json:"health"`
+	Port          int                `json:"port"`
+	Active        bool               `json:"active"`
+	RoutePattern  *string            `json:"routePattern,omitempty"`
+	StripOrigin   bool               `json:"stripOrigin,omitempty"` // Strip Origin header for local proxy (Quarkus Dev UI fix)
+	Route         RouteState         `json:"route"`
+	LastOperation *OperationMetadata `json:"lastOperation,omitempty"`
+	Runtime       AppRuntime         `json:"-"`
+	wsID          string             `json:"-"`
 }
 
 // CanonicalAppID returns the stable identity key while preserving the legacy
@@ -199,6 +229,73 @@ func (a *Application) CanonicalAppID() string {
 		return strings.TrimSpace(a.AppID)
 	}
 	return strings.TrimSpace(a.ID)
+}
+
+// RouteStateFor derives the typed route projection from legacy fields without
+// mutating the application. This is useful to adapters that need to project a
+// route while the application contains runtime state protected by a mutex.
+func (a *Application) RouteStateFor(workspace *Workspace, verifiedAt *time.Time) RouteState {
+	if a == nil {
+		return RouteState{}
+	}
+	state := a.Route
+	mode := "remote"
+	if a.Active || (workspace != nil && workspace.IsLocalApps()) {
+		mode = "local"
+	}
+	state.DesiredMode = mode
+	state.EffectiveMode = mode
+	state.LocalTarget = ""
+	state.RemoteTarget = ""
+	if a.Port > 0 {
+		state.LocalTarget = fmt.Sprintf("%s://%s:%d", ProtocolHTTP, Localhost, a.Port)
+	}
+	if workspace != nil && !workspace.IsLocalApps() {
+		state.RemoteTarget = a.GetRemoteBaseUrl(workspace)
+	}
+	state.Target = state.RemoteTarget
+	if mode == "local" {
+		state.Target = state.LocalTarget
+	}
+	if state.Target == "" {
+		state.Target = a.Path
+	}
+	if state.EffectiveMode == "remote" && state.RemoteTarget == "" {
+		state.EffectiveMode = "fallback"
+		state.RemoteFallback = true
+	} else {
+		state.RemoteFallback = false
+	}
+	if a.Runtime.GetHealthLast() != nil {
+		if a.Runtime.GetHealthOk() {
+			state.ProxyHealth = "healthy"
+		} else {
+			state.ProxyHealth = "unhealthy"
+		}
+	}
+	if verifiedAt != nil {
+		state.VerifiedAt = cloneTime(verifiedAt)
+	}
+	return state
+}
+
+// RefreshRouteState derives the typed route projection from legacy fields.
+// Keeping this derivation in the domain model guarantees that RPC, CLI, MCP,
+// and UI adapters report the same desired/effective mode while old persisted
+// configurations continue to use Active and Path.
+func (a *Application) RefreshRouteState(workspace *Workspace, verifiedAt *time.Time) {
+	if a == nil {
+		return
+	}
+	a.Route = a.RouteStateFor(workspace, verifiedAt)
+}
+
+func cloneTime(value *time.Time) *time.Time {
+	if value == nil {
+		return nil
+	}
+	clone := value.UTC()
+	return &clone
 }
 
 // NormalizeIdentityToken normalizes a canonical ID or alias for lookup.
@@ -292,12 +389,14 @@ func (a *Application) RemoteHealthURL(defaultRemoteBaseUrl string) string {
 
 // Workspace represents a workspace with its applications
 type Workspace struct {
-	WorkspaceID   string         `json:"workspaceId"`
-	Type          string         `json:"type,omitempty"`
-	Name          *string        `json:"name,omitempty"`
-	Color         *string        `json:"color,omitempty"`
-	RoutingConfig *RoutingConfig `json:"routingConfig,omitempty"`
-	Applications  []*Application `json:"applications"`
+	WorkspaceID   string             `json:"workspaceId"`
+	Type          string             `json:"type,omitempty"`
+	Name          *string            `json:"name,omitempty"`
+	Color         *string            `json:"color,omitempty"`
+	RoutingConfig *RoutingConfig     `json:"routingConfig,omitempty"`
+	Applications  []*Application     `json:"applications"`
+	Route         RouteState         `json:"route"`
+	LastOperation *OperationMetadata `json:"lastOperation,omitempty"`
 }
 
 // IsLocalApps returns true if this workspace is of type local-apps
@@ -363,6 +462,18 @@ func (w *Workspace) SetDefaults() {
 	// Set workspace reference on all applications
 	for _, app := range w.Applications {
 		app.SetWsID(w.WorkspaceID)
+		app.RefreshRouteState(w, nil)
+	}
+}
+
+// RefreshRouteStates recalculates route projections for all applications in a
+// workspace after a health or routing mutation.
+func (w *Workspace) RefreshRouteStates(verifiedAt *time.Time) {
+	if w == nil {
+		return
+	}
+	for _, app := range w.Applications {
+		app.RefreshRouteState(w, verifiedAt)
 	}
 }
 
@@ -378,21 +489,23 @@ type HealthUpdate struct {
 
 // ApplicationConfig represents a persisted application definition.
 type ApplicationConfig struct {
-	ID            string   `json:"id"`
-	AppID         string   `json:"appId,omitempty"`
-	ServiceID     string   `json:"serviceId,omitempty"`
-	Repository    string   `json:"repository,omitempty"`
-	Aliases       []string `json:"aliases,omitempty"`
-	Name          string   `json:"name,omitempty"`
-	Path          string   `json:"path"`
-	Domain        string   `json:"domain,omitempty"`
-	RemoteBaseUrl string   `json:"remoteBaseUrl,omitempty"` // Per-app remote base URL override
-	Port          int      `json:"port"`
-	Health        string   `json:"health,omitempty"`
-	Active        bool     `json:"active"`
-	RoutePattern  *string  `json:"routePattern,omitempty"`
-	Context       string   `json:"context,omitempty"`
-	StripOrigin   bool     `json:"stripOrigin,omitempty"` // Strip Origin header for local proxy (Quarkus Dev UI fix)
+	ID            string             `json:"id"`
+	AppID         string             `json:"appId,omitempty"`
+	ServiceID     string             `json:"serviceId,omitempty"`
+	Repository    string             `json:"repository,omitempty"`
+	Aliases       []string           `json:"aliases,omitempty"`
+	Name          string             `json:"name,omitempty"`
+	Path          string             `json:"path"`
+	Domain        string             `json:"domain,omitempty"`
+	RemoteBaseUrl string             `json:"remoteBaseUrl,omitempty"` // Per-app remote base URL override
+	Port          int                `json:"port"`
+	Health        string             `json:"health,omitempty"`
+	Active        bool               `json:"active"`
+	RoutePattern  *string            `json:"routePattern,omitempty"`
+	Context       string             `json:"context,omitempty"`
+	StripOrigin   bool               `json:"stripOrigin,omitempty"` // Strip Origin header for local proxy (Quarkus Dev UI fix)
+	Route         RouteState         `json:"route,omitempty"`
+	LastOperation *OperationMetadata `json:"lastOperation,omitempty"`
 }
 
 // CanonicalAppID returns the stable application identity, falling back to the
@@ -412,10 +525,12 @@ func (a ApplicationConfig) NormalizedAliases() []string {
 
 // WorkspaceConfig represents a persisted workspace definition.
 type WorkspaceConfig struct {
-	ID           string              `json:"id"`
-	Type         string              `json:"type,omitempty"`
-	Name         string              `json:"name,omitempty"`
-	Color        string              `json:"color,omitempty"`
-	Routing      RoutingConfig       `json:"routing"`
-	Applications []ApplicationConfig `json:"applications"`
+	ID            string              `json:"id"`
+	Type          string              `json:"type,omitempty"`
+	Name          string              `json:"name,omitempty"`
+	Color         string              `json:"color,omitempty"`
+	Routing       RoutingConfig       `json:"routing"`
+	Applications  []ApplicationConfig `json:"applications"`
+	Route         RouteState          `json:"route,omitempty"`
+	LastOperation *OperationMetadata  `json:"lastOperation,omitempty"`
 }

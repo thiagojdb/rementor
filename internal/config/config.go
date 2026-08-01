@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/thiagojdb/rementor/internal/models"
 	_ "modernc.org/sqlite"
@@ -151,7 +152,7 @@ func LoadState(workspaces []*models.Workspace) error {
 	defer db.Close()
 
 	rows, err := db.Query(`
-		SELECT workspace_id, id, active, route_pattern
+		SELECT workspace_id, id, active, route_pattern, route_version, operation_id, correlation_id, operation_kind, operation_created_at, operation_completed_at
 		FROM applications
 	`)
 	if err != nil {
@@ -162,19 +163,32 @@ func LoadState(workspaces []*models.Workspace) error {
 	type state struct {
 		active       bool
 		routePattern *string
+		route        models.RouteState
+		operation    *models.OperationMetadata
 	}
 	states := make(map[string]map[string]state)
 	for rows.Next() {
 		var wsID, appID string
 		var active int
 		var routePattern sql.NullString
-		if err := rows.Scan(&wsID, &appID, &active, &routePattern); err != nil {
+		var routeVersion int64
+		var operationID, correlationID, operationKind string
+		var operationCreatedAt, operationCompletedAt sql.NullString
+		if err := rows.Scan(&wsID, &appID, &active, &routePattern, &routeVersion, &operationID, &correlationID, &operationKind, &operationCreatedAt, &operationCompletedAt); err != nil {
 			return fmt.Errorf("failed to scan application state: %w", err)
 		}
 		if states[wsID] == nil {
 			states[wsID] = make(map[string]state)
 		}
-		states[wsID][appID] = state{active: active != 0, routePattern: nullStringPtr(routePattern)}
+		appState := state{active: active != 0, routePattern: nullStringPtr(routePattern)}
+		appState.route.RouteVersion = uint64(routeVersion)
+		appState.route.OperationID = operationID
+		if operationID != "" {
+			createdAt := parseStoredTime(operationCreatedAt)
+			completedAt := parseStoredTime(operationCompletedAt)
+			appState.operation = &models.OperationMetadata{OperationID: operationID, CorrelationID: correlationID, RouteVersion: uint64(routeVersion), Kind: operationKind, CreatedAt: createdAt, CompletedAt: completedAt}
+		}
+		states[wsID][appID] = appState
 	}
 	if err := rows.Err(); err != nil {
 		return fmt.Errorf("failed to iterate application state: %w", err)
@@ -186,6 +200,8 @@ func LoadState(workspaces []*models.Workspace) error {
 				if appState, ok := wsStates[app.ID]; ok {
 					app.Active = appState.active
 					app.RoutePattern = appState.routePattern
+					app.Route = appState.route
+					app.LastOperation = appState.operation
 				}
 			}
 		}
@@ -208,17 +224,29 @@ func SaveState(workspaces []*models.Workspace) error {
 
 	stmt, err := tx.Prepare(`
 		UPDATE applications
-		SET active = ?, route_pattern = ?
+		SET active = ?, route_pattern = ?, route_version = ?, operation_id = ?, correlation_id = ?, operation_kind = ?, operation_created_at = ?, operation_completed_at = ?
 		WHERE workspace_id = ? AND id = ?
 	`)
 	if err != nil {
 		return fmt.Errorf("failed to prepare state save: %w", err)
 	}
 	defer stmt.Close()
+	workspaceStmt, err := tx.Prepare(`
+		UPDATE workspaces
+		SET route_version = ?, operation_id = ?, correlation_id = ?, operation_kind = ?, operation_created_at = ?, operation_completed_at = ?
+		WHERE id = ?
+	`)
+	if err != nil {
+		return fmt.Errorf("failed to prepare workspace state save: %w", err)
+	}
+	defer workspaceStmt.Close()
 
 	for _, ws := range workspaces {
+		if _, err := workspaceStmt.Exec(ws.Route.RouteVersion, ws.Route.OperationID, operationCorrelation(ws.LastOperation), operationKind(ws.LastOperation), operationCreatedAt(ws.LastOperation), operationCompletedAt(ws.LastOperation), ws.WorkspaceID); err != nil {
+			return fmt.Errorf("failed to save workspace state for %s: %w", ws.WorkspaceID, err)
+		}
 		for _, app := range ws.Applications {
-			if _, err := stmt.Exec(boolInt(app.Active), ptrValue(app.RoutePattern), ws.WorkspaceID, app.ID); err != nil {
+			if _, err := stmt.Exec(boolInt(app.Active), ptrValue(app.RoutePattern), app.Route.RouteVersion, app.Route.OperationID, operationCorrelation(app.LastOperation), operationKind(app.LastOperation), operationCreatedAt(app.LastOperation), operationCompletedAt(app.LastOperation), ws.WorkspaceID, app.ID); err != nil {
 				return fmt.Errorf("failed to save state for %s/%s: %w", ws.WorkspaceID, app.ID, err)
 			}
 		}
@@ -288,10 +316,12 @@ func UpdateWorkspaceApplications(wsID string, apps []models.ApplicationConfig, l
 		active       bool
 		routePattern *string
 		stripOrigin  bool
+		route        models.RouteState
+		operation    *models.OperationMetadata
 	}
 	oldStates := make(map[string]oldState)
 	rows, err := db.Query(`
-		SELECT id, active, route_pattern, strip_origin
+		SELECT id, active, route_pattern, strip_origin, route_version, operation_id, correlation_id, operation_kind, operation_created_at, operation_completed_at
 		FROM applications
 		WHERE workspace_id = ?
 	`, wsID)
@@ -303,14 +333,23 @@ func UpdateWorkspaceApplications(wsID string, apps []models.ApplicationConfig, l
 		var active int
 		var stripOrigin int
 		var routePattern sql.NullString
-		if err := rows.Scan(&id, &active, &routePattern, &stripOrigin); err != nil {
+		var routeVersion int64
+		var operationID, correlationID, operationKind string
+		var operationCreatedAt, operationCompletedAt sql.NullString
+		if err := rows.Scan(&id, &active, &routePattern, &stripOrigin, &routeVersion, &operationID, &correlationID, &operationKind, &operationCreatedAt, &operationCompletedAt); err != nil {
 			rows.Close()
 			return fmt.Errorf("failed to scan existing application state: %w", err)
 		}
-		oldStates[id] = oldState{
+		previousState := oldState{
 			active: active != 0, routePattern: nullStringPtr(routePattern),
 			stripOrigin: stripOrigin != 0,
 		}
+		previousState.route.RouteVersion = uint64(routeVersion)
+		previousState.route.OperationID = operationID
+		if operationID != "" {
+			previousState.operation = &models.OperationMetadata{OperationID: operationID, CorrelationID: correlationID, RouteVersion: uint64(routeVersion), Kind: operationKind, CreatedAt: parseStoredTime(operationCreatedAt), CompletedAt: parseStoredTime(operationCompletedAt)}
+		}
+		oldStates[id] = previousState
 	}
 	if err := rows.Close(); err != nil {
 		return fmt.Errorf("failed to close existing application state rows: %w", err)
@@ -343,6 +382,8 @@ func UpdateWorkspaceApplications(wsID string, apps []models.ApplicationConfig, l
 			if app.RoutePattern == nil {
 				app.RoutePattern = old.routePattern
 			}
+			app.Route = old.route
+			app.LastOperation = old.operation
 		}
 		if err := insertApplicationConfig(tx, wsID, app, i); err != nil {
 			return err
@@ -445,7 +486,13 @@ func initDB(db *sql.DB) error {
 			routing_mode TEXT NOT NULL DEFAULT '',
 			local_domain TEXT NOT NULL DEFAULT '',
 			default_remote_base_url TEXT NOT NULL DEFAULT '',
-			sort_order INTEGER NOT NULL DEFAULT 0
+			sort_order INTEGER NOT NULL DEFAULT 0,
+			route_version INTEGER NOT NULL DEFAULT 0,
+			operation_id TEXT NOT NULL DEFAULT '',
+			correlation_id TEXT NOT NULL DEFAULT '',
+			operation_kind TEXT NOT NULL DEFAULT '',
+			operation_created_at TEXT,
+			operation_completed_at TEXT
 		)`,
 		`CREATE TABLE IF NOT EXISTS applications (
 			workspace_id TEXT NOT NULL,
@@ -461,6 +508,12 @@ func initDB(db *sql.DB) error {
 			context TEXT NOT NULL DEFAULT '',
 			strip_origin INTEGER NOT NULL DEFAULT 0,
 			sort_order INTEGER NOT NULL DEFAULT 0,
+			route_version INTEGER NOT NULL DEFAULT 0,
+			operation_id TEXT NOT NULL DEFAULT '',
+			correlation_id TEXT NOT NULL DEFAULT '',
+			operation_kind TEXT NOT NULL DEFAULT '',
+			operation_created_at TEXT,
+			operation_completed_at TEXT,
 			PRIMARY KEY (workspace_id, id),
 			FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE
 		)`,
@@ -482,7 +535,63 @@ func initDB(db *sql.DB) error {
 			return fmt.Errorf("failed to initialize sqlite schema: %w", err)
 		}
 	}
+	// Existing installations predate operation metadata. Keep the migration
+	// additive so legacy SQLite files continue to load without a reset.
+	for _, migration := range []struct {
+		table  string
+		column string
+		def    string
+	}{
+		{"workspaces", "route_version", "INTEGER NOT NULL DEFAULT 0"},
+		{"workspaces", "operation_id", "TEXT NOT NULL DEFAULT ''"},
+		{"workspaces", "correlation_id", "TEXT NOT NULL DEFAULT ''"},
+		{"workspaces", "operation_kind", "TEXT NOT NULL DEFAULT ''"},
+		{"workspaces", "operation_created_at", "TEXT"},
+		{"workspaces", "operation_completed_at", "TEXT"},
+		{"applications", "route_version", "INTEGER NOT NULL DEFAULT 0"},
+		{"applications", "operation_id", "TEXT NOT NULL DEFAULT ''"},
+		{"applications", "correlation_id", "TEXT NOT NULL DEFAULT ''"},
+		{"applications", "operation_kind", "TEXT NOT NULL DEFAULT ''"},
+		{"applications", "operation_created_at", "TEXT"},
+		{"applications", "operation_completed_at", "TEXT"},
+	} {
+		if err := ensureColumn(db, migration.table, migration.column, migration.def); err != nil {
+			return err
+		}
+	}
 	return backfillApplicationIdentities(db)
+}
+
+func ensureColumn(db *sql.DB, table, column, definition string) error {
+	rows, err := db.Query(`PRAGMA table_info(` + table + `)`)
+	if err != nil {
+		return fmt.Errorf("failed to inspect %s schema: %w", table, err)
+	}
+	defer rows.Close()
+	var found bool
+	for rows.Next() {
+		var cid int
+		var name, typ string
+		var notNull, pk int
+		var defaultValue sql.NullString
+		if err := rows.Scan(&cid, &name, &typ, &notNull, &defaultValue, &pk); err != nil {
+			return fmt.Errorf("failed to inspect %s schema: %w", table, err)
+		}
+		if name == column {
+			found = true
+			break
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("failed to inspect %s schema: %w", table, err)
+	}
+	if found {
+		return nil
+	}
+	if _, err := db.Exec(`ALTER TABLE ` + table + ` ADD COLUMN ` + column + ` ` + definition); err != nil {
+		return fmt.Errorf("failed to migrate %s.%s: %w", table, column, err)
+	}
+	return nil
 }
 
 // backfillApplicationIdentities makes existing workspace-scoped application
@@ -582,7 +691,7 @@ func normalizeConfig(cfg AppConfig) (AppConfig, bool) {
 
 func loadWorkspacesFromDB(db *sql.DB) ([]*models.Workspace, error) {
 	rows, err := db.Query(`
-		SELECT id, type, name, color, routing_mode, local_domain, default_remote_base_url
+		SELECT id, type, name, color, routing_mode, local_domain, default_remote_base_url, route_version, operation_id, correlation_id, operation_kind, operation_created_at, operation_completed_at
 		FROM workspaces
 		ORDER BY sort_order, id
 	`)
@@ -594,8 +703,16 @@ func loadWorkspacesFromDB(db *sql.DB) ([]*models.Workspace, error) {
 	var configs []models.WorkspaceConfig
 	for rows.Next() {
 		var ws models.WorkspaceConfig
-		if err := rows.Scan(&ws.ID, &ws.Type, &ws.Name, &ws.Color, &ws.Routing.Mode, &ws.Routing.LocalDomain, &ws.Routing.DefaultRemoteBaseURL); err != nil {
+		var routeVersion int64
+		var operationID, correlationID, operationKind string
+		var operationCreatedAt, operationCompletedAt sql.NullString
+		if err := rows.Scan(&ws.ID, &ws.Type, &ws.Name, &ws.Color, &ws.Routing.Mode, &ws.Routing.LocalDomain, &ws.Routing.DefaultRemoteBaseURL, &routeVersion, &operationID, &correlationID, &operationKind, &operationCreatedAt, &operationCompletedAt); err != nil {
 			return nil, fmt.Errorf("failed to scan sqlite workspace: %w", err)
+		}
+		ws.Route.RouteVersion = uint64(routeVersion)
+		ws.Route.OperationID = operationID
+		if operationID != "" {
+			ws.LastOperation = &models.OperationMetadata{OperationID: operationID, CorrelationID: correlationID, RouteVersion: uint64(routeVersion), Kind: operationKind, CreatedAt: parseStoredTime(operationCreatedAt), CompletedAt: parseStoredTime(operationCompletedAt)}
 		}
 		configs = append(configs, ws)
 	}
@@ -619,7 +736,8 @@ func loadApplicationConfigs(db *sql.DB, wsID string) ([]models.ApplicationConfig
 	rows, err := db.Query(`
 		SELECT
 			a.id, a.name, a.path, a.domain, a.remote_base_url, a.port, a.health, a.active, a.route_pattern, a.context, a.strip_origin,
-			COALESCE(i.app_id, a.id), COALESCE(i.service_id, a.id), COALESCE(i.repository, '')
+			COALESCE(i.app_id, a.id), COALESCE(i.service_id, a.id), COALESCE(i.repository, ''),
+			a.route_version, a.operation_id, a.correlation_id, a.operation_kind, a.operation_created_at, a.operation_completed_at
 		FROM applications a
 		LEFT JOIN application_identities i ON i.app_id = a.id
 		WHERE a.workspace_id = ?
@@ -635,14 +753,23 @@ func loadApplicationConfigs(db *sql.DB, wsID string) ([]models.ApplicationConfig
 		var app models.ApplicationConfig
 		var active int
 		var routePattern sql.NullString
+		var routeVersion int64
+		var operationID, correlationID, operationKind string
+		var operationCreatedAt, operationCompletedAt sql.NullString
 		if err := rows.Scan(
 			&app.ID, &app.Name, &app.Path, &app.Domain, &app.RemoteBaseUrl, &app.Port, &app.Health, &active,
 			&routePattern, &app.Context, &app.StripOrigin, &app.AppID, &app.ServiceID, &app.Repository,
+			&routeVersion, &operationID, &correlationID, &operationKind, &operationCreatedAt, &operationCompletedAt,
 		); err != nil {
 			return nil, fmt.Errorf("failed to scan sqlite application: %w", err)
 		}
 		app.Active = active != 0
 		app.RoutePattern = nullStringPtr(routePattern)
+		app.Route.RouteVersion = uint64(routeVersion)
+		app.Route.OperationID = operationID
+		if operationID != "" {
+			app.LastOperation = &models.OperationMetadata{OperationID: operationID, CorrelationID: correlationID, RouteVersion: uint64(routeVersion), Kind: operationKind, CreatedAt: parseStoredTime(operationCreatedAt), CompletedAt: parseStoredTime(operationCompletedAt)}
+		}
 		apps = append(apps, app)
 	}
 	if err := rows.Err(); err != nil {
@@ -693,11 +820,13 @@ func workspacesFromConfigs(configs []models.WorkspaceConfig) []*models.Workspace
 		}
 
 		ws := &models.Workspace{
-			WorkspaceID:  wsConfig.ID,
-			Type:         wsConfig.Type,
-			Name:         stringPtr(name),
-			Color:        stringPtr(color),
-			Applications: convertAppConfigs(wsConfig.Applications),
+			WorkspaceID:   wsConfig.ID,
+			Type:          wsConfig.Type,
+			Name:          stringPtr(name),
+			Color:         stringPtr(color),
+			Applications:  convertAppConfigs(wsConfig.Applications),
+			Route:         wsConfig.Route,
+			LastOperation: wsConfig.LastOperation,
 		}
 		if wsConfig.Type != models.WorkspaceTypeLocalApps {
 			ws.RoutingConfig = &wsConfig.Routing
@@ -710,10 +839,12 @@ func workspacesFromConfigs(configs []models.WorkspaceConfig) []*models.Workspace
 
 func workspaceConfigFromWorkspace(workspace *models.Workspace) models.WorkspaceConfig {
 	config := models.WorkspaceConfig{
-		ID:           workspace.WorkspaceID,
-		Type:         workspace.GetType(),
-		Name:         workspace.NameOrID(),
-		Applications: make([]models.ApplicationConfig, 0, len(workspace.Applications)),
+		ID:            workspace.WorkspaceID,
+		Type:          workspace.GetType(),
+		Name:          workspace.NameOrID(),
+		Applications:  make([]models.ApplicationConfig, 0, len(workspace.Applications)),
+		Route:         workspace.Route,
+		LastOperation: workspace.LastOperation,
 	}
 	if workspace.Color != nil {
 		config.Color = *workspace.Color
@@ -727,6 +858,7 @@ func workspaceConfigFromWorkspace(workspace *models.Workspace) models.WorkspaceC
 			RemoteBaseUrl: app.RemoteBaseUrl, Port: app.Port, Health: app.Health,
 			Active: app.Active, RoutePattern: app.RoutePattern, Context: app.Context,
 			StripOrigin: app.StripOrigin,
+			Route:       app.Route, LastOperation: app.LastOperation,
 		})
 	}
 	return config
@@ -766,6 +898,8 @@ func convertAppConfigs(configs []models.ApplicationConfig) []*models.Application
 			Active:        appConfig.Active,
 			RoutePattern:  appConfig.RoutePattern,
 			StripOrigin:   appConfig.StripOrigin,
+			Route:         appConfig.Route,
+			LastOperation: appConfig.LastOperation,
 		}
 		apps = append(apps, app)
 	}
@@ -797,9 +931,11 @@ func insertWorkspaceConfigTx(tx *sql.Tx, ws models.WorkspaceConfig, order int) e
 	}
 	_, err := tx.Exec(`
 		INSERT INTO workspaces (
-			id, type, name, color, routing_mode, local_domain, default_remote_base_url, sort_order
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-	`, ws.ID, ws.Type, ws.Name, ws.Color, ws.Routing.Mode, ws.Routing.LocalDomain, ws.Routing.DefaultRemoteBaseURL, order)
+			id, type, name, color, routing_mode, local_domain, default_remote_base_url, sort_order,
+			route_version, operation_id, correlation_id, operation_kind, operation_created_at, operation_completed_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`, ws.ID, ws.Type, ws.Name, ws.Color, ws.Routing.Mode, ws.Routing.LocalDomain, ws.Routing.DefaultRemoteBaseURL, order,
+		ws.Route.RouteVersion, ws.Route.OperationID, operationCorrelation(ws.LastOperation), operationKind(ws.LastOperation), operationCreatedAt(ws.LastOperation), operationCompletedAt(ws.LastOperation))
 	if err != nil {
 		return fmt.Errorf("failed to insert workspace %q: %w", ws.ID, err)
 	}
@@ -828,10 +964,11 @@ func insertApplicationConfig(tx *sql.Tx, wsID string, app models.ApplicationConf
 	_, err := tx.Exec(`
 		INSERT INTO applications (
 			workspace_id, id, name, path, domain, remote_base_url, port, health, active, route_pattern, context,
-			strip_origin, sort_order
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			strip_origin, sort_order, route_version, operation_id, correlation_id, operation_kind, operation_created_at, operation_completed_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`, wsID, appID, app.Name, app.Path, app.Domain, app.RemoteBaseUrl, app.Port, health, boolInt(app.Active),
-		ptrValue(app.RoutePattern), app.Context, boolInt(app.StripOrigin), order)
+		ptrValue(app.RoutePattern), app.Context, boolInt(app.StripOrigin), order, app.Route.RouteVersion, app.Route.OperationID,
+		operationCorrelation(app.LastOperation), operationKind(app.LastOperation), operationCreatedAt(app.LastOperation), operationCompletedAt(app.LastOperation))
 	if err != nil {
 		return fmt.Errorf("failed to insert application %s/%s: %w", wsID, appID, err)
 	}
@@ -922,6 +1059,45 @@ func nullStringPtr(value sql.NullString) *string {
 		return nil
 	}
 	return &value.String
+}
+
+func parseStoredTime(value sql.NullString) time.Time {
+	if !value.Valid || value.String == "" {
+		return time.Time{}
+	}
+	parsed, err := time.Parse(time.RFC3339Nano, value.String)
+	if err != nil {
+		return time.Time{}
+	}
+	return parsed
+}
+
+func operationCorrelation(operation *models.OperationMetadata) string {
+	if operation == nil {
+		return ""
+	}
+	return operation.CorrelationID
+}
+
+func operationKind(operation *models.OperationMetadata) string {
+	if operation == nil {
+		return ""
+	}
+	return operation.Kind
+}
+
+func operationCreatedAt(operation *models.OperationMetadata) any {
+	if operation == nil || operation.CreatedAt.IsZero() {
+		return nil
+	}
+	return operation.CreatedAt.UTC().Format(time.RFC3339Nano)
+}
+
+func operationCompletedAt(operation *models.OperationMetadata) any {
+	if operation == nil || operation.CompletedAt.IsZero() {
+		return nil
+	}
+	return operation.CompletedAt.UTC().Format(time.RFC3339Nano)
 }
 
 func ptrValue(value *string) any {
