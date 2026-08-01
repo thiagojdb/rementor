@@ -19,7 +19,7 @@
     "solid-js": "^1.9.0"
   },
   "devDependencies": {
-    "@bufbuild/protoc-gen-es": "^1.10.0",
+    "@bufbuild/protoc-gen-es": "^2.13.0",
     "@connectrpc/protoc-gen-connect-es": "^1.7.0",
     "@tailwindcss/postcss": "^4.3.1",
     "postcss": "^8.5.15",
