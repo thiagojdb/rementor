@@ -26,6 +26,8 @@ var mutatingProcedures = map[string]struct{}{
 	rementorv1connect.ControlPlaneServiceToggleAllToLocalProcedure:     {},
 	rementorv1connect.ControlPlaneServiceSyncWorkspaceRoutingProcedure: {},
 	rementorv1connect.ControlPlaneServiceUpdateRoutePatternProcedure:   {},
+	rementorv1connect.ControlPlaneServiceApplyRouteProcedure:           {},
+	rementorv1connect.ControlPlaneServiceSyncRouteProcedure:            {},
 }
 
 type CSRFGuard struct {
@@ -68,7 +70,7 @@ func (g *CSRFGuard) WrapStreamingHandler(next connect.StreamingHandlerFunc) conn
 
 func (g *CSRFGuard) validate(procedure string, header http.Header) error {
 	if err := validateBrowserOrigin(header); err != nil {
-		return connect.NewError(connect.CodePermissionDenied, err)
+		return newRPCError(connect.CodePermissionDenied, err)
 	}
 	if _, ok := mutatingProcedures[procedure]; !ok {
 		return nil
@@ -77,7 +79,7 @@ func (g *CSRFGuard) validate(procedure string, header http.Header) error {
 		return nil
 	}
 	if g.token == "" || header.Get(CSRFHeader) != g.token {
-		return connect.NewError(connect.CodePermissionDenied, errors.New("invalid CSRF token"))
+		return newRPCError(connect.CodePermissionDenied, errors.New("invalid CSRF token"))
 	}
 	return nil
 }

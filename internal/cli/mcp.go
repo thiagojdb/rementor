@@ -57,10 +57,12 @@ type mcpTextContent struct {
 }
 
 type mcpAppRouteResult struct {
-	Changed       bool           `json:"changed"`
-	PreviousRoute string         `json:"previousRoute"`
-	CurrentRoute  string         `json:"currentRoute"`
-	Application   ApplicationDTO `json:"application"`
+	Changed       bool                  `json:"changed"`
+	PreviousRoute string                `json:"previousRoute"`
+	CurrentRoute  string                `json:"currentRoute"`
+	Application   ApplicationDTO        `json:"application"`
+	Plan          *RoutePlanDTO         `json:"plan,omitempty"`
+	Operation     *OperationMetadataDTO `json:"operation,omitempty"`
 }
 
 type mcpToggleResult struct {
@@ -70,41 +72,51 @@ type mcpToggleResult struct {
 }
 
 type mcpCompactWorkspace struct {
-	ID                   string `json:"id"`
-	Type                 string `json:"type"`
-	Name                 string `json:"name"`
-	LocalDomain          string `json:"localDomain,omitempty"`
-	DefaultRemoteBaseURL string `json:"defaultRemoteBaseUrl,omitempty"`
-	ApplicationCount     int    `json:"applicationCount"`
-	LocalCount           int    `json:"localCount"`
-	RemoteCount          int    `json:"remoteCount"`
-	UnhealthyLocalCount  int    `json:"unhealthyLocalCount"`
+	ID                   string                     `json:"id"`
+	Type                 string                     `json:"type"`
+	Name                 string                     `json:"name"`
+	LocalDomain          string                     `json:"localDomain,omitempty"`
+	DefaultRemoteBaseURL string                     `json:"defaultRemoteBaseUrl,omitempty"`
+	ApplicationCount     int                        `json:"applicationCount"`
+	LocalCount           int                        `json:"localCount"`
+	RemoteCount          int                        `json:"remoteCount"`
+	UnhealthyLocalCount  int                        `json:"unhealthyLocalCount"`
+	Environment          WorkspaceEnvironmentRefDTO `json:"environment"`
+	Route                *RouteStateDTO             `json:"route,omitempty"`
 }
 
 type mcpCompactApplication struct {
-	ID           string `json:"id"`
-	Name         string `json:"name"`
-	Route        string `json:"route"`
-	Path         string `json:"path"`
-	Domain       string `json:"domain,omitempty"`
-	Port         int    `json:"port"`
-	HealthStatus string `json:"healthStatus"`
-	RemoteStatus string `json:"remoteStatus,omitempty"`
-	URL          string `json:"url,omitempty"`
+	ID           string                     `json:"id"`
+	AppID        string                     `json:"appId,omitempty"`
+	ServiceID    string                     `json:"serviceId,omitempty"`
+	Repository   string                     `json:"repository,omitempty"`
+	Aliases      []string                   `json:"aliases,omitempty"`
+	Name         string                     `json:"name"`
+	Route        string                     `json:"route"`
+	RouteState   *RouteStateDTO             `json:"routeState,omitempty"`
+	Path         string                     `json:"path"`
+	Domain       string                     `json:"domain,omitempty"`
+	Port         int                        `json:"port"`
+	HealthStatus string                     `json:"healthStatus"`
+	RemoteStatus string                     `json:"remoteStatus,omitempty"`
+	URL          string                     `json:"url,omitempty"`
+	Environment  WorkspaceEnvironmentRefDTO `json:"environment"`
 }
 
 type mcpApplicationUpsertResult struct {
-	Status      string         `json:"status"`
-	Application ApplicationDTO `json:"application"`
+	Status      string                `json:"status"`
+	Application ApplicationDTO        `json:"application"`
+	Operation   *OperationMetadataDTO `json:"operation,omitempty"`
 }
 
 type mcpAnnounceResult struct {
-	Workspace   string         `json:"workspace"`
-	App         string         `json:"app"`
-	Status      string         `json:"status"`
-	Activated   bool           `json:"activated"`
-	URL         string         `json:"url,omitempty"`
-	Application ApplicationDTO `json:"application"`
+	Workspace   string                `json:"workspace"`
+	App         string                `json:"app"`
+	Status      string                `json:"status"`
+	Activated   bool                  `json:"activated"`
+	URL         string                `json:"url,omitempty"`
+	Application ApplicationDTO        `json:"application"`
+	Operation   *OperationMetadataDTO `json:"operation,omitempty"`
 }
 
 // MCPCmd runs rementorctl as a stdio MCP server.
@@ -231,7 +243,14 @@ func (s *mcpServer) handle(req mcpRequest) (resp *mcpResponse) {
 		err = fmt.Errorf("unsupported method: %s", req.Method)
 	}
 	if err != nil {
-		return mcpErr(req.ID, -32000, err.Error(), map[string]any{"type": classifyMCPError(err), "message": err.Error()})
+		data := map[string]any{"type": classifyMCPError(err), "message": err.Error()}
+		if apiErr, ok := err.(*APIError); ok {
+			data["statusCode"] = apiErr.StatusCode
+			if apiErr.Code != "" {
+				data["code"] = apiErr.Code
+			}
+		}
+		return mcpErr(req.ID, -32000, err.Error(), data)
 	}
 	return &mcpResponse{JSONRPC: "2.0", ID: req.ID, Result: result}
 }
@@ -279,6 +298,16 @@ func (s *mcpServer) handleToolCall(raw json.RawMessage) (any, error) {
 		return s.toolWorkspaceSetAll(params.Arguments)
 	case "rementor.sync_routing":
 		return s.toolSyncRouting(params.Arguments)
+	case "rementor_route_get":
+		return s.toolRouteGet(params.Arguments)
+	case "rementor_route_resolve":
+		return s.toolRouteResolve(params.Arguments)
+	case "rementor_route_plan":
+		return s.toolRoutePlan(params.Arguments)
+	case "rementor_route_apply":
+		return s.toolRouteApply(params.Arguments)
+	case "rementor_route_sync":
+		return s.toolRouteSync(params.Arguments)
 	case "rementor.route_pattern_get":
 		return s.toolRoutePatternGet(params.Arguments)
 	case "rementor.route_pattern_set":
@@ -450,6 +479,7 @@ func (s *mcpServer) toolAppAnnounce(args map[string]any) (any, error) {
 	}
 	application := registered.Application
 	activated := false
+	operation := registered.Operation
 	if !optionalBool(args, "no_activate") {
 		set, err := s.setRoute(workspaceID, appID, "local")
 		if err != nil {
@@ -457,6 +487,9 @@ func (s *mcpServer) toolAppAnnounce(args map[string]any) (any, error) {
 		}
 		activated = set.Changed
 		application = set.Application
+		if set.Operation != nil {
+			operation = set.Operation
+		}
 	}
 	result := mcpAnnounceResult{
 		Workspace:   workspaceID,
@@ -465,6 +498,7 @@ func (s *mcpServer) toolAppAnnounce(args map[string]any) (any, error) {
 		Activated:   activated,
 		URL:         buildMCPAppURL(workspace, path, domain),
 		Application: application,
+		Operation:   operation,
 	}
 	return toolResult(fmt.Sprintf("App %s %s; route is %s", appID, registered.Status, routeOf(application)), result), nil
 }
@@ -472,11 +506,12 @@ func (s *mcpServer) toolAppAnnounce(args map[string]any) (any, error) {
 func (s *mcpServer) toolAppUnregister(args map[string]any) (any, error) {
 	workspaceID := requiredString(args, "workspace")
 	appID := requiredString(args, "app")
-	if err := s.client.DeleteApplication(context.Background(), workspaceID, appID); err != nil {
+	operation, err := s.client.DeleteApplicationWithMetadata(context.Background(), workspaceID, appID)
+	if err != nil {
 		return nil, err
 	}
-	return toolResult(fmt.Sprintf("App %s unregistered from %s", appID, workspaceID), map[string]string{
-		"status": "unregistered", "workspace": workspaceID, "app": appID,
+	return toolResult(fmt.Sprintf("App %s unregistered from %s", appID, workspaceID), map[string]any{
+		"status": "unregistered", "workspace": workspaceID, "app": appID, "operation": operation,
 	}), nil
 }
 
@@ -516,11 +551,85 @@ func (s *mcpServer) toolWorkspaceSetAll(args map[string]any) (any, error) {
 }
 
 func (s *mcpServer) toolSyncRouting(args map[string]any) (any, error) {
-	result, err := s.client.SyncWorkspaceRouting(context.Background(), requiredString(args, "workspace"))
+	result, err := s.client.SyncRoute(context.Background(), requiredString(args, "workspace"), true, optionalString(args, "correlation_id"))
 	if err != nil {
 		return nil, err
 	}
 	return toolResult("Rementor routing synced", result), nil
+}
+
+func (s *mcpServer) toolRouteGet(args map[string]any) (any, error) {
+	result, err := s.client.GetRoutes(context.Background(), requiredString(args, "workspace"))
+	if err != nil {
+		return nil, err
+	}
+	return toolResult(fmt.Sprintf("Resolved %d route(s)", len(result.Routes)), result), nil
+}
+
+func (s *mcpServer) toolRouteResolve(args map[string]any) (any, error) {
+	result, err := s.client.ResolveRoute(context.Background(), requiredString(args, "workspace"), optionalString(args, "host"), optionalString(args, "path"))
+	if err != nil {
+		return nil, err
+	}
+	return toolResult(fmt.Sprintf("Resolved %s%s to %s", result.Host, result.Path, result.Target), result), nil
+}
+
+func (s *mcpServer) toolRoutePlan(args map[string]any) (any, error) {
+	mode := requiredString(args, "mode")
+	var pattern *string
+	if value, ok := args["pattern"].(string); ok {
+		pattern = &value
+	}
+	if optionalBool(args, "clear_pattern") {
+		value := ""
+		pattern = &value
+	}
+	result, err := s.client.PlanRoute(context.Background(), PlanRouteRequest{WorkspaceID: requiredString(args, "workspace"), ApplicationRef: requiredString(args, "app"), DesiredMode: mode, RoutePattern: pattern, ExpectedVersion: optionalUint64(args, "expected_version"), CorrelationID: optionalString(args, "correlation_id")})
+	if err != nil {
+		return nil, err
+	}
+	return toolResult(fmt.Sprintf("Planned %d route change(s)", len(result.Changes)), result), nil
+}
+
+func (s *mcpServer) toolRouteApply(args map[string]any) (any, error) {
+	request := ApplyRouteRequest{WorkspaceID: requiredString(args, "workspace"), ApplicationRef: optionalString(args, "app"), DesiredMode: optionalString(args, "mode"), ExpectedVersion: optionalUint64(args, "expected_version"), IdempotencyKey: optionalString(args, "idempotency_key"), CorrelationID: optionalString(args, "correlation_id")}
+	if value, ok := args["pattern"].(string); ok {
+		request.RoutePattern = &value
+	}
+	if optionalBool(args, "clear_pattern") {
+		value := ""
+		request.RoutePattern = &value
+	}
+	if raw, ok := args["plan"]; ok && raw != nil {
+		payload, err := json.Marshal(raw)
+		if err != nil {
+			return nil, err
+		}
+		var plan RoutePlanDTO
+		if err := json.Unmarshal(payload, &plan); err != nil {
+			return nil, fmt.Errorf("invalid route plan: %w", err)
+		}
+		request.Plan = &plan
+		if request.ApplicationRef == "" {
+			request.ApplicationRef = plan.ApplicationID
+		}
+	}
+	if request.Plan == nil && (request.ApplicationRef == "" || request.DesiredMode == "") {
+		return nil, fmt.Errorf("app and mode are required unless plan is supplied")
+	}
+	result, err := s.client.ApplyRoute(context.Background(), request)
+	if err != nil {
+		return nil, err
+	}
+	return toolResult("Route applied", result), nil
+}
+
+func (s *mcpServer) toolRouteSync(args map[string]any) (any, error) {
+	result, err := s.client.SyncRoute(context.Background(), requiredString(args, "workspace"), true, optionalString(args, "correlation_id"))
+	if err != nil {
+		return nil, err
+	}
+	return toolResult("Route synchronization complete", result), nil
 }
 
 func (s *mcpServer) toolRoutePatternGet(args map[string]any) (any, error) {
@@ -589,7 +698,7 @@ func (s *mcpServer) registerApp(workspaceID string, input ApplicationConfigInput
 		if err != nil {
 			return mcpApplicationUpsertResult{}, err
 		}
-		return mcpApplicationUpsertResult{Status: status, Application: upserted.Application}, nil
+		return mcpApplicationUpsertResult{Status: status, Application: upserted.Application, Operation: upserted.Operation}, nil
 	}
 	app, err := s.getApp(workspaceID, input.ID)
 	if err != nil {
@@ -607,11 +716,19 @@ func (s *mcpServer) setRoute(workspaceID, appID, route string) (mcpAppRouteResul
 	if current == route {
 		return mcpAppRouteResult{Changed: false, PreviousRoute: current, CurrentRoute: current, Application: app}, nil
 	}
-	toggled, err := s.toggleApp(workspaceID, appID)
+	plan, err := s.client.PlanRoute(context.Background(), PlanRouteRequest{WorkspaceID: workspaceID, ApplicationRef: appID, DesiredMode: route})
 	if err != nil {
 		return mcpAppRouteResult{}, err
 	}
-	return mcpAppRouteResult{Changed: true, PreviousRoute: toggled.PreviousRoute, CurrentRoute: toggled.CurrentRoute, Application: toggled.Application}, nil
+	applied, err := s.client.ApplyRoute(context.Background(), ApplyRouteRequest{WorkspaceID: workspaceID, ApplicationRef: appID, DesiredMode: route, Plan: &plan})
+	if err != nil {
+		return mcpAppRouteResult{}, err
+	}
+	updated, err := s.getApp(workspaceID, appID)
+	if err != nil {
+		return mcpAppRouteResult{}, err
+	}
+	return mcpAppRouteResult{Changed: applied.Changed, PreviousRoute: current, CurrentRoute: routeOf(updated), Application: updated, Plan: &applied.Plan, Operation: applied.Operation}, nil
 }
 
 func (s *mcpServer) toggleApp(workspaceID, appID string) (mcpToggleResult, error) {
@@ -652,6 +769,11 @@ func mcpToolList() []map[string]any {
 		toolSchema("rementor.app_toggle", "Flip an app route between local and remote. Prefer app_set_route when the intended target is known.", workspaceAppSchema()),
 		toolSchema("rementor.workspace_set_all", "Route all applications in a workspace to local or remote.", workspaceRouteSchema()),
 		toolSchema("rementor.sync_routing", "Force Rementor to regenerate and reload routing for a workspace.", workspaceSchema()),
+		toolSchema("rementor_route_get", "Inspect the normalized routes for a workspace.", workspaceSchema()),
+		toolSchema("rementor_route_resolve", "Resolve a public host and request path to its winning route.", objectSchema(map[string]any{"workspace": map[string]any{"type": "string"}, "host": map[string]any{"type": "string"}, "path": map[string]any{"type": "string", "default": "/"}}, []string{"workspace"})),
+		toolSchema("rementor_route_plan", "Create a deterministic, non-mutating route plan.", objectSchema(map[string]any{"workspace": map[string]any{"type": "string"}, "app": map[string]any{"type": "string"}, "mode": map[string]any{"type": "string", "enum": []string{"local", "remote"}}, "pattern": map[string]any{"type": "string"}, "clear_pattern": map[string]any{"type": "boolean"}, "expected_version": map[string]any{"type": "integer"}}, []string{"workspace", "app", "mode"})),
+		toolSchema("rementor_route_apply", "Apply a route plan with version and idempotency checks.", objectSchema(map[string]any{"workspace": map[string]any{"type": "string"}, "app": map[string]any{"type": "string"}, "mode": map[string]any{"type": "string", "enum": []string{"local", "remote"}}, "plan": map[string]any{"type": "object"}, "pattern": map[string]any{"type": "string"}, "clear_pattern": map[string]any{"type": "boolean"}, "expected_version": map[string]any{"type": "integer"}, "idempotency_key": map[string]any{"type": "string"}}, []string{"workspace"})),
+		toolSchema("rementor_route_sync", "Reconcile a workspace's desired routes with the loaded proxy configuration.", workspaceSchema()),
 		toolSchema("rementor.route_pattern_get", "Get the route pattern for an application.", workspaceAppSchema()),
 		toolSchema("rementor.route_pattern_set", "Set or clear the route pattern for an application. Omit pattern or pass empty string to clear.", objectSchema(map[string]any{
 			"workspace": map[string]any{"type": "string"}, "app": map[string]any{"type": "string"}, "pattern": map[string]any{"type": "string"},
@@ -751,6 +873,25 @@ func optionalBool(args map[string]any, name string) bool {
 	return value
 }
 
+func optionalUint64(args map[string]any, name string) uint64 {
+	switch value := args[name].(type) {
+	case float64:
+		if value < 0 {
+			return 0
+		}
+		return uint64(value)
+	case int:
+		if value < 0 {
+			return 0
+		}
+		return uint64(value)
+	case uint64:
+		return value
+	default:
+		return 0
+	}
+}
+
 func requiredInt(args map[string]any, name string) int {
 	switch value := args[name].(type) {
 	case float64:
@@ -812,7 +953,7 @@ func compactWorkspace(ws WorkspaceDTO) mcpCompactWorkspace {
 			}
 		}
 	}
-	result := mcpCompactWorkspace{ID: ws.ID, Type: ws.Type, Name: ws.Name, ApplicationCount: len(ws.Applications), LocalCount: local, RemoteCount: len(ws.Applications) - local, UnhealthyLocalCount: unhealthy}
+	result := mcpCompactWorkspace{ID: ws.ID, Type: ws.Type, Name: ws.Name, ApplicationCount: len(ws.Applications), LocalCount: local, RemoteCount: len(ws.Applications) - local, UnhealthyLocalCount: unhealthy, Environment: ws.Environment, Route: ws.Route}
 	if ws.Routing != nil {
 		result.LocalDomain = ws.Routing.LocalDomain
 		result.DefaultRemoteBaseURL = ws.Routing.DefaultRemoteBaseURL
@@ -821,10 +962,13 @@ func compactWorkspace(ws WorkspaceDTO) mcpCompactWorkspace {
 }
 
 func compactApplication(ws WorkspaceDTO, app ApplicationDTO) mcpCompactApplication {
-	return mcpCompactApplication{ID: app.ID, Name: app.Name, Route: routeOf(app), Path: app.Path, Domain: app.Domain, Port: app.Port, HealthStatus: app.HealthStatus, RemoteStatus: app.RemoteStatus, URL: buildMCPAppURL(ws, app.Path, app.Domain)}
+	return mcpCompactApplication{ID: app.ID, AppID: app.AppID, ServiceID: app.ServiceID, Repository: app.Repository, Aliases: append([]string(nil), app.Aliases...), Name: app.Name, Route: routeOf(app), RouteState: app.Route, Path: app.Path, Domain: app.Domain, Port: app.Port, HealthStatus: app.HealthStatus, RemoteStatus: app.RemoteStatus, URL: buildMCPAppURL(ws, app.Path, app.Domain), Environment: ws.Environment}
 }
 
 func routeOf(app ApplicationDTO) string {
+	if app.Route != nil && app.Route.DesiredMode != "" {
+		return app.Route.DesiredMode
+	}
 	if app.Active {
 		return "local"
 	}

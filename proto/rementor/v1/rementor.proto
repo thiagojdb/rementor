@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package rementor.v1;
 
+import "google/protobuf/timestamp.proto";
+
 option go_package = "github.com/thiagojdb/rementor/internal/gen/rementor/v1;rementorv1";
 
 service ControlPlaneService {
@@ -25,7 +27,113 @@ service ControlPlaneService {
   rpc GetRoutePattern(GetRoutePatternRequest) returns (GetRoutePatternResponse);
   rpc UpdateRoutePattern(UpdateRoutePatternRequest) returns (UpdateRoutePatternResponse);
 
+  rpc GetRoute(GetRouteRequest) returns (GetRouteResponse);
+  rpc ResolveRoute(ResolveRouteRequest) returns (ResolveRouteResponse);
+  rpc PlanRoute(PlanRouteRequest) returns (PlanRouteResponse);
+  rpc ApplyRoute(ApplyRouteRequest) returns (ApplyRouteResponse);
+  rpc SyncRoute(SyncRouteRequest) returns (SyncRouteResponse);
+
   rpc WatchHealth(WatchHealthRequest) returns (stream WatchHealthResponse);
+}
+
+// RouteMode describes the desired or effective destination for a route. The
+// numeric values are append-only so older clients can continue to decode the
+// existing boolean active flag while newer clients use the explicit mode.
+enum RouteMode {
+  ROUTE_MODE_UNSPECIFIED = 0;
+  ROUTE_MODE_LOCAL = 1;
+  ROUTE_MODE_REMOTE = 2;
+  ROUTE_MODE_FALLBACK = 3;
+}
+
+// RouteOperationKind identifies the mutation that produced operation
+// metadata. It is intentionally broader than the current RPC set so the
+// contract can be shared by future route planning/apply operations.
+enum RouteOperationKind {
+  ROUTE_OPERATION_KIND_UNSPECIFIED = 0;
+  ROUTE_OPERATION_KIND_TOGGLE = 1;
+  ROUTE_OPERATION_KIND_TOGGLE_ALL = 2;
+  ROUTE_OPERATION_KIND_SYNC = 3;
+  ROUTE_OPERATION_KIND_UPDATE_PATTERN = 4;
+  ROUTE_OPERATION_KIND_UPSERT = 5;
+  ROUTE_OPERATION_KIND_DELETE = 6;
+  ROUTE_OPERATION_KIND_ROUTE_APPLY = 7;
+  ROUTE_OPERATION_KIND_ROUTE_SYNC = 8;
+}
+
+// ErrorCode is the stable, machine-readable error vocabulary shared by RPC,
+// CLI, MCP, and the browser. The Connect status remains available as the
+// transport-level classification.
+enum ErrorCode {
+  ERROR_CODE_UNSPECIFIED = 0;
+  ERROR_CODE_INVALID_ARGUMENT = 1;
+  ERROR_CODE_NOT_FOUND = 2;
+  ERROR_CODE_ALREADY_EXISTS = 3;
+  ERROR_CODE_FAILED_PRECONDITION = 4;
+  ERROR_CODE_PERMISSION_DENIED = 5;
+  ERROR_CODE_UNAUTHENTICATED = 6;
+  ERROR_CODE_UNAVAILABLE = 7;
+  ERROR_CODE_INTERNAL = 8;
+  ERROR_CODE_CONFLICT = 9;
+}
+
+// CanonicalApplicationRef is the identity portion of an application. The
+// legacy_id field is populated only when a response is serving an old
+// workspace/application identifier; app_id remains the canonical key.
+message CanonicalApplicationRef {
+  string app_id = 1;
+  string service_id = 2;
+  string repository = 3;
+  repeated string aliases = 4;
+  string legacy_id = 5;
+}
+
+// WorkspaceEnvironmentRef makes the environment boundary explicit while
+// retaining workspace_id for compatibility with the original API.
+message WorkspaceEnvironmentRef {
+  string workspace_id = 1;
+  string environment = 2;
+  string legacy_id = 3;
+}
+
+message RouteVersion {
+  uint64 value = 1;
+}
+
+// RouteState is the normalized routing projection shared by all control
+// surfaces. Existing fields such as Application.active and route_pattern stay
+// wire-compatible; this message is the additive, typed representation.
+message RouteState {
+  RouteMode desired_mode = 1;
+  RouteMode effective_mode = 2;
+  string target = 3;
+  string local_target = 4;
+  string remote_target = 5;
+  bool remote_fallback = 6;
+  string proxy_health = 7;
+  RouteVersion version = 8;
+  string operation_id = 9;
+  google.protobuf.Timestamp verified_at = 10;
+}
+
+// OperationMetadata accompanies every route-affecting mutation. Timestamps
+// are typed protobuf timestamps; clients should use correlation_id to join a
+// request with logs and operation_id to inspect a particular mutation.
+message OperationMetadata {
+  string operation_id = 1;
+  string correlation_id = 2;
+  RouteVersion route_version = 3;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp completed_at = 5;
+  RouteOperationKind kind = 6;
+}
+
+// StructuredError is transported as a Connect error detail and gives every
+// client a stable code without changing the legacy human-readable message.
+message StructuredError {
+  ErrorCode code = 1;
+  string message = 2;
+  map<string, string> metadata = 3;
 }
 
 message Application {
@@ -45,6 +153,9 @@ message Application {
   string service_id = 14;
   string repository = 15;
   repeated string aliases = 16;
+  CanonicalApplicationRef identity = 17;
+  WorkspaceEnvironmentRef environment = 18;
+  RouteState route = 19;
 }
 
 message Workspace {
@@ -54,6 +165,8 @@ message Workspace {
   string color = 4;
   optional Routing routing = 5;
   repeated Application applications = 6;
+  WorkspaceEnvironmentRef environment = 7;
+  RouteState route = 8;
 }
 
 message Routing {
@@ -99,10 +212,12 @@ message CreateWorkspaceRequest {
   string local_domain = 5;
   string default_remote_base_url = 6;
   repeated ApplicationConfigInput applications = 7;
+  string correlation_id = 8;
 }
 
 message CreateWorkspaceResponse {
   Workspace workspace = 1;
+  OperationMetadata operation = 2;
 }
 
 message UpdateWorkspaceRequest {
@@ -110,17 +225,22 @@ message UpdateWorkspaceRequest {
   repeated ApplicationConfigInput applications = 2;
   string local_domain = 3;
   string default_remote_base_url = 4;
+  string correlation_id = 5;
 }
 
 message UpdateWorkspaceResponse {
   Workspace workspace = 1;
+  OperationMetadata operation = 2;
 }
 
 message DeleteWorkspaceRequest {
   string workspace_id = 1;
+  string correlation_id = 2;
 }
 
-message DeleteWorkspaceResponse {}
+message DeleteWorkspaceResponse {
+  OperationMetadata operation = 1;
+}
 
 message ListApplicationsRequest {
   string workspace_id = 1;
@@ -152,62 +272,77 @@ message RegisterApplicationAliasRequest {
   string workspace_id = 1;
   string application_ref = 2;
   string alias = 3;
+  string correlation_id = 4;
 }
 
 message RegisterApplicationAliasResponse {
   Application application = 1;
+  OperationMetadata operation = 2;
 }
 
 message UpsertApplicationRequest {
   string workspace_id = 1;
   ApplicationConfigInput application = 2;
+  string correlation_id = 3;
 }
 
 message UpsertApplicationResponse {
   Application application = 1;
   bool created = 2;
+  OperationMetadata operation = 3;
 }
 
 message DeleteApplicationRequest {
   string workspace_id = 1;
   string application_id = 2;
+  string correlation_id = 3;
 }
 
-message DeleteApplicationResponse {}
+message DeleteApplicationResponse {
+  OperationMetadata operation = 1;
+}
 
 message ToggleApplicationRequest {
   string workspace_id = 1;
   string application_id = 2;
+  string correlation_id = 3;
 }
 
 message ToggleApplicationResponse {
   Application application = 1;
+  OperationMetadata operation = 2;
 }
 
 message ToggleAllToRemoteRequest {
   string workspace_id = 1;
+  string correlation_id = 2;
 }
 
 message ToggleAllToRemoteResponse {
   int32 success_count = 1;
   int32 failure_count = 2;
+  OperationMetadata operation = 3;
 }
 
 message ToggleAllToLocalRequest {
   string workspace_id = 1;
+  string correlation_id = 2;
 }
 
 message ToggleAllToLocalResponse {
   int32 success_count = 1;
   int32 failure_count = 2;
+  OperationMetadata operation = 3;
 }
 
 message SyncWorkspaceRoutingRequest {
   string workspace_id = 1;
+  string correlation_id = 2;
 }
 
 message SyncWorkspaceRoutingResponse {
   string status = 1;
+  OperationMetadata operation = 2;
 }
 
 message GetRoutePatternRequest {
@@ -223,10 +358,163 @@ message UpdateRoutePatternRequest {
   string workspace_id = 1;
   string application_id = 2;
   string pattern = 3;
+  string correlation_id = 4;
 }
 
 message UpdateRoutePatternResponse {
   Application application = 1;
+  OperationMetadata operation = 2;
+}
+
+// NormalizedRoute is the canonical route entry used by the route lifecycle
+// operations. Pattern retains the wildcard notation understood by Rementor
+// (for example /users/*); precedence is higher for exact and longer matches.
+message NormalizedRoute {
+  string workspace_id = 1;
+  string environment = 2;
+  string public_host = 3;
+  string pattern = 4;
+  string canonical_app_id = 5;
+  string service_id = 6;
+  string repository = 7;
+  RouteMode desired_mode = 8;
+  RouteMode effective_mode = 9;
+  string target = 10;
+  string local_target = 11;
+  string remote_target = 12;
+  bool remote_fallback = 13;
+  string upstream_context = 14;
+  int32 precedence = 15;
+  string precedence_reason = 16;
+  bool exact = 17;
+}
+
+message RouteWarning {
+  string code = 1;
+  string message = 2;
+}
+
+message RouteConflict {
+  string workspace_id = 1;
+  string environment = 2;
+  string public_host = 3;
+  string pattern = 4;
+  string app_id = 5;
+  string conflicting_app_id = 6;
+  string winning_app_id = 7;
+  string reason = 8;
+}
+
+message RouteChange {
+  string application_id = 1;
+  NormalizedRoute before = 2;
+  NormalizedRoute after = 3;
+}
+
+message RoutePlan {
+  string workspace_id = 1;
+  string environment = 2;
+  RouteVersion base_route_version = 3;
+  string application_id = 4;
+  RouteMode desired_mode = 5;
+  optional string route_pattern = 6;
+  repeated NormalizedRoute before_routes = 7;
+  repeated NormalizedRoute after_routes = 8;
+  repeated RouteChange changes = 9;
+  repeated RouteWarning warnings = 10;
+  repeated RouteConflict conflicts = 11;
+  string fingerprint = 12;
+  uint64 base_version = 13;
+}
+
+message RouteResolution {
+  string workspace_id = 1;
+  string environment = 2;
+  string host = 3;
+  string path = 4;
+  NormalizedRoute route = 5;
+  string matching_pattern = 6;
+  string canonical_app_id = 7;
+  string service_id = 8;
+  string target = 9;
+  int32 precedence = 10;
+  string precedence_reason = 11;
+}
+
+message GetRouteRequest {
+  string workspace_id = 1;
+}
+
+message GetRouteResponse {
+  string workspace_id = 1;
+  string environment = 2;
+  RouteVersion route_version = 3;
+  repeated NormalizedRoute routes = 4;
+  repeated RouteWarning warnings = 5;
+  repeated RouteConflict conflicts = 6;
+}
+
+message ResolveRouteRequest {
+  string workspace_id = 1;
+  string host = 2;
+  string path = 3;
+}
+
+message ResolveRouteResponse {
+  RouteResolution resolution = 1;
+}
+
+message PlanRouteRequest {
+  string workspace_id = 1;
+  string application_ref = 2;
+  RouteMode desired_mode = 3;
+  optional string route_pattern = 4;
+  RouteVersion expected_route_version = 5;
+  string correlation_id = 6;
+  uint64 expected_version = 7;
+}
+
+message PlanRouteResponse {
+  RoutePlan plan = 1;
+}
+
+message ApplyRouteRequest {
+  string workspace_id = 1;
+  RoutePlan plan = 2;
+  RouteVersion expected_route_version = 3;
+  string idempotency_key = 4;
+  string correlation_id = 5;
+  string application_ref = 6;
+  RouteMode desired_mode = 7;
+  optional string route_pattern = 8;
+  uint64 expected_version = 9;
+}
+
+message ApplyRouteResponse {
+  bool changed = 1;
+  RoutePlan plan = 2;
+  repeated NormalizedRoute routes = 3;
+  OperationMetadata operation = 4;
+  bool verified = 5;
+  string verification_status = 6;
+}
+
+message SyncRouteRequest {
+  string workspace_id = 1;
+  string correlation_id = 2;
+  optional bool repair = 3;
+}
+
+message SyncRouteResponse {
+  string workspace_id = 1;
+  bool changed = 2;
+  bool verified = 3;
+  string status = 4;
+  RouteVersion desired_route_version = 5;
+  RouteVersion effective_route_version = 6;
+  repeated NormalizedRoute routes = 7;
+  repeated RouteWarning warnings = 8;
+  OperationMetadata operation = 9;
 }
 
 message WatchHealthRequest {
@@ -241,4 +529,8 @@ message WatchHealthResponse {
   bool remote_ok = 5;
   string local_checked = 6;
   string remote_checked = 7;
+  google.protobuf.Timestamp local_checked_at = 8;
+  google.protobuf.Timestamp remote_checked_at = 9;
+  CanonicalApplicationRef identity = 10;
+  WorkspaceEnvironmentRef environment = 11;
 }
