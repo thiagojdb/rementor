@@ -56,13 +56,13 @@ func (s *ControlPlaneService) PlanRoute(ctx context.Context, req *connect.Reques
 		return nil, newRPCError(classifyRegistryError(err), err)
 	}
 	var expected uint64
-	if req.Msg.GetExpectedRouteVersion() != nil {
+	expectedProvided := req.Msg.GetExpectedRouteVersion() != nil
+	if expectedProvided {
 		expected = req.Msg.GetExpectedRouteVersion().GetValue()
-	}
-	if expected == 0 {
+	} else {
 		expected = req.Msg.GetExpectedVersion()
 	}
-	if expected != 0 && expected != plan.BaseRouteVersion {
+	if (expectedProvided || expected != 0) && expected != plan.BaseRouteVersion {
 		return nil, newRPCErrorWithStructured(connect.CodeFailedPrecondition, &services.RouteVersionConflictError{WorkspaceID: plan.WorkspaceID, Expected: expected, Actual: plan.BaseRouteVersion}, rementorv1.ErrorCode_ERROR_CODE_CONFLICT)
 	}
 	return connect.NewResponse(&rementorv1.PlanRouteResponse{Plan: routePlanToProto(plan)}), nil
@@ -93,11 +93,17 @@ func (s *ControlPlaneService) ApplyRoute(ctx context.Context, req *connect.Reque
 		}
 	}
 	var expected uint64
-	if req.Msg.GetExpectedRouteVersion() != nil {
+	expectedRouteVersionProvided := req.Msg.GetExpectedRouteVersion() != nil
+	if expectedRouteVersionProvided {
 		expected = req.Msg.GetExpectedRouteVersion().GetValue()
-	}
-	if expected == 0 {
+	} else {
 		expected = req.Msg.GetExpectedVersion()
+	}
+	// Zero is a valid initial route version when the optional wrapper is
+	// explicitly present. Preserve that compare-and-swap value instead of
+	// letting ApplyRoutePlan infer the freshly generated plan's current version.
+	if expectedRouteVersionProvided && expected == 0 {
+		plan.BaseRouteVersion = 0
 	}
 	result, err := s.registry.ApplyRoutePlan(wsID, plan, expected, req.Msg.GetIdempotencyKey(), correlationID(req.Msg.GetCorrelationId(), req.Header()))
 	if err != nil {
@@ -118,6 +124,9 @@ func (s *ControlPlaneService) ApplyRoute(ctx context.Context, req *connect.Reque
 		Operation:          toProtoOperation(result.Operation),
 		Verified:           result.Verified,
 		VerificationStatus: result.Verification,
+		Status:             result.Status,
+		Degraded:           result.Degraded,
+		RollbackStatus:     result.Rollback,
 	}), nil
 }
 
@@ -130,6 +139,10 @@ func (s *ControlPlaneService) SyncRoute(ctx context.Context, req *connect.Reques
 	}
 	result, err := s.registry.SyncRoute(req.Msg.GetWorkspaceId(), correlationID(req.Msg.GetCorrelationId(), req.Header()), repair)
 	if err != nil {
+		var transactionErr *services.RouteTransactionError
+		if errors.As(err, &transactionErr) {
+			return nil, newRPCErrorWithStructured(connect.CodeInternal, err, rementorv1.ErrorCode_ERROR_CODE_INTERNAL)
+		}
 		return nil, newRPCError(classifyRegistryError(err), err)
 	}
 	return connect.NewResponse(&rementorv1.SyncRouteResponse{
@@ -142,6 +155,8 @@ func (s *ControlPlaneService) SyncRoute(ctx context.Context, req *connect.Reques
 		Routes:                routeListToProto(result.Routes),
 		Warnings:              routeWarningsToProto(result.Warnings),
 		Operation:             toProtoOperation(result.Operation),
+		Degraded:              result.Degraded,
+		RollbackStatus:        result.Rollback,
 	}), nil
 }
 
@@ -341,6 +356,16 @@ func newRPCErrorWithStructured(code connect.Code, err error, structuredCode reme
 	if errors.As(err, &ambiguousErr) {
 		metadata["reference"] = ambiguousErr.Reference
 		metadata["matches"] = strings.Join(ambiguousErr.Matches, ",")
+	}
+	var transactionErr *services.RouteTransactionError
+	if errors.As(err, &transactionErr) {
+		if transactionErr.Operation != nil {
+			metadata["operationId"] = transactionErr.Operation.OperationID
+			metadata["correlationId"] = transactionErr.Operation.CorrelationID
+		}
+		metadata["transactionStatus"] = transactionErr.Status
+		metadata["rollbackStatus"] = transactionErr.Rollback
+		metadata["degraded"] = fmt.Sprintf("%t", transactionErr.Degraded)
 	}
 	detail, detailErr := connect.NewErrorDetail(&rementorv1.StructuredError{Code: structuredCode, Message: err.Error(), Metadata: metadata})
 	if detailErr == nil {

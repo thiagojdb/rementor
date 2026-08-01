@@ -269,6 +269,9 @@ type RouteApplyResponse struct {
 	Operation          *OperationMetadataDTO `json:"operation,omitempty"`
 	Verified           bool                  `json:"verified"`
 	VerificationStatus string                `json:"verificationStatus"`
+	Status             string                `json:"status,omitempty"`
+	Degraded           bool                  `json:"degraded,omitempty"`
+	Rollback           string                `json:"rollbackStatus,omitempty"`
 }
 
 type RouteSyncResponse struct {
@@ -281,6 +284,8 @@ type RouteSyncResponse struct {
 	Routes                []NormalizedRouteDTO  `json:"routes"`
 	Warnings              []RouteWarningDTO     `json:"warnings"`
 	Operation             *OperationMetadataDTO `json:"operation,omitempty"`
+	Degraded              bool                  `json:"degraded,omitempty"`
+	Rollback              string                `json:"rollbackStatus,omitempty"`
 }
 
 type PlanRouteRequest struct {

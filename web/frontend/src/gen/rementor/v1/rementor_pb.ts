@@ -3631,6 +3631,21 @@ export class ApplyRouteResponse extends Message<ApplyRouteResponse> {
    */
   verificationStatus = "";
 
+  /**
+   * @generated from field: string status = 7;
+   */
+  status = "";
+
+  /**
+   * @generated from field: bool degraded = 8;
+   */
+  degraded = false;
+
+  /**
+   * @generated from field: string rollback_status = 9;
+   */
+  rollbackStatus = "";
+
   constructor(data?: PartialMessage<ApplyRouteResponse>) {
     super();
     proto3.util.initPartial(data, this);
@@ -3645,6 +3660,9 @@ export class ApplyRouteResponse extends Message<ApplyRouteResponse> {
     { no: 4, name: "operation", kind: "message", T: OperationMetadata },
     { no: 5, name: "verified", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 6, name: "verification_status", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "status", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 8, name: "degraded", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 9, name: "rollback_status", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ApplyRouteResponse {
@@ -3762,6 +3780,16 @@ export class SyncRouteResponse extends Message<SyncRouteResponse> {
    */
   operation?: OperationMetadata;
 
+  /**
+   * @generated from field: bool degraded = 10;
+   */
+  degraded = false;
+
+  /**
+   * @generated from field: string rollback_status = 11;
+   */
+  rollbackStatus = "";
+
   constructor(data?: PartialMessage<SyncRouteResponse>) {
     super();
     proto3.util.initPartial(data, this);
@@ -3779,6 +3807,8 @@ export class SyncRouteResponse extends Message<SyncRouteResponse> {
     { no: 7, name: "routes", kind: "message", T: NormalizedRoute, repeated: true },
     { no: 8, name: "warnings", kind: "message", T: RouteWarning, repeated: true },
     { no: 9, name: "operation", kind: "message", T: OperationMetadata },
+    { no: 10, name: "degraded", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 11, name: "rollback_status", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SyncRouteResponse {
