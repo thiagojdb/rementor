@@ -18,11 +18,15 @@ const WorkspaceDetailModal: Component<WorkspaceDetailModalProps> = (props) => {
       id: a.id,
       name: a.name,
       path: a.path,
+      publicPath: a.publicPath || a.path,
       domain: a.domain,
       remoteBaseUrl: a.remoteBaseUrl,
       port: a.port,
       health: a.health ?? 'actuator/health',
       context: a.context,
+      upstreamContext: a.upstreamContext || a.context,
+      frontendRoot: a.frontendRoot,
+      frontendRootSource: a.frontendRootSource,
     }))
   )
   const [localDomain, setLocalDomain] = createSignal(props.workspace.routing?.localDomain ?? '')
@@ -121,11 +125,15 @@ const WorkspaceDetailModal: Component<WorkspaceDetailModalProps> = (props) => {
             id: a.id,
             name: a.name,
             path: a.path,
+            publicPath: a.publicPath || a.path,
             domain: a.domain,
             remoteBaseUrl: a.remoteBaseUrl,
             port: a.port,
             health: a.health ?? 'actuator/health',
             context: a.context,
+            upstreamContext: a.upstreamContext || a.context,
+            frontendRoot: a.frontendRoot,
+            frontendRootSource: a.frontendRootSource,
           }))}
           onChange={handleAppsChange}
         />

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/thiagojdb/rementor/internal/models"
+	"github.com/thiagojdb/rementor/internal/validation"
 	_ "modernc.org/sqlite"
 )
 
@@ -382,6 +383,14 @@ func LoadRouteOperations() ([]models.RouteOperationJournal, error) {
 // ReplaceWorkspaces atomically replaces the durable workspace projection.
 // Callers construct and validate the complete desired state before invoking it.
 func ReplaceWorkspaces(workspaces []*models.Workspace) error {
+	for _, workspace := range workspaces {
+		if workspace == nil {
+			return fmt.Errorf("workspace is required")
+		}
+		if err := validateWorkspaceConfig(workspaceConfigFromWorkspace(workspace)); err != nil {
+			return err
+		}
+	}
 	db, err := readyDB()
 	if err != nil {
 		return err
@@ -409,6 +418,9 @@ func ReplaceWorkspaces(workspaces []*models.Workspace) error {
 }
 
 func AppendWorkspace(newConfig models.WorkspaceConfig) error {
+	if err := validateWorkspaceConfig(newConfig); err != nil {
+		return err
+	}
 	db, err := readyDB()
 	if err != nil {
 		return err
@@ -431,6 +443,13 @@ func UpdateWorkspaceApplications(wsID string, apps []models.ApplicationConfig, l
 	}
 	if exists == 0 {
 		return fmt.Errorf("workspace %q not found", wsID)
+	}
+	var workspaceType string
+	if err := db.QueryRow(`SELECT type FROM workspaces WHERE id = ?`, wsID).Scan(&workspaceType); err != nil {
+		return fmt.Errorf("failed to load workspace type %q: %w", wsID, err)
+	}
+	if _, err := validation.WorkspaceWithOptions(workspaceType, localDomain, defaultRemoteBaseUrl, apps, validation.MetadataValidationOptions{}); err != nil {
+		return fmt.Errorf("validate workspace %q: %w", wsID, err)
 	}
 
 	type oldState struct {
@@ -517,6 +536,17 @@ func UpdateWorkspaceApplications(wsID string, apps []models.ApplicationConfig, l
 	}
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("failed to commit workspace update: %w", err)
+	}
+	return nil
+}
+
+func validateWorkspaceConfig(ws models.WorkspaceConfig) error {
+	workspaceType := ws.Type
+	if workspaceType == "" {
+		workspaceType = models.WorkspaceTypeRouting
+	}
+	if _, err := validation.WorkspaceWithOptions(workspaceType, ws.Routing.LocalDomain, ws.Routing.DefaultRemoteBaseURL, ws.Applications, validation.MetadataValidationOptions{}); err != nil {
+		return fmt.Errorf("validate workspace %q: %w", ws.ID, err)
 	}
 	return nil
 }
@@ -632,6 +662,12 @@ func initDB(db *sql.DB) error {
 			active INTEGER NOT NULL DEFAULT 0,
 			route_pattern TEXT,
 			context TEXT NOT NULL DEFAULT '',
+			public_path TEXT NOT NULL DEFAULT '',
+			upstream_context TEXT NOT NULL DEFAULT '',
+			frontend_root TEXT NOT NULL DEFAULT '',
+			frontend_root_source TEXT NOT NULL DEFAULT '',
+			legacy_public_path INTEGER NOT NULL DEFAULT 0,
+			legacy_upstream_context INTEGER NOT NULL DEFAULT 0,
 			strip_origin INTEGER NOT NULL DEFAULT 0,
 			route_override INTEGER NOT NULL DEFAULT 0,
 			sort_order INTEGER NOT NULL DEFAULT 0,
@@ -707,6 +743,12 @@ func initDB(db *sql.DB) error {
 		{"applications", "operation_completed_at", "TEXT"},
 		{"applications", "route_override", "INTEGER NOT NULL DEFAULT 0"},
 		{"route_operations", "rollback_status", "TEXT NOT NULL DEFAULT ''"},
+		{"applications", "public_path", "TEXT NOT NULL DEFAULT ''"},
+		{"applications", "upstream_context", "TEXT NOT NULL DEFAULT ''"},
+		{"applications", "frontend_root", "TEXT NOT NULL DEFAULT ''"},
+		{"applications", "frontend_root_source", "TEXT NOT NULL DEFAULT ''"},
+		{"applications", "legacy_public_path", "INTEGER NOT NULL DEFAULT 0"},
+		{"applications", "legacy_upstream_context", "INTEGER NOT NULL DEFAULT 0"},
 	} {
 		if err := ensureColumn(db, migration.table, migration.column, migration.def); err != nil {
 			return err
@@ -888,7 +930,9 @@ func loadWorkspacesFromDB(db *sql.DB) ([]*models.Workspace, error) {
 func loadApplicationConfigs(db *sql.DB, wsID string) ([]models.ApplicationConfig, error) {
 	rows, err := db.Query(`
 		SELECT
-			a.id, a.name, a.path, a.domain, a.remote_base_url, a.port, a.health, a.active, a.route_pattern, a.context, a.strip_origin, a.route_override,
+			a.id, a.name, a.path, a.domain, a.remote_base_url, a.port, a.health, a.active, a.route_pattern, a.context,
+			a.public_path, a.upstream_context, a.frontend_root, a.frontend_root_source, a.legacy_public_path, a.legacy_upstream_context, a.strip_origin,
+			a.route_override,
 			COALESCE(i.app_id, a.id), COALESCE(i.service_id, a.id), COALESCE(i.repository, ''),
 			a.route_version, a.operation_id, a.correlation_id, a.operation_kind, a.operation_created_at, a.operation_completed_at
 		FROM applications a
@@ -905,20 +949,22 @@ func loadApplicationConfigs(db *sql.DB, wsID string) ([]models.ApplicationConfig
 	for rows.Next() {
 		var app models.ApplicationConfig
 		var active int
-		var routeOverride int
+		var legacyPublicPath, legacyUpstreamContext, routeOverride int
 		var routePattern sql.NullString
 		var routeVersion int64
 		var operationID, correlationID, operationKind string
 		var operationCreatedAt, operationCompletedAt sql.NullString
 		if err := rows.Scan(
 			&app.ID, &app.Name, &app.Path, &app.Domain, &app.RemoteBaseUrl, &app.Port, &app.Health, &active,
-			&routePattern, &app.Context, &app.StripOrigin, &routeOverride, &app.AppID, &app.ServiceID, &app.Repository,
+			&routePattern, &app.Context, &app.PublicPath, &app.UpstreamContext, &app.FrontendRoot, &app.FrontendRootSource, &legacyPublicPath, &legacyUpstreamContext, &app.StripOrigin, &routeOverride, &app.AppID, &app.ServiceID, &app.Repository,
 			&routeVersion, &operationID, &correlationID, &operationKind, &operationCreatedAt, &operationCompletedAt,
 		); err != nil {
 			return nil, fmt.Errorf("failed to scan sqlite application: %w", err)
 		}
 		app.Active = active != 0
 		app.RouteOverride = routeOverride != 0
+		app.LegacyPublicPath = legacyPublicPath != 0
+		app.LegacyUpstreamContext = legacyUpstreamContext != 0
 		app.RoutePattern = nullStringPtr(routePattern)
 		app.Route.RouteVersion = uint64(routeVersion)
 		app.Route.OperationID = operationID
@@ -934,6 +980,7 @@ func loadApplicationConfigs(db *sql.DB, wsID string) ([]models.ApplicationConfig
 		return nil, fmt.Errorf("failed to close sqlite applications for %q: %w", wsID, err)
 	}
 	for i := range apps {
+		apps[i].NormalizeRouteMetadata()
 		apps[i].Aliases, err = loadApplicationAliases(db, apps[i].AppID)
 		if err != nil {
 			return nil, err
@@ -1010,8 +1057,10 @@ func workspaceConfigFromWorkspace(workspace *models.Workspace) models.WorkspaceC
 	for _, app := range workspace.Applications {
 		config.Applications = append(config.Applications, models.ApplicationConfig{
 			ID: app.ID, AppID: app.CanonicalAppID(), ServiceID: app.ServiceID, Repository: app.Repository, Aliases: app.NormalizedAliases(), Name: app.Name, Path: app.Path, Domain: app.Domain,
-			RemoteBaseUrl: app.RemoteBaseUrl, Port: app.Port, Health: app.Health,
-			Active: app.Active, RoutePattern: app.RoutePattern, Context: app.Context,
+			PublicPath: app.PublicRoutePath(), RemoteBaseUrl: app.RemoteBaseUrl, Port: app.Port, Health: app.Health,
+			Active: app.Active, RoutePattern: app.RoutePattern, Context: app.Context, UpstreamContext: app.BackendContextPath(),
+			FrontendRoot: app.FrontendRoot, FrontendRootSource: app.FrontendRootSource,
+			LegacyPublicPath: app.LegacyPublicPath, LegacyUpstreamContext: app.LegacyUpstreamContext,
 			StripOrigin: app.StripOrigin, RouteOverride: app.RouteOverride, RouteOverrideSet: true,
 			Route: app.Route, LastOperation: app.LastOperation,
 		})
@@ -1032,22 +1081,24 @@ func convertAppConfigs(configs []models.ApplicationConfig) []*models.Application
 			health = models.DefaultHealthEndpoint
 		}
 
-		path := appConfig.Path
-		if path != "" && path[0] != '/' {
-			path = "/" + path
-		}
+		path := appConfig.PublicRoutePath()
 
 		app := &models.Application{
-			ID:            canonical,
-			AppID:         canonical,
-			ServiceID:     serviceID,
-			Repository:    appConfig.Repository,
-			Aliases:       appConfig.Aliases,
-			Name:          appConfig.Name,
-			Path:          path,
-			Domain:        appConfig.Domain,
-			RemoteBaseUrl: appConfig.RemoteBaseUrl,
-			Context:       appConfig.Context,
+			ID:                 canonical,
+			AppID:              canonical,
+			ServiceID:          serviceID,
+			Repository:         appConfig.Repository,
+			Aliases:            appConfig.Aliases,
+			Name:               appConfig.Name,
+			Path:               path,
+			PublicPath:         path,
+			Domain:             appConfig.Domain,
+			RemoteBaseUrl:      appConfig.RemoteBaseUrl,
+			Context:            appConfig.Context,
+			UpstreamContext:    appConfig.BackendContextPath(),
+			FrontendRoot:       appConfig.FrontendRoot,
+			FrontendRootSource: appConfig.FrontendRootSource,
+			LegacyPublicPath:   appConfig.LegacyPublicPath, LegacyUpstreamContext: appConfig.LegacyUpstreamContext,
 			Health:        health,
 			Port:          appConfig.Port,
 			Active:        appConfig.Active,
@@ -1057,6 +1108,7 @@ func convertAppConfigs(configs []models.ApplicationConfig) []*models.Application
 			Route:         appConfig.Route,
 			LastOperation: appConfig.LastOperation,
 		}
+		app.NormalizeRouteMetadata()
 		apps = append(apps, app)
 	}
 	return apps
@@ -1104,6 +1156,10 @@ func insertWorkspaceConfigTx(tx *sql.Tx, ws models.WorkspaceConfig, order int) e
 }
 
 func insertApplicationConfig(tx *sql.Tx, wsID string, app models.ApplicationConfig, order int) error {
+	// Persist canonical aliases and their provenance. The latter keeps legacy
+	// path/context-only registrations on their historical ingress route after
+	// a restart while still exposing the explicit fields to new clients.
+	app.NormalizeRouteMetadata()
 	appID := models.NormalizeIdentityToken(app.CanonicalAppID())
 	if appID == "" {
 		return fmt.Errorf("application %s/%s: canonical app ID is required", wsID, app.ID)
@@ -1120,10 +1176,11 @@ func insertApplicationConfig(tx *sql.Tx, wsID string, app models.ApplicationConf
 	_, err := tx.Exec(`
 		INSERT INTO applications (
 			workspace_id, id, name, path, domain, remote_base_url, port, health, active, route_pattern, context,
-			strip_origin, route_override, sort_order, route_version, operation_id, correlation_id, operation_kind, operation_created_at, operation_completed_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			public_path, upstream_context, frontend_root, frontend_root_source,
+			legacy_public_path, legacy_upstream_context, strip_origin, route_override, sort_order, route_version, operation_id, correlation_id, operation_kind, operation_created_at, operation_completed_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`, wsID, appID, app.Name, app.Path, app.Domain, app.RemoteBaseUrl, app.Port, health, boolInt(app.Active),
-		ptrValue(app.RoutePattern), app.Context, boolInt(app.StripOrigin), boolInt(app.RouteOverride), order, app.Route.RouteVersion, app.Route.OperationID,
+		ptrValue(app.RoutePattern), app.Context, app.PublicRoutePath(), app.BackendContextPath(), app.FrontendRoot, app.FrontendRootSource, boolInt(app.LegacyPublicPath), boolInt(app.LegacyUpstreamContext), boolInt(app.StripOrigin), boolInt(app.RouteOverride), order, app.Route.RouteVersion, app.Route.OperationID,
 		operationCorrelation(app.LastOperation), operationKind(app.LastOperation), operationCreatedAt(app.LastOperation), operationCompletedAt(app.LastOperation))
 	if err != nil {
 		return fmt.Errorf("failed to insert application %s/%s: %w", wsID, appID, err)

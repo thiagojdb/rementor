@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -28,17 +29,18 @@ type Server struct {
 }
 
 type Location struct {
-	Modifier      string
-	Pattern       string
-	Rewrite       string
-	Proxy         Proxy
-	Redirect      string
-	AddCORS       bool
-	PassHeaders   bool
-	StripOrigin   bool
-	ProxyRequests bool
-	Proof         ResponseProof
-	Trace         bool
+	Modifier       string
+	Pattern        string
+	Rewrite        string
+	RewritePattern string
+	Proxy          Proxy
+	Redirect       string
+	AddCORS        bool
+	PassHeaders    bool
+	StripOrigin    bool
+	ProxyRequests  bool
+	Proof          ResponseProof
+	Trace          bool
 }
 
 // ResponseProof is the immutable route metadata emitted by nginx. The values
@@ -78,9 +80,10 @@ func RenderConfig(workspaces []*models.Workspace, rementorDomain string) (string
 		apps := make([]models.ApplicationConfig, 0, len(ws.Applications))
 		for _, app := range ws.Applications {
 			apps = append(apps, models.ApplicationConfig{
-				ID: app.ID, Name: app.Name, Path: app.Path, Domain: app.Domain,
+				ID: app.ID, Name: app.Name, Path: app.Path, PublicPath: app.PublicPath, Domain: app.Domain,
 				RemoteBaseUrl: app.RemoteBaseUrl, Port: app.Port, Health: app.Health,
-				Active: app.Active, RoutePattern: app.RoutePattern, RouteOverride: app.RouteOverride, Context: app.Context,
+				Active: app.Active, RoutePattern: app.RoutePattern, RouteOverride: app.RouteOverride, Context: app.Context, UpstreamContext: app.UpstreamContext,
+				FrontendRoot: app.FrontendRoot, FrontendRootSource: app.FrontendRootSource,
 				StripOrigin: app.StripOrigin,
 			})
 		}
@@ -307,44 +310,50 @@ func listenDirectives() []string {
 
 func appWithRemoteBase(app *models.Application, remoteBase string) *models.Application {
 	return &models.Application{
-		ID:            app.ID,
-		AppID:         app.AppID,
-		ServiceID:     app.ServiceID,
-		Repository:    app.Repository,
-		Aliases:       append([]string(nil), app.Aliases...),
-		Name:          app.Name,
-		Path:          app.Path,
-		Domain:        app.Domain,
-		RemoteBaseUrl: remoteBase,
-		Context:       app.Context,
-		Health:        app.Health,
-		Port:          app.Port,
-		Active:        app.Active,
-		RoutePattern:  app.RoutePattern,
-		RouteOverride: app.RouteOverride,
-		StripOrigin:   app.StripOrigin,
-		Route:         app.Route,
-		LastOperation: app.LastOperation,
+		ID:                    app.ID,
+		AppID:                 app.AppID,
+		ServiceID:             app.ServiceID,
+		Repository:            app.Repository,
+		Aliases:               append([]string(nil), app.Aliases...),
+		Name:                  app.Name,
+		Path:                  app.Path,
+		PublicPath:            app.PublicPath,
+		Domain:                app.Domain,
+		RemoteBaseUrl:         remoteBase,
+		Context:               app.Context,
+		UpstreamContext:       app.UpstreamContext,
+		FrontendRoot:          app.FrontendRoot,
+		FrontendRootSource:    app.FrontendRootSource,
+		LegacyPublicPath:      app.LegacyPublicPath,
+		LegacyUpstreamContext: app.LegacyUpstreamContext,
+		Health:                app.Health,
+		Port:                  app.Port,
+		Active:                app.Active,
+		RoutePattern:          app.RoutePattern,
+		RouteOverride:         app.RouteOverride,
+		StripOrigin:           app.StripOrigin,
+		Route:                 app.Route,
+		LastOperation:         app.LastOperation,
 	}
 }
 
 func localAppLocations(ws *models.Workspace, app *models.Application) []Location {
 	proof := routeProof(ws, app, "local")
-	if app.Path == "/" && app.Context != "" && app.Context != "/" {
-		context := cleanPath(app.Context)
+	if app.PublicRoutePath() == "/" && app.BackendContextPath() != "" && app.BackendContextPath() != "/" {
+		context := cleanPath(app.BackendContextPath())
 		return []Location{
 			{Modifier: "=", Pattern: "/", Proxy: localProxy(app.Port, false, ""), AddCORS: true, PassHeaders: true, StripOrigin: app.StripOrigin, Proof: proof},
 			{Modifier: "=", Pattern: context, Redirect: context + "/", AddCORS: true, Proof: proof},
 			{Pattern: context + "/", Proxy: localProxy(app.Port, true, ""), AddCORS: true, PassHeaders: true, StripOrigin: app.StripOrigin, Proof: proof},
 		}
 	}
-	return locationsForPatternsWithProof(routePathPatterns(ws, app), localProxy(app.Port, false, ""), app.StripOrigin, proof)
+	return locationsForPatternsWithProof(routePathPatterns(ws, app), app, localProxy(app.Port, false, ""), app.StripOrigin, proof)
 }
 
 func remoteAppLocationsWithMode(ws *models.Workspace, app *models.Application, effectiveMode string) []Location {
 	proof := routeProof(ws, app, effectiveMode)
-	if app.Path == "/" && app.Context != "" && app.Context != "/" {
-		context := cleanPath(app.Context)
+	if app.PublicRoutePath() == "/" && app.BackendContextPath() != "" && app.BackendContextPath() != "/" {
+		context := cleanPath(app.BackendContextPath())
 		proxy := remoteProxy(app.RemoteBaseUrl)
 		return []Location{
 			{Modifier: "=", Pattern: "/", Rewrite: context + "/home", Proxy: proxy, AddCORS: true, PassHeaders: true, Proof: proof},
@@ -352,7 +361,7 @@ func remoteAppLocationsWithMode(ws *models.Workspace, app *models.Application, e
 			{Pattern: context + "/", Proxy: proxy, AddCORS: true, PassHeaders: true, Proof: proof},
 		}
 	}
-	return locationsForPatternsWithProof(routePathPatterns(ws, app), remoteProxy(app.RemoteBaseUrl), false, proof)
+	return locationsForPatternsWithProof(routePathPatterns(ws, app), app, remoteProxy(app.RemoteBaseUrl), false, proof)
 }
 
 func remoteEffectiveMode(app *models.Application) string {
@@ -362,28 +371,46 @@ func remoteEffectiveMode(app *models.Application) string {
 	return "remote"
 }
 
-func locationsForPatternsWithProof(patterns []string, proxy Proxy, stripOrigin bool, proof ResponseProof) []Location {
+func locationsForPatternsWithProof(patterns []string, app *models.Application, proxy Proxy, stripOrigin bool, proof ResponseProof) []Location {
 	locations := make([]Location, 0, len(patterns))
 	for _, pattern := range patterns {
 		modifier, nginxPattern := nginxLocationPattern(pattern)
+		rewritePattern, rewrite := explicitContextRewrite(app, pattern)
 		locations = append(locations, Location{
-			Modifier:    modifier,
-			Pattern:     nginxPattern,
-			Proxy:       proxy,
-			AddCORS:     true,
-			PassHeaders: true,
-			StripOrigin: stripOrigin,
-			Proof:       proof,
+			Modifier: modifier, Pattern: nginxPattern, Rewrite: rewrite, RewritePattern: rewritePattern,
+			Proxy: proxy, AddCORS: true, PassHeaders: true, StripOrigin: stripOrigin, Proof: proof,
 		})
 	}
 	return locations
+}
+
+// explicitContextRewrite maps a new public path to the upstream context. Old
+// path/context-only registrations keep their historical ingress behavior.
+func explicitContextRewrite(app *models.Application, pattern string) (string, string) {
+	if app == nil || app.LegacyPublicPath || strings.TrimSpace(app.PublicPath) == "" {
+		return "", ""
+	}
+	publicPath := cleanPath(app.PublicRoutePath())
+	upstreamContext := cleanPath(app.BackendContextPath())
+	if upstreamContext == "/" || upstreamContext == publicPath {
+		return "", ""
+	}
+	pattern = cleanPath(pattern)
+	if pattern == "/" || pattern == "/*" {
+		return "", ""
+	}
+	prefix := strings.TrimSuffix(pattern, "/*")
+	if prefix == pattern {
+		return fmt.Sprintf("^%s$", regexp.QuoteMeta(prefix)), upstreamContext
+	}
+	return fmt.Sprintf("^%s(.*)$", regexp.QuoteMeta(prefix)), upstreamContext + "$1"
 }
 
 func fallbackLocation(ws *models.Workspace, domainApp *models.Application) Location {
 	rootApp := domainApp
 	if rootApp == nil {
 		for _, app := range ws.Applications {
-			if app.Domain == "" && app.Path == "/" && app.RemoteBaseUrl != "" {
+			if app.Domain == "" && app.PublicRoutePath() == "/" && app.RemoteBaseUrl != "" {
 				rootApp = app
 				break
 			}
@@ -409,8 +436,8 @@ func fallbackLocation(ws *models.Workspace, domainApp *models.Application) Locat
 	mode := "fallback"
 	if rootApp != nil && rootApp.RemoteBaseUrl != "" {
 		remoteBase = rootApp.RemoteBaseUrl
-		if rootApp.Context != "" && rootApp.Context != "/" {
-			rewrite = fmt.Sprintf("%s$uri", cleanPath(rootApp.Context))
+		if rootApp.BackendContextPath() != "" && rootApp.BackendContextPath() != "/" {
+			rewrite = fmt.Sprintf("%s$uri", cleanPath(rootApp.BackendContextPath()))
 		}
 	}
 	return Location{
@@ -523,12 +550,12 @@ func routePathPatterns(ws *models.Workspace, app *models.Application) []string {
 	if app.RoutePattern != nil && *app.RoutePattern != "" {
 		return []string{*app.RoutePattern}
 	}
-	if app.Path == "/" {
+	if app.PublicRoutePath() == "/" {
 		return []string{"/*"}
 	}
-	path := app.Context
+	path := app.BackendContextPath()
 	if path == "" {
-		path = app.Path
+		path = app.PublicRoutePath()
 	}
 	path = cleanPath(path)
 	return []string{path, fmt.Sprintf("%s/*", path)}
@@ -681,7 +708,11 @@ server {
         return 301 {{ .Redirect }};
 {{- else }}
 {{- if .Rewrite }}
+{{- if .RewritePattern }}
+        rewrite {{ .RewritePattern }} {{ .Rewrite }} break;
+{{- else }}
         rewrite ^ {{ .Rewrite }} break;
+{{- end }}
 {{- end }}
         proxy_pass_request_headers on;
 {{- if .StripOrigin }}

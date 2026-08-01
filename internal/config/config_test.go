@@ -211,6 +211,44 @@ func TestLoadWorkspacesPreservesApplicationRemoteBaseURL(t *testing.T) {
 	}
 }
 
+func TestApplicationRouteMetadataPersistsAndMigratesLegacyFields(t *testing.T) {
+	t.Setenv("XDG_DATA_HOME", filepath.Join(t.TempDir(), "data"))
+
+	if err := AppendWorkspace(models.WorkspaceConfig{
+		ID: "demo", Type: models.WorkspaceTypeRouting,
+		Routing: models.RoutingConfig{LocalDomain: "api.localhost"},
+		Applications: []models.ApplicationConfig{{
+			ID: "portal", PublicPath: "/portal/", UpstreamContext: "/service-portal/", FrontendRoot: "/portal", FrontendRootSource: "registration", Port: 8080,
+		}},
+	}); err != nil {
+		t.Fatalf("AppendWorkspace failed: %v", err)
+	}
+	workspaces, err := LoadWorkspaces()
+	if err != nil {
+		t.Fatalf("LoadWorkspaces failed: %v", err)
+	}
+	app := workspaces[0].Applications[0]
+	if app.PublicPath != "/portal" || app.Path != "/portal" || app.UpstreamContext != "/service-portal" || app.Context != "/service-portal" || app.FrontendRoot != "/portal" {
+		t.Fatalf("explicit metadata was not normalized/persisted: %#v", app)
+	}
+
+	if err := AppendWorkspace(models.WorkspaceConfig{
+		ID: "legacy", Type: models.WorkspaceTypeRouting,
+		Routing:      models.RoutingConfig{LocalDomain: "legacy.localhost"},
+		Applications: []models.ApplicationConfig{{ID: "legacy-app", Path: "/legacy", Context: "/service-legacy", Port: 8081}},
+	}); err != nil {
+		t.Fatalf("AppendWorkspace legacy failed: %v", err)
+	}
+	workspaces, err = LoadWorkspaces()
+	if err != nil {
+		t.Fatalf("LoadWorkspaces after legacy append failed: %v", err)
+	}
+	legacy := workspaces[1].Applications[0]
+	if legacy.PublicPath != "/legacy" || legacy.UpstreamContext != "/service-legacy" || legacy.IngressPath() != "/service-legacy" {
+		t.Fatalf("legacy route metadata was not migrated: %#v", legacy)
+	}
+}
+
 func TestApplicationIdentityAndAliasesPersistAcrossWorkspaces(t *testing.T) {
 	t.Setenv("XDG_DATA_HOME", filepath.Join(t.TempDir(), "data"))
 

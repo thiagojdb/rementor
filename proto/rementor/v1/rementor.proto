@@ -166,6 +166,10 @@ message Application {
   WorkspaceEnvironmentRef environment = 18;
   RouteState route = 19;
   bool route_override = 20;
+  string public_path = 21;
+  string upstream_context = 22;
+  string frontend_root = 23;
+  string frontend_root_source = 24;
 }
 
 message Workspace {
@@ -199,6 +203,10 @@ message ApplicationConfigInput {
   string repository = 11;
   repeated string aliases = 12;
   optional bool route_override = 13;
+  string public_path = 14;
+  string upstream_context = 15;
+  string frontend_root = 16;
+  string frontend_root_source = 17;
 }
 
 message ListWorkspacesRequest {}
@@ -224,11 +232,13 @@ message CreateWorkspaceRequest {
   string default_remote_base_url = 6;
   repeated ApplicationConfigInput applications = 7;
   string correlation_id = 8;
+  bool strict_metadata = 9;
 }
 
 message CreateWorkspaceResponse {
   Workspace workspace = 1;
   OperationMetadata operation = 2;
+  repeated RouteWarning warnings = 3;
 }
 
 message UpdateWorkspaceRequest {
@@ -237,11 +247,13 @@ message UpdateWorkspaceRequest {
   string local_domain = 3;
   string default_remote_base_url = 4;
   string correlation_id = 5;
+  bool strict_metadata = 6;
 }
 
 message UpdateWorkspaceResponse {
   Workspace workspace = 1;
   OperationMetadata operation = 2;
+  repeated RouteWarning warnings = 3;
 }
 
 message DeleteWorkspaceRequest {
@@ -336,12 +348,14 @@ message UpsertApplicationRequest {
   string workspace_id = 1;
   ApplicationConfigInput application = 2;
   string correlation_id = 3;
+  bool strict_metadata = 4;
 }
 
 message UpsertApplicationResponse {
   Application application = 1;
   bool created = 2;
   OperationMetadata operation = 3;
+  repeated RouteWarning warnings = 4;
 }
 
 message DeleteApplicationRequest {
@@ -450,6 +464,9 @@ message NormalizedRoute {
 message RouteWarning {
   string code = 1;
   string message = 2;
+  string field = 3;
+  string severity = 4;
+  string remediation = 5;
 }
 
 message RouteConflict {
@@ -498,6 +515,7 @@ message RoutePlan {
   repeated RouteConflict conflicts = 11;
   string fingerprint = 12;
   uint64 base_version = 13;
+  bool strict_metadata = 14;
 }
 
 message RouteResolution {
@@ -557,6 +575,7 @@ message PlanRouteRequest {
   RouteVersion expected_route_version = 5;
   string correlation_id = 6;
   uint64 expected_version = 7;
+  bool strict_metadata = 8;
 }
 
 message PlanRouteResponse {
@@ -573,6 +592,7 @@ message ApplyRouteRequest {
   RouteMode desired_mode = 7;
   optional string route_pattern = 8;
   uint64 expected_version = 9;
+  bool strict_metadata = 10;
 }
 
 message ApplyRouteResponse {

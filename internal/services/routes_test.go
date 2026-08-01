@@ -351,3 +351,73 @@ func TestRouteApplySerializesConcurrentIdempotentCallers(t *testing.T) {
 		t.Fatalf("concurrent callers reloaded proxy %d times", len(provider.snapshots))
 	}
 }
+
+func TestRoutePlanUsesExplicitPublicPathAndSurfacesMetadataWarning(t *testing.T) {
+	provider := &mockRoutingProvider{}
+	ws := &models.Workspace{
+		WorkspaceID: "demo",
+		Type:        models.WorkspaceTypeRouting,
+		RoutingConfig: &models.RoutingConfig{
+			LocalDomain:          "api.localhost",
+			DefaultRemoteBaseURL: "https://remote.example.test",
+		},
+		Applications: []*models.Application{{
+			ID:              "portal",
+			Path:            "/portal/home",
+			PublicPath:      "/portal/home",
+			Context:         "/service-portal",
+			UpstreamContext: "/service-portal",
+			RemoteBaseUrl:   "https://portal.example.test",
+			Port:            1902,
+		}},
+	}
+	ws.SetDefaults()
+	r := &Registry{workspaces: []*models.Workspace{ws}, store: &fakeWorkspaceStore{}, routingProvider: provider, stopChan: make(chan struct{}), subscribers: make(map[string]int), healthStreams: make(map[uint64]healthStream)}
+
+	plan, err := r.PlanRoute("demo", "portal", "remote", nil)
+	if err != nil {
+		t.Fatalf("plan failed: %v", err)
+	}
+	if len(plan.Warnings) == 0 || plan.Warnings[0].Code != "FRONTEND_ROOT_UNKNOWN" {
+		t.Fatalf("expected frontend root warning, got %#v", plan.Warnings)
+	}
+	for _, route := range plan.After {
+		if route.CanonicalAppID == "portal" && route.Pattern == "/portal/home" {
+			if route.UpstreamContext != "/service-portal" {
+				t.Fatalf("upstream context = %q, want /service-portal", route.UpstreamContext)
+			}
+			return
+		}
+	}
+	t.Fatalf("explicit public route not found in %#v", plan.After)
+}
+
+func TestStrictRoutePlanRejectsUnknownFrontendRoot(t *testing.T) {
+	r := routeTestRegistry(&mockRoutingProvider{})
+	if _, err := r.PlanRouteWithOptions("demo", "orders", "local", nil, true); err == nil {
+		t.Fatal("expected strict route plan to reject unknown frontend root")
+	}
+}
+
+func TestStrictRoutePlanFingerprintApplies(t *testing.T) {
+	provider := &mockRoutingProvider{}
+	ws := &models.Workspace{
+		WorkspaceID: "demo",
+		Type:        models.WorkspaceTypeRouting,
+		RoutingConfig: &models.RoutingConfig{
+			LocalDomain: "api.localhost",
+		},
+		Applications: []*models.Application{{
+			ID: "root", Path: "/", PublicPath: "/", UpstreamContext: "/", FrontendRoot: "/", Port: 1901,
+		}},
+	}
+	ws.SetDefaults()
+	r := &Registry{workspaces: []*models.Workspace{ws}, store: &fakeWorkspaceStore{}, routingProvider: provider, stopChan: make(chan struct{}), subscribers: make(map[string]int), healthStreams: make(map[uint64]healthStream)}
+	plan, err := r.PlanRouteWithOptions("demo", "root", "local", nil, true)
+	if err != nil {
+		t.Fatalf("strict route plan failed: %v", err)
+	}
+	if _, err := r.ApplyRoutePlan("demo", plan, plan.BaseRouteVersion, "", "strict-apply"); err != nil {
+		t.Fatalf("strict route plan could not be applied: %v", err)
+	}
+}

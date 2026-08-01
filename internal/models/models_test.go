@@ -43,6 +43,20 @@ func TestApplicationRemoteHealthURLFallsBackToPath(t *testing.T) {
 	}
 }
 
+func TestLegacyRouteMetadataPreservesContextIngress(t *testing.T) {
+	legacy := &Application{ID: "orders", Path: "/orders", Context: "/service-orders"}
+	workspace := &Workspace{WorkspaceID: "demo", Type: WorkspaceTypeRouting, RoutingConfig: &RoutingConfig{LocalDomain: "api.localhost"}, Applications: []*Application{legacy}}
+	workspace.SetDefaults()
+	if !legacy.LegacyPublicPath || !legacy.LegacyUpstreamContext || legacy.IngressPath() != "/service-orders" {
+		t.Fatalf("legacy ingress metadata was not preserved: %#v", legacy)
+	}
+
+	explicit := &Application{ID: "orders", Path: "/orders", PublicPath: "/orders", Context: "/service-orders", UpstreamContext: "/service-orders"}
+	if explicit.IngressPath() != "/orders" {
+		t.Fatalf("explicit public path was conflated with upstream context: %q", explicit.IngressPath())
+	}
+}
+
 func TestNormalizeIdentityTokenAndAliases(t *testing.T) {
 	app := Application{ID: "rtc", Aliases: []string{" Front_GISS-V2 ", "rtc", "front-giss-v2"}}
 	if got, want := NormalizeIdentityToken(" Reforma Tributaria_Consumo "), "reforma-tributaria-consumo"; got != want {

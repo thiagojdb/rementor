@@ -50,6 +50,13 @@ export function routeModeLabel(mode: RouteMode | undefined): string {
       return 'unknown'
   }
 }
+export interface RouteWarningDTO {
+  code: string
+  field?: string
+  severity: string
+  message: string
+  remediation?: string
+}
 
 export interface RoutingDTO {
   mode: string
@@ -67,6 +74,7 @@ export interface WorkspaceDTO {
   environment?: WorkspaceEnvironmentRefDTO
   route?: RouteStateDTO
   operation?: OperationMetadataDTO
+  warnings?: RouteWarningDTO[]
 }
 
 export type RoutePatternDTO = PlainMessage<GetRoutePatternResponse>
@@ -86,6 +94,7 @@ export interface CreateWorkspaceRequest {
   defaultRemoteBaseUrl?: string
   applications: ApplicationConfigInput[]
   correlationId?: string
+  strictMetadata?: boolean
 }
 
 export interface UpdateWorkspaceRequest {
@@ -93,6 +102,7 @@ export interface UpdateWorkspaceRequest {
   localDomain: string
   defaultRemoteBaseUrl: string
   correlationId?: string
+  strictMetadata?: boolean
 }
 
 export interface ApplicationConfigInput {
@@ -103,12 +113,16 @@ export interface ApplicationConfigInput {
   aliases?: string[]
   name: string
   path: string
+  publicPath?: string
   domain?: string
   remoteBaseUrl?: string
   port?: number
   health?: string
   context?: string
   routeOverride?: boolean
+  upstreamContext?: string
+  frontendRoot?: string
+  frontendRootSource?: string
 }
 
 export interface UpdateRoutePatternRequest {

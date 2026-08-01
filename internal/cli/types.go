@@ -41,27 +41,31 @@ type OperationMetadataDTO struct {
 
 // ApplicationDTO is the CLI-friendly view of the protobuf Application message.
 type ApplicationDTO struct {
-	ID            string                     `json:"id"`
-	AppID         string                     `json:"appId,omitempty"`
-	ServiceID     string                     `json:"serviceId,omitempty"`
-	Repository    string                     `json:"repository,omitempty"`
-	Aliases       []string                   `json:"aliases,omitempty"`
-	Name          string                     `json:"name"`
-	Path          string                     `json:"path"`
-	Domain        string                     `json:"domain,omitempty"`
-	RemoteBaseUrl string                     `json:"remoteBaseUrl,omitempty"`
-	Context       string                     `json:"context,omitempty"`
-	Port          int                        `json:"port"`
-	Health        string                     `json:"health,omitempty"`
-	Active        bool                       `json:"active"`
-	HealthStatus  string                     `json:"healthStatus"`
-	RemoteStatus  string                     `json:"remoteStatus,omitempty"`
-	RoutePattern  *string                    `json:"routePattern,omitempty"`
-	RouteOverride bool                       `json:"routeOverride,omitempty"`
-	Identity      CanonicalApplicationRefDTO `json:"identity"`
-	Environment   WorkspaceEnvironmentRefDTO `json:"environment"`
-	Route         *RouteStateDTO             `json:"route,omitempty"`
-	Operation     *OperationMetadataDTO      `json:"operation,omitempty"`
+	ID                 string                     `json:"id"`
+	AppID              string                     `json:"appId,omitempty"`
+	ServiceID          string                     `json:"serviceId,omitempty"`
+	Repository         string                     `json:"repository,omitempty"`
+	Aliases            []string                   `json:"aliases,omitempty"`
+	Name               string                     `json:"name"`
+	Path               string                     `json:"path"`
+	PublicPath         string                     `json:"publicPath,omitempty"`
+	Domain             string                     `json:"domain,omitempty"`
+	RemoteBaseUrl      string                     `json:"remoteBaseUrl,omitempty"`
+	Context            string                     `json:"context,omitempty"`
+	UpstreamContext    string                     `json:"upstreamContext,omitempty"`
+	FrontendRoot       string                     `json:"frontendRoot,omitempty"`
+	FrontendRootSource string                     `json:"frontendRootSource,omitempty"`
+	Port               int                        `json:"port"`
+	Health             string                     `json:"health,omitempty"`
+	Active             bool                       `json:"active"`
+	HealthStatus       string                     `json:"healthStatus"`
+	RemoteStatus       string                     `json:"remoteStatus,omitempty"`
+	RoutePattern       *string                    `json:"routePattern,omitempty"`
+	RouteOverride      bool                       `json:"routeOverride,omitempty"`
+	Identity           CanonicalApplicationRefDTO `json:"identity"`
+	Environment        WorkspaceEnvironmentRefDTO `json:"environment"`
+	Route              *RouteStateDTO             `json:"route,omitempty"`
+	Operation          *OperationMetadataDTO      `json:"operation,omitempty"`
 }
 
 // RoutingDTO is the CLI-friendly view of the protobuf Routing message.
@@ -82,6 +86,7 @@ type WorkspaceDTO struct {
 	Environment  WorkspaceEnvironmentRefDTO `json:"environment"`
 	Route        *RouteStateDTO             `json:"route,omitempty"`
 	Operation    *OperationMetadataDTO      `json:"operation,omitempty"`
+	Warnings     []RouteWarningDTO          `json:"warnings,omitempty"`
 }
 
 // ErrorResponse is retained for command output compatibility.
@@ -99,6 +104,7 @@ type CreateWorkspaceRequest struct {
 	DefaultRemoteBaseURL string                   `json:"defaultRemoteBaseUrl"`
 	Applications         []ApplicationConfigInput `json:"applications"`
 	CorrelationID        string                   `json:"-"`
+	StrictMetadata       bool                     `json:"strictMetadata,omitempty"`
 }
 
 // UpdateWorkspaceRequest is the CLI-friendly update workspace input.
@@ -107,23 +113,29 @@ type UpdateWorkspaceRequest struct {
 	LocalDomain          string                   `json:"localDomain"`
 	DefaultRemoteBaseURL string                   `json:"defaultRemoteBaseUrl"`
 	CorrelationID        string                   `json:"-"`
+	StrictMetadata       bool                     `json:"strictMetadata,omitempty"`
 }
 
 // ApplicationConfigInput is the CLI-friendly application config input.
 type ApplicationConfigInput struct {
-	ID            string   `json:"id"`
-	AppID         string   `json:"appId,omitempty"`
-	ServiceID     string   `json:"serviceId,omitempty"`
-	Repository    string   `json:"repository,omitempty"`
-	Aliases       []string `json:"aliases,omitempty"`
-	Name          string   `json:"name"`
-	Path          string   `json:"path"`
-	Domain        string   `json:"domain"`
-	RemoteBaseUrl string   `json:"remoteBaseUrl"`
-	Port          int      `json:"port"`
-	Health        string   `json:"health"`
-	Context       string   `json:"context"`
-	RouteOverride *bool    `json:"routeOverride,omitempty"`
+	ID                 string   `json:"id"`
+	AppID              string   `json:"appId,omitempty"`
+	ServiceID          string   `json:"serviceId,omitempty"`
+	Repository         string   `json:"repository,omitempty"`
+	Aliases            []string `json:"aliases,omitempty"`
+	Name               string   `json:"name"`
+	Path               string   `json:"path"`
+	Domain             string   `json:"domain"`
+	RemoteBaseUrl      string   `json:"remoteBaseUrl"`
+	Port               int      `json:"port"`
+	Health             string   `json:"health"`
+	Context            string   `json:"context"`
+	PublicPath         string   `json:"publicPath,omitempty"`
+	UpstreamContext    string   `json:"upstreamContext,omitempty"`
+	FrontendRoot       string   `json:"frontendRoot,omitempty"`
+	FrontendRootSource string   `json:"frontendRootSource,omitempty"`
+	StrictMetadata     bool     `json:"strictMetadata,omitempty"`
+	RouteOverride      *bool    `json:"routeOverride,omitempty"`
 }
 
 func boolPtr(value bool) *bool { return &value }
@@ -132,6 +144,7 @@ type UpsertApplicationResponse struct {
 	Application ApplicationDTO        `json:"application"`
 	Created     bool                  `json:"created"`
 	Operation   *OperationMetadataDTO `json:"operation,omitempty"`
+	Warnings    []RouteWarningDTO     `json:"warnings,omitempty"`
 }
 
 // RoutePatternResponse is the CLI-friendly route pattern response.
@@ -179,8 +192,11 @@ type NormalizedRouteDTO struct {
 }
 
 type RouteWarningDTO struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
+	Code        string `json:"code"`
+	Field       string `json:"field,omitempty"`
+	Severity    string `json:"severity"`
+	Message     string `json:"message"`
+	Remediation string `json:"remediation,omitempty"`
 }
 
 type RouteConflictDTO struct {
@@ -228,6 +244,7 @@ type RoutePlanDTO struct {
 	Warnings         []RouteWarningDTO    `json:"warnings"`
 	Conflicts        []RouteConflictDTO   `json:"conflicts"`
 	Fingerprint      string               `json:"fingerprint"`
+	StrictMetadata   bool                 `json:"strictMetadata,omitempty"`
 }
 
 type RouteGetResponse struct {
@@ -329,6 +346,7 @@ type PlanRouteRequest struct {
 	RoutePattern    *string
 	ExpectedVersion uint64
 	CorrelationID   string
+	StrictMetadata  bool
 }
 
 type ApplyRouteRequest struct {
@@ -340,4 +358,5 @@ type ApplyRouteRequest struct {
 	ExpectedVersion uint64
 	IdempotencyKey  string
 	CorrelationID   string
+	StrictMetadata  bool
 }

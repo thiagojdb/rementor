@@ -16,9 +16,14 @@ func AnnounceCmd(client *Client, jsonOutput bool, args []string) {
 	wsType := fs.String("type", "routing", "workspace type for creation: routing|local-apps")
 	localDomain := fs.String("local-domain", "", "local domain (required when creating a routing workspace)")
 	path := fs.String("path", "", "URL path for routing workspaces (default: /<app-id>)")
+	publicPath := fs.String("public-path", "", "public/browser route (defaults to --path)")
 	domain := fs.String("domain", "", "hostname for local-apps workspaces (default: <app-id>.localhost)")
 	remoteBaseURL := fs.String("remote-base-url", "", "per-app remote base URL")
 	context := fs.String("context", "", "application context path")
+	upstreamContext := fs.String("upstream-context", "", "upstream/backend context path (defaults to --context)")
+	frontendRoot := fs.String("frontend-root", "", "frontend root/base path when known")
+	frontendRootSource := fs.String("frontend-root-source", "", "frontend root source")
+	strictMetadata := fs.Bool("strict-metadata", false, "reject unknown frontend-root metadata")
 	name := fs.String("name", "", "display name for the application")
 	health := fs.String("health", "", "health endpoint")
 	appIdentityID := fs.String("app-id", "", "canonical application identity (defaults to --app)")
@@ -64,22 +69,37 @@ func AnnounceCmd(client *Client, jsonOutput bool, args []string) {
 		if resolvedPath == "" {
 			resolvedPath = "/" + *appID
 		}
+		// A public path supplied without the legacy --path should replace the
+		// derived default instead of creating an artificial path/publicPath
+		// contradiction during migration validation.
+		if *publicPath != "" && *path == "" {
+			resolvedPath = *publicPath
+		}
+	}
+	resolvedPublicPath := *publicPath
+	if resolvedPublicPath == "" {
+		resolvedPublicPath = resolvedPath
 	}
 
 	input := ApplicationConfigInput{
-		ID:            *appID,
-		AppID:         *appIdentityID,
-		ServiceID:     *serviceID,
-		Repository:    *repository,
-		Aliases:       splitAliases(*aliases),
-		Name:          *name,
-		Path:          resolvedPath,
-		Domain:        resolvedDomain,
-		RemoteBaseUrl: *remoteBaseURL,
-		Port:          *port,
-		Health:        *health,
-		Context:       *context,
-		RouteOverride: routeOverrideValue,
+		ID:                 *appID,
+		AppID:              *appIdentityID,
+		ServiceID:          *serviceID,
+		Repository:         *repository,
+		Aliases:            splitAliases(*aliases),
+		Name:               *name,
+		Path:               resolvedPath,
+		PublicPath:         resolvedPublicPath,
+		Domain:             resolvedDomain,
+		RemoteBaseUrl:      *remoteBaseURL,
+		Port:               *port,
+		Health:             *health,
+		Context:            *context,
+		UpstreamContext:    *upstreamContext,
+		FrontendRoot:       *frontendRoot,
+		FrontendRootSource: *frontendRootSource,
+		StrictMetadata:     *strictMetadata,
+		RouteOverride:      routeOverrideValue,
 	}
 
 	upserted, err := client.UpsertApplication(stdctx.Background(), *wsID, input)
@@ -108,7 +128,7 @@ func AnnounceCmd(client *Client, jsonOutput bool, args []string) {
 	}
 
 	// Step 4: Build URL.
-	appURL := buildAppURL(ws, resolvedPath, resolvedDomain)
+	appURL := buildAppURL(ws, resolvedPublicPath, resolvedDomain)
 
 	if jsonOutput {
 		PrintJSON(map[string]any{
@@ -118,6 +138,7 @@ func AnnounceCmd(client *Client, jsonOutput bool, args []string) {
 			"activated": activated,
 			"url":       appURL,
 			"operation": upserted.Operation,
+			"warnings":  upserted.Warnings,
 		})
 		return
 	}
@@ -129,6 +150,7 @@ func AnnounceCmd(client *Client, jsonOutput bool, args []string) {
 		fmt.Printf("activated: %v\n", activated)
 	}
 	fmt.Printf("url:       %s\n", appURL)
+	printMetadataWarnings(upserted.Warnings)
 }
 
 // ensureWorkspace fetches the workspace; if 404, creates it.

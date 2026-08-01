@@ -76,12 +76,14 @@ func (c *Client) CreateWorkspace(ctx context.Context, req CreateWorkspaceRequest
 		DefaultRemoteBaseUrl: req.DefaultRemoteBaseURL,
 		Applications:         applicationInputsToProto(req.Applications),
 		CorrelationId:        req.CorrelationID,
+		StrictMetadata:       req.StrictMetadata,
 	}))
 	if err != nil {
 		return WorkspaceDTO{}, apiError(err)
 	}
 	workspace := workspaceFromProto(res.Msg.GetWorkspace())
 	workspace.Operation = operationFromProto(res.Msg.GetOperation())
+	workspace.Warnings = routeWarningsFromProto(res.Msg.GetWarnings())
 	return workspace, nil
 }
 
@@ -92,12 +94,14 @@ func (c *Client) UpdateWorkspace(ctx context.Context, workspaceID string, req Up
 		LocalDomain:          req.LocalDomain,
 		DefaultRemoteBaseUrl: req.DefaultRemoteBaseURL,
 		CorrelationId:        req.CorrelationID,
+		StrictMetadata:       req.StrictMetadata,
 	}))
 	if err != nil {
 		return WorkspaceDTO{}, apiError(err)
 	}
 	workspace := workspaceFromProto(res.Msg.GetWorkspace())
 	workspace.Operation = operationFromProto(res.Msg.GetOperation())
+	workspace.Warnings = routeWarningsFromProto(res.Msg.GetWarnings())
 	return workspace, nil
 }
 
@@ -174,8 +178,9 @@ func (c *Client) RegisterApplicationAlias(ctx context.Context, workspaceID, appl
 
 func (c *Client) UpsertApplication(ctx context.Context, workspaceID string, input ApplicationConfigInput) (UpsertApplicationResponse, error) {
 	res, err := c.rpc.UpsertApplication(ctx, connect.NewRequest(&rementorv1.UpsertApplicationRequest{
-		WorkspaceId: workspaceID,
-		Application: applicationInputToProto(input),
+		WorkspaceId:    workspaceID,
+		Application:    applicationInputToProto(input),
+		StrictMetadata: input.StrictMetadata,
 	}))
 	if err != nil {
 		return UpsertApplicationResponse{}, apiError(err)
@@ -183,7 +188,7 @@ func (c *Client) UpsertApplication(ctx context.Context, workspaceID string, inpu
 	operation := operationFromProto(res.Msg.GetOperation())
 	app := applicationFromProto(res.Msg.GetApplication())
 	app.Operation = operation
-	return UpsertApplicationResponse{Application: app, Created: res.Msg.GetCreated(), Operation: operation}, nil
+	return UpsertApplicationResponse{Application: app, Created: res.Msg.GetCreated(), Operation: operation, Warnings: routeWarningsFromProto(res.Msg.GetWarnings())}, nil
 }
 
 func (c *Client) DeleteApplication(ctx context.Context, workspaceID, appID string) error {
@@ -297,7 +302,7 @@ func (c *Client) ResolveRoute(ctx context.Context, workspaceID, host, path strin
 }
 
 func (c *Client) PlanRoute(ctx context.Context, req PlanRouteRequest) (RoutePlanDTO, error) {
-	message := &rementorv1.PlanRouteRequest{WorkspaceId: req.WorkspaceID, ApplicationRef: req.ApplicationRef, DesiredMode: routeModeToProto(req.DesiredMode), CorrelationId: req.CorrelationID, ExpectedVersion: req.ExpectedVersion}
+	message := &rementorv1.PlanRouteRequest{WorkspaceId: req.WorkspaceID, ApplicationRef: req.ApplicationRef, DesiredMode: routeModeToProto(req.DesiredMode), CorrelationId: req.CorrelationID, ExpectedVersion: req.ExpectedVersion, StrictMetadata: req.StrictMetadata}
 	if req.ExpectedVersion != 0 {
 		message.ExpectedRouteVersion = &rementorv1.RouteVersion{Value: req.ExpectedVersion}
 	}
@@ -313,7 +318,7 @@ func (c *Client) PlanRoute(ctx context.Context, req PlanRouteRequest) (RoutePlan
 }
 
 func (c *Client) ApplyRoute(ctx context.Context, req ApplyRouteRequest) (RouteApplyResponse, error) {
-	message := &rementorv1.ApplyRouteRequest{WorkspaceId: req.WorkspaceID, ApplicationRef: req.ApplicationRef, DesiredMode: routeModeToProto(req.DesiredMode), ExpectedVersion: req.ExpectedVersion, IdempotencyKey: req.IdempotencyKey, CorrelationId: req.CorrelationID}
+	message := &rementorv1.ApplyRouteRequest{WorkspaceId: req.WorkspaceID, ApplicationRef: req.ApplicationRef, DesiredMode: routeModeToProto(req.DesiredMode), ExpectedVersion: req.ExpectedVersion, IdempotencyKey: req.IdempotencyKey, CorrelationId: req.CorrelationID, StrictMetadata: req.StrictMetadata}
 	if req.ExpectedVersion != 0 {
 		message.ExpectedRouteVersion = &rementorv1.RouteVersion{Value: req.ExpectedVersion}
 	}
@@ -451,26 +456,30 @@ func applicationFromProto(app *rementorv1.Application) ApplicationDTO {
 		}
 	}
 	return ApplicationDTO{
-		ID:            app.GetId(),
-		AppID:         app.GetAppId(),
-		ServiceID:     app.GetServiceId(),
-		Repository:    app.GetRepository(),
-		Aliases:       append([]string(nil), app.GetAliases()...),
-		Name:          app.GetName(),
-		Path:          app.GetPath(),
-		Domain:        app.GetDomain(),
-		RemoteBaseUrl: app.GetRemoteBaseUrl(),
-		Context:       app.GetContext(),
-		Port:          int(app.GetPort()),
-		Health:        app.GetHealth(),
-		Active:        app.GetActive(),
-		HealthStatus:  app.GetHealthStatus(),
-		RemoteStatus:  app.GetRemoteStatus(),
-		RoutePattern:  app.RoutePattern,
-		RouteOverride: app.GetRouteOverride(),
-		Identity:      identity,
-		Environment:   environmentFromProto(app.GetEnvironment()),
-		Route:         routeFromProto(app.GetRoute()),
+		ID:                 app.GetId(),
+		AppID:              app.GetAppId(),
+		ServiceID:          app.GetServiceId(),
+		Repository:         app.GetRepository(),
+		Aliases:            append([]string(nil), app.GetAliases()...),
+		Name:               app.GetName(),
+		Path:               app.GetPath(),
+		PublicPath:         app.GetPublicPath(),
+		Domain:             app.GetDomain(),
+		RemoteBaseUrl:      app.GetRemoteBaseUrl(),
+		Context:            app.GetContext(),
+		UpstreamContext:    app.GetUpstreamContext(),
+		FrontendRoot:       app.GetFrontendRoot(),
+		FrontendRootSource: app.GetFrontendRootSource(),
+		Port:               int(app.GetPort()),
+		Health:             app.GetHealth(),
+		Active:             app.GetActive(),
+		HealthStatus:       app.GetHealthStatus(),
+		RemoteStatus:       app.GetRemoteStatus(),
+		RoutePattern:       app.RoutePattern,
+		RouteOverride:      app.GetRouteOverride(),
+		Identity:           identity,
+		Environment:        environmentFromProto(app.GetEnvironment()),
+		Route:              routeFromProto(app.GetRoute()),
 	}
 }
 
@@ -576,7 +585,7 @@ func applicationInputToProto(input ApplicationConfigInput) *rementorv1.Applicati
 	return &rementorv1.ApplicationConfigInput{
 		Id: input.ID, AppId: input.AppID, ServiceId: input.ServiceID, Repository: input.Repository, Aliases: input.Aliases, Name: input.Name, Path: input.Path, Domain: input.Domain,
 		RemoteBaseUrl: input.RemoteBaseUrl, Port: int32(input.Port),
-		Health: input.Health, Context: input.Context,
+		Health: input.Health, Context: input.Context, PublicPath: input.PublicPath, UpstreamContext: input.UpstreamContext, FrontendRoot: input.FrontendRoot, FrontendRootSource: input.FrontendRootSource,
 		RouteOverride: input.RouteOverride,
 	}
 }
@@ -643,7 +652,7 @@ func routeWarningFromProto(warning *rementorv1.RouteWarning) RouteWarningDTO {
 	if warning == nil {
 		return RouteWarningDTO{}
 	}
-	return RouteWarningDTO{Code: warning.GetCode(), Message: warning.GetMessage()}
+	return RouteWarningDTO{Code: warning.GetCode(), Field: warning.GetField(), Severity: warning.GetSeverity(), Message: warning.GetMessage(), Remediation: warning.GetRemediation()}
 }
 
 func routeWarningsFromProto(warnings []*rementorv1.RouteWarning) []RouteWarningDTO {
@@ -698,7 +707,7 @@ func routeConflictToProto(conflict RouteConflictDTO) *rementorv1.RouteConflict {
 }
 
 func routePlanToProto(plan RoutePlanDTO) *rementorv1.RoutePlan {
-	result := &rementorv1.RoutePlan{WorkspaceId: plan.WorkspaceID, Environment: plan.Environment, BaseRouteVersion: &rementorv1.RouteVersion{Value: plan.BaseRouteVersion}, BaseVersion: plan.BaseRouteVersion, ApplicationId: plan.ApplicationID, DesiredMode: routeModeToProto(plan.DesiredMode), Fingerprint: plan.Fingerprint}
+	result := &rementorv1.RoutePlan{WorkspaceId: plan.WorkspaceID, Environment: plan.Environment, BaseRouteVersion: &rementorv1.RouteVersion{Value: plan.BaseRouteVersion}, BaseVersion: plan.BaseRouteVersion, ApplicationId: plan.ApplicationID, DesiredMode: routeModeToProto(plan.DesiredMode), Fingerprint: plan.Fingerprint, StrictMetadata: plan.StrictMetadata}
 	if plan.RoutePattern != nil {
 		value := *plan.RoutePattern
 		result.RoutePattern = &value
@@ -710,7 +719,7 @@ func routePlanToProto(plan RoutePlanDTO) *rementorv1.RoutePlan {
 		result.AfterRoutes = append(result.AfterRoutes, normalizedRouteToProto(route))
 	}
 	for _, warning := range plan.Warnings {
-		result.Warnings = append(result.Warnings, &rementorv1.RouteWarning{Code: warning.Code, Message: warning.Message})
+		result.Warnings = append(result.Warnings, &rementorv1.RouteWarning{Code: warning.Code, Field: warning.Field, Severity: warning.Severity, Message: warning.Message, Remediation: warning.Remediation})
 	}
 	for _, conflict := range plan.Conflicts {
 		result.Conflicts = append(result.Conflicts, routeConflictToProto(conflict))
@@ -738,7 +747,7 @@ func routePlanFromProto(plan *rementorv1.RoutePlan) RoutePlanDTO {
 	} else {
 		version = plan.GetBaseVersion()
 	}
-	result := RoutePlanDTO{WorkspaceID: plan.GetWorkspaceId(), Environment: plan.GetEnvironment(), BaseRouteVersion: version, ApplicationID: plan.GetApplicationId(), DesiredMode: routeModeFromProtoValue(plan.GetDesiredMode()), Fingerprint: plan.GetFingerprint(), BeforeRoutes: normalizedRoutesFromProto(plan.GetBeforeRoutes()), AfterRoutes: normalizedRoutesFromProto(plan.GetAfterRoutes()), Warnings: routeWarningsFromProto(plan.GetWarnings()), Conflicts: routeConflictsFromProto(plan.GetConflicts())}
+	result := RoutePlanDTO{WorkspaceID: plan.GetWorkspaceId(), Environment: plan.GetEnvironment(), BaseRouteVersion: version, ApplicationID: plan.GetApplicationId(), DesiredMode: routeModeFromProtoValue(plan.GetDesiredMode()), Fingerprint: plan.GetFingerprint(), StrictMetadata: plan.GetStrictMetadata(), BeforeRoutes: normalizedRoutesFromProto(plan.GetBeforeRoutes()), AfterRoutes: normalizedRoutesFromProto(plan.GetAfterRoutes()), Warnings: routeWarningsFromProto(plan.GetWarnings()), Conflicts: routeConflictsFromProto(plan.GetConflicts())}
 	if plan.RoutePattern != nil {
 		value := plan.GetRoutePattern()
 		result.RoutePattern = &value

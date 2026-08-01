@@ -63,6 +63,7 @@ func workspaceCreate(client *Client, jsonOutput bool, args []string) {
 	name := fs.String("name", "", "display name")
 	color := fs.String("color", "", "color class (e.g. bg-blue-500)")
 	defaultRemoteBaseUrl := fs.String("default-remote-base-url", "", "default remote base URL")
+	strictMetadata := fs.Bool("strict-metadata", false, "reject unknown frontend-root metadata in registrations")
 	if err := parseFlags(fs, args); err != nil {
 		Die("%v", err)
 	}
@@ -84,6 +85,7 @@ func workspaceCreate(client *Client, jsonOutput bool, args []string) {
 		Color:                *color,
 		LocalDomain:          *localDomain,
 		DefaultRemoteBaseURL: *defaultRemoteBaseUrl,
+		StrictMetadata:       *strictMetadata,
 	}
 
 	ws, err := client.CreateWorkspace(context.Background(), req)
