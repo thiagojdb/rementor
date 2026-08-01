@@ -18,6 +18,23 @@ type RoutingProvider interface {
 	Close() error
 }
 
+// RoutingVerifier is an optional extension implemented by providers that can
+// inspect the configuration currently loaded by the proxy.  LoadInitialConfig
+// remains the compatibility boundary for existing providers; when this hook
+// is present the registry uses it to close the apply/verify boundary before
+// persisting desired state.
+type RoutingVerifier interface {
+	VerifyRouting(workspaces []*models.Workspace) error
+}
+
+// RoutingInspector is an optional read-only drift check.  Providers that can
+// compare their loaded projection with a candidate should implement it so a
+// sync operation can report external proxy drift instead of relying only on
+// the registry's last successful apply.
+type RoutingInspector interface {
+	InspectRouting(workspaces []*models.Workspace) (bool, error)
+}
+
 // ToggleResult represents the result of a toggle all operation
 type ToggleResult struct {
 	SuccessCount int
