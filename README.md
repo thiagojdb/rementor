@@ -149,6 +149,9 @@ make build-ctl
 ./dist/rementorctl route plan demo orders-api --mode local
 ./dist/rementorctl route apply demo orders-api --mode local --idempotency-key orders-local
 ./dist/rementorctl route sync demo
+
+# Resolve the stable browser entry point (aliases are accepted).
+./dist/rementorctl url --workspace demo --app orders-api
 ```
 
 Flags may appear before or after positional arguments.
@@ -259,6 +262,13 @@ the browser. Responses include an explicit `identity` reference, an
 `operationId`, `routeVersion`, typed creation/completion timestamps, and a
 `correlationId`; callers may supply a correlation ID in the request or let
 Rementor generate one.
+
+Browser URLs are resolved from the canonical application identity and the
+selected workspace/environment public binding. `rementorctl url` and the MCP
+`rementor_url` tool return the stable URL separately from the current local or
+remote proxy target, together with route version, effective mode, and the last
+operation/correlation metadata. Switching an application between local and
+remote therefore never changes the URL a browser should open.
 
 Existing workspace files and RPC clients remain compatible: `id` is treated as
 the legacy alias for `appId`, `workspaceId` remains the environment key, and

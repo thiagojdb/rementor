@@ -46,6 +46,15 @@ type ApplicationIdentity struct {
 	ServiceID  string   `json:"serviceId"`
 	Repository string   `json:"repository,omitempty"`
 	Aliases    []string `json:"aliases,omitempty"`
+	LegacyID   string   `json:"legacyId,omitempty"`
+}
+
+// WorkspaceEnvironmentRef makes the environment boundary explicit in domain
+// responses while retaining the legacy workspace identifier.
+type WorkspaceEnvironmentRef struct {
+	WorkspaceID string `json:"workspaceId"`
+	Environment string `json:"environment,omitempty"`
+	LegacyID    string `json:"legacyId,omitempty"`
 }
 
 // ApplicationBinding is the environment-specific route configuration for an
