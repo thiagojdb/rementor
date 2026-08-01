@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -164,6 +165,98 @@ func TestLoadWorkspacesPreservesApplicationRemoteBaseURL(t *testing.T) {
 	}
 	if got, want := app.GetRemoteBaseUrl(workspaces[0]), "https://api.remote.example.test"; got != want {
 		t.Fatalf("expected effective remote base URL %q, got %q", want, got)
+	}
+}
+
+func TestApplicationIdentityAndAliasesPersistAcrossWorkspaces(t *testing.T) {
+	t.Setenv("XDG_DATA_HOME", filepath.Join(t.TempDir(), "data"))
+
+	identity := models.ApplicationConfig{
+		ID: "rtc", AppID: "rtc", ServiceID: "reforma-tributaria-consumo", Repository: "front-giss-v2",
+		Aliases: []string{"reforma-tributaria-consumo", "front_giss_v2"}, Path: "/rtc", Port: 8080,
+	}
+	for _, workspaceID := range []string{"desenvolvimento", "qualidade"} {
+		if err := AppendWorkspace(models.WorkspaceConfig{
+			ID: workspaceID, Type: models.WorkspaceTypeRouting,
+			Routing:      models.RoutingConfig{LocalDomain: workspaceID + ".localhost"},
+			Applications: []models.ApplicationConfig{identity},
+		}); err != nil {
+			t.Fatalf("AppendWorkspace(%s) failed: %v", workspaceID, err)
+		}
+	}
+
+	workspaces, err := LoadWorkspaces()
+	if err != nil {
+		t.Fatalf("LoadWorkspaces failed: %v", err)
+	}
+	if len(workspaces) != 2 {
+		t.Fatalf("expected two workspaces, got %d", len(workspaces))
+	}
+	for _, workspace := range workspaces {
+		app := workspace.Applications[0]
+		if app.CanonicalAppID() != "rtc" || app.ServiceID != "reforma-tributaria-consumo" || app.Repository != "front-giss-v2" {
+			t.Fatalf("identity did not persist in %s: %#v", workspace.WorkspaceID, app)
+		}
+		if len(app.Aliases) != 2 || app.Aliases[0] != "front-giss-v2" || app.Aliases[1] != "reforma-tributaria-consumo" {
+			t.Fatalf("aliases did not persist in %s: %#v", workspace.WorkspaceID, app.Aliases)
+		}
+	}
+}
+
+func TestApplicationBindingReusesIdentityMetadataWhenOmitted(t *testing.T) {
+	t.Setenv("XDG_DATA_HOME", filepath.Join(t.TempDir(), "data"))
+
+	if err := AppendWorkspace(models.WorkspaceConfig{
+		ID: "desenvolvimento", Type: models.WorkspaceTypeRouting,
+		Routing: models.RoutingConfig{LocalDomain: "desenvolvimento.localhost"},
+		Applications: []models.ApplicationConfig{{
+			ID: "rtc", AppID: "rtc", ServiceID: "reforma-tributaria-consumo", Repository: "front-giss-v2",
+			Aliases: []string{"rtc-ui"}, Path: "/rtc", Port: 8080,
+		}},
+	}); err != nil {
+		t.Fatalf("AppendWorkspace(desenvolvimento) failed: %v", err)
+	}
+	if err := AppendWorkspace(models.WorkspaceConfig{
+		ID: "qualidade", Type: models.WorkspaceTypeRouting,
+		Routing: models.RoutingConfig{LocalDomain: "qualidade.localhost"},
+		Applications: []models.ApplicationConfig{{
+			ID: "rtc", Path: "/rtc", Port: 8081,
+		}},
+	}); err != nil {
+		t.Fatalf("AppendWorkspace(qualidade) failed: %v", err)
+	}
+
+	workspaces, err := LoadWorkspaces()
+	if err != nil {
+		t.Fatalf("LoadWorkspaces failed: %v", err)
+	}
+	if got := workspaces[1].Applications[0]; got.ServiceID != "reforma-tributaria-consumo" || got.Repository != "front-giss-v2" || len(got.Aliases) != 1 || got.Aliases[0] != "rtc-ui" {
+		t.Fatalf("expected shared identity metadata on second binding, got %#v", got)
+	}
+}
+
+func TestApplicationCanonicalIDCannotCollideWithAnotherIdentityAlias(t *testing.T) {
+	t.Setenv("XDG_DATA_HOME", filepath.Join(t.TempDir(), "data"))
+
+	if err := AppendWorkspace(models.WorkspaceConfig{
+		ID: "desenvolvimento", Type: models.WorkspaceTypeRouting,
+		Routing: models.RoutingConfig{LocalDomain: "desenvolvimento.localhost"},
+		Applications: []models.ApplicationConfig{{
+			ID: "frontend", Path: "/frontend", Port: 8080, Aliases: []string{"shared-ui"},
+		}},
+	}); err != nil {
+		t.Fatalf("AppendWorkspace(frontend) failed: %v", err)
+	}
+
+	err := AppendWorkspace(models.WorkspaceConfig{
+		ID: "qualidade", Type: models.WorkspaceTypeRouting,
+		Routing: models.RoutingConfig{LocalDomain: "qualidade.localhost"},
+		Applications: []models.ApplicationConfig{{
+			ID: "shared-ui", Path: "/shared-ui", Port: 8081,
+		}},
+	})
+	if !errors.Is(err, models.ErrAliasConflict) {
+		t.Fatalf("expected canonical/alias collision, got %v", err)
 	}
 }
 

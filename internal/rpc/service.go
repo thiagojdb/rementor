@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -147,6 +148,31 @@ func (s *ControlPlaneService) GetApplication(ctx context.Context, req *connect.R
 	return connect.NewResponse(&rementorv1.GetApplicationResponse{Application: toProtoApplication(app)}), nil
 }
 
+func (s *ControlPlaneService) ResolveApplication(ctx context.Context, req *connect.Request[rementorv1.ResolveApplicationRequest]) (*connect.Response[rementorv1.ResolveApplicationResponse], error) {
+	_, app, err := s.registry.FindApp(req.Msg.GetWorkspaceId(), req.Msg.GetApplicationRef())
+	if err != nil {
+		if errors.Is(err, models.ErrAmbiguousApplication) {
+			return nil, connect.NewError(connect.CodeFailedPrecondition, err)
+		}
+		return nil, connect.NewError(connect.CodeNotFound, err)
+	}
+	return connect.NewResponse(&rementorv1.ResolveApplicationResponse{Application: toProtoApplication(app)}), nil
+}
+
+func (s *ControlPlaneService) RegisterApplicationAlias(ctx context.Context, req *connect.Request[rementorv1.RegisterApplicationAliasRequest]) (*connect.Response[rementorv1.RegisterApplicationAliasResponse], error) {
+	app, err := s.registry.RegisterApplicationAlias(req.Msg.GetWorkspaceId(), req.Msg.GetApplicationRef(), req.Msg.GetAlias())
+	if err != nil {
+		if errors.Is(err, models.ErrAliasConflict) {
+			return nil, connect.NewError(connect.CodeAlreadyExists, err)
+		}
+		if errors.Is(err, models.ErrAmbiguousApplication) {
+			return nil, connect.NewError(connect.CodeFailedPrecondition, err)
+		}
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
+	return connect.NewResponse(&rementorv1.RegisterApplicationAliasResponse{Application: toProtoApplication(app)}), nil
+}
+
 func (s *ControlPlaneService) UpsertApplication(ctx context.Context, req *connect.Request[rementorv1.UpsertApplicationRequest]) (*connect.Response[rementorv1.UpsertApplicationResponse], error) {
 	ws := s.registry.FindWorkspace(req.Msg.GetWorkspaceId())
 	if ws == nil {
@@ -157,6 +183,19 @@ func (s *ControlPlaneService) UpsertApplication(ctx context.Context, req *connec
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("application is required"))
 	}
 	appConfig := toApplicationConfig(input)
+	if appConfig.AppID == "" {
+		if _, existing, err := s.registry.FindApp(ws.WorkspaceID, appConfig.ID); err == nil {
+			appConfig.AppID = existing.CanonicalAppID()
+			appConfig.ID = existing.CanonicalAppID()
+			appConfig.ServiceID = existing.ServiceID
+			appConfig.Repository = existing.Repository
+			appConfig.Aliases = existing.NormalizedAliases()
+		}
+	}
+	if appConfig.AppID == "" {
+		appConfig.AppID = appConfig.ID
+	}
+	appConfig.ID = appConfig.AppID
 	if err := validation.Application(ws.GetType(), appConfig); err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
@@ -164,7 +203,7 @@ func (s *ControlPlaneService) UpsertApplication(ctx context.Context, req *connec
 	apps := applicationConfigsFromWorkspace(ws)
 	created := true
 	for i := range apps {
-		if apps[i].ID != appConfig.ID {
+		if apps[i].CanonicalAppID() != appConfig.CanonicalAppID() {
 			continue
 		}
 		created = false
@@ -200,8 +239,12 @@ func (s *ControlPlaneService) DeleteApplication(ctx context.Context, req *connec
 	apps := applicationConfigsFromWorkspace(ws)
 	filtered := make([]models.ApplicationConfig, 0, len(apps))
 	found := false
+	_, target, err := s.registry.FindApp(ws.WorkspaceID, req.Msg.GetApplicationId())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeNotFound, err)
+	}
 	for _, app := range apps {
-		if app.ID == req.Msg.GetApplicationId() {
+		if app.CanonicalAppID() == target.CanonicalAppID() {
 			found = true
 			continue
 		}
@@ -315,7 +358,7 @@ func toApplicationConfig(input *rementorv1.ApplicationConfigInput) models.Applic
 		health = models.DefaultHealthEndpoint
 	}
 	return models.ApplicationConfig{
-		ID: strings.TrimSpace(input.GetId()), Name: strings.TrimSpace(input.GetName()),
+		ID: strings.TrimSpace(input.GetId()), AppID: strings.TrimSpace(input.GetAppId()), ServiceID: strings.TrimSpace(input.GetServiceId()), Repository: strings.TrimSpace(input.GetRepository()), Aliases: input.GetAliases(), Name: strings.TrimSpace(input.GetName()),
 		Path: strings.TrimSpace(input.GetPath()), Domain: strings.TrimSpace(input.GetDomain()),
 		RemoteBaseUrl: strings.TrimSpace(input.GetRemoteBaseUrl()), Port: int(input.GetPort()),
 		Health: health, Context: strings.TrimSpace(input.GetContext()),
@@ -326,7 +369,7 @@ func applicationConfigsFromWorkspace(ws *models.Workspace) []models.ApplicationC
 	apps := make([]models.ApplicationConfig, 0, len(ws.Applications))
 	for _, app := range ws.Applications {
 		apps = append(apps, models.ApplicationConfig{
-			ID: app.ID, Name: app.Name, Path: app.Path, Domain: app.Domain,
+			ID: app.ID, AppID: app.CanonicalAppID(), ServiceID: app.ServiceID, Repository: app.Repository, Aliases: app.NormalizedAliases(), Name: app.Name, Path: app.Path, Domain: app.Domain,
 			RemoteBaseUrl: app.RemoteBaseUrl, Port: app.Port, Health: app.Health,
 			Active: app.Active, RoutePattern: app.RoutePattern, Context: app.Context,
 			StripOrigin: app.StripOrigin,
@@ -389,6 +432,10 @@ func toProtoApplication(app *models.Application) *rementorv1.Application {
 	}
 	return &rementorv1.Application{
 		Id:            app.ID,
+		AppId:         app.CanonicalAppID(),
+		ServiceId:     app.ServiceID,
+		Repository:    app.Repository,
+		Aliases:       app.NormalizedAliases(),
 		Name:          name,
 		Path:          app.Path,
 		Domain:        app.Domain,

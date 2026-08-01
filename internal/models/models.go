@@ -5,6 +5,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 )
 
 // Constants for the application
@@ -36,6 +37,26 @@ type RoutingConfig struct {
 	Mode                 string `json:"mode"`                 // "path-based"
 	LocalDomain          string `json:"localDomain"`          // e.g., "api.localhost"
 	DefaultRemoteBaseURL string `json:"defaultRemoteBaseUrl"` // e.g., "https://api.remote.example.test"
+}
+
+// ApplicationIdentity is the environment-independent identity shared by all
+// workspace bindings of a service.
+type ApplicationIdentity struct {
+	AppID      string   `json:"appId"`
+	ServiceID  string   `json:"serviceId"`
+	Repository string   `json:"repository,omitempty"`
+	Aliases    []string `json:"aliases,omitempty"`
+}
+
+// ApplicationBinding is the environment-specific route configuration for an
+// application identity. WorkspaceID acts as the environment boundary while
+// path/domain/context remain binding metadata rather than identity fields.
+type ApplicationBinding struct {
+	WorkspaceID     string `json:"workspaceId"`
+	AppID           string `json:"appId"`
+	PublicHost      string `json:"publicHost,omitempty"`
+	PublicPath      string `json:"publicPath,omitempty"`
+	UpstreamContext string `json:"upstreamContext,omitempty"`
 }
 
 // AppRuntime holds runtime health status information
@@ -146,7 +167,14 @@ func (ar *AppRuntime) UpdateBothStatuses(healthOk bool, healthLast *time.Time, r
 
 // Application represents an application in a workspace
 type Application struct {
+	// ID is retained as the wire-compatible canonical application identifier.
+	// AppID is the explicit identity field used by new callers; both values are
+	// kept in sync when configurations are loaded or registered.
 	ID            string     `json:"id"`
+	AppID         string     `json:"appId,omitempty"`
+	ServiceID     string     `json:"serviceId,omitempty"`
+	Repository    string     `json:"repository,omitempty"`
+	Aliases       []string   `json:"aliases,omitempty"`
 	Name          string     `json:"name,omitempty"`          // Display name
 	Path          string     `json:"path"`                    // URL path for routing (e.g., "/users")
 	Domain        string     `json:"domain,omitempty"`        // Per-app hostname for local-apps type
@@ -159,6 +187,62 @@ type Application struct {
 	StripOrigin   bool       `json:"stripOrigin,omitempty"` // Strip Origin header for local proxy (Quarkus Dev UI fix)
 	Runtime       AppRuntime `json:"-"`
 	wsID          string     `json:"-"`
+}
+
+// CanonicalAppID returns the stable identity key while preserving the legacy
+// ID field for clients that still use it.
+func (a *Application) CanonicalAppID() string {
+	if a == nil {
+		return ""
+	}
+	if strings.TrimSpace(a.AppID) != "" {
+		return strings.TrimSpace(a.AppID)
+	}
+	return strings.TrimSpace(a.ID)
+}
+
+// NormalizeIdentityToken normalizes a canonical ID or alias for lookup.
+// Separators are normalized so human-facing repository names remain usable;
+// callers still validate the resulting token before persisting it.
+func NormalizeIdentityToken(value string) string {
+	value = strings.ToLower(strings.TrimSpace(value))
+	var b strings.Builder
+	lastDash := false
+	for _, r := range value {
+		switch {
+		case unicode.IsLetter(r) || unicode.IsDigit(r):
+			b.WriteRune(r)
+			lastDash = false
+		case r == '-' || r == '_' || unicode.IsSpace(r):
+			if b.Len() > 0 && !lastDash {
+				b.WriteByte('-')
+				lastDash = true
+			}
+		}
+	}
+	return strings.Trim(b.String(), "-")
+}
+
+// NormalizedAliases returns de-duplicated, normalized aliases in stable order.
+func (a *Application) NormalizedAliases() []string {
+	if a == nil {
+		return nil
+	}
+	canonical := NormalizeIdentityToken(a.CanonicalAppID())
+	seen := make(map[string]struct{}, len(a.Aliases))
+	aliases := make([]string, 0, len(a.Aliases))
+	for _, raw := range a.Aliases {
+		alias := NormalizeIdentityToken(raw)
+		if alias == "" || alias == canonical {
+			continue
+		}
+		if _, ok := seen[alias]; ok {
+			continue
+		}
+		seen[alias] = struct{}{}
+		aliases = append(aliases, alias)
+	}
+	return aliases
 }
 
 // SetWsID sets the workspace ID for this application
@@ -294,17 +378,36 @@ type HealthUpdate struct {
 
 // ApplicationConfig represents a persisted application definition.
 type ApplicationConfig struct {
-	ID            string  `json:"id"`
-	Name          string  `json:"name,omitempty"`
-	Path          string  `json:"path"`
-	Domain        string  `json:"domain,omitempty"`
-	RemoteBaseUrl string  `json:"remoteBaseUrl,omitempty"` // Per-app remote base URL override
-	Port          int     `json:"port"`
-	Health        string  `json:"health,omitempty"`
-	Active        bool    `json:"active"`
-	RoutePattern  *string `json:"routePattern,omitempty"`
-	Context       string  `json:"context,omitempty"`
-	StripOrigin   bool    `json:"stripOrigin,omitempty"` // Strip Origin header for local proxy (Quarkus Dev UI fix)
+	ID            string   `json:"id"`
+	AppID         string   `json:"appId,omitempty"`
+	ServiceID     string   `json:"serviceId,omitempty"`
+	Repository    string   `json:"repository,omitempty"`
+	Aliases       []string `json:"aliases,omitempty"`
+	Name          string   `json:"name,omitempty"`
+	Path          string   `json:"path"`
+	Domain        string   `json:"domain,omitempty"`
+	RemoteBaseUrl string   `json:"remoteBaseUrl,omitempty"` // Per-app remote base URL override
+	Port          int      `json:"port"`
+	Health        string   `json:"health,omitempty"`
+	Active        bool     `json:"active"`
+	RoutePattern  *string  `json:"routePattern,omitempty"`
+	Context       string   `json:"context,omitempty"`
+	StripOrigin   bool     `json:"stripOrigin,omitempty"` // Strip Origin header for local proxy (Quarkus Dev UI fix)
+}
+
+// CanonicalAppID returns the stable application identity, falling back to the
+// legacy ID field for persisted configurations created before identity support.
+func (a ApplicationConfig) CanonicalAppID() string {
+	if strings.TrimSpace(a.AppID) != "" {
+		return strings.TrimSpace(a.AppID)
+	}
+	return strings.TrimSpace(a.ID)
+}
+
+// NormalizedAliases returns the normalized aliases configured for this app.
+func (a ApplicationConfig) NormalizedAliases() []string {
+	app := Application{ID: a.ID, AppID: a.AppID, Aliases: a.Aliases}
+	return app.NormalizedAliases()
 }
 
 // WorkspaceConfig represents a persisted workspace definition.

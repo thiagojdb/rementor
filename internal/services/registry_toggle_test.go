@@ -195,6 +195,40 @@ func TestToggleAppRollsBackWhenRoutingReloadFails(t *testing.T) {
 	}
 }
 
+func TestFindAppResolvesCanonicalIDsAndAliases(t *testing.T) {
+	ws := &models.Workspace{
+		WorkspaceID: "demo", Type: models.WorkspaceTypeRouting,
+		RoutingConfig: &models.RoutingConfig{LocalDomain: "api.localhost"},
+		Applications:  []*models.Application{{ID: "rtc", AppID: "rtc", Aliases: []string{"front-giss-v2"}, Path: "/rtc"}},
+	}
+	r := &Registry{workspaces: []*models.Workspace{ws}}
+	_, app, err := r.FindApp("demo", " FRONT_GISS_V2 ")
+	if err != nil {
+		t.Fatalf("FindApp alias failed: %v", err)
+	}
+	if app.CanonicalAppID() != "rtc" {
+		t.Fatalf("resolved app = %q, want rtc", app.CanonicalAppID())
+	}
+}
+
+func TestRegisterApplicationAliasRejectsConflicts(t *testing.T) {
+	ws := &models.Workspace{
+		WorkspaceID: "demo", Type: models.WorkspaceTypeRouting,
+		RoutingConfig: &models.RoutingConfig{LocalDomain: "api.localhost"},
+		Applications: []*models.Application{
+			{ID: "rtc", AppID: "rtc", Path: "/rtc"},
+			{ID: "billing", AppID: "billing", Path: "/billing", Aliases: []string{"billing-ui"}},
+		},
+	}
+	r := &Registry{
+		workspaces: []*models.Workspace{ws}, store: &fakeWorkspaceStore{}, routingProvider: &mockRoutingProvider{},
+		stopChan: make(chan struct{}), subscribers: make(map[string]int), healthStreams: make(map[uint64]healthStream),
+	}
+	if _, err := r.RegisterApplicationAlias("demo", "rtc", "billing-ui"); !errors.Is(err, models.ErrAliasConflict) {
+		t.Fatalf("expected alias conflict, got %v", err)
+	}
+}
+
 func TestToggleAppRollsBackWhenStateSaveFails(t *testing.T) {
 	ws := &models.Workspace{
 		WorkspaceID: "demo",

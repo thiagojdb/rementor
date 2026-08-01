@@ -5,12 +5,13 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 )
 
 // AppCmd dispatches app subcommands.
 func AppCmd(client *Client, jsonOutput bool, args []string) {
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, "usage: rementorctl app <list|register|unregister|toggle> [options]")
+		fmt.Fprintln(os.Stderr, "usage: rementorctl app <list|register|unregister|toggle|alias|resolve> [options]")
 		os.Exit(1)
 	}
 	sub := args[0]
@@ -24,10 +25,54 @@ func AppCmd(client *Client, jsonOutput bool, args []string) {
 		appUnregister(client, jsonOutput, rest)
 	case "toggle":
 		appToggle(client, jsonOutput, rest)
+	case "alias":
+		appAlias(client, jsonOutput, rest)
+	case "resolve":
+		appResolve(client, jsonOutput, rest)
 	default:
 		fmt.Fprintf(os.Stderr, "unknown app subcommand: %s\n", sub)
 		os.Exit(1)
 	}
+}
+
+func appAlias(client *Client, jsonOutput bool, args []string) {
+	fs := flag.NewFlagSet("app alias", flag.ExitOnError)
+	if err := parseFlags(fs, args); err != nil {
+		Die("%v", err)
+	}
+	if fs.NArg() < 3 {
+		fmt.Fprintln(os.Stderr, "usage: rementorctl app alias <workspace> <app> <alias>")
+		os.Exit(1)
+	}
+	app, err := client.RegisterApplicationAlias(stdctx.Background(), fs.Arg(0), fs.Arg(1), fs.Arg(2))
+	if err != nil {
+		Die("%v", err)
+	}
+	if jsonOutput {
+		PrintJSON(app)
+		return
+	}
+	fmt.Printf("alias %q registered for app %q\n", fs.Arg(2), app.ID)
+}
+
+func appResolve(client *Client, jsonOutput bool, args []string) {
+	fs := flag.NewFlagSet("app resolve", flag.ExitOnError)
+	if err := parseFlags(fs, args); err != nil {
+		Die("%v", err)
+	}
+	if fs.NArg() < 2 {
+		fmt.Fprintln(os.Stderr, "usage: rementorctl app resolve <workspace> <app-or-alias>")
+		os.Exit(1)
+	}
+	app, err := client.ResolveApplication(stdctx.Background(), fs.Arg(0), fs.Arg(1))
+	if err != nil {
+		Die("%v", err)
+	}
+	if jsonOutput {
+		PrintJSON(app)
+		return
+	}
+	fmt.Printf("%s -> %s\n", fs.Arg(1), app.ID)
 }
 
 func appList(client *Client, jsonOutput bool, args []string) {
@@ -70,6 +115,10 @@ func appRegister(client *Client, jsonOutput bool, args []string) {
 	context := fs.String("context", "", "application context path")
 	name := fs.String("name", "", "display name")
 	health := fs.String("health", "", "health endpoint (default: actuator/health)")
+	appIdentityID := fs.String("app-id", "", "canonical application identity (defaults to <app>)")
+	serviceID := fs.String("service-id", "", "canonical service identity")
+	repository := fs.String("repository", "", "source repository identity")
+	aliases := fs.String("aliases", "", "comma-separated application aliases")
 	if err := parseFlags(fs, args); err != nil {
 		Die("%v", err)
 	}
@@ -87,6 +136,10 @@ func appRegister(client *Client, jsonOutput bool, args []string) {
 
 	input := ApplicationConfigInput{
 		ID:            appID,
+		AppID:         *appIdentityID,
+		ServiceID:     *serviceID,
+		Repository:    *repository,
+		Aliases:       splitAliases(*aliases),
 		Name:          *name,
 		Path:          *path,
 		Domain:        *domain,
@@ -110,6 +163,20 @@ func appRegister(client *Client, jsonOutput bool, args []string) {
 		return
 	}
 	fmt.Printf("app %q %s in workspace %q\n", appID, status, wsID)
+}
+
+func splitAliases(value string) []string {
+	if value == "" {
+		return nil
+	}
+	parts := strings.Split(value, ",")
+	result := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if value := strings.TrimSpace(part); value != "" {
+			result = append(result, value)
+		}
+	}
+	return result
 }
 
 func appUnregister(client *Client, jsonOutput bool, args []string) {
@@ -179,7 +246,11 @@ func upsertApp(existing []ApplicationDTO, input ApplicationConfigInput) ([]Appli
 				(input.RemoteBaseUrl == "" || app.RemoteBaseUrl == input.RemoteBaseUrl) &&
 				(input.Context == "" || app.Context == input.Context) &&
 				app.Health == input.Health &&
-				(input.Name == "" || app.Name == input.Name)
+				(input.Name == "" || app.Name == input.Name) &&
+				(input.AppID == "" || app.AppID == input.AppID) &&
+				(input.ServiceID == "" || app.ServiceID == input.ServiceID) &&
+				(input.Repository == "" || app.Repository == input.Repository) &&
+				(input.Aliases == nil || sameAliases(app.Aliases, input.Aliases))
 
 			if same {
 				return nil, "unchanged"
@@ -195,12 +266,28 @@ func upsertApp(existing []ApplicationDTO, input ApplicationConfigInput) ([]Appli
 			if input.Context == "" {
 				input.Context = app.Context
 			}
+			if input.AppID == "" {
+				input.AppID = app.AppID
+			}
+			if input.ServiceID == "" {
+				input.ServiceID = app.ServiceID
+			}
+			if input.Repository == "" {
+				input.Repository = app.Repository
+			}
+			if input.Aliases == nil {
+				input.Aliases = append([]string(nil), app.Aliases...)
+			}
 			status = "updated"
 			result = append(result, input)
 			continue
 		}
 		result = append(result, ApplicationConfigInput{
 			ID:            app.ID,
+			AppID:         app.AppID,
+			ServiceID:     app.ServiceID,
+			Repository:    app.Repository,
+			Aliases:       append([]string(nil), app.Aliases...),
 			Name:          app.Name,
 			Path:          app.Path,
 			Domain:        app.Domain,
@@ -216,4 +303,16 @@ func upsertApp(existing []ApplicationDTO, input ApplicationConfigInput) ([]Appli
 	}
 
 	return result, status
+}
+
+func sameAliases(left, right []string) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for i := range left {
+		if strings.ToLower(strings.TrimSpace(left[i])) != strings.ToLower(strings.TrimSpace(right[i])) {
+			return false
+		}
+	}
+	return true
 }

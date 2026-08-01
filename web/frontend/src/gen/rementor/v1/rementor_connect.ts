@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateWorkspaceRequest, CreateWorkspaceResponse, DeleteApplicationRequest, DeleteApplicationResponse, DeleteWorkspaceRequest, DeleteWorkspaceResponse, GetApplicationRequest, GetApplicationResponse, GetRoutePatternRequest, GetRoutePatternResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListApplicationsRequest, ListApplicationsResponse, ListWorkspacesRequest, ListWorkspacesResponse, SyncWorkspaceRoutingRequest, SyncWorkspaceRoutingResponse, ToggleAllToLocalRequest, ToggleAllToLocalResponse, ToggleAllToRemoteRequest, ToggleAllToRemoteResponse, ToggleApplicationRequest, ToggleApplicationResponse, UpdateRoutePatternRequest, UpdateRoutePatternResponse, UpdateWorkspaceRequest, UpdateWorkspaceResponse, UpsertApplicationRequest, UpsertApplicationResponse, WatchHealthRequest, WatchHealthResponse } from "./rementor_pb.js";
+import { CreateWorkspaceRequest, CreateWorkspaceResponse, DeleteApplicationRequest, DeleteApplicationResponse, DeleteWorkspaceRequest, DeleteWorkspaceResponse, GetApplicationRequest, GetApplicationResponse, GetRoutePatternRequest, GetRoutePatternResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListApplicationsRequest, ListApplicationsResponse, ListWorkspacesRequest, ListWorkspacesResponse, RegisterApplicationAliasRequest, RegisterApplicationAliasResponse, ResolveApplicationRequest, ResolveApplicationResponse, SyncWorkspaceRoutingRequest, SyncWorkspaceRoutingResponse, ToggleAllToLocalRequest, ToggleAllToLocalResponse, ToggleAllToRemoteRequest, ToggleAllToRemoteResponse, ToggleApplicationRequest, ToggleApplicationResponse, UpdateRoutePatternRequest, UpdateRoutePatternResponse, UpdateWorkspaceRequest, UpdateWorkspaceResponse, UpsertApplicationRequest, UpsertApplicationResponse, WatchHealthRequest, WatchHealthResponse } from "./rementor_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -73,6 +73,24 @@ export const ControlPlaneService = {
       name: "GetApplication",
       I: GetApplicationRequest,
       O: GetApplicationResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.ResolveApplication
+     */
+    resolveApplication: {
+      name: "ResolveApplication",
+      I: ResolveApplicationRequest,
+      O: ResolveApplicationResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.RegisterApplicationAlias
+     */
+    registerApplicationAlias: {
+      name: "RegisterApplicationAlias",
+      I: RegisterApplicationAliasRequest,
+      O: RegisterApplicationAliasResponse,
       kind: MethodKind.Unary,
     },
     /**

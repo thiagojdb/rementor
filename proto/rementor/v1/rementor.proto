@@ -13,6 +13,8 @@ service ControlPlaneService {
 
   rpc ListApplications(ListApplicationsRequest) returns (ListApplicationsResponse);
   rpc GetApplication(GetApplicationRequest) returns (GetApplicationResponse);
+  rpc ResolveApplication(ResolveApplicationRequest) returns (ResolveApplicationResponse);
+  rpc RegisterApplicationAlias(RegisterApplicationAliasRequest) returns (RegisterApplicationAliasResponse);
   rpc UpsertApplication(UpsertApplicationRequest) returns (UpsertApplicationResponse);
   rpc DeleteApplication(DeleteApplicationRequest) returns (DeleteApplicationResponse);
   rpc ToggleApplication(ToggleApplicationRequest) returns (ToggleApplicationResponse);
@@ -39,6 +41,10 @@ message Application {
   string health_status = 10;
   string remote_status = 11;
   optional string route_pattern = 12;
+  string app_id = 13;
+  string service_id = 14;
+  string repository = 15;
+  repeated string aliases = 16;
 }
 
 message Workspace {
@@ -65,6 +71,10 @@ message ApplicationConfigInput {
   int32 port = 6;
   string health = 7;
   string context = 8;
+  string app_id = 9;
+  string service_id = 10;
+  string repository = 11;
+  repeated string aliases = 12;
 }
 
 message ListWorkspacesRequest {}
@@ -126,6 +136,25 @@ message GetApplicationRequest {
 }
 
 message GetApplicationResponse {
+  Application application = 1;
+}
+
+message ResolveApplicationRequest {
+  string workspace_id = 1;
+  string application_ref = 2;
+}
+
+message ResolveApplicationResponse {
+  Application application = 1;
+}
+
+message RegisterApplicationAliasRequest {
+  string workspace_id = 1;
+  string application_ref = 2;
+  string alias = 3;
+}
+
+message RegisterApplicationAliasResponse {
   Application application = 1;
 }
 
