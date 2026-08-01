@@ -302,7 +302,7 @@ func (c *Client) ApplyRoute(ctx context.Context, req ApplyRouteRequest) (RouteAp
 	if err != nil {
 		return RouteApplyResponse{}, apiError(err)
 	}
-	return RouteApplyResponse{Changed: res.Msg.GetChanged(), Plan: routePlanFromProto(res.Msg.GetPlan()), Routes: normalizedRoutesFromProto(res.Msg.GetRoutes()), Operation: operationFromProto(res.Msg.GetOperation()), Verified: res.Msg.GetVerified(), VerificationStatus: res.Msg.GetVerificationStatus()}, nil
+	return RouteApplyResponse{Changed: res.Msg.GetChanged(), Plan: routePlanFromProto(res.Msg.GetPlan()), Routes: normalizedRoutesFromProto(res.Msg.GetRoutes()), Operation: operationFromProto(res.Msg.GetOperation()), Verified: res.Msg.GetVerified(), VerificationStatus: res.Msg.GetVerificationStatus(), Status: res.Msg.GetStatus(), Degraded: res.Msg.GetDegraded(), Rollback: res.Msg.GetRollbackStatus()}, nil
 }
 
 func (c *Client) SyncRoute(ctx context.Context, workspaceID string, repair bool, correlationID string) (RouteSyncResponse, error) {
@@ -317,7 +317,7 @@ func (c *Client) SyncRoute(ctx context.Context, workspaceID string, repair bool,
 	if res.Msg.GetEffectiveRouteVersion() != nil {
 		effectiveVersion = res.Msg.GetEffectiveRouteVersion().GetValue()
 	}
-	return RouteSyncResponse{WorkspaceID: res.Msg.GetWorkspaceId(), Changed: res.Msg.GetChanged(), Verified: res.Msg.GetVerified(), Status: res.Msg.GetStatus(), DesiredRouteVersion: desiredVersion, EffectiveRouteVersion: effectiveVersion, Routes: normalizedRoutesFromProto(res.Msg.GetRoutes()), Warnings: routeWarningsFromProto(res.Msg.GetWarnings()), Operation: operationFromProto(res.Msg.GetOperation())}, nil
+	return RouteSyncResponse{WorkspaceID: res.Msg.GetWorkspaceId(), Changed: res.Msg.GetChanged(), Verified: res.Msg.GetVerified(), Status: res.Msg.GetStatus(), DesiredRouteVersion: desiredVersion, EffectiveRouteVersion: effectiveVersion, Routes: normalizedRoutesFromProto(res.Msg.GetRoutes()), Warnings: routeWarningsFromProto(res.Msg.GetWarnings()), Operation: operationFromProto(res.Msg.GetOperation()), Degraded: res.Msg.GetDegraded(), Rollback: res.Msg.GetRollbackStatus()}, nil
 }
 
 func apiError(err error) error {

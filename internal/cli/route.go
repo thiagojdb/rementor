@@ -183,13 +183,14 @@ func routeApply(client *Client, jsonOutput bool, args []string) {
 	pattern := fs.String("pattern", "", "optional route pattern; an empty value clears it")
 	clearPattern := fs.Bool("clear-pattern", false, "clear the configured route pattern")
 	idempotency := fs.String("idempotency-key", "", "idempotency key")
+	correlation := fs.String("correlation-id", "", "correlation ID")
 	planPath := fs.String("plan", "", "JSON route plan file (or - for stdin)")
 	expected := fs.Uint64("expected-version", 0, "expected route version")
 	if err := parseFlags(fs, args); err != nil {
 		Die("%v", err)
 	}
 	wsID, appID := routeWorkspaceApp(fs, *workspace)
-	request := ApplyRouteRequest{WorkspaceID: wsID, ApplicationRef: appID, DesiredMode: *mode, ExpectedVersion: *expected, IdempotencyKey: *idempotency}
+	request := ApplyRouteRequest{WorkspaceID: wsID, ApplicationRef: appID, DesiredMode: *mode, ExpectedVersion: *expected, IdempotencyKey: *idempotency, CorrelationID: *correlation}
 	if *clearPattern || *pattern != "" {
 		value := *pattern
 		request.RoutePattern = &value
@@ -235,6 +236,7 @@ func routeApply(client *Client, jsonOutput bool, args []string) {
 func routeSync(client *Client, jsonOutput bool, args []string) {
 	fs := flag.NewFlagSet("route sync", flag.ExitOnError)
 	workspace := fs.String("workspace", "", "workspace/environment ID")
+	correlation := fs.String("correlation-id", "", "correlation ID")
 	if err := parseFlags(fs, args); err != nil {
 		Die("%v", err)
 	}
@@ -242,7 +244,7 @@ func routeSync(client *Client, jsonOutput bool, args []string) {
 	if wsID == "" {
 		Die("workspace is required")
 	}
-	result, err := client.SyncRoute(stdctx.Background(), wsID, true, "")
+	result, err := client.SyncRoute(stdctx.Background(), wsID, true, *correlation)
 	if err != nil {
 		Die("%v", err)
 	}

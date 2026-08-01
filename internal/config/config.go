@@ -2,6 +2,7 @@ package config
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -256,6 +257,126 @@ func SaveState(workspaces []*models.Workspace) error {
 		return fmt.Errorf("failed to commit state save: %w", err)
 	}
 	return nil
+}
+
+// BeginRouteOperation writes a route operation before the proxy is touched.
+// It is the write-ahead portion of the route transaction and is deliberately
+// separate from SaveState so a daemon restart can recover an operation that
+// stopped after proxy reload but before the desired state commit.
+func BeginRouteOperation(operation models.RouteOperationJournal) error {
+	return saveRouteOperation(operation)
+}
+
+// UpdateRouteOperation advances a previously written route journal entry.
+func UpdateRouteOperation(operation models.RouteOperationJournal) error {
+	return saveRouteOperation(operation)
+}
+
+func saveRouteOperation(operation models.RouteOperationJournal) error {
+	db, err := readyDB()
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	prior, err := json.Marshal(operation.PriorState)
+	if err != nil {
+		return fmt.Errorf("marshal route operation prior state: %w", err)
+	}
+	candidate, err := json.Marshal(operation.CandidateState)
+	if err != nil {
+		return fmt.Errorf("marshal route operation candidate state: %w", err)
+	}
+	if operation.CreatedAt.IsZero() {
+		operation.CreatedAt = time.Now().UTC()
+	}
+	if operation.UpdatedAt.IsZero() {
+		operation.UpdatedAt = operation.CreatedAt
+	}
+	_, err = db.Exec(`
+		INSERT INTO route_operations (
+			operation_id, workspace_id, idempotency_key, fingerprint, correlation_id,
+			expected_version, route_version, phase, status, error, degraded, rollback_status,
+			created_at, updated_at, prior_state, candidate_state, result_json
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		ON CONFLICT(operation_id) DO UPDATE SET
+			workspace_id = excluded.workspace_id,
+			idempotency_key = excluded.idempotency_key,
+			fingerprint = excluded.fingerprint,
+			correlation_id = excluded.correlation_id,
+			expected_version = excluded.expected_version,
+			route_version = excluded.route_version,
+			phase = excluded.phase,
+			status = excluded.status,
+			error = excluded.error,
+			degraded = excluded.degraded,
+			rollback_status = excluded.rollback_status,
+			created_at = excluded.created_at,
+			updated_at = excluded.updated_at,
+			prior_state = excluded.prior_state,
+			candidate_state = excluded.candidate_state,
+			result_json = excluded.result_json
+	`, operation.OperationID, operation.WorkspaceID, operation.IdempotencyKey, operation.Fingerprint, operation.CorrelationID,
+		operation.ExpectedVersion, operation.RouteVersion, operation.Phase, operation.Status, operation.Error, boolInt(operation.Degraded), operation.RollbackStatus,
+		operation.CreatedAt.UTC().Format(time.RFC3339Nano), operation.UpdatedAt.UTC().Format(time.RFC3339Nano), prior, candidate, operation.Result)
+	if err != nil {
+		return fmt.Errorf("persist route operation %q: %w", operation.OperationID, err)
+	}
+	return nil
+}
+
+// LoadRouteOperations returns the durable route journal in update order.
+func LoadRouteOperations() ([]models.RouteOperationJournal, error) {
+	db, err := readyDB()
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	rows, err := db.Query(`
+		SELECT operation_id, workspace_id, idempotency_key, fingerprint, correlation_id,
+			expected_version, route_version, phase, status, error, degraded, rollback_status,
+			created_at, updated_at, prior_state, candidate_state, result_json
+		FROM route_operations ORDER BY updated_at, operation_id
+	`)
+	if err != nil {
+		return nil, fmt.Errorf("load route operation journal: %w", err)
+	}
+	defer rows.Close()
+
+	var operations []models.RouteOperationJournal
+	for rows.Next() {
+		var operation models.RouteOperationJournal
+		var expectedVersion, routeVersion int64
+		var degraded int
+		var createdAt, updatedAt sql.NullString
+		var prior, candidate []byte
+		if err := rows.Scan(&operation.OperationID, &operation.WorkspaceID, &operation.IdempotencyKey, &operation.Fingerprint, &operation.CorrelationID,
+			&expectedVersion, &routeVersion, &operation.Phase, &operation.Status, &operation.Error, &degraded, &operation.RollbackStatus,
+			&createdAt, &updatedAt, &prior, &candidate, &operation.Result); err != nil {
+			return nil, fmt.Errorf("scan route operation journal: %w", err)
+		}
+		operation.ExpectedVersion = uint64(expectedVersion)
+		operation.RouteVersion = uint64(routeVersion)
+		operation.Degraded = degraded != 0
+		operation.CreatedAt = parseStoredTime(createdAt)
+		operation.UpdatedAt = parseStoredTime(updatedAt)
+		if len(prior) > 0 {
+			if err := json.Unmarshal(prior, &operation.PriorState); err != nil {
+				return nil, fmt.Errorf("decode route operation prior state: %w", err)
+			}
+		}
+		if len(candidate) > 0 {
+			if err := json.Unmarshal(candidate, &operation.CandidateState); err != nil {
+				return nil, fmt.Errorf("decode route operation candidate state: %w", err)
+			}
+		}
+		operations = append(operations, operation)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate route operation journal: %w", err)
+	}
+	return operations, nil
 }
 
 // ReplaceWorkspaces atomically replaces the durable workspace projection.
@@ -530,6 +651,30 @@ func initDB(db *sql.DB) error {
 			created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			FOREIGN KEY (app_id) REFERENCES application_identities(app_id) ON DELETE CASCADE
 		)`,
+		`CREATE TABLE IF NOT EXISTS route_operations (
+			operation_id TEXT PRIMARY KEY,
+			workspace_id TEXT NOT NULL,
+			idempotency_key TEXT NOT NULL DEFAULT '',
+			fingerprint TEXT NOT NULL DEFAULT '',
+			correlation_id TEXT NOT NULL DEFAULT '',
+			expected_version INTEGER NOT NULL DEFAULT 0,
+			route_version INTEGER NOT NULL DEFAULT 0,
+			phase TEXT NOT NULL DEFAULT '',
+			status TEXT NOT NULL DEFAULT '',
+			error TEXT NOT NULL DEFAULT '',
+			degraded INTEGER NOT NULL DEFAULT 0,
+			rollback_status TEXT NOT NULL DEFAULT '',
+			created_at TEXT NOT NULL,
+			updated_at TEXT NOT NULL,
+			prior_state BLOB,
+			candidate_state BLOB,
+			result_json BLOB
+		)`,
+		`CREATE INDEX IF NOT EXISTS route_operations_workspace_idx
+			ON route_operations(workspace_id, updated_at)`,
+		`CREATE UNIQUE INDEX IF NOT EXISTS route_operations_idempotency_idx
+			ON route_operations(workspace_id, idempotency_key)
+			WHERE idempotency_key <> '' AND status = 'committed'`,
 	}
 	for _, stmt := range stmts {
 		if _, err := db.Exec(stmt); err != nil {
@@ -556,6 +701,7 @@ func initDB(db *sql.DB) error {
 		{"applications", "operation_created_at", "TEXT"},
 		{"applications", "operation_completed_at", "TEXT"},
 		{"applications", "route_override", "INTEGER NOT NULL DEFAULT 0"},
+		{"route_operations", "rollback_status", "TEXT NOT NULL DEFAULT ''"},
 	} {
 		if err := ensureColumn(db, migration.table, migration.column, migration.def); err != nil {
 			return err
