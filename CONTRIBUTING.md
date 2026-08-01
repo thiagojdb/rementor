@@ -28,19 +28,19 @@ Run these before opening a pull request:
 buf lint
 make generate
 git diff --exit-code
-go vet ./...
-go test -race ./...
 cd web/frontend
 npm ci
 npm audit
 npm run typecheck
 npm run build
 cd ../..
-git diff --exit-code
+go vet ./...
+go test -race ./...
 ```
 
-Generated Go and TypeScript RPC code and the embedded frontend bundle are
-committed so a clean Go checkout can build without Node.js.
+Generated Go and TypeScript RPC code is committed. The frontend bundle is
+generated locally into `cmd/server/dist/`, which is ignored by Git, so run
+`make frontend` before starting the server or running Go checks.
 
 ## Pull Requests
 

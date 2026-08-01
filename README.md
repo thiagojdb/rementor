@@ -296,17 +296,21 @@ Run the same quality gates used in CI:
 
 ```bash
 buf lint
-go vet ./...
-go test -race ./...
+make generate
+git diff --exit-code
 cd web/frontend
 npm ci
 npm audit
 npm run typecheck
 npm run build
+cd ../..
+go vet ./...
+go test -race ./...
 ```
 
-Generated RPC clients and embedded frontend assets are committed so a clean Go
-checkout can build without running the JavaScript toolchain.
+Generated RPC clients are committed. The frontend bundle is generated into
+`cmd/server/dist/` and ignored by Git; run `make frontend` before starting the
+server or running Go checks.
 
 ## Scope
 
