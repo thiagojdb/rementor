@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -58,7 +59,42 @@ type RouteApplyResult struct {
 	Routes       []Route                   `json:"routes"`
 	Verified     bool                      `json:"verified"`
 	Verification string                    `json:"verificationStatus"`
+	Status       string                    `json:"status,omitempty"`
+	Degraded     bool                      `json:"degraded,omitempty"`
+	Rollback     string                    `json:"rollbackStatus,omitempty"`
 	Operation    *models.OperationMetadata `json:"operation,omitempty"`
+}
+
+// RouteTransactionError identifies which side of the proxy/durable-state
+// transaction failed.  Degraded is true only when compensation itself failed;
+// callers can then surface that the previous effective route is no longer
+// guaranteed even though the desired state was not committed.
+type RouteTransactionError struct {
+	Operation *models.OperationMetadata
+	Status    string
+	Rollback  string
+	Degraded  bool
+	Cause     error
+}
+
+func (e *RouteTransactionError) Error() string {
+	if e == nil || e.Cause == nil {
+		return "route transaction failed"
+	}
+	if e.Degraded {
+		return fmt.Sprintf("route transaction %s (rollback %s): %v", e.Status, e.Rollback, e.Cause)
+	}
+	if e.Rollback != "" {
+		return fmt.Sprintf("route transaction %s (rollback %s): %v", e.Status, e.Rollback, e.Cause)
+	}
+	return fmt.Sprintf("route transaction %s: %v", e.Status, e.Cause)
+}
+
+func (e *RouteTransactionError) Unwrap() error {
+	if e == nil {
+		return nil
+	}
+	return e.Cause
 }
 
 type healthStream struct {
@@ -147,6 +183,13 @@ func (r *Registry) Load() error {
 	if err := r.workspaceStore().LoadState(r.workspaces); err != nil {
 		log.Printf("Warning: failed to load state: %v", err)
 	}
+	if err := r.restoreRouteJournal(); err != nil {
+		// A journal is an enhancement over the legacy store.  Do not prevent a
+		// daemon from serving its durable workspace state when an old or
+		// partially migrated database cannot be decoded, but make the recovery
+		// gap visible to operators.
+		log.Printf("Warning: failed to load route operation journal: %v", err)
+	}
 
 	// Warm health checks (non-blocking)
 	log.Println("Warming health checks...")
@@ -157,6 +200,8 @@ func (r *Registry) Load() error {
 		log.Printf("Loading initial routing config for %d workspaces", len(r.workspaces))
 		if err := r.reloadProxy(); err != nil {
 			log.Printf("Warning: failed to load initial routing config: %v", err)
+		} else if err := r.reconcileRouteJournal(); err != nil {
+			log.Printf("Warning: failed to reconcile route operation journal: %v", err)
 		}
 	} else {
 		log.Println("Routing provider not available, running without routing")
@@ -494,6 +539,9 @@ func (r *Registry) ApplyRoutePlan(wsID string, plan RoutePlan, expectedVersion u
 	if strings.TrimSpace(plan.WorkspaceID) == "" {
 		plan.WorkspaceID = wsID
 	}
+	if strings.TrimSpace(plan.Environment) == "" {
+		plan.Environment = wsID
+	}
 	if plan.WorkspaceID != wsID {
 		return RouteApplyResult{}, fmt.Errorf("route plan workspace %q does not match request workspace %q", plan.WorkspaceID, wsID)
 	}
@@ -508,40 +556,41 @@ func (r *Registry) ApplyRoutePlan(wsID string, plan RoutePlan, expectedVersion u
 		return RouteApplyResult{}, err
 	}
 	plan.DesiredMode = mode
-	planFingerprint := plan.Fingerprint
-	if planFingerprint == "" {
-		// Direct callers may omit the optional fingerprint. Keep idempotency
-		// keys safe for those requests without treating the incomplete plan as
-		// authoritative during canonical-state validation below.
-		planFingerprint = fingerprintPlan(plan)
-	}
+	idempotencyFingerprint := routeIntentFingerprint(plan)
 
 	key := strings.TrimSpace(idempotencyKey)
+
+	r.mutationMu.Lock()
+	defer r.mutationMu.Unlock()
+	// Idempotency lookup is deliberately inside the mutation critical section.
+	// Looking up a key before taking this lock permits two concurrent callers
+	// to both pass the check and reload nginx twice.
 	if key != "" {
 		r.ensureRouteState()
 		r.idempotencyMu.Lock()
-		if record, ok := r.routeIdempotency[wsID+"\x00"+key]; ok {
-			if record.Fingerprint != planFingerprint {
-				r.idempotencyMu.Unlock()
+		record, found := r.routeIdempotency[wsID+"\x00"+key]
+		r.idempotencyMu.Unlock()
+		if found {
+			if record.Fingerprint != idempotencyFingerprint {
 				return RouteApplyResult{}, &RouteIdempotencyConflictError{Key: key}
 			}
 			result := record.Result
 			result.Changed = false
+			result.Status = "idempotent-replay"
 			result.Verification = "unchanged"
-			r.idempotencyMu.Unlock()
 			return result, nil
 		}
-		r.idempotencyMu.Unlock()
 	}
 
-	r.mutationMu.Lock()
-	defer r.mutationMu.Unlock()
 	previous := r.workspaceSnapshot()
 	ws := findWorkspace(previous, wsID)
 	if ws == nil {
 		return RouteApplyResult{}, fmt.Errorf("workspace not found: %s", wsID)
 	}
 	currentVersion := ws.Route.RouteVersion
+	if r.nextRouteVersion < currentVersion {
+		r.nextRouteVersion = currentVersion
+	}
 	if expectedVersion == 0 {
 		expectedVersion = plan.BaseRouteVersion
 	}
@@ -549,26 +598,21 @@ func (r *Registry) ApplyRoutePlan(wsID string, plan RoutePlan, expectedVersion u
 	if err != nil {
 		return RouteApplyResult{}, err
 	}
-	versionConflict := expectedVersion != currentVersion || (plan.BaseRouteVersion != 0 && plan.BaseRouteVersion != currentVersion)
+	// A concrete plan (fingerprint or route snapshots) carries an expected
+	// version even when that version is zero.  Only a direct, unplanned apply
+	// with no expected value treats zero as "unspecified".
+	hasExpectedVersion := expectedVersion != 0 || plan.BaseRouteVersion != 0 || plan.Fingerprint != "" || len(plan.Before) > 0 || len(plan.After) > 0
+	versionConflict := hasExpectedVersion && (expectedVersion != currentVersion || (plan.BaseRouteVersion != 0 && plan.BaseRouteVersion != currentVersion))
 	if versionConflict {
-		// A retried request for a desired state that is already present is safe
-		// to treat as an idempotent no-op. A stale plan that asks for a different
-		// state still fails before touching the proxy or durable state.
-		_, currentApp, findErr := findAppInWorkspace(ws, plan.ApplicationID)
-		if findErr != nil || !desiredStateMatches(currentApp, mode, plan.RoutePattern) {
-			expected := expectedVersion
-			if plan.BaseRouteVersion != 0 {
-				expected = plan.BaseRouteVersion
-			}
-			return RouteApplyResult{}, &RouteVersionConflictError{WorkspaceID: wsID, Expected: expected, Actual: currentVersion}
+		// Compare-and-swap is strict. A request that was planned against an
+		// older route version must fail before touching either the proxy or
+		// durable state; retries that should replay an earlier result are handled
+		// by the idempotency record above.
+		expected := expectedVersion
+		if plan.BaseRouteVersion != 0 {
+			expected = plan.BaseRouteVersion
 		}
-		result := RouteApplyResult{Changed: false, Plan: canonical, Routes: r.projectedRoutes(ws), Verified: r.routesAreEffective(wsID, canonical.After), Verification: "unchanged"}
-		if key != "" {
-			r.idempotencyMu.Lock()
-			r.routeIdempotency[wsID+"\x00"+key] = routeApplyRecord{Fingerprint: planFingerprint, Result: result}
-			r.idempotencyMu.Unlock()
-		}
-		return result, nil
+		return RouteApplyResult{}, &RouteVersionConflictError{WorkspaceID: wsID, Expected: expected, Actual: currentVersion}
 	}
 	if plan.Fingerprint != "" && plan.Fingerprint != canonical.Fingerprint {
 		return RouteApplyResult{}, fmt.Errorf("route plan fingerprint does not match current desired state")
@@ -577,12 +621,9 @@ func (r *Registry) ApplyRoutePlan(wsID string, plan RoutePlan, expectedVersion u
 		return RouteApplyResult{}, fmt.Errorf("route plan contains %d route conflict(s)", len(canonical.Conflicts))
 	}
 	if len(canonical.Changes) == 0 {
-		result := RouteApplyResult{Changed: false, Plan: canonical, Routes: r.projectedRoutes(ws), Verified: r.routesAreEffective(wsID, canonical.After), Verification: "unchanged"}
-		if key != "" {
-			r.idempotencyMu.Lock()
-			r.routeIdempotency[wsID+"\x00"+key] = routeApplyRecord{Fingerprint: planFingerprint, Result: result}
-			r.idempotencyMu.Unlock()
-		}
+		result := r.routeNoopResult(ws, canonical, correlationID)
+		r.rememberRouteResult(wsID, key, idempotencyFingerprint, result)
+		r.persistNoopRouteResult(wsID, key, idempotencyFingerprint, result)
 		return result, nil
 	}
 
@@ -605,31 +646,115 @@ func (r *Registry) ApplyRoutePlan(wsID string, plan RoutePlan, expectedVersion u
 			candidateApp.RoutePattern = &pattern
 		}
 	}
+	candidateWS.SetDefaults()
 	operation := r.beginOperation("route-apply", correlationID)
 	r.applyOperation(candidateWS, candidateApp, operation)
-	candidateWS.SetDefaults()
 	if err := validateWorkspaces(candidate); err != nil {
 		return RouteApplyResult{}, fmt.Errorf("validate route plan: %w", err)
 	}
-	if err := r.applyRouting(candidate, true); err != nil {
-		return RouteApplyResult{}, fmt.Errorf("apply route plan: %w", err)
+
+	journal := models.RouteOperationJournal{
+		OperationID:     operation.OperationID,
+		WorkspaceID:     wsID,
+		IdempotencyKey:  key,
+		Fingerprint:     idempotencyFingerprint,
+		CorrelationID:   operation.CorrelationID,
+		ExpectedVersion: currentVersion,
+		RouteVersion:    operation.RouteVersion,
+		Phase:           "prepared",
+		Status:          "prepared",
+		CreatedAt:       operation.CreatedAt,
+		UpdatedAt:       time.Now().UTC(),
+		PriorState:      cloneWorkspaces(previous),
+		CandidateState:  cloneWorkspaces(candidate),
 	}
-	if err := r.workspaceStore().SaveState(candidate); err != nil {
-		if rollbackErr := r.applyRouting(previous, true); rollbackErr != nil {
-			return RouteApplyResult{}, fmt.Errorf("persist route plan: %w; restore routing: %v", err, rollbackErr)
+	journalStore, journalEnabled := r.routeJournalStore()
+	if journalEnabled {
+		if err := journalStore.BeginRouteOperation(journal); err != nil {
+			r.releaseOperationVersion(operation)
+			return RouteApplyResult{}, &RouteTransactionError{Operation: operation, Status: "journal", Rollback: "not-required", Cause: err}
 		}
-		return RouteApplyResult{}, fmt.Errorf("persist route plan: %w", err)
+	}
+
+	if err := r.applyRouting(candidate, true); err != nil {
+		rollbackStatus := r.rollbackAfterApplyFailure(previous)
+		if journalEnabled {
+			journal.Status = "failed"
+			journal.Phase = "proxy-apply-failed"
+			journal.Error = err.Error()
+			journal.Degraded = strings.HasPrefix(rollbackStatus, "failed")
+			journal.RollbackStatus = rollbackStatus
+			journal.UpdatedAt = time.Now().UTC()
+			_ = journalStore.UpdateRouteOperation(journal)
+		}
+		r.releaseOperationVersion(operation)
+		return RouteApplyResult{}, &RouteTransactionError{Operation: operation, Status: "proxy-apply", Rollback: rollbackStatus, Degraded: strings.HasPrefix(rollbackStatus, "failed"), Cause: err}
+	}
+	if journalEnabled {
+		journal.Status = "proxy-applied"
+		journal.Phase = "proxy-applied"
+		journal.UpdatedAt = time.Now().UTC()
+		if err := journalStore.UpdateRouteOperation(journal); err != nil {
+			rollbackStatus := r.rollbackRoute(previous)
+			journal.Status = "rolled_back"
+			journal.Phase = "journal-failed"
+			journal.Error = err.Error()
+			journal.Degraded = rollbackStatus != "succeeded"
+			journal.RollbackStatus = rollbackStatus
+			journal.UpdatedAt = time.Now().UTC()
+			_ = journalStore.UpdateRouteOperation(journal)
+			r.releaseOperationVersion(operation)
+			return RouteApplyResult{}, &RouteTransactionError{Operation: operation, Status: "journal", Rollback: rollbackStatus, Degraded: rollbackStatus != "succeeded", Cause: err}
+		}
+	}
+
+	// Persist the completed timestamp with the desired state.  The proxy has
+	// already verified the candidate, so this is the durable half of the
+	// transaction.
+	operation.CompletedAt = time.Now().UTC()
+	candidateWS.LastOperation.CompletedAt = operation.CompletedAt
+	candidateWS.Route.OperationID = operation.OperationID
+	candidateWS.Route.RouteVersion = operation.RouteVersion
+	candidateApp.LastOperation.CompletedAt = operation.CompletedAt
+	candidateApp.Route.OperationID = operation.OperationID
+	candidateApp.Route.RouteVersion = operation.RouteVersion
+	if err := r.workspaceStore().SaveState(candidate); err != nil {
+		durableRollback := r.rollbackDurableState(previous)
+		proxyRollback := r.rollbackRoute(previous)
+		rollbackStatus := combineRollbackStatus(proxyRollback, durableRollback)
+		if journalEnabled {
+			journal.Status = "rolled_back"
+			journal.Phase = "persistence-failed"
+			journal.Error = err.Error()
+			journal.Degraded = rollbackStatus != "succeeded"
+			journal.RollbackStatus = rollbackStatus
+			journal.UpdatedAt = time.Now().UTC()
+			_ = journalStore.UpdateRouteOperation(journal)
+		}
+		r.releaseOperationVersion(operation)
+		return RouteApplyResult{}, &RouteTransactionError{Operation: operation, Status: "persist", Rollback: rollbackStatus, Degraded: rollbackStatus != "succeeded", Cause: err}
 	}
 	r.workspacesMu.Lock()
 	r.workspaces = candidate
 	r.workspacesMu.Unlock()
 	after := buildNormalizedRoutes(candidateWS)
-	result := RouteApplyResult{Changed: true, Plan: canonical, Routes: r.projectedRoutes(candidateWS), Verified: r.routesAreEffective(wsID, after), Verification: "applied", Operation: operation}
-	if key != "" {
-		r.idempotencyMu.Lock()
-		r.routeIdempotency[wsID+"\x00"+key] = routeApplyRecord{Fingerprint: planFingerprint, Result: result}
-		r.idempotencyMu.Unlock()
+	result := RouteApplyResult{Changed: true, Plan: canonical, Routes: r.projectedRoutes(candidateWS), Verified: r.routesAreEffective(wsID, after), Verification: "verified", Status: "committed", Rollback: "not-needed", Operation: cloneOperation(operation)}
+	if journalEnabled {
+		journal.Status = "committed"
+		journal.Phase = "committed"
+		journal.Result, _ = json.Marshal(result)
+		journal.UpdatedAt = time.Now().UTC()
+		if err := journalStore.UpdateRouteOperation(journal); err != nil {
+			// Desired state and proxy are already aligned.  Keep the journal
+			// pending so startup recovery can mark it committed, but surface
+			// the degraded observability rather than claiming a durable history
+			// write that did not happen.
+			result.Status = "committed-with-journal-warning"
+			result.Degraded = true
+			log.Printf("Warning: route operation %s committed but journal update failed: %v", operation.OperationID, err)
+		}
 	}
+	r.rememberRouteResult(wsID, key, idempotencyFingerprint, result)
 	return result, nil
 }
 
@@ -644,38 +769,146 @@ func (r *Registry) SyncRoute(wsID, correlationID string, repair bool) (RouteSync
 	if ws == nil {
 		return RouteSyncResult{}, fmt.Errorf("workspace not found: %s", wsID)
 	}
+	if r.nextRouteVersion < ws.Route.RouteVersion {
+		r.nextRouteVersion = ws.Route.RouteVersion
+	}
 	desired := buildNormalizedRoutes(ws)
 	desiredHash := fingerprintRoutes(desired)
 	warnings := make([]RouteWarning, 0)
 	if len(conflictsForRoutes(desired)) > 0 {
 		warnings = append(warnings, RouteWarning{Code: "ROUTE_CONFLICT", Message: "one or more routes compete for the same host and pattern"})
 	}
-	if r.routesAreEffectiveHash(wsID, desiredHash) && r.effectiveVersion(wsID) == ws.Route.RouteVersion {
-		return RouteSyncResult{WorkspaceID: wsID, Changed: false, Verified: true, Status: "in-sync", DesiredRouteVersion: ws.Route.RouteVersion, EffectiveRouteVersion: r.effectiveVersion(wsID), Routes: r.projectedRoutes(ws), Warnings: warnings}, nil
+	// In-memory effective state is only a cache. When a provider exposes the
+	// optional inspector, compare the generated candidate with what the proxy
+	// actually has loaded so an external edit/reload is reported as drift. A
+	// missing or unavailable provider cannot produce a verified in-sync result.
+	cacheInSync := r.routesAreEffectiveHash(wsID, desiredHash) && r.effectiveVersion(wsID) == ws.Route.RouteVersion
+	proxyInSync := cacheInSync
+	provider := r.GetRoutingProvider()
+	if provider == nil || !provider.IsAvailable() {
+		proxyInSync = false
+		warnings = append(warnings, RouteWarning{Code: "ROUTE_PROVIDER_UNAVAILABLE", Message: "routing provider is unavailable; effective proxy state could not be verified"})
+	} else if inspector, ok := provider.(RoutingInspector); ok {
+		inspected, inspectErr := inspector.InspectRouting(previous)
+		if inspectErr != nil {
+			proxyInSync = false
+			warnings = append(warnings, RouteWarning{Code: "ROUTE_INSPECTION_FAILED", Message: inspectErr.Error()})
+		} else if !inspected {
+			proxyInSync = false
+			warnings = append(warnings, RouteWarning{Code: "ROUTE_PROXY_DRIFT", Message: "proxy configuration differs from the desired route projection"})
+		} else {
+			// The provider is authoritative when it can inspect the loaded
+			// projection. Hydrate the in-memory cache without forcing a reload
+			// merely because this registry instance has not recorded that state.
+			proxyInSync = true
+			if !cacheInSync {
+				r.recordEffectiveRoutes(previous)
+			}
+		}
+	}
+	if proxyInSync {
+		return RouteSyncResult{WorkspaceID: wsID, Changed: false, Verified: true, Status: "in-sync", DesiredRouteVersion: ws.Route.RouteVersion, EffectiveRouteVersion: r.effectiveVersion(wsID), Routes: r.projectedRoutes(ws), Warnings: warnings, Operation: r.routeNoopOperation(ws, correlationID, "route-sync")}, nil
 	}
 	if !repair {
 		return RouteSyncResult{WorkspaceID: wsID, Changed: false, Verified: false, Status: "drift", DesiredRouteVersion: ws.Route.RouteVersion, EffectiveRouteVersion: r.effectiveVersion(wsID), Routes: r.projectedRoutes(ws), Warnings: warnings}, nil
 	}
 	candidate := cloneWorkspaces(previous)
 	candidateWS := findWorkspace(candidate, wsID)
+	candidateWS.SetDefaults()
 	operation := r.beginOperation("route-sync", correlationID)
 	r.applyOperation(candidateWS, nil, operation)
 	for _, app := range candidateWS.Applications {
 		setAppOperation(candidateWS, app, operation)
 	}
+	journal := models.RouteOperationJournal{
+		OperationID:     operation.OperationID,
+		WorkspaceID:     wsID,
+		CorrelationID:   operation.CorrelationID,
+		ExpectedVersion: ws.Route.RouteVersion,
+		RouteVersion:    operation.RouteVersion,
+		Phase:           "prepared",
+		Status:          "prepared",
+		CreatedAt:       operation.CreatedAt,
+		UpdatedAt:       time.Now().UTC(),
+		PriorState:      cloneWorkspaces(previous),
+		CandidateState:  cloneWorkspaces(candidate),
+	}
+	journalStore, journalEnabled := r.routeJournalStore()
+	if journalEnabled {
+		if err := journalStore.BeginRouteOperation(journal); err != nil {
+			r.releaseOperationVersion(operation)
+			return RouteSyncResult{}, &RouteTransactionError{Operation: operation, Status: "journal", Rollback: "not-required", Cause: err}
+		}
+	}
 	if err := r.applyRouting(candidate, true); err != nil {
-		return RouteSyncResult{}, fmt.Errorf("sync routes: %w", err)
+		rollbackStatus := r.rollbackAfterApplyFailure(previous)
+		if journalEnabled {
+			journal.Status = "failed"
+			journal.Phase = "proxy-apply-failed"
+			journal.Error = err.Error()
+			journal.Degraded = strings.HasPrefix(rollbackStatus, "failed")
+			journal.RollbackStatus = rollbackStatus
+			journal.UpdatedAt = time.Now().UTC()
+			_ = journalStore.UpdateRouteOperation(journal)
+		}
+		r.releaseOperationVersion(operation)
+		return RouteSyncResult{}, &RouteTransactionError{Operation: operation, Status: "proxy-apply", Rollback: rollbackStatus, Degraded: strings.HasPrefix(rollbackStatus, "failed"), Cause: err}
+	}
+	if journalEnabled {
+		journal.Status = "proxy-applied"
+		journal.Phase = "proxy-applied"
+		journal.UpdatedAt = time.Now().UTC()
+		if err := journalStore.UpdateRouteOperation(journal); err != nil {
+			rollbackStatus := r.rollbackRoute(previous)
+			journal.Status = "rolled_back"
+			journal.Phase = "journal-failed"
+			journal.Error = err.Error()
+			journal.Degraded = rollbackStatus != "succeeded"
+			journal.RollbackStatus = rollbackStatus
+			journal.UpdatedAt = time.Now().UTC()
+			_ = journalStore.UpdateRouteOperation(journal)
+			r.releaseOperationVersion(operation)
+			return RouteSyncResult{}, &RouteTransactionError{Operation: operation, Status: "journal", Rollback: rollbackStatus, Degraded: rollbackStatus != "succeeded", Cause: err}
+		}
+	}
+	operation.CompletedAt = time.Now().UTC()
+	candidateWS.LastOperation.CompletedAt = operation.CompletedAt
+	for _, app := range candidateWS.Applications {
+		if app.LastOperation != nil {
+			app.LastOperation.CompletedAt = operation.CompletedAt
+		}
 	}
 	if err := r.workspaceStore().SaveState(candidate); err != nil {
-		if rollbackErr := r.applyRouting(previous, true); rollbackErr != nil {
-			return RouteSyncResult{}, fmt.Errorf("persist route sync: %w; restore routing: %v", err, rollbackErr)
+		durableRollback := r.rollbackDurableState(previous)
+		proxyRollback := r.rollbackRoute(previous)
+		rollbackStatus := combineRollbackStatus(proxyRollback, durableRollback)
+		if journalEnabled {
+			journal.Status = "rolled_back"
+			journal.Phase = "persistence-failed"
+			journal.Error = err.Error()
+			journal.Degraded = rollbackStatus != "succeeded"
+			journal.RollbackStatus = rollbackStatus
+			journal.UpdatedAt = time.Now().UTC()
+			_ = journalStore.UpdateRouteOperation(journal)
 		}
-		return RouteSyncResult{}, fmt.Errorf("persist route sync: %w", err)
+		r.releaseOperationVersion(operation)
+		return RouteSyncResult{}, &RouteTransactionError{Operation: operation, Status: "persist", Rollback: rollbackStatus, Degraded: rollbackStatus != "succeeded", Cause: err}
 	}
 	r.workspacesMu.Lock()
 	r.workspaces = candidate
 	r.workspacesMu.Unlock()
-	return RouteSyncResult{WorkspaceID: wsID, Changed: true, Verified: r.routesAreEffectiveHash(wsID, desiredHash), Status: "repaired", DesiredRouteVersion: operation.RouteVersion, EffectiveRouteVersion: r.effectiveVersion(wsID), Routes: r.projectedRoutes(candidateWS), Warnings: warnings, Operation: operation}, nil
+	result := RouteSyncResult{WorkspaceID: wsID, Changed: true, Verified: r.routesAreEffectiveHash(wsID, desiredHash), Status: "repaired", DesiredRouteVersion: operation.RouteVersion, EffectiveRouteVersion: operation.RouteVersion, Routes: r.projectedRoutes(candidateWS), Warnings: warnings, Rollback: "not-needed", Operation: cloneOperation(operation)}
+	if journalEnabled {
+		journal.Status = "committed"
+		journal.Phase = "committed"
+		journal.UpdatedAt = time.Now().UTC()
+		if err := journalStore.UpdateRouteOperation(journal); err != nil {
+			result.Status = "repaired-with-journal-warning"
+			result.Degraded = true
+			log.Printf("Warning: route sync %s committed but journal update failed: %v", operation.OperationID, err)
+		}
+	}
+	return result, nil
 }
 
 // RegisterApplicationAlias adds an unambiguous normalized alias to an app
@@ -1052,27 +1285,18 @@ func (r *Registry) SyncRouting() error {
 // does not change application configuration. The operation is published on
 // the workspace projection so subsequent reads can correlate the sync.
 func (r *Registry) SyncRoutingWithMetadata(correlationID string) (*models.OperationMetadata, error) {
-	r.mutationMu.Lock()
-	defer r.mutationMu.Unlock()
-	if err := r.reloadProxy(); err != nil {
-		return nil, err
-	}
-	operation := r.beginOperation("sync", correlationID)
-	r.workspacesMu.Lock()
-	for _, ws := range r.workspaces {
-		r.applyOperation(ws, nil, operation)
-		for _, app := range ws.Applications {
-			setAppOperation(ws, app, operation)
+	var operation *models.OperationMetadata
+	_, err := r.mutate(true, func(candidate *[]*models.Workspace) error {
+		operation = r.beginOperation("sync", correlationID)
+		for _, ws := range *candidate {
+			r.applyOperation(ws, nil, operation)
+			for _, app := range ws.Applications {
+				setAppOperation(ws, app, operation)
+			}
 		}
-	}
-	// The reload completed before operation metadata was allocated. Rebind the
-	// successful proxy snapshot to the operation version so sync remains
-	// verified instead of appearing stale solely because of bookkeeping.
-	r.recordEffectiveRoutes(r.workspaces)
-	r.projectRouteStates(r.workspaces)
-	snapshot := cloneWorkspaces(r.workspaces)
-	r.workspacesMu.Unlock()
-	if err := r.workspaceStore().SaveState(snapshot); err != nil {
+		return nil
+	}, r.workspaceStore().SaveState)
+	if err != nil {
 		return nil, err
 	}
 	return operation, nil
@@ -1088,7 +1312,7 @@ func (r *Registry) UpdateWorkspaceApplications(wsID string, apps []models.Applic
 // workspace and records the operation that changed its route projection.
 func (r *Registry) UpdateWorkspaceApplicationsWithMetadata(wsID string, apps []models.ApplicationConfig, localDomain, defaultRemoteBaseURL, correlationID string) (*models.OperationMetadata, error) {
 	var operation *models.OperationMetadata
-	_, err := r.mutate(false, func(candidate *[]*models.Workspace) error {
+	_, err := r.mutate(true, func(candidate *[]*models.Workspace) error {
 		workspace := findWorkspace(*candidate, wsID)
 		if workspace == nil {
 			return fmt.Errorf("workspace not found: %s", wsID)
@@ -1128,7 +1352,7 @@ func (r *Registry) CreateWorkspaceWithMetadata(wsConfig models.WorkspaceConfig, 
 	}
 	var result *models.Workspace
 	var operation *models.OperationMetadata
-	_, err := r.mutate(false, func(candidate *[]*models.Workspace) error {
+	_, err := r.mutate(true, func(candidate *[]*models.Workspace) error {
 		if findWorkspace(*candidate, wsConfig.ID) != nil {
 			return fmt.Errorf("workspace already exists: %s", wsConfig.ID)
 		}
@@ -1152,7 +1376,7 @@ func (r *Registry) AddWorkspace(workspace *models.Workspace) error {
 	if workspace == nil {
 		return fmt.Errorf("workspace is required")
 	}
-	_, err := r.mutate(false, func(candidate *[]*models.Workspace) error {
+	_, err := r.mutate(true, func(candidate *[]*models.Workspace) error {
 		if findWorkspace(*candidate, workspace.WorkspaceID) != nil {
 			return fmt.Errorf("workspace already exists: %s", workspace.WorkspaceID)
 		}
@@ -1170,7 +1394,7 @@ func (r *Registry) DeleteWorkspace(wsID string) error {
 
 func (r *Registry) DeleteWorkspaceWithMetadata(wsID, correlationID string) (*models.OperationMetadata, error) {
 	var operation *models.OperationMetadata
-	_, err := r.mutate(false, func(candidate *[]*models.Workspace) error {
+	_, err := r.mutate(true, func(candidate *[]*models.Workspace) error {
 		for i, workspace := range *candidate {
 			if workspace.WorkspaceID == wsID {
 				operation = r.beginOperation("delete", correlationID)
@@ -1233,6 +1457,12 @@ func (r *Registry) mutate(requireRouting bool, change func(*[]*models.Workspace)
 		return nil, fmt.Errorf("validate workspace state: %w", err)
 	}
 	if err := r.applyRouting(candidate, requireRouting); err != nil {
+		provider := r.GetRoutingProvider()
+		if provider != nil && provider.IsAvailable() {
+			if rollbackErr := r.applyRouting(previous, true); rollbackErr != nil {
+				return nil, fmt.Errorf("apply routing: %w; restore routing: %v", err, rollbackErr)
+			}
+		}
 		return nil, fmt.Errorf("apply routing: %w", err)
 	}
 	if err := persist(candidate); err != nil {
@@ -1494,6 +1724,247 @@ func (r *Registry) ensureRouteState() {
 	r.idempotencyMu.Unlock()
 }
 
+func (r *Registry) routeJournalStore() (RouteJournalStore, bool) {
+	store := r.workspaceStore()
+	journal, ok := store.(RouteJournalStore)
+	return journal, ok
+}
+
+func (r *Registry) rememberRouteResult(wsID, key, fingerprint string, result RouteApplyResult) {
+	if strings.TrimSpace(key) == "" {
+		return
+	}
+	r.ensureRouteState()
+	r.idempotencyMu.Lock()
+	r.routeIdempotency[wsID+"\x00"+key] = routeApplyRecord{Fingerprint: fingerprint, Result: result}
+	r.idempotencyMu.Unlock()
+}
+
+func (r *Registry) persistNoopRouteResult(wsID, key, fingerprint string, result RouteApplyResult) {
+	if strings.TrimSpace(key) == "" || result.Operation == nil {
+		return
+	}
+	journal, ok := r.routeJournalStore()
+	if !ok {
+		return
+	}
+	encoded, err := json.Marshal(result)
+	if err != nil {
+		log.Printf("Warning: failed to encode idempotent route result: %v", err)
+		return
+	}
+	now := time.Now().UTC()
+	entry := models.RouteOperationJournal{
+		// No-op responses get a synthetic operation ID without consuming a route
+		// version, so the durable history can use the same identity returned to
+		// the caller.
+		OperationID:     result.Operation.OperationID,
+		WorkspaceID:     wsID,
+		IdempotencyKey:  key,
+		Fingerprint:     fingerprint,
+		CorrelationID:   result.Operation.CorrelationID,
+		ExpectedVersion: result.Operation.RouteVersion,
+		RouteVersion:    result.Operation.RouteVersion,
+		Phase:           "committed",
+		Status:          "committed",
+		CreatedAt:       result.Operation.CreatedAt,
+		UpdatedAt:       now,
+		Result:          encoded,
+	}
+	if err := journal.BeginRouteOperation(entry); err != nil {
+		log.Printf("Warning: failed to persist idempotent route result: %v", err)
+	}
+}
+
+func (r *Registry) routeNoopResult(ws *models.Workspace, plan RoutePlan, correlationID string) RouteApplyResult {
+	operation := r.routeNoopOperation(ws, correlationID, "route-apply")
+	return RouteApplyResult{
+		Changed:      false,
+		Plan:         plan,
+		Routes:       r.projectedRoutes(ws),
+		Verified:     r.routesAreEffective(ws.WorkspaceID, plan.After),
+		Verification: "unchanged",
+		Status:       "unchanged",
+		Rollback:     "not-needed",
+		Operation:    operation,
+	}
+}
+
+func (r *Registry) routeNoopOperation(ws *models.Workspace, correlationID, kind string) *models.OperationMetadata {
+	now := time.Now().UTC()
+	if strings.TrimSpace(correlationID) == "" {
+		correlationID = newOperationID("corr")
+	}
+	return &models.OperationMetadata{
+		OperationID:   newOperationID("op-noop"),
+		CorrelationID: correlationID,
+		RouteVersion:  ws.Route.RouteVersion,
+		Kind:          kind,
+		CreatedAt:     now,
+		CompletedAt:   now,
+	}
+}
+
+func (r *Registry) rollbackRoute(previous []*models.Workspace) string {
+	if err := r.applyRouting(previous, true); err != nil {
+		return "failed: " + err.Error()
+	}
+	return "succeeded"
+}
+
+func (r *Registry) rollbackDurableState(previous []*models.Workspace) string {
+	if err := r.workspaceStore().SaveState(previous); err != nil {
+		return "failed: " + err.Error()
+	}
+	return "succeeded"
+}
+
+func combineRollbackStatus(proxy, durable string) string {
+	if proxy == "succeeded" && durable == "succeeded" {
+		return "succeeded"
+	}
+	return fmt.Sprintf("proxy=%s; durable=%s", proxy, durable)
+}
+
+func (r *Registry) rollbackAfterApplyFailure(previous []*models.Workspace) string {
+	provider := r.GetRoutingProvider()
+	if provider == nil || !provider.IsAvailable() {
+		// No proxy was available to mutate, so there is no compensation to
+		// perform and the previous effective route remains the provider's last
+		// known state.
+		return "not-required"
+	}
+	return r.rollbackRoute(previous)
+}
+
+func (r *Registry) releaseOperationVersion(operation *models.OperationMetadata) {
+	if operation == nil || r.nextRouteVersion != operation.RouteVersion {
+		return
+	}
+	if operation.RouteVersion > 0 {
+		r.nextRouteVersion = operation.RouteVersion - 1
+	}
+}
+
+// restoreRouteJournal hydrates durable idempotency results before requests can
+// arrive.  Pending entries are intentionally retained until the initial proxy
+// load has completed; reconcileRouteJournal then resolves them against the
+// durable desired state.
+func (r *Registry) restoreRouteJournal() error {
+	journal, ok := r.routeJournalStore()
+	if !ok {
+		return nil
+	}
+	operations, err := journal.LoadRouteOperations()
+	if err != nil {
+		return err
+	}
+	r.ensureRouteState()
+	for _, operation := range operations {
+		// Reserve every journaled version, including failed/pending attempts. A
+		// recovered pending operation may become a commit during reconciliation,
+		// and reusing its version after restart would break monotonicity.
+		if operation.RouteVersion > r.nextRouteVersion {
+			r.nextRouteVersion = operation.RouteVersion
+		}
+		if operation.Status != "committed" || operation.IdempotencyKey == "" {
+			continue
+		}
+		result := routeResultFromJournal(operation)
+		fingerprint := journalIntentFingerprint(operation, result)
+		r.idempotencyMu.Lock()
+		r.routeIdempotency[operation.WorkspaceID+"\x00"+operation.IdempotencyKey] = routeApplyRecord{Fingerprint: fingerprint, Result: result}
+		r.idempotencyMu.Unlock()
+	}
+	return nil
+}
+
+// reconcileRouteJournal closes operations left between proxy application and
+// the durable state commit.  The initial proxy load has just made the loaded
+// durable workspace state authoritative, so a journal is either committed
+// when its version is present or rolled back when the previous version is
+// still present.  This is deliberately idempotent and safe to run on every
+// daemon start.
+func (r *Registry) reconcileRouteJournal() error {
+	journal, ok := r.routeJournalStore()
+	if !ok {
+		return nil
+	}
+	operations, err := journal.LoadRouteOperations()
+	if err != nil {
+		return err
+	}
+	workspaces := r.workspaceSnapshot()
+	for _, operation := range operations {
+		if operation.Status == "committed" || operation.Status == "rolled_back" || operation.Status == "failed" || operation.Status == "degraded" {
+			continue
+		}
+		current := findWorkspace(workspaces, operation.WorkspaceID)
+		matchesCandidate := current != nil && current.Route.RouteVersion == operation.RouteVersion
+		operation.UpdatedAt = time.Now().UTC()
+		if matchesCandidate {
+			operation.Status = "committed"
+			operation.Phase = "recovered-commit"
+			operation.RollbackStatus = "not-needed"
+			if operation.IdempotencyKey != "" {
+				result := routeResultFromJournal(operation)
+				fingerprint := journalIntentFingerprint(operation, result)
+				r.ensureRouteState()
+				r.idempotencyMu.Lock()
+				r.routeIdempotency[operation.WorkspaceID+"\x00"+operation.IdempotencyKey] = routeApplyRecord{Fingerprint: fingerprint, Result: result}
+				r.idempotencyMu.Unlock()
+			}
+		} else {
+			operation.Status = "rolled_back"
+			operation.Phase = "recovered-rollback"
+			operation.RollbackStatus = "recovered"
+		}
+		if err := journal.UpdateRouteOperation(operation); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func routeResultFromJournal(operation models.RouteOperationJournal) RouteApplyResult {
+	var result RouteApplyResult
+	recovered := true
+	if len(operation.Result) > 0 {
+		if err := json.Unmarshal(operation.Result, &result); err != nil {
+			log.Printf("Warning: ignoring malformed route result for %s: %v", operation.OperationID, err)
+		} else {
+			recovered = false
+		}
+	}
+	if result.Operation == nil {
+		result.Operation = &models.OperationMetadata{
+			OperationID:   operation.OperationID,
+			CorrelationID: operation.CorrelationID,
+			RouteVersion:  operation.RouteVersion,
+			Kind:          "route-apply",
+			CreatedAt:     operation.CreatedAt,
+			CompletedAt:   operation.UpdatedAt,
+		}
+	}
+	if result.Status == "" {
+		result.Status = "recovered"
+	}
+	if result.Verification == "" {
+		result.Verification = "verified"
+	}
+	if recovered {
+		result.Verified = true
+	}
+	return result
+}
+
+func journalIntentFingerprint(operation models.RouteOperationJournal, result RouteApplyResult) string {
+	if result.Plan.ApplicationID != "" && result.Plan.DesiredMode != "" {
+		return routeIntentFingerprint(result.Plan)
+	}
+	return operation.Fingerprint
+}
+
 func (r *Registry) recordEffectiveRoutes(workspaces []*models.Workspace) {
 	r.ensureRouteState()
 	verifiedAt := time.Now().UTC()
@@ -1716,6 +2187,21 @@ func (r *Registry) applyRouting(workspaces []*models.Workspace, required bool) e
 		// Keep the last successful snapshot untouched. Callers must never see
 		// the candidate desired route as effective after a failed reload.
 		return err
+	}
+	if verifier, ok := provider.(RoutingVerifier); ok {
+		if err := verifier.VerifyRouting(workspaces); err != nil {
+			return fmt.Errorf("verify loaded routing: %w", err)
+		}
+	} else if inspector, ok := provider.(RoutingInspector); ok {
+		// Providers without the richer verifier can still close the apply
+		// boundary with their read-only projection check.
+		inSync, err := inspector.InspectRouting(workspaces)
+		if err != nil {
+			return fmt.Errorf("inspect loaded routing: %w", err)
+		}
+		if !inSync {
+			return fmt.Errorf("loaded routing differs from the candidate")
+		}
 	}
 	r.recordEffectiveRoutes(workspaces)
 	r.projectRouteStates(workspaces)

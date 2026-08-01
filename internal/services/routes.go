@@ -114,6 +114,8 @@ type RouteSyncResult struct {
 	EffectiveRouteVersion uint64                    `json:"effectiveRouteVersion"`
 	Routes                []Route                   `json:"routes"`
 	Warnings              []RouteWarning            `json:"warnings"`
+	Degraded              bool                      `json:"degraded,omitempty"`
+	Rollback              string                    `json:"rollbackStatus,omitempty"`
 	Operation             *models.OperationMetadata `json:"operation,omitempty"`
 }
 
@@ -166,23 +168,6 @@ func normalizeMode(mode string) (string, error) {
 		return "", fmt.Errorf("route mode must be local or remote")
 	}
 	return mode, nil
-}
-
-func desiredStateMatches(app *models.Application, mode string, routePattern *string) bool {
-	if app == nil {
-		return false
-	}
-	active := mode == "local"
-	if app.Active != active {
-		return false
-	}
-	if routePattern == nil {
-		return true
-	}
-	if strings.TrimSpace(*routePattern) == "" {
-		return app.RoutePattern == nil || strings.TrimSpace(*app.RoutePattern) == ""
-	}
-	return app.RoutePattern != nil && normalizeRequestPath(*app.RoutePattern) == normalizeRequestPath(*routePattern)
 }
 
 func normalizeRequestPath(path string) string {
@@ -670,7 +655,9 @@ func cloneString(value *string) *string {
 }
 
 func fingerprintPlan(plan RoutePlan) string {
-	// Exclude the fingerprint itself and volatile route metadata from the hash.
+	// The plan fingerprint includes the complete planned projection, making a
+	// serialized plan tamper-evident. Idempotency uses the separate intent
+	// fingerprint below so a server-side re-plan can still replay a request.
 	copyPlan := struct {
 		WorkspaceID   string
 		Environment   string
@@ -685,6 +672,19 @@ func fingerprintPlan(plan RoutePlan) string {
 		Conflicts     []RouteConflict
 	}{plan.WorkspaceID, plan.Environment, plan.BaseRouteVersion, plan.ApplicationID, plan.DesiredMode, plan.RoutePattern, plan.Before, plan.After, plan.Changes, plan.Warnings, plan.Conflicts}
 	raw, _ := json.Marshal(copyPlan)
+	hash := sha256.Sum256(raw)
+	return hex.EncodeToString(hash[:])
+}
+
+func routeIntentFingerprint(plan RoutePlan) string {
+	intent := struct {
+		WorkspaceID   string
+		Environment   string
+		ApplicationID string
+		DesiredMode   string
+		RoutePattern  *string
+	}{plan.WorkspaceID, plan.Environment, plan.ApplicationID, plan.DesiredMode, plan.RoutePattern}
+	raw, _ := json.Marshal(intent)
 	hash := sha256.Sum256(raw)
 	return hex.EncodeToString(hash[:])
 }

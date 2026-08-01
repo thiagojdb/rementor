@@ -509,6 +509,9 @@ message ApplyRouteResponse {
   OperationMetadata operation = 4;
   bool verified = 5;
   string verification_status = 6;
+  string status = 7;
+  bool degraded = 8;
+  string rollback_status = 9;
 }
 
 message SyncRouteRequest {
@@ -527,6 +530,8 @@ message SyncRouteResponse {
   repeated NormalizedRoute routes = 7;
   repeated RouteWarning warnings = 8;
   OperationMetadata operation = 9;
+  bool degraded = 10;
+  string rollback_status = 11;
 }
 
 message WatchHealthRequest {

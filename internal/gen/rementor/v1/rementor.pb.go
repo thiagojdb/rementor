@@ -4170,6 +4170,9 @@ type ApplyRouteResponse struct {
 	Operation          *OperationMetadata     `protobuf:"bytes,4,opt,name=operation,proto3" json:"operation,omitempty"`
 	Verified           bool                   `protobuf:"varint,5,opt,name=verified,proto3" json:"verified,omitempty"`
 	VerificationStatus string                 `protobuf:"bytes,6,opt,name=verification_status,json=verificationStatus,proto3" json:"verification_status,omitempty"`
+	Status             string                 `protobuf:"bytes,7,opt,name=status,proto3" json:"status,omitempty"`
+	Degraded           bool                   `protobuf:"varint,8,opt,name=degraded,proto3" json:"degraded,omitempty"`
+	RollbackStatus     string                 `protobuf:"bytes,9,opt,name=rollback_status,json=rollbackStatus,proto3" json:"rollback_status,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
 }
@@ -4246,6 +4249,27 @@ func (x *ApplyRouteResponse) GetVerificationStatus() string {
 	return ""
 }
 
+func (x *ApplyRouteResponse) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *ApplyRouteResponse) GetDegraded() bool {
+	if x != nil {
+		return x.Degraded
+	}
+	return false
+}
+
+func (x *ApplyRouteResponse) GetRollbackStatus() string {
+	if x != nil {
+		return x.RollbackStatus
+	}
+	return ""
+}
+
 type SyncRouteRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	WorkspaceId   string                 `protobuf:"bytes,1,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
@@ -4317,6 +4341,8 @@ type SyncRouteResponse struct {
 	Routes                []*NormalizedRoute     `protobuf:"bytes,7,rep,name=routes,proto3" json:"routes,omitempty"`
 	Warnings              []*RouteWarning        `protobuf:"bytes,8,rep,name=warnings,proto3" json:"warnings,omitempty"`
 	Operation             *OperationMetadata     `protobuf:"bytes,9,opt,name=operation,proto3" json:"operation,omitempty"`
+	Degraded              bool                   `protobuf:"varint,10,opt,name=degraded,proto3" json:"degraded,omitempty"`
+	RollbackStatus        string                 `protobuf:"bytes,11,opt,name=rollback_status,json=rollbackStatus,proto3" json:"rollback_status,omitempty"`
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
 }
@@ -4412,6 +4438,20 @@ func (x *SyncRouteResponse) GetOperation() *OperationMetadata {
 		return x.Operation
 	}
 	return nil
+}
+
+func (x *SyncRouteResponse) GetDegraded() bool {
+	if x != nil {
+		return x.Degraded
+	}
+	return false
+}
+
+func (x *SyncRouteResponse) GetRollbackStatus() string {
+	if x != nil {
+		return x.RollbackStatus
+	}
+	return ""
 }
 
 type WatchHealthRequest struct {
@@ -4920,19 +4960,22 @@ const file_rementor_v1_rementor_proto_rawDesc = "" +
 	"\fdesired_mode\x18\a \x01(\x0e2\x16.rementor.v1.RouteModeR\vdesiredMode\x12(\n" +
 	"\rroute_pattern\x18\b \x01(\tH\x00R\froutePattern\x88\x01\x01\x12)\n" +
 	"\x10expected_version\x18\t \x01(\x04R\x0fexpectedVersionB\x10\n" +
-	"\x0e_route_pattern\"\x9b\x02\n" +
+	"\x0e_route_pattern\"\xf8\x02\n" +
 	"\x12ApplyRouteResponse\x12\x18\n" +
 	"\achanged\x18\x01 \x01(\bR\achanged\x12*\n" +
 	"\x04plan\x18\x02 \x01(\v2\x16.rementor.v1.RoutePlanR\x04plan\x124\n" +
 	"\x06routes\x18\x03 \x03(\v2\x1c.rementor.v1.NormalizedRouteR\x06routes\x12<\n" +
 	"\toperation\x18\x04 \x01(\v2\x1e.rementor.v1.OperationMetadataR\toperation\x12\x1a\n" +
 	"\bverified\x18\x05 \x01(\bR\bverified\x12/\n" +
-	"\x13verification_status\x18\x06 \x01(\tR\x12verificationStatus\"\x84\x01\n" +
+	"\x13verification_status\x18\x06 \x01(\tR\x12verificationStatus\x12\x16\n" +
+	"\x06status\x18\a \x01(\tR\x06status\x12\x1a\n" +
+	"\bdegraded\x18\b \x01(\bR\bdegraded\x12'\n" +
+	"\x0frollback_status\x18\t \x01(\tR\x0erollbackStatus\"\x84\x01\n" +
 	"\x10SyncRouteRequest\x12!\n" +
 	"\fworkspace_id\x18\x01 \x01(\tR\vworkspaceId\x12%\n" +
 	"\x0ecorrelation_id\x18\x02 \x01(\tR\rcorrelationId\x12\x1b\n" +
 	"\x06repair\x18\x03 \x01(\bH\x00R\x06repair\x88\x01\x01B\t\n" +
-	"\a_repair\"\xd1\x03\n" +
+	"\a_repair\"\x96\x04\n" +
 	"\x11SyncRouteResponse\x12!\n" +
 	"\fworkspace_id\x18\x01 \x01(\tR\vworkspaceId\x12\x18\n" +
 	"\achanged\x18\x02 \x01(\bR\achanged\x12\x1a\n" +
@@ -4942,7 +4985,10 @@ const file_rementor_v1_rementor_proto_rawDesc = "" +
 	"\x17effective_route_version\x18\x06 \x01(\v2\x19.rementor.v1.RouteVersionR\x15effectiveRouteVersion\x124\n" +
 	"\x06routes\x18\a \x03(\v2\x1c.rementor.v1.NormalizedRouteR\x06routes\x125\n" +
 	"\bwarnings\x18\b \x03(\v2\x19.rementor.v1.RouteWarningR\bwarnings\x12<\n" +
-	"\toperation\x18\t \x01(\v2\x1e.rementor.v1.OperationMetadataR\toperation\"7\n" +
+	"\toperation\x18\t \x01(\v2\x1e.rementor.v1.OperationMetadataR\toperation\x12\x1a\n" +
+	"\bdegraded\x18\n" +
+	" \x01(\bR\bdegraded\x12'\n" +
+	"\x0frollback_status\x18\v \x01(\tR\x0erollbackStatus\"7\n" +
 	"\x12WatchHealthRequest\x12!\n" +
 	"\fworkspace_id\x18\x01 \x01(\tR\vworkspaceId\"\x93\x04\n" +
 	"\x13WatchHealthResponse\x12\x12\n" +
