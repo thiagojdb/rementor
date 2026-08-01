@@ -1544,6 +1544,13 @@ func findAppInWorkspace(workspace *models.Workspace, reference string) (*models.
 			matches = append(matches, app)
 			continue
 		}
+		// A legacy binding may retain an ID that differs from its canonical
+		// app_id. Treat that wire-compatible identifier as a lookup alias while
+		// keeping the canonical identity as the returned key.
+		if models.NormalizeIdentityToken(app.ID) == normalized {
+			matches = append(matches, app)
+			continue
+		}
 		for _, alias := range app.NormalizedAliases() {
 			if alias == normalized {
 				matches = append(matches, app)

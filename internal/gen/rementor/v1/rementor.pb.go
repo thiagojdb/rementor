@@ -1993,6 +1993,342 @@ func (x *ResolveApplicationResponse) GetApplication() *Application {
 	return nil
 }
 
+type ResolveBrowserURLRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	WorkspaceId    string                 `protobuf:"bytes,1,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
+	ApplicationRef string                 `protobuf:"bytes,2,opt,name=application_ref,json=applicationRef,proto3" json:"application_ref,omitempty"`
+	CorrelationId  string                 `protobuf:"bytes,3,opt,name=correlation_id,json=correlationId,proto3" json:"correlation_id,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *ResolveBrowserURLRequest) Reset() {
+	*x = ResolveBrowserURLRequest{}
+	mi := &file_rementor_v1_rementor_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResolveBrowserURLRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResolveBrowserURLRequest) ProtoMessage() {}
+
+func (x *ResolveBrowserURLRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_rementor_v1_rementor_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResolveBrowserURLRequest.ProtoReflect.Descriptor instead.
+func (*ResolveBrowserURLRequest) Descriptor() ([]byte, []int) {
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *ResolveBrowserURLRequest) GetWorkspaceId() string {
+	if x != nil {
+		return x.WorkspaceId
+	}
+	return ""
+}
+
+func (x *ResolveBrowserURLRequest) GetApplicationRef() string {
+	if x != nil {
+		return x.ApplicationRef
+	}
+	return ""
+}
+
+func (x *ResolveBrowserURLRequest) GetCorrelationId() string {
+	if x != nil {
+		return x.CorrelationId
+	}
+	return ""
+}
+
+// BrowserURLResolution is the stable public entry point for an application.
+// The URL is deliberately independent from target/local_target/remote_target:
+// toggling a route changes where the proxy sends traffic, not where a browser
+// should open the application.
+type BrowserURLResolution struct {
+	state           protoimpl.MessageState   `protogen:"open.v1"`
+	WorkspaceId     string                   `protobuf:"bytes,1,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
+	Environment     string                   `protobuf:"bytes,2,opt,name=environment,proto3" json:"environment,omitempty"`
+	ApplicationRef  string                   `protobuf:"bytes,3,opt,name=application_ref,json=applicationRef,proto3" json:"application_ref,omitempty"`
+	CanonicalAppId  string                   `protobuf:"bytes,4,opt,name=canonical_app_id,json=canonicalAppId,proto3" json:"canonical_app_id,omitempty"`
+	ServiceId       string                   `protobuf:"bytes,5,opt,name=service_id,json=serviceId,proto3" json:"service_id,omitempty"`
+	Repository      string                   `protobuf:"bytes,6,opt,name=repository,proto3" json:"repository,omitempty"`
+	PublicHost      string                   `protobuf:"bytes,7,opt,name=public_host,json=publicHost,proto3" json:"public_host,omitempty"`
+	PublicPath      string                   `protobuf:"bytes,8,opt,name=public_path,json=publicPath,proto3" json:"public_path,omitempty"`
+	Url             string                   `protobuf:"bytes,9,opt,name=url,proto3" json:"url,omitempty"`
+	BrowserUrl      string                   `protobuf:"bytes,10,opt,name=browser_url,json=browserUrl,proto3" json:"browser_url,omitempty"`
+	Target          string                   `protobuf:"bytes,11,opt,name=target,proto3" json:"target,omitempty"`
+	LocalTarget     string                   `protobuf:"bytes,12,opt,name=local_target,json=localTarget,proto3" json:"local_target,omitempty"`
+	RemoteTarget    string                   `protobuf:"bytes,13,opt,name=remote_target,json=remoteTarget,proto3" json:"remote_target,omitempty"`
+	DesiredMode     RouteMode                `protobuf:"varint,14,opt,name=desired_mode,json=desiredMode,proto3,enum=rementor.v1.RouteMode" json:"desired_mode,omitempty"`
+	EffectiveMode   RouteMode                `protobuf:"varint,15,opt,name=effective_mode,json=effectiveMode,proto3,enum=rementor.v1.RouteMode" json:"effective_mode,omitempty"`
+	RouteVersion    *RouteVersion            `protobuf:"bytes,16,opt,name=route_version,json=routeVersion,proto3" json:"route_version,omitempty"`
+	OperationId     string                   `protobuf:"bytes,17,opt,name=operation_id,json=operationId,proto3" json:"operation_id,omitempty"`
+	CorrelationId   string                   `protobuf:"bytes,18,opt,name=correlation_id,json=correlationId,proto3" json:"correlation_id,omitempty"`
+	Route           *RouteState              `protobuf:"bytes,19,opt,name=route,proto3" json:"route,omitempty"`
+	Identity        *CanonicalApplicationRef `protobuf:"bytes,20,opt,name=identity,proto3" json:"identity,omitempty"`
+	EnvironmentRef  *WorkspaceEnvironmentRef `protobuf:"bytes,21,opt,name=environment_ref,json=environmentRef,proto3" json:"environment_ref,omitempty"`
+	Operation       *OperationMetadata       `protobuf:"bytes,22,opt,name=operation,proto3" json:"operation,omitempty"`
+	Precedence      int32                    `protobuf:"varint,23,opt,name=precedence,proto3" json:"precedence,omitempty"`
+	MatchingPattern string                   `protobuf:"bytes,24,opt,name=matching_pattern,json=matchingPattern,proto3" json:"matching_pattern,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *BrowserURLResolution) Reset() {
+	*x = BrowserURLResolution{}
+	mi := &file_rementor_v1_rementor_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BrowserURLResolution) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BrowserURLResolution) ProtoMessage() {}
+
+func (x *BrowserURLResolution) ProtoReflect() protoreflect.Message {
+	mi := &file_rementor_v1_rementor_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BrowserURLResolution.ProtoReflect.Descriptor instead.
+func (*BrowserURLResolution) Descriptor() ([]byte, []int) {
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *BrowserURLResolution) GetWorkspaceId() string {
+	if x != nil {
+		return x.WorkspaceId
+	}
+	return ""
+}
+
+func (x *BrowserURLResolution) GetEnvironment() string {
+	if x != nil {
+		return x.Environment
+	}
+	return ""
+}
+
+func (x *BrowserURLResolution) GetApplicationRef() string {
+	if x != nil {
+		return x.ApplicationRef
+	}
+	return ""
+}
+
+func (x *BrowserURLResolution) GetCanonicalAppId() string {
+	if x != nil {
+		return x.CanonicalAppId
+	}
+	return ""
+}
+
+func (x *BrowserURLResolution) GetServiceId() string {
+	if x != nil {
+		return x.ServiceId
+	}
+	return ""
+}
+
+func (x *BrowserURLResolution) GetRepository() string {
+	if x != nil {
+		return x.Repository
+	}
+	return ""
+}
+
+func (x *BrowserURLResolution) GetPublicHost() string {
+	if x != nil {
+		return x.PublicHost
+	}
+	return ""
+}
+
+func (x *BrowserURLResolution) GetPublicPath() string {
+	if x != nil {
+		return x.PublicPath
+	}
+	return ""
+}
+
+func (x *BrowserURLResolution) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *BrowserURLResolution) GetBrowserUrl() string {
+	if x != nil {
+		return x.BrowserUrl
+	}
+	return ""
+}
+
+func (x *BrowserURLResolution) GetTarget() string {
+	if x != nil {
+		return x.Target
+	}
+	return ""
+}
+
+func (x *BrowserURLResolution) GetLocalTarget() string {
+	if x != nil {
+		return x.LocalTarget
+	}
+	return ""
+}
+
+func (x *BrowserURLResolution) GetRemoteTarget() string {
+	if x != nil {
+		return x.RemoteTarget
+	}
+	return ""
+}
+
+func (x *BrowserURLResolution) GetDesiredMode() RouteMode {
+	if x != nil {
+		return x.DesiredMode
+	}
+	return RouteMode_ROUTE_MODE_UNSPECIFIED
+}
+
+func (x *BrowserURLResolution) GetEffectiveMode() RouteMode {
+	if x != nil {
+		return x.EffectiveMode
+	}
+	return RouteMode_ROUTE_MODE_UNSPECIFIED
+}
+
+func (x *BrowserURLResolution) GetRouteVersion() *RouteVersion {
+	if x != nil {
+		return x.RouteVersion
+	}
+	return nil
+}
+
+func (x *BrowserURLResolution) GetOperationId() string {
+	if x != nil {
+		return x.OperationId
+	}
+	return ""
+}
+
+func (x *BrowserURLResolution) GetCorrelationId() string {
+	if x != nil {
+		return x.CorrelationId
+	}
+	return ""
+}
+
+func (x *BrowserURLResolution) GetRoute() *RouteState {
+	if x != nil {
+		return x.Route
+	}
+	return nil
+}
+
+func (x *BrowserURLResolution) GetIdentity() *CanonicalApplicationRef {
+	if x != nil {
+		return x.Identity
+	}
+	return nil
+}
+
+func (x *BrowserURLResolution) GetEnvironmentRef() *WorkspaceEnvironmentRef {
+	if x != nil {
+		return x.EnvironmentRef
+	}
+	return nil
+}
+
+func (x *BrowserURLResolution) GetOperation() *OperationMetadata {
+	if x != nil {
+		return x.Operation
+	}
+	return nil
+}
+
+func (x *BrowserURLResolution) GetPrecedence() int32 {
+	if x != nil {
+		return x.Precedence
+	}
+	return 0
+}
+
+func (x *BrowserURLResolution) GetMatchingPattern() string {
+	if x != nil {
+		return x.MatchingPattern
+	}
+	return ""
+}
+
+type ResolveBrowserURLResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Resolution    *BrowserURLResolution  `protobuf:"bytes,1,opt,name=resolution,proto3" json:"resolution,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResolveBrowserURLResponse) Reset() {
+	*x = ResolveBrowserURLResponse{}
+	mi := &file_rementor_v1_rementor_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResolveBrowserURLResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResolveBrowserURLResponse) ProtoMessage() {}
+
+func (x *ResolveBrowserURLResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_rementor_v1_rementor_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResolveBrowserURLResponse.ProtoReflect.Descriptor instead.
+func (*ResolveBrowserURLResponse) Descriptor() ([]byte, []int) {
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *ResolveBrowserURLResponse) GetResolution() *BrowserURLResolution {
+	if x != nil {
+		return x.Resolution
+	}
+	return nil
+}
+
 type RegisterApplicationAliasRequest struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	WorkspaceId    string                 `protobuf:"bytes,1,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
@@ -2005,7 +2341,7 @@ type RegisterApplicationAliasRequest struct {
 
 func (x *RegisterApplicationAliasRequest) Reset() {
 	*x = RegisterApplicationAliasRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[26]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2017,7 +2353,7 @@ func (x *RegisterApplicationAliasRequest) String() string {
 func (*RegisterApplicationAliasRequest) ProtoMessage() {}
 
 func (x *RegisterApplicationAliasRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[26]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2030,7 +2366,7 @@ func (x *RegisterApplicationAliasRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterApplicationAliasRequest.ProtoReflect.Descriptor instead.
 func (*RegisterApplicationAliasRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{26}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *RegisterApplicationAliasRequest) GetWorkspaceId() string {
@@ -2071,7 +2407,7 @@ type RegisterApplicationAliasResponse struct {
 
 func (x *RegisterApplicationAliasResponse) Reset() {
 	*x = RegisterApplicationAliasResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[27]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2083,7 +2419,7 @@ func (x *RegisterApplicationAliasResponse) String() string {
 func (*RegisterApplicationAliasResponse) ProtoMessage() {}
 
 func (x *RegisterApplicationAliasResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[27]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2096,7 +2432,7 @@ func (x *RegisterApplicationAliasResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterApplicationAliasResponse.ProtoReflect.Descriptor instead.
 func (*RegisterApplicationAliasResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{27}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *RegisterApplicationAliasResponse) GetApplication() *Application {
@@ -2124,7 +2460,7 @@ type UpsertApplicationRequest struct {
 
 func (x *UpsertApplicationRequest) Reset() {
 	*x = UpsertApplicationRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[28]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2136,7 +2472,7 @@ func (x *UpsertApplicationRequest) String() string {
 func (*UpsertApplicationRequest) ProtoMessage() {}
 
 func (x *UpsertApplicationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[28]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2149,7 +2485,7 @@ func (x *UpsertApplicationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpsertApplicationRequest.ProtoReflect.Descriptor instead.
 func (*UpsertApplicationRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{28}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *UpsertApplicationRequest) GetWorkspaceId() string {
@@ -2184,7 +2520,7 @@ type UpsertApplicationResponse struct {
 
 func (x *UpsertApplicationResponse) Reset() {
 	*x = UpsertApplicationResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[29]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2196,7 +2532,7 @@ func (x *UpsertApplicationResponse) String() string {
 func (*UpsertApplicationResponse) ProtoMessage() {}
 
 func (x *UpsertApplicationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[29]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2209,7 +2545,7 @@ func (x *UpsertApplicationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpsertApplicationResponse.ProtoReflect.Descriptor instead.
 func (*UpsertApplicationResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{29}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *UpsertApplicationResponse) GetApplication() *Application {
@@ -2244,7 +2580,7 @@ type DeleteApplicationRequest struct {
 
 func (x *DeleteApplicationRequest) Reset() {
 	*x = DeleteApplicationRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[30]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2256,7 +2592,7 @@ func (x *DeleteApplicationRequest) String() string {
 func (*DeleteApplicationRequest) ProtoMessage() {}
 
 func (x *DeleteApplicationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[30]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2269,7 +2605,7 @@ func (x *DeleteApplicationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteApplicationRequest.ProtoReflect.Descriptor instead.
 func (*DeleteApplicationRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{30}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *DeleteApplicationRequest) GetWorkspaceId() string {
@@ -2302,7 +2638,7 @@ type DeleteApplicationResponse struct {
 
 func (x *DeleteApplicationResponse) Reset() {
 	*x = DeleteApplicationResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[31]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2314,7 +2650,7 @@ func (x *DeleteApplicationResponse) String() string {
 func (*DeleteApplicationResponse) ProtoMessage() {}
 
 func (x *DeleteApplicationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[31]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2327,7 +2663,7 @@ func (x *DeleteApplicationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteApplicationResponse.ProtoReflect.Descriptor instead.
 func (*DeleteApplicationResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{31}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *DeleteApplicationResponse) GetOperation() *OperationMetadata {
@@ -2348,7 +2684,7 @@ type ToggleApplicationRequest struct {
 
 func (x *ToggleApplicationRequest) Reset() {
 	*x = ToggleApplicationRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[32]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2360,7 +2696,7 @@ func (x *ToggleApplicationRequest) String() string {
 func (*ToggleApplicationRequest) ProtoMessage() {}
 
 func (x *ToggleApplicationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[32]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2373,7 +2709,7 @@ func (x *ToggleApplicationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ToggleApplicationRequest.ProtoReflect.Descriptor instead.
 func (*ToggleApplicationRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{32}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *ToggleApplicationRequest) GetWorkspaceId() string {
@@ -2407,7 +2743,7 @@ type ToggleApplicationResponse struct {
 
 func (x *ToggleApplicationResponse) Reset() {
 	*x = ToggleApplicationResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[33]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2419,7 +2755,7 @@ func (x *ToggleApplicationResponse) String() string {
 func (*ToggleApplicationResponse) ProtoMessage() {}
 
 func (x *ToggleApplicationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[33]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2432,7 +2768,7 @@ func (x *ToggleApplicationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ToggleApplicationResponse.ProtoReflect.Descriptor instead.
 func (*ToggleApplicationResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{33}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *ToggleApplicationResponse) GetApplication() *Application {
@@ -2459,7 +2795,7 @@ type ToggleAllToRemoteRequest struct {
 
 func (x *ToggleAllToRemoteRequest) Reset() {
 	*x = ToggleAllToRemoteRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[34]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2471,7 +2807,7 @@ func (x *ToggleAllToRemoteRequest) String() string {
 func (*ToggleAllToRemoteRequest) ProtoMessage() {}
 
 func (x *ToggleAllToRemoteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[34]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2484,7 +2820,7 @@ func (x *ToggleAllToRemoteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ToggleAllToRemoteRequest.ProtoReflect.Descriptor instead.
 func (*ToggleAllToRemoteRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{34}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *ToggleAllToRemoteRequest) GetWorkspaceId() string {
@@ -2512,7 +2848,7 @@ type ToggleAllToRemoteResponse struct {
 
 func (x *ToggleAllToRemoteResponse) Reset() {
 	*x = ToggleAllToRemoteResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[35]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2524,7 +2860,7 @@ func (x *ToggleAllToRemoteResponse) String() string {
 func (*ToggleAllToRemoteResponse) ProtoMessage() {}
 
 func (x *ToggleAllToRemoteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[35]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2537,7 +2873,7 @@ func (x *ToggleAllToRemoteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ToggleAllToRemoteResponse.ProtoReflect.Descriptor instead.
 func (*ToggleAllToRemoteResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{35}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *ToggleAllToRemoteResponse) GetSuccessCount() int32 {
@@ -2571,7 +2907,7 @@ type ToggleAllToLocalRequest struct {
 
 func (x *ToggleAllToLocalRequest) Reset() {
 	*x = ToggleAllToLocalRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[36]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2583,7 +2919,7 @@ func (x *ToggleAllToLocalRequest) String() string {
 func (*ToggleAllToLocalRequest) ProtoMessage() {}
 
 func (x *ToggleAllToLocalRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[36]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2596,7 +2932,7 @@ func (x *ToggleAllToLocalRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ToggleAllToLocalRequest.ProtoReflect.Descriptor instead.
 func (*ToggleAllToLocalRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{36}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *ToggleAllToLocalRequest) GetWorkspaceId() string {
@@ -2624,7 +2960,7 @@ type ToggleAllToLocalResponse struct {
 
 func (x *ToggleAllToLocalResponse) Reset() {
 	*x = ToggleAllToLocalResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[37]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2636,7 +2972,7 @@ func (x *ToggleAllToLocalResponse) String() string {
 func (*ToggleAllToLocalResponse) ProtoMessage() {}
 
 func (x *ToggleAllToLocalResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[37]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2649,7 +2985,7 @@ func (x *ToggleAllToLocalResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ToggleAllToLocalResponse.ProtoReflect.Descriptor instead.
 func (*ToggleAllToLocalResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{37}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *ToggleAllToLocalResponse) GetSuccessCount() int32 {
@@ -2683,7 +3019,7 @@ type SyncWorkspaceRoutingRequest struct {
 
 func (x *SyncWorkspaceRoutingRequest) Reset() {
 	*x = SyncWorkspaceRoutingRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[38]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2695,7 +3031,7 @@ func (x *SyncWorkspaceRoutingRequest) String() string {
 func (*SyncWorkspaceRoutingRequest) ProtoMessage() {}
 
 func (x *SyncWorkspaceRoutingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[38]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2708,7 +3044,7 @@ func (x *SyncWorkspaceRoutingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SyncWorkspaceRoutingRequest.ProtoReflect.Descriptor instead.
 func (*SyncWorkspaceRoutingRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{38}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *SyncWorkspaceRoutingRequest) GetWorkspaceId() string {
@@ -2735,7 +3071,7 @@ type SyncWorkspaceRoutingResponse struct {
 
 func (x *SyncWorkspaceRoutingResponse) Reset() {
 	*x = SyncWorkspaceRoutingResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[39]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2747,7 +3083,7 @@ func (x *SyncWorkspaceRoutingResponse) String() string {
 func (*SyncWorkspaceRoutingResponse) ProtoMessage() {}
 
 func (x *SyncWorkspaceRoutingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[39]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2760,7 +3096,7 @@ func (x *SyncWorkspaceRoutingResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SyncWorkspaceRoutingResponse.ProtoReflect.Descriptor instead.
 func (*SyncWorkspaceRoutingResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{39}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *SyncWorkspaceRoutingResponse) GetStatus() string {
@@ -2787,7 +3123,7 @@ type GetRoutePatternRequest struct {
 
 func (x *GetRoutePatternRequest) Reset() {
 	*x = GetRoutePatternRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[40]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2799,7 +3135,7 @@ func (x *GetRoutePatternRequest) String() string {
 func (*GetRoutePatternRequest) ProtoMessage() {}
 
 func (x *GetRoutePatternRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[40]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2812,7 +3148,7 @@ func (x *GetRoutePatternRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRoutePatternRequest.ProtoReflect.Descriptor instead.
 func (*GetRoutePatternRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{40}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *GetRoutePatternRequest) GetWorkspaceId() string {
@@ -2838,7 +3174,7 @@ type GetRoutePatternResponse struct {
 
 func (x *GetRoutePatternResponse) Reset() {
 	*x = GetRoutePatternResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[41]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2850,7 +3186,7 @@ func (x *GetRoutePatternResponse) String() string {
 func (*GetRoutePatternResponse) ProtoMessage() {}
 
 func (x *GetRoutePatternResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[41]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2863,7 +3199,7 @@ func (x *GetRoutePatternResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRoutePatternResponse.ProtoReflect.Descriptor instead.
 func (*GetRoutePatternResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{41}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *GetRoutePatternResponse) GetPattern() string {
@@ -2885,7 +3221,7 @@ type UpdateRoutePatternRequest struct {
 
 func (x *UpdateRoutePatternRequest) Reset() {
 	*x = UpdateRoutePatternRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[42]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2897,7 +3233,7 @@ func (x *UpdateRoutePatternRequest) String() string {
 func (*UpdateRoutePatternRequest) ProtoMessage() {}
 
 func (x *UpdateRoutePatternRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[42]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2910,7 +3246,7 @@ func (x *UpdateRoutePatternRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateRoutePatternRequest.ProtoReflect.Descriptor instead.
 func (*UpdateRoutePatternRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{42}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *UpdateRoutePatternRequest) GetWorkspaceId() string {
@@ -2951,7 +3287,7 @@ type UpdateRoutePatternResponse struct {
 
 func (x *UpdateRoutePatternResponse) Reset() {
 	*x = UpdateRoutePatternResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[43]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2963,7 +3299,7 @@ func (x *UpdateRoutePatternResponse) String() string {
 func (*UpdateRoutePatternResponse) ProtoMessage() {}
 
 func (x *UpdateRoutePatternResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[43]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2976,7 +3312,7 @@ func (x *UpdateRoutePatternResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateRoutePatternResponse.ProtoReflect.Descriptor instead.
 func (*UpdateRoutePatternResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{43}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *UpdateRoutePatternResponse) GetApplication() *Application {
@@ -3022,7 +3358,7 @@ type NormalizedRoute struct {
 
 func (x *NormalizedRoute) Reset() {
 	*x = NormalizedRoute{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[44]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3034,7 +3370,7 @@ func (x *NormalizedRoute) String() string {
 func (*NormalizedRoute) ProtoMessage() {}
 
 func (x *NormalizedRoute) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[44]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3047,7 +3383,7 @@ func (x *NormalizedRoute) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NormalizedRoute.ProtoReflect.Descriptor instead.
 func (*NormalizedRoute) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{44}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *NormalizedRoute) GetWorkspaceId() string {
@@ -3186,7 +3522,7 @@ type RouteWarning struct {
 
 func (x *RouteWarning) Reset() {
 	*x = RouteWarning{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[45]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3198,7 +3534,7 @@ func (x *RouteWarning) String() string {
 func (*RouteWarning) ProtoMessage() {}
 
 func (x *RouteWarning) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[45]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3211,7 +3547,7 @@ func (x *RouteWarning) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RouteWarning.ProtoReflect.Descriptor instead.
 func (*RouteWarning) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{45}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *RouteWarning) GetCode() string {
@@ -3259,7 +3595,7 @@ type RouteConflict struct {
 
 func (x *RouteConflict) Reset() {
 	*x = RouteConflict{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[46]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3271,7 +3607,7 @@ func (x *RouteConflict) String() string {
 func (*RouteConflict) ProtoMessage() {}
 
 func (x *RouteConflict) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[46]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3284,7 +3620,7 @@ func (x *RouteConflict) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RouteConflict.ProtoReflect.Descriptor instead.
 func (*RouteConflict) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{46}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *RouteConflict) GetWorkspaceId() string {
@@ -3459,7 +3795,7 @@ type RouteChange struct {
 
 func (x *RouteChange) Reset() {
 	*x = RouteChange{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[47]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3471,7 +3807,7 @@ func (x *RouteChange) String() string {
 func (*RouteChange) ProtoMessage() {}
 
 func (x *RouteChange) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[47]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3484,7 +3820,7 @@ func (x *RouteChange) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RouteChange.ProtoReflect.Descriptor instead.
 func (*RouteChange) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{47}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *RouteChange) GetApplicationId() string {
@@ -3529,7 +3865,7 @@ type RoutePlan struct {
 
 func (x *RoutePlan) Reset() {
 	*x = RoutePlan{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[48]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3541,7 +3877,7 @@ func (x *RoutePlan) String() string {
 func (*RoutePlan) ProtoMessage() {}
 
 func (x *RoutePlan) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[48]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3554,7 +3890,7 @@ func (x *RoutePlan) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoutePlan.ProtoReflect.Descriptor instead.
 func (*RoutePlan) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{48}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *RoutePlan) GetWorkspaceId() string {
@@ -3667,7 +4003,7 @@ type RouteResolution struct {
 
 func (x *RouteResolution) Reset() {
 	*x = RouteResolution{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[49]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3679,7 +4015,7 @@ func (x *RouteResolution) String() string {
 func (*RouteResolution) ProtoMessage() {}
 
 func (x *RouteResolution) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[49]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3692,7 +4028,7 @@ func (x *RouteResolution) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RouteResolution.ProtoReflect.Descriptor instead.
 func (*RouteResolution) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{49}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *RouteResolution) GetWorkspaceId() string {
@@ -3781,7 +4117,7 @@ type GetRouteRequest struct {
 
 func (x *GetRouteRequest) Reset() {
 	*x = GetRouteRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[50]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3793,7 +4129,7 @@ func (x *GetRouteRequest) String() string {
 func (*GetRouteRequest) ProtoMessage() {}
 
 func (x *GetRouteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[50]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3806,7 +4142,7 @@ func (x *GetRouteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRouteRequest.ProtoReflect.Descriptor instead.
 func (*GetRouteRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{50}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *GetRouteRequest) GetWorkspaceId() string {
@@ -3830,7 +4166,7 @@ type GetRouteResponse struct {
 
 func (x *GetRouteResponse) Reset() {
 	*x = GetRouteResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[51]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3842,7 +4178,7 @@ func (x *GetRouteResponse) String() string {
 func (*GetRouteResponse) ProtoMessage() {}
 
 func (x *GetRouteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[51]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3855,7 +4191,7 @@ func (x *GetRouteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRouteResponse.ProtoReflect.Descriptor instead.
 func (*GetRouteResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{51}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *GetRouteResponse) GetWorkspaceId() string {
@@ -3909,7 +4245,7 @@ type GetRouteConflictsRequest struct {
 
 func (x *GetRouteConflictsRequest) Reset() {
 	*x = GetRouteConflictsRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[52]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3921,7 +4257,7 @@ func (x *GetRouteConflictsRequest) String() string {
 func (*GetRouteConflictsRequest) ProtoMessage() {}
 
 func (x *GetRouteConflictsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[52]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3934,7 +4270,7 @@ func (x *GetRouteConflictsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRouteConflictsRequest.ProtoReflect.Descriptor instead.
 func (*GetRouteConflictsRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{52}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *GetRouteConflictsRequest) GetWorkspaceId() string {
@@ -3957,7 +4293,7 @@ type GetRouteConflictsResponse struct {
 
 func (x *GetRouteConflictsResponse) Reset() {
 	*x = GetRouteConflictsResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[53]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3969,7 +4305,7 @@ func (x *GetRouteConflictsResponse) String() string {
 func (*GetRouteConflictsResponse) ProtoMessage() {}
 
 func (x *GetRouteConflictsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[53]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3982,7 +4318,7 @@ func (x *GetRouteConflictsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRouteConflictsResponse.ProtoReflect.Descriptor instead.
 func (*GetRouteConflictsResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{53}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{56}
 }
 
 func (x *GetRouteConflictsResponse) GetWorkspaceId() string {
@@ -4031,7 +4367,7 @@ type ResolveRouteRequest struct {
 
 func (x *ResolveRouteRequest) Reset() {
 	*x = ResolveRouteRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[54]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4043,7 +4379,7 @@ func (x *ResolveRouteRequest) String() string {
 func (*ResolveRouteRequest) ProtoMessage() {}
 
 func (x *ResolveRouteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[54]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4056,7 +4392,7 @@ func (x *ResolveRouteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveRouteRequest.ProtoReflect.Descriptor instead.
 func (*ResolveRouteRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{54}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *ResolveRouteRequest) GetWorkspaceId() string {
@@ -4089,7 +4425,7 @@ type ResolveRouteResponse struct {
 
 func (x *ResolveRouteResponse) Reset() {
 	*x = ResolveRouteResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[55]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4101,7 +4437,7 @@ func (x *ResolveRouteResponse) String() string {
 func (*ResolveRouteResponse) ProtoMessage() {}
 
 func (x *ResolveRouteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[55]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4114,7 +4450,7 @@ func (x *ResolveRouteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveRouteResponse.ProtoReflect.Descriptor instead.
 func (*ResolveRouteResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{55}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *ResolveRouteResponse) GetResolution() *RouteResolution {
@@ -4139,7 +4475,7 @@ type PlanRouteRequest struct {
 
 func (x *PlanRouteRequest) Reset() {
 	*x = PlanRouteRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[56]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4151,7 +4487,7 @@ func (x *PlanRouteRequest) String() string {
 func (*PlanRouteRequest) ProtoMessage() {}
 
 func (x *PlanRouteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[56]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4164,7 +4500,7 @@ func (x *PlanRouteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlanRouteRequest.ProtoReflect.Descriptor instead.
 func (*PlanRouteRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{56}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{59}
 }
 
 func (x *PlanRouteRequest) GetWorkspaceId() string {
@@ -4225,7 +4561,7 @@ type PlanRouteResponse struct {
 
 func (x *PlanRouteResponse) Reset() {
 	*x = PlanRouteResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[57]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[60]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4237,7 +4573,7 @@ func (x *PlanRouteResponse) String() string {
 func (*PlanRouteResponse) ProtoMessage() {}
 
 func (x *PlanRouteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[57]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[60]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4250,7 +4586,7 @@ func (x *PlanRouteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlanRouteResponse.ProtoReflect.Descriptor instead.
 func (*PlanRouteResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{57}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *PlanRouteResponse) GetPlan() *RoutePlan {
@@ -4277,7 +4613,7 @@ type ApplyRouteRequest struct {
 
 func (x *ApplyRouteRequest) Reset() {
 	*x = ApplyRouteRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[58]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[61]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4289,7 +4625,7 @@ func (x *ApplyRouteRequest) String() string {
 func (*ApplyRouteRequest) ProtoMessage() {}
 
 func (x *ApplyRouteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[58]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[61]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4302,7 +4638,7 @@ func (x *ApplyRouteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ApplyRouteRequest.ProtoReflect.Descriptor instead.
 func (*ApplyRouteRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{58}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{61}
 }
 
 func (x *ApplyRouteRequest) GetWorkspaceId() string {
@@ -4385,7 +4721,7 @@ type ApplyRouteResponse struct {
 
 func (x *ApplyRouteResponse) Reset() {
 	*x = ApplyRouteResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[59]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[62]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4397,7 +4733,7 @@ func (x *ApplyRouteResponse) String() string {
 func (*ApplyRouteResponse) ProtoMessage() {}
 
 func (x *ApplyRouteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[59]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[62]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4410,7 +4746,7 @@ func (x *ApplyRouteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ApplyRouteResponse.ProtoReflect.Descriptor instead.
 func (*ApplyRouteResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{59}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{62}
 }
 
 func (x *ApplyRouteResponse) GetChanged() bool {
@@ -4487,7 +4823,7 @@ type SyncRouteRequest struct {
 
 func (x *SyncRouteRequest) Reset() {
 	*x = SyncRouteRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[60]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[63]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4499,7 +4835,7 @@ func (x *SyncRouteRequest) String() string {
 func (*SyncRouteRequest) ProtoMessage() {}
 
 func (x *SyncRouteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[60]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[63]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4512,7 +4848,7 @@ func (x *SyncRouteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SyncRouteRequest.ProtoReflect.Descriptor instead.
 func (*SyncRouteRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{60}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{63}
 }
 
 func (x *SyncRouteRequest) GetWorkspaceId() string {
@@ -4555,7 +4891,7 @@ type SyncRouteResponse struct {
 
 func (x *SyncRouteResponse) Reset() {
 	*x = SyncRouteResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[61]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[64]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4567,7 +4903,7 @@ func (x *SyncRouteResponse) String() string {
 func (*SyncRouteResponse) ProtoMessage() {}
 
 func (x *SyncRouteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[61]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[64]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4580,7 +4916,7 @@ func (x *SyncRouteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SyncRouteResponse.ProtoReflect.Descriptor instead.
 func (*SyncRouteResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{61}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{64}
 }
 
 func (x *SyncRouteResponse) GetWorkspaceId() string {
@@ -4669,7 +5005,7 @@ type WatchHealthRequest struct {
 
 func (x *WatchHealthRequest) Reset() {
 	*x = WatchHealthRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[62]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[65]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4681,7 +5017,7 @@ func (x *WatchHealthRequest) String() string {
 func (*WatchHealthRequest) ProtoMessage() {}
 
 func (x *WatchHealthRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[62]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[65]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4694,7 +5030,7 @@ func (x *WatchHealthRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WatchHealthRequest.ProtoReflect.Descriptor instead.
 func (*WatchHealthRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{62}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{65}
 }
 
 func (x *WatchHealthRequest) GetWorkspaceId() string {
@@ -4723,7 +5059,7 @@ type WatchHealthResponse struct {
 
 func (x *WatchHealthResponse) Reset() {
 	*x = WatchHealthResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[63]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[66]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4735,7 +5071,7 @@ func (x *WatchHealthResponse) String() string {
 func (*WatchHealthResponse) ProtoMessage() {}
 
 func (x *WatchHealthResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[63]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[66]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4748,7 +5084,7 @@ func (x *WatchHealthResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WatchHealthResponse.ProtoReflect.Descriptor instead.
 func (*WatchHealthResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{63}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{66}
 }
 
 func (x *WatchHealthResponse) GetType() string {
@@ -4984,7 +5320,49 @@ const file_rementor_v1_rementor_proto_rawDesc = "" +
 	"\fworkspace_id\x18\x01 \x01(\tR\vworkspaceId\x12'\n" +
 	"\x0fapplication_ref\x18\x02 \x01(\tR\x0eapplicationRef\"X\n" +
 	"\x1aResolveApplicationResponse\x12:\n" +
-	"\vapplication\x18\x01 \x01(\v2\x18.rementor.v1.ApplicationR\vapplication\"\xaa\x01\n" +
+	"\vapplication\x18\x01 \x01(\v2\x18.rementor.v1.ApplicationR\vapplication\"\x8d\x01\n" +
+	"\x18ResolveBrowserURLRequest\x12!\n" +
+	"\fworkspace_id\x18\x01 \x01(\tR\vworkspaceId\x12'\n" +
+	"\x0fapplication_ref\x18\x02 \x01(\tR\x0eapplicationRef\x12%\n" +
+	"\x0ecorrelation_id\x18\x03 \x01(\tR\rcorrelationId\"\x8f\b\n" +
+	"\x14BrowserURLResolution\x12!\n" +
+	"\fworkspace_id\x18\x01 \x01(\tR\vworkspaceId\x12 \n" +
+	"\venvironment\x18\x02 \x01(\tR\venvironment\x12'\n" +
+	"\x0fapplication_ref\x18\x03 \x01(\tR\x0eapplicationRef\x12(\n" +
+	"\x10canonical_app_id\x18\x04 \x01(\tR\x0ecanonicalAppId\x12\x1d\n" +
+	"\n" +
+	"service_id\x18\x05 \x01(\tR\tserviceId\x12\x1e\n" +
+	"\n" +
+	"repository\x18\x06 \x01(\tR\n" +
+	"repository\x12\x1f\n" +
+	"\vpublic_host\x18\a \x01(\tR\n" +
+	"publicHost\x12\x1f\n" +
+	"\vpublic_path\x18\b \x01(\tR\n" +
+	"publicPath\x12\x10\n" +
+	"\x03url\x18\t \x01(\tR\x03url\x12\x1f\n" +
+	"\vbrowser_url\x18\n" +
+	" \x01(\tR\n" +
+	"browserUrl\x12\x16\n" +
+	"\x06target\x18\v \x01(\tR\x06target\x12!\n" +
+	"\flocal_target\x18\f \x01(\tR\vlocalTarget\x12#\n" +
+	"\rremote_target\x18\r \x01(\tR\fremoteTarget\x129\n" +
+	"\fdesired_mode\x18\x0e \x01(\x0e2\x16.rementor.v1.RouteModeR\vdesiredMode\x12=\n" +
+	"\x0eeffective_mode\x18\x0f \x01(\x0e2\x16.rementor.v1.RouteModeR\reffectiveMode\x12>\n" +
+	"\rroute_version\x18\x10 \x01(\v2\x19.rementor.v1.RouteVersionR\frouteVersion\x12!\n" +
+	"\foperation_id\x18\x11 \x01(\tR\voperationId\x12%\n" +
+	"\x0ecorrelation_id\x18\x12 \x01(\tR\rcorrelationId\x12-\n" +
+	"\x05route\x18\x13 \x01(\v2\x17.rementor.v1.RouteStateR\x05route\x12@\n" +
+	"\bidentity\x18\x14 \x01(\v2$.rementor.v1.CanonicalApplicationRefR\bidentity\x12M\n" +
+	"\x0fenvironment_ref\x18\x15 \x01(\v2$.rementor.v1.WorkspaceEnvironmentRefR\x0eenvironmentRef\x12<\n" +
+	"\toperation\x18\x16 \x01(\v2\x1e.rementor.v1.OperationMetadataR\toperation\x12\x1e\n" +
+	"\n" +
+	"precedence\x18\x17 \x01(\x05R\n" +
+	"precedence\x12)\n" +
+	"\x10matching_pattern\x18\x18 \x01(\tR\x0fmatchingPattern\"^\n" +
+	"\x19ResolveBrowserURLResponse\x12A\n" +
+	"\n" +
+	"resolution\x18\x01 \x01(\v2!.rementor.v1.BrowserURLResolutionR\n" +
+	"resolution\"\xaa\x01\n" +
 	"\x1fRegisterApplicationAliasRequest\x12!\n" +
 	"\fworkspace_id\x18\x01 \x01(\tR\vworkspaceId\x12'\n" +
 	"\x0fapplication_ref\x18\x02 \x01(\tR\x0eapplicationRef\x12\x14\n" +
@@ -5255,7 +5633,7 @@ const file_rementor_v1_rementor_proto_rawDesc = "" +
 	"\x1aERROR_CODE_UNAUTHENTICATED\x10\x06\x12\x1a\n" +
 	"\x16ERROR_CODE_UNAVAILABLE\x10\a\x12\x17\n" +
 	"\x13ERROR_CODE_INTERNAL\x10\b\x12\x17\n" +
-	"\x13ERROR_CODE_CONFLICT\x10\t2\xdb\x11\n" +
+	"\x13ERROR_CODE_CONFLICT\x10\t2\xbf\x12\n" +
 	"\x13ControlPlaneService\x12Y\n" +
 	"\x0eListWorkspaces\x12\".rementor.v1.ListWorkspacesRequest\x1a#.rementor.v1.ListWorkspacesResponse\x12S\n" +
 	"\fGetWorkspace\x12 .rementor.v1.GetWorkspaceRequest\x1a!.rementor.v1.GetWorkspaceResponse\x12\\\n" +
@@ -5264,7 +5642,8 @@ const file_rementor_v1_rementor_proto_rawDesc = "" +
 	"\x0fDeleteWorkspace\x12#.rementor.v1.DeleteWorkspaceRequest\x1a$.rementor.v1.DeleteWorkspaceResponse\x12_\n" +
 	"\x10ListApplications\x12$.rementor.v1.ListApplicationsRequest\x1a%.rementor.v1.ListApplicationsResponse\x12Y\n" +
 	"\x0eGetApplication\x12\".rementor.v1.GetApplicationRequest\x1a#.rementor.v1.GetApplicationResponse\x12e\n" +
-	"\x12ResolveApplication\x12&.rementor.v1.ResolveApplicationRequest\x1a'.rementor.v1.ResolveApplicationResponse\x12w\n" +
+	"\x12ResolveApplication\x12&.rementor.v1.ResolveApplicationRequest\x1a'.rementor.v1.ResolveApplicationResponse\x12b\n" +
+	"\x11ResolveBrowserURL\x12%.rementor.v1.ResolveBrowserURLRequest\x1a&.rementor.v1.ResolveBrowserURLResponse\x12w\n" +
 	"\x18RegisterApplicationAlias\x12,.rementor.v1.RegisterApplicationAliasRequest\x1a-.rementor.v1.RegisterApplicationAliasResponse\x12b\n" +
 	"\x11UpsertApplication\x12%.rementor.v1.UpsertApplicationRequest\x1a&.rementor.v1.UpsertApplicationResponse\x12b\n" +
 	"\x11DeleteApplication\x12%.rementor.v1.DeleteApplicationRequest\x1a&.rementor.v1.DeleteApplicationResponse\x12b\n" +
@@ -5296,7 +5675,7 @@ func file_rementor_v1_rementor_proto_rawDescGZIP() []byte {
 }
 
 var file_rementor_v1_rementor_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_rementor_v1_rementor_proto_msgTypes = make([]protoimpl.MessageInfo, 65)
+var file_rementor_v1_rementor_proto_msgTypes = make([]protoimpl.MessageInfo, 68)
 var file_rementor_v1_rementor_proto_goTypes = []any{
 	(RouteMode)(0),                           // 0: rementor.v1.RouteMode
 	(RouteOperationKind)(0),                  // 1: rementor.v1.RouteOperationKind
@@ -5327,58 +5706,61 @@ var file_rementor_v1_rementor_proto_goTypes = []any{
 	(*GetApplicationResponse)(nil),           // 26: rementor.v1.GetApplicationResponse
 	(*ResolveApplicationRequest)(nil),        // 27: rementor.v1.ResolveApplicationRequest
 	(*ResolveApplicationResponse)(nil),       // 28: rementor.v1.ResolveApplicationResponse
-	(*RegisterApplicationAliasRequest)(nil),  // 29: rementor.v1.RegisterApplicationAliasRequest
-	(*RegisterApplicationAliasResponse)(nil), // 30: rementor.v1.RegisterApplicationAliasResponse
-	(*UpsertApplicationRequest)(nil),         // 31: rementor.v1.UpsertApplicationRequest
-	(*UpsertApplicationResponse)(nil),        // 32: rementor.v1.UpsertApplicationResponse
-	(*DeleteApplicationRequest)(nil),         // 33: rementor.v1.DeleteApplicationRequest
-	(*DeleteApplicationResponse)(nil),        // 34: rementor.v1.DeleteApplicationResponse
-	(*ToggleApplicationRequest)(nil),         // 35: rementor.v1.ToggleApplicationRequest
-	(*ToggleApplicationResponse)(nil),        // 36: rementor.v1.ToggleApplicationResponse
-	(*ToggleAllToRemoteRequest)(nil),         // 37: rementor.v1.ToggleAllToRemoteRequest
-	(*ToggleAllToRemoteResponse)(nil),        // 38: rementor.v1.ToggleAllToRemoteResponse
-	(*ToggleAllToLocalRequest)(nil),          // 39: rementor.v1.ToggleAllToLocalRequest
-	(*ToggleAllToLocalResponse)(nil),         // 40: rementor.v1.ToggleAllToLocalResponse
-	(*SyncWorkspaceRoutingRequest)(nil),      // 41: rementor.v1.SyncWorkspaceRoutingRequest
-	(*SyncWorkspaceRoutingResponse)(nil),     // 42: rementor.v1.SyncWorkspaceRoutingResponse
-	(*GetRoutePatternRequest)(nil),           // 43: rementor.v1.GetRoutePatternRequest
-	(*GetRoutePatternResponse)(nil),          // 44: rementor.v1.GetRoutePatternResponse
-	(*UpdateRoutePatternRequest)(nil),        // 45: rementor.v1.UpdateRoutePatternRequest
-	(*UpdateRoutePatternResponse)(nil),       // 46: rementor.v1.UpdateRoutePatternResponse
-	(*NormalizedRoute)(nil),                  // 47: rementor.v1.NormalizedRoute
-	(*RouteWarning)(nil),                     // 48: rementor.v1.RouteWarning
-	(*RouteConflict)(nil),                    // 49: rementor.v1.RouteConflict
-	(*RouteChange)(nil),                      // 50: rementor.v1.RouteChange
-	(*RoutePlan)(nil),                        // 51: rementor.v1.RoutePlan
-	(*RouteResolution)(nil),                  // 52: rementor.v1.RouteResolution
-	(*GetRouteRequest)(nil),                  // 53: rementor.v1.GetRouteRequest
-	(*GetRouteResponse)(nil),                 // 54: rementor.v1.GetRouteResponse
-	(*GetRouteConflictsRequest)(nil),         // 55: rementor.v1.GetRouteConflictsRequest
-	(*GetRouteConflictsResponse)(nil),        // 56: rementor.v1.GetRouteConflictsResponse
-	(*ResolveRouteRequest)(nil),              // 57: rementor.v1.ResolveRouteRequest
-	(*ResolveRouteResponse)(nil),             // 58: rementor.v1.ResolveRouteResponse
-	(*PlanRouteRequest)(nil),                 // 59: rementor.v1.PlanRouteRequest
-	(*PlanRouteResponse)(nil),                // 60: rementor.v1.PlanRouteResponse
-	(*ApplyRouteRequest)(nil),                // 61: rementor.v1.ApplyRouteRequest
-	(*ApplyRouteResponse)(nil),               // 62: rementor.v1.ApplyRouteResponse
-	(*SyncRouteRequest)(nil),                 // 63: rementor.v1.SyncRouteRequest
-	(*SyncRouteResponse)(nil),                // 64: rementor.v1.SyncRouteResponse
-	(*WatchHealthRequest)(nil),               // 65: rementor.v1.WatchHealthRequest
-	(*WatchHealthResponse)(nil),              // 66: rementor.v1.WatchHealthResponse
-	nil,                                      // 67: rementor.v1.StructuredError.MetadataEntry
-	(*timestamppb.Timestamp)(nil),            // 68: google.protobuf.Timestamp
+	(*ResolveBrowserURLRequest)(nil),         // 29: rementor.v1.ResolveBrowserURLRequest
+	(*BrowserURLResolution)(nil),             // 30: rementor.v1.BrowserURLResolution
+	(*ResolveBrowserURLResponse)(nil),        // 31: rementor.v1.ResolveBrowserURLResponse
+	(*RegisterApplicationAliasRequest)(nil),  // 32: rementor.v1.RegisterApplicationAliasRequest
+	(*RegisterApplicationAliasResponse)(nil), // 33: rementor.v1.RegisterApplicationAliasResponse
+	(*UpsertApplicationRequest)(nil),         // 34: rementor.v1.UpsertApplicationRequest
+	(*UpsertApplicationResponse)(nil),        // 35: rementor.v1.UpsertApplicationResponse
+	(*DeleteApplicationRequest)(nil),         // 36: rementor.v1.DeleteApplicationRequest
+	(*DeleteApplicationResponse)(nil),        // 37: rementor.v1.DeleteApplicationResponse
+	(*ToggleApplicationRequest)(nil),         // 38: rementor.v1.ToggleApplicationRequest
+	(*ToggleApplicationResponse)(nil),        // 39: rementor.v1.ToggleApplicationResponse
+	(*ToggleAllToRemoteRequest)(nil),         // 40: rementor.v1.ToggleAllToRemoteRequest
+	(*ToggleAllToRemoteResponse)(nil),        // 41: rementor.v1.ToggleAllToRemoteResponse
+	(*ToggleAllToLocalRequest)(nil),          // 42: rementor.v1.ToggleAllToLocalRequest
+	(*ToggleAllToLocalResponse)(nil),         // 43: rementor.v1.ToggleAllToLocalResponse
+	(*SyncWorkspaceRoutingRequest)(nil),      // 44: rementor.v1.SyncWorkspaceRoutingRequest
+	(*SyncWorkspaceRoutingResponse)(nil),     // 45: rementor.v1.SyncWorkspaceRoutingResponse
+	(*GetRoutePatternRequest)(nil),           // 46: rementor.v1.GetRoutePatternRequest
+	(*GetRoutePatternResponse)(nil),          // 47: rementor.v1.GetRoutePatternResponse
+	(*UpdateRoutePatternRequest)(nil),        // 48: rementor.v1.UpdateRoutePatternRequest
+	(*UpdateRoutePatternResponse)(nil),       // 49: rementor.v1.UpdateRoutePatternResponse
+	(*NormalizedRoute)(nil),                  // 50: rementor.v1.NormalizedRoute
+	(*RouteWarning)(nil),                     // 51: rementor.v1.RouteWarning
+	(*RouteConflict)(nil),                    // 52: rementor.v1.RouteConflict
+	(*RouteChange)(nil),                      // 53: rementor.v1.RouteChange
+	(*RoutePlan)(nil),                        // 54: rementor.v1.RoutePlan
+	(*RouteResolution)(nil),                  // 55: rementor.v1.RouteResolution
+	(*GetRouteRequest)(nil),                  // 56: rementor.v1.GetRouteRequest
+	(*GetRouteResponse)(nil),                 // 57: rementor.v1.GetRouteResponse
+	(*GetRouteConflictsRequest)(nil),         // 58: rementor.v1.GetRouteConflictsRequest
+	(*GetRouteConflictsResponse)(nil),        // 59: rementor.v1.GetRouteConflictsResponse
+	(*ResolveRouteRequest)(nil),              // 60: rementor.v1.ResolveRouteRequest
+	(*ResolveRouteResponse)(nil),             // 61: rementor.v1.ResolveRouteResponse
+	(*PlanRouteRequest)(nil),                 // 62: rementor.v1.PlanRouteRequest
+	(*PlanRouteResponse)(nil),                // 63: rementor.v1.PlanRouteResponse
+	(*ApplyRouteRequest)(nil),                // 64: rementor.v1.ApplyRouteRequest
+	(*ApplyRouteResponse)(nil),               // 65: rementor.v1.ApplyRouteResponse
+	(*SyncRouteRequest)(nil),                 // 66: rementor.v1.SyncRouteRequest
+	(*SyncRouteResponse)(nil),                // 67: rementor.v1.SyncRouteResponse
+	(*WatchHealthRequest)(nil),               // 68: rementor.v1.WatchHealthRequest
+	(*WatchHealthResponse)(nil),              // 69: rementor.v1.WatchHealthResponse
+	nil,                                      // 70: rementor.v1.StructuredError.MetadataEntry
+	(*timestamppb.Timestamp)(nil),            // 71: google.protobuf.Timestamp
 }
 var file_rementor_v1_rementor_proto_depIdxs = []int32{
 	0,   // 0: rementor.v1.RouteState.desired_mode:type_name -> rementor.v1.RouteMode
 	0,   // 1: rementor.v1.RouteState.effective_mode:type_name -> rementor.v1.RouteMode
 	5,   // 2: rementor.v1.RouteState.version:type_name -> rementor.v1.RouteVersion
-	68,  // 3: rementor.v1.RouteState.verified_at:type_name -> google.protobuf.Timestamp
+	71,  // 3: rementor.v1.RouteState.verified_at:type_name -> google.protobuf.Timestamp
 	5,   // 4: rementor.v1.OperationMetadata.route_version:type_name -> rementor.v1.RouteVersion
-	68,  // 5: rementor.v1.OperationMetadata.created_at:type_name -> google.protobuf.Timestamp
-	68,  // 6: rementor.v1.OperationMetadata.completed_at:type_name -> google.protobuf.Timestamp
+	71,  // 5: rementor.v1.OperationMetadata.created_at:type_name -> google.protobuf.Timestamp
+	71,  // 6: rementor.v1.OperationMetadata.completed_at:type_name -> google.protobuf.Timestamp
 	1,   // 7: rementor.v1.OperationMetadata.kind:type_name -> rementor.v1.RouteOperationKind
 	2,   // 8: rementor.v1.StructuredError.code:type_name -> rementor.v1.ErrorCode
-	67,  // 9: rementor.v1.StructuredError.metadata:type_name -> rementor.v1.StructuredError.MetadataEntry
+	70,  // 9: rementor.v1.StructuredError.metadata:type_name -> rementor.v1.StructuredError.MetadataEntry
 	3,   // 10: rementor.v1.Application.identity:type_name -> rementor.v1.CanonicalApplicationRef
 	4,   // 11: rementor.v1.Application.environment:type_name -> rementor.v1.WorkspaceEnvironmentRef
 	6,   // 12: rementor.v1.Application.route:type_name -> rementor.v1.RouteState
@@ -5398,112 +5780,122 @@ var file_rementor_v1_rementor_proto_depIdxs = []int32{
 	9,   // 26: rementor.v1.ListApplicationsResponse.applications:type_name -> rementor.v1.Application
 	9,   // 27: rementor.v1.GetApplicationResponse.application:type_name -> rementor.v1.Application
 	9,   // 28: rementor.v1.ResolveApplicationResponse.application:type_name -> rementor.v1.Application
-	9,   // 29: rementor.v1.RegisterApplicationAliasResponse.application:type_name -> rementor.v1.Application
-	7,   // 30: rementor.v1.RegisterApplicationAliasResponse.operation:type_name -> rementor.v1.OperationMetadata
-	12,  // 31: rementor.v1.UpsertApplicationRequest.application:type_name -> rementor.v1.ApplicationConfigInput
-	9,   // 32: rementor.v1.UpsertApplicationResponse.application:type_name -> rementor.v1.Application
-	7,   // 33: rementor.v1.UpsertApplicationResponse.operation:type_name -> rementor.v1.OperationMetadata
-	7,   // 34: rementor.v1.DeleteApplicationResponse.operation:type_name -> rementor.v1.OperationMetadata
-	9,   // 35: rementor.v1.ToggleApplicationResponse.application:type_name -> rementor.v1.Application
-	7,   // 36: rementor.v1.ToggleApplicationResponse.operation:type_name -> rementor.v1.OperationMetadata
-	7,   // 37: rementor.v1.ToggleAllToRemoteResponse.operation:type_name -> rementor.v1.OperationMetadata
-	7,   // 38: rementor.v1.ToggleAllToLocalResponse.operation:type_name -> rementor.v1.OperationMetadata
-	7,   // 39: rementor.v1.SyncWorkspaceRoutingResponse.operation:type_name -> rementor.v1.OperationMetadata
-	9,   // 40: rementor.v1.UpdateRoutePatternResponse.application:type_name -> rementor.v1.Application
-	7,   // 41: rementor.v1.UpdateRoutePatternResponse.operation:type_name -> rementor.v1.OperationMetadata
-	0,   // 42: rementor.v1.NormalizedRoute.desired_mode:type_name -> rementor.v1.RouteMode
-	0,   // 43: rementor.v1.NormalizedRoute.effective_mode:type_name -> rementor.v1.RouteMode
-	47,  // 44: rementor.v1.RouteConflict.winning_route:type_name -> rementor.v1.NormalizedRoute
-	47,  // 45: rementor.v1.RouteConflict.shadowed_route:type_name -> rementor.v1.NormalizedRoute
-	47,  // 46: rementor.v1.RouteChange.before:type_name -> rementor.v1.NormalizedRoute
-	47,  // 47: rementor.v1.RouteChange.after:type_name -> rementor.v1.NormalizedRoute
-	5,   // 48: rementor.v1.RoutePlan.base_route_version:type_name -> rementor.v1.RouteVersion
-	0,   // 49: rementor.v1.RoutePlan.desired_mode:type_name -> rementor.v1.RouteMode
-	47,  // 50: rementor.v1.RoutePlan.before_routes:type_name -> rementor.v1.NormalizedRoute
-	47,  // 51: rementor.v1.RoutePlan.after_routes:type_name -> rementor.v1.NormalizedRoute
-	50,  // 52: rementor.v1.RoutePlan.changes:type_name -> rementor.v1.RouteChange
-	48,  // 53: rementor.v1.RoutePlan.warnings:type_name -> rementor.v1.RouteWarning
-	49,  // 54: rementor.v1.RoutePlan.conflicts:type_name -> rementor.v1.RouteConflict
-	47,  // 55: rementor.v1.RouteResolution.route:type_name -> rementor.v1.NormalizedRoute
-	5,   // 56: rementor.v1.GetRouteResponse.route_version:type_name -> rementor.v1.RouteVersion
-	47,  // 57: rementor.v1.GetRouteResponse.routes:type_name -> rementor.v1.NormalizedRoute
-	48,  // 58: rementor.v1.GetRouteResponse.warnings:type_name -> rementor.v1.RouteWarning
-	49,  // 59: rementor.v1.GetRouteResponse.conflicts:type_name -> rementor.v1.RouteConflict
-	5,   // 60: rementor.v1.GetRouteConflictsResponse.route_version:type_name -> rementor.v1.RouteVersion
-	49,  // 61: rementor.v1.GetRouteConflictsResponse.conflicts:type_name -> rementor.v1.RouteConflict
-	48,  // 62: rementor.v1.GetRouteConflictsResponse.warnings:type_name -> rementor.v1.RouteWarning
-	52,  // 63: rementor.v1.ResolveRouteResponse.resolution:type_name -> rementor.v1.RouteResolution
-	0,   // 64: rementor.v1.PlanRouteRequest.desired_mode:type_name -> rementor.v1.RouteMode
-	5,   // 65: rementor.v1.PlanRouteRequest.expected_route_version:type_name -> rementor.v1.RouteVersion
-	51,  // 66: rementor.v1.PlanRouteResponse.plan:type_name -> rementor.v1.RoutePlan
-	51,  // 67: rementor.v1.ApplyRouteRequest.plan:type_name -> rementor.v1.RoutePlan
-	5,   // 68: rementor.v1.ApplyRouteRequest.expected_route_version:type_name -> rementor.v1.RouteVersion
-	0,   // 69: rementor.v1.ApplyRouteRequest.desired_mode:type_name -> rementor.v1.RouteMode
-	51,  // 70: rementor.v1.ApplyRouteResponse.plan:type_name -> rementor.v1.RoutePlan
-	47,  // 71: rementor.v1.ApplyRouteResponse.routes:type_name -> rementor.v1.NormalizedRoute
-	7,   // 72: rementor.v1.ApplyRouteResponse.operation:type_name -> rementor.v1.OperationMetadata
-	5,   // 73: rementor.v1.SyncRouteResponse.desired_route_version:type_name -> rementor.v1.RouteVersion
-	5,   // 74: rementor.v1.SyncRouteResponse.effective_route_version:type_name -> rementor.v1.RouteVersion
-	47,  // 75: rementor.v1.SyncRouteResponse.routes:type_name -> rementor.v1.NormalizedRoute
-	48,  // 76: rementor.v1.SyncRouteResponse.warnings:type_name -> rementor.v1.RouteWarning
-	7,   // 77: rementor.v1.SyncRouteResponse.operation:type_name -> rementor.v1.OperationMetadata
-	68,  // 78: rementor.v1.WatchHealthResponse.local_checked_at:type_name -> google.protobuf.Timestamp
-	68,  // 79: rementor.v1.WatchHealthResponse.remote_checked_at:type_name -> google.protobuf.Timestamp
-	3,   // 80: rementor.v1.WatchHealthResponse.identity:type_name -> rementor.v1.CanonicalApplicationRef
-	4,   // 81: rementor.v1.WatchHealthResponse.environment:type_name -> rementor.v1.WorkspaceEnvironmentRef
-	13,  // 82: rementor.v1.ControlPlaneService.ListWorkspaces:input_type -> rementor.v1.ListWorkspacesRequest
-	15,  // 83: rementor.v1.ControlPlaneService.GetWorkspace:input_type -> rementor.v1.GetWorkspaceRequest
-	17,  // 84: rementor.v1.ControlPlaneService.CreateWorkspace:input_type -> rementor.v1.CreateWorkspaceRequest
-	19,  // 85: rementor.v1.ControlPlaneService.UpdateWorkspace:input_type -> rementor.v1.UpdateWorkspaceRequest
-	21,  // 86: rementor.v1.ControlPlaneService.DeleteWorkspace:input_type -> rementor.v1.DeleteWorkspaceRequest
-	23,  // 87: rementor.v1.ControlPlaneService.ListApplications:input_type -> rementor.v1.ListApplicationsRequest
-	25,  // 88: rementor.v1.ControlPlaneService.GetApplication:input_type -> rementor.v1.GetApplicationRequest
-	27,  // 89: rementor.v1.ControlPlaneService.ResolveApplication:input_type -> rementor.v1.ResolveApplicationRequest
-	29,  // 90: rementor.v1.ControlPlaneService.RegisterApplicationAlias:input_type -> rementor.v1.RegisterApplicationAliasRequest
-	31,  // 91: rementor.v1.ControlPlaneService.UpsertApplication:input_type -> rementor.v1.UpsertApplicationRequest
-	33,  // 92: rementor.v1.ControlPlaneService.DeleteApplication:input_type -> rementor.v1.DeleteApplicationRequest
-	35,  // 93: rementor.v1.ControlPlaneService.ToggleApplication:input_type -> rementor.v1.ToggleApplicationRequest
-	37,  // 94: rementor.v1.ControlPlaneService.ToggleAllToRemote:input_type -> rementor.v1.ToggleAllToRemoteRequest
-	39,  // 95: rementor.v1.ControlPlaneService.ToggleAllToLocal:input_type -> rementor.v1.ToggleAllToLocalRequest
-	41,  // 96: rementor.v1.ControlPlaneService.SyncWorkspaceRouting:input_type -> rementor.v1.SyncWorkspaceRoutingRequest
-	43,  // 97: rementor.v1.ControlPlaneService.GetRoutePattern:input_type -> rementor.v1.GetRoutePatternRequest
-	45,  // 98: rementor.v1.ControlPlaneService.UpdateRoutePattern:input_type -> rementor.v1.UpdateRoutePatternRequest
-	53,  // 99: rementor.v1.ControlPlaneService.GetRoute:input_type -> rementor.v1.GetRouteRequest
-	55,  // 100: rementor.v1.ControlPlaneService.GetRouteConflicts:input_type -> rementor.v1.GetRouteConflictsRequest
-	57,  // 101: rementor.v1.ControlPlaneService.ResolveRoute:input_type -> rementor.v1.ResolveRouteRequest
-	59,  // 102: rementor.v1.ControlPlaneService.PlanRoute:input_type -> rementor.v1.PlanRouteRequest
-	61,  // 103: rementor.v1.ControlPlaneService.ApplyRoute:input_type -> rementor.v1.ApplyRouteRequest
-	63,  // 104: rementor.v1.ControlPlaneService.SyncRoute:input_type -> rementor.v1.SyncRouteRequest
-	65,  // 105: rementor.v1.ControlPlaneService.WatchHealth:input_type -> rementor.v1.WatchHealthRequest
-	14,  // 106: rementor.v1.ControlPlaneService.ListWorkspaces:output_type -> rementor.v1.ListWorkspacesResponse
-	16,  // 107: rementor.v1.ControlPlaneService.GetWorkspace:output_type -> rementor.v1.GetWorkspaceResponse
-	18,  // 108: rementor.v1.ControlPlaneService.CreateWorkspace:output_type -> rementor.v1.CreateWorkspaceResponse
-	20,  // 109: rementor.v1.ControlPlaneService.UpdateWorkspace:output_type -> rementor.v1.UpdateWorkspaceResponse
-	22,  // 110: rementor.v1.ControlPlaneService.DeleteWorkspace:output_type -> rementor.v1.DeleteWorkspaceResponse
-	24,  // 111: rementor.v1.ControlPlaneService.ListApplications:output_type -> rementor.v1.ListApplicationsResponse
-	26,  // 112: rementor.v1.ControlPlaneService.GetApplication:output_type -> rementor.v1.GetApplicationResponse
-	28,  // 113: rementor.v1.ControlPlaneService.ResolveApplication:output_type -> rementor.v1.ResolveApplicationResponse
-	30,  // 114: rementor.v1.ControlPlaneService.RegisterApplicationAlias:output_type -> rementor.v1.RegisterApplicationAliasResponse
-	32,  // 115: rementor.v1.ControlPlaneService.UpsertApplication:output_type -> rementor.v1.UpsertApplicationResponse
-	34,  // 116: rementor.v1.ControlPlaneService.DeleteApplication:output_type -> rementor.v1.DeleteApplicationResponse
-	36,  // 117: rementor.v1.ControlPlaneService.ToggleApplication:output_type -> rementor.v1.ToggleApplicationResponse
-	38,  // 118: rementor.v1.ControlPlaneService.ToggleAllToRemote:output_type -> rementor.v1.ToggleAllToRemoteResponse
-	40,  // 119: rementor.v1.ControlPlaneService.ToggleAllToLocal:output_type -> rementor.v1.ToggleAllToLocalResponse
-	42,  // 120: rementor.v1.ControlPlaneService.SyncWorkspaceRouting:output_type -> rementor.v1.SyncWorkspaceRoutingResponse
-	44,  // 121: rementor.v1.ControlPlaneService.GetRoutePattern:output_type -> rementor.v1.GetRoutePatternResponse
-	46,  // 122: rementor.v1.ControlPlaneService.UpdateRoutePattern:output_type -> rementor.v1.UpdateRoutePatternResponse
-	54,  // 123: rementor.v1.ControlPlaneService.GetRoute:output_type -> rementor.v1.GetRouteResponse
-	56,  // 124: rementor.v1.ControlPlaneService.GetRouteConflicts:output_type -> rementor.v1.GetRouteConflictsResponse
-	58,  // 125: rementor.v1.ControlPlaneService.ResolveRoute:output_type -> rementor.v1.ResolveRouteResponse
-	60,  // 126: rementor.v1.ControlPlaneService.PlanRoute:output_type -> rementor.v1.PlanRouteResponse
-	62,  // 127: rementor.v1.ControlPlaneService.ApplyRoute:output_type -> rementor.v1.ApplyRouteResponse
-	64,  // 128: rementor.v1.ControlPlaneService.SyncRoute:output_type -> rementor.v1.SyncRouteResponse
-	66,  // 129: rementor.v1.ControlPlaneService.WatchHealth:output_type -> rementor.v1.WatchHealthResponse
-	106, // [106:130] is the sub-list for method output_type
-	82,  // [82:106] is the sub-list for method input_type
-	82,  // [82:82] is the sub-list for extension type_name
-	82,  // [82:82] is the sub-list for extension extendee
-	0,   // [0:82] is the sub-list for field type_name
+	0,   // 29: rementor.v1.BrowserURLResolution.desired_mode:type_name -> rementor.v1.RouteMode
+	0,   // 30: rementor.v1.BrowserURLResolution.effective_mode:type_name -> rementor.v1.RouteMode
+	5,   // 31: rementor.v1.BrowserURLResolution.route_version:type_name -> rementor.v1.RouteVersion
+	6,   // 32: rementor.v1.BrowserURLResolution.route:type_name -> rementor.v1.RouteState
+	3,   // 33: rementor.v1.BrowserURLResolution.identity:type_name -> rementor.v1.CanonicalApplicationRef
+	4,   // 34: rementor.v1.BrowserURLResolution.environment_ref:type_name -> rementor.v1.WorkspaceEnvironmentRef
+	7,   // 35: rementor.v1.BrowserURLResolution.operation:type_name -> rementor.v1.OperationMetadata
+	30,  // 36: rementor.v1.ResolveBrowserURLResponse.resolution:type_name -> rementor.v1.BrowserURLResolution
+	9,   // 37: rementor.v1.RegisterApplicationAliasResponse.application:type_name -> rementor.v1.Application
+	7,   // 38: rementor.v1.RegisterApplicationAliasResponse.operation:type_name -> rementor.v1.OperationMetadata
+	12,  // 39: rementor.v1.UpsertApplicationRequest.application:type_name -> rementor.v1.ApplicationConfigInput
+	9,   // 40: rementor.v1.UpsertApplicationResponse.application:type_name -> rementor.v1.Application
+	7,   // 41: rementor.v1.UpsertApplicationResponse.operation:type_name -> rementor.v1.OperationMetadata
+	7,   // 42: rementor.v1.DeleteApplicationResponse.operation:type_name -> rementor.v1.OperationMetadata
+	9,   // 43: rementor.v1.ToggleApplicationResponse.application:type_name -> rementor.v1.Application
+	7,   // 44: rementor.v1.ToggleApplicationResponse.operation:type_name -> rementor.v1.OperationMetadata
+	7,   // 45: rementor.v1.ToggleAllToRemoteResponse.operation:type_name -> rementor.v1.OperationMetadata
+	7,   // 46: rementor.v1.ToggleAllToLocalResponse.operation:type_name -> rementor.v1.OperationMetadata
+	7,   // 47: rementor.v1.SyncWorkspaceRoutingResponse.operation:type_name -> rementor.v1.OperationMetadata
+	9,   // 48: rementor.v1.UpdateRoutePatternResponse.application:type_name -> rementor.v1.Application
+	7,   // 49: rementor.v1.UpdateRoutePatternResponse.operation:type_name -> rementor.v1.OperationMetadata
+	0,   // 50: rementor.v1.NormalizedRoute.desired_mode:type_name -> rementor.v1.RouteMode
+	0,   // 51: rementor.v1.NormalizedRoute.effective_mode:type_name -> rementor.v1.RouteMode
+	50,  // 52: rementor.v1.RouteConflict.winning_route:type_name -> rementor.v1.NormalizedRoute
+	50,  // 53: rementor.v1.RouteConflict.shadowed_route:type_name -> rementor.v1.NormalizedRoute
+	50,  // 54: rementor.v1.RouteChange.before:type_name -> rementor.v1.NormalizedRoute
+	50,  // 55: rementor.v1.RouteChange.after:type_name -> rementor.v1.NormalizedRoute
+	5,   // 56: rementor.v1.RoutePlan.base_route_version:type_name -> rementor.v1.RouteVersion
+	0,   // 57: rementor.v1.RoutePlan.desired_mode:type_name -> rementor.v1.RouteMode
+	50,  // 58: rementor.v1.RoutePlan.before_routes:type_name -> rementor.v1.NormalizedRoute
+	50,  // 59: rementor.v1.RoutePlan.after_routes:type_name -> rementor.v1.NormalizedRoute
+	53,  // 60: rementor.v1.RoutePlan.changes:type_name -> rementor.v1.RouteChange
+	51,  // 61: rementor.v1.RoutePlan.warnings:type_name -> rementor.v1.RouteWarning
+	52,  // 62: rementor.v1.RoutePlan.conflicts:type_name -> rementor.v1.RouteConflict
+	50,  // 63: rementor.v1.RouteResolution.route:type_name -> rementor.v1.NormalizedRoute
+	5,   // 64: rementor.v1.GetRouteResponse.route_version:type_name -> rementor.v1.RouteVersion
+	50,  // 65: rementor.v1.GetRouteResponse.routes:type_name -> rementor.v1.NormalizedRoute
+	51,  // 66: rementor.v1.GetRouteResponse.warnings:type_name -> rementor.v1.RouteWarning
+	52,  // 67: rementor.v1.GetRouteResponse.conflicts:type_name -> rementor.v1.RouteConflict
+	5,   // 68: rementor.v1.GetRouteConflictsResponse.route_version:type_name -> rementor.v1.RouteVersion
+	52,  // 69: rementor.v1.GetRouteConflictsResponse.conflicts:type_name -> rementor.v1.RouteConflict
+	51,  // 70: rementor.v1.GetRouteConflictsResponse.warnings:type_name -> rementor.v1.RouteWarning
+	55,  // 71: rementor.v1.ResolveRouteResponse.resolution:type_name -> rementor.v1.RouteResolution
+	0,   // 72: rementor.v1.PlanRouteRequest.desired_mode:type_name -> rementor.v1.RouteMode
+	5,   // 73: rementor.v1.PlanRouteRequest.expected_route_version:type_name -> rementor.v1.RouteVersion
+	54,  // 74: rementor.v1.PlanRouteResponse.plan:type_name -> rementor.v1.RoutePlan
+	54,  // 75: rementor.v1.ApplyRouteRequest.plan:type_name -> rementor.v1.RoutePlan
+	5,   // 76: rementor.v1.ApplyRouteRequest.expected_route_version:type_name -> rementor.v1.RouteVersion
+	0,   // 77: rementor.v1.ApplyRouteRequest.desired_mode:type_name -> rementor.v1.RouteMode
+	54,  // 78: rementor.v1.ApplyRouteResponse.plan:type_name -> rementor.v1.RoutePlan
+	50,  // 79: rementor.v1.ApplyRouteResponse.routes:type_name -> rementor.v1.NormalizedRoute
+	7,   // 80: rementor.v1.ApplyRouteResponse.operation:type_name -> rementor.v1.OperationMetadata
+	5,   // 81: rementor.v1.SyncRouteResponse.desired_route_version:type_name -> rementor.v1.RouteVersion
+	5,   // 82: rementor.v1.SyncRouteResponse.effective_route_version:type_name -> rementor.v1.RouteVersion
+	50,  // 83: rementor.v1.SyncRouteResponse.routes:type_name -> rementor.v1.NormalizedRoute
+	51,  // 84: rementor.v1.SyncRouteResponse.warnings:type_name -> rementor.v1.RouteWarning
+	7,   // 85: rementor.v1.SyncRouteResponse.operation:type_name -> rementor.v1.OperationMetadata
+	71,  // 86: rementor.v1.WatchHealthResponse.local_checked_at:type_name -> google.protobuf.Timestamp
+	71,  // 87: rementor.v1.WatchHealthResponse.remote_checked_at:type_name -> google.protobuf.Timestamp
+	3,   // 88: rementor.v1.WatchHealthResponse.identity:type_name -> rementor.v1.CanonicalApplicationRef
+	4,   // 89: rementor.v1.WatchHealthResponse.environment:type_name -> rementor.v1.WorkspaceEnvironmentRef
+	13,  // 90: rementor.v1.ControlPlaneService.ListWorkspaces:input_type -> rementor.v1.ListWorkspacesRequest
+	15,  // 91: rementor.v1.ControlPlaneService.GetWorkspace:input_type -> rementor.v1.GetWorkspaceRequest
+	17,  // 92: rementor.v1.ControlPlaneService.CreateWorkspace:input_type -> rementor.v1.CreateWorkspaceRequest
+	19,  // 93: rementor.v1.ControlPlaneService.UpdateWorkspace:input_type -> rementor.v1.UpdateWorkspaceRequest
+	21,  // 94: rementor.v1.ControlPlaneService.DeleteWorkspace:input_type -> rementor.v1.DeleteWorkspaceRequest
+	23,  // 95: rementor.v1.ControlPlaneService.ListApplications:input_type -> rementor.v1.ListApplicationsRequest
+	25,  // 96: rementor.v1.ControlPlaneService.GetApplication:input_type -> rementor.v1.GetApplicationRequest
+	27,  // 97: rementor.v1.ControlPlaneService.ResolveApplication:input_type -> rementor.v1.ResolveApplicationRequest
+	29,  // 98: rementor.v1.ControlPlaneService.ResolveBrowserURL:input_type -> rementor.v1.ResolveBrowserURLRequest
+	32,  // 99: rementor.v1.ControlPlaneService.RegisterApplicationAlias:input_type -> rementor.v1.RegisterApplicationAliasRequest
+	34,  // 100: rementor.v1.ControlPlaneService.UpsertApplication:input_type -> rementor.v1.UpsertApplicationRequest
+	36,  // 101: rementor.v1.ControlPlaneService.DeleteApplication:input_type -> rementor.v1.DeleteApplicationRequest
+	38,  // 102: rementor.v1.ControlPlaneService.ToggleApplication:input_type -> rementor.v1.ToggleApplicationRequest
+	40,  // 103: rementor.v1.ControlPlaneService.ToggleAllToRemote:input_type -> rementor.v1.ToggleAllToRemoteRequest
+	42,  // 104: rementor.v1.ControlPlaneService.ToggleAllToLocal:input_type -> rementor.v1.ToggleAllToLocalRequest
+	44,  // 105: rementor.v1.ControlPlaneService.SyncWorkspaceRouting:input_type -> rementor.v1.SyncWorkspaceRoutingRequest
+	46,  // 106: rementor.v1.ControlPlaneService.GetRoutePattern:input_type -> rementor.v1.GetRoutePatternRequest
+	48,  // 107: rementor.v1.ControlPlaneService.UpdateRoutePattern:input_type -> rementor.v1.UpdateRoutePatternRequest
+	56,  // 108: rementor.v1.ControlPlaneService.GetRoute:input_type -> rementor.v1.GetRouteRequest
+	58,  // 109: rementor.v1.ControlPlaneService.GetRouteConflicts:input_type -> rementor.v1.GetRouteConflictsRequest
+	60,  // 110: rementor.v1.ControlPlaneService.ResolveRoute:input_type -> rementor.v1.ResolveRouteRequest
+	62,  // 111: rementor.v1.ControlPlaneService.PlanRoute:input_type -> rementor.v1.PlanRouteRequest
+	64,  // 112: rementor.v1.ControlPlaneService.ApplyRoute:input_type -> rementor.v1.ApplyRouteRequest
+	66,  // 113: rementor.v1.ControlPlaneService.SyncRoute:input_type -> rementor.v1.SyncRouteRequest
+	68,  // 114: rementor.v1.ControlPlaneService.WatchHealth:input_type -> rementor.v1.WatchHealthRequest
+	14,  // 115: rementor.v1.ControlPlaneService.ListWorkspaces:output_type -> rementor.v1.ListWorkspacesResponse
+	16,  // 116: rementor.v1.ControlPlaneService.GetWorkspace:output_type -> rementor.v1.GetWorkspaceResponse
+	18,  // 117: rementor.v1.ControlPlaneService.CreateWorkspace:output_type -> rementor.v1.CreateWorkspaceResponse
+	20,  // 118: rementor.v1.ControlPlaneService.UpdateWorkspace:output_type -> rementor.v1.UpdateWorkspaceResponse
+	22,  // 119: rementor.v1.ControlPlaneService.DeleteWorkspace:output_type -> rementor.v1.DeleteWorkspaceResponse
+	24,  // 120: rementor.v1.ControlPlaneService.ListApplications:output_type -> rementor.v1.ListApplicationsResponse
+	26,  // 121: rementor.v1.ControlPlaneService.GetApplication:output_type -> rementor.v1.GetApplicationResponse
+	28,  // 122: rementor.v1.ControlPlaneService.ResolveApplication:output_type -> rementor.v1.ResolveApplicationResponse
+	31,  // 123: rementor.v1.ControlPlaneService.ResolveBrowserURL:output_type -> rementor.v1.ResolveBrowserURLResponse
+	33,  // 124: rementor.v1.ControlPlaneService.RegisterApplicationAlias:output_type -> rementor.v1.RegisterApplicationAliasResponse
+	35,  // 125: rementor.v1.ControlPlaneService.UpsertApplication:output_type -> rementor.v1.UpsertApplicationResponse
+	37,  // 126: rementor.v1.ControlPlaneService.DeleteApplication:output_type -> rementor.v1.DeleteApplicationResponse
+	39,  // 127: rementor.v1.ControlPlaneService.ToggleApplication:output_type -> rementor.v1.ToggleApplicationResponse
+	41,  // 128: rementor.v1.ControlPlaneService.ToggleAllToRemote:output_type -> rementor.v1.ToggleAllToRemoteResponse
+	43,  // 129: rementor.v1.ControlPlaneService.ToggleAllToLocal:output_type -> rementor.v1.ToggleAllToLocalResponse
+	45,  // 130: rementor.v1.ControlPlaneService.SyncWorkspaceRouting:output_type -> rementor.v1.SyncWorkspaceRoutingResponse
+	47,  // 131: rementor.v1.ControlPlaneService.GetRoutePattern:output_type -> rementor.v1.GetRoutePatternResponse
+	49,  // 132: rementor.v1.ControlPlaneService.UpdateRoutePattern:output_type -> rementor.v1.UpdateRoutePatternResponse
+	57,  // 133: rementor.v1.ControlPlaneService.GetRoute:output_type -> rementor.v1.GetRouteResponse
+	59,  // 134: rementor.v1.ControlPlaneService.GetRouteConflicts:output_type -> rementor.v1.GetRouteConflictsResponse
+	61,  // 135: rementor.v1.ControlPlaneService.ResolveRoute:output_type -> rementor.v1.ResolveRouteResponse
+	63,  // 136: rementor.v1.ControlPlaneService.PlanRoute:output_type -> rementor.v1.PlanRouteResponse
+	65,  // 137: rementor.v1.ControlPlaneService.ApplyRoute:output_type -> rementor.v1.ApplyRouteResponse
+	67,  // 138: rementor.v1.ControlPlaneService.SyncRoute:output_type -> rementor.v1.SyncRouteResponse
+	69,  // 139: rementor.v1.ControlPlaneService.WatchHealth:output_type -> rementor.v1.WatchHealthResponse
+	115, // [115:140] is the sub-list for method output_type
+	90,  // [90:115] is the sub-list for method input_type
+	90,  // [90:90] is the sub-list for extension type_name
+	90,  // [90:90] is the sub-list for extension extendee
+	0,   // [0:90] is the sub-list for field type_name
 }
 
 func init() { file_rementor_v1_rementor_proto_init() }
@@ -5513,18 +5905,18 @@ func file_rementor_v1_rementor_proto_init() {
 	}
 	file_rementor_v1_rementor_proto_msgTypes[6].OneofWrappers = []any{}
 	file_rementor_v1_rementor_proto_msgTypes[7].OneofWrappers = []any{}
-	file_rementor_v1_rementor_proto_msgTypes[41].OneofWrappers = []any{}
-	file_rementor_v1_rementor_proto_msgTypes[48].OneofWrappers = []any{}
-	file_rementor_v1_rementor_proto_msgTypes[56].OneofWrappers = []any{}
-	file_rementor_v1_rementor_proto_msgTypes[58].OneofWrappers = []any{}
-	file_rementor_v1_rementor_proto_msgTypes[60].OneofWrappers = []any{}
+	file_rementor_v1_rementor_proto_msgTypes[44].OneofWrappers = []any{}
+	file_rementor_v1_rementor_proto_msgTypes[51].OneofWrappers = []any{}
+	file_rementor_v1_rementor_proto_msgTypes[59].OneofWrappers = []any{}
+	file_rementor_v1_rementor_proto_msgTypes[61].OneofWrappers = []any{}
+	file_rementor_v1_rementor_proto_msgTypes[63].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_rementor_v1_rementor_proto_rawDesc), len(file_rementor_v1_rementor_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   65,
+			NumMessages:   68,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

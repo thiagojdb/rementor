@@ -650,6 +650,9 @@ func classifyRegistryError(err error) connect.Code {
 	if errors.Is(err, models.ErrAmbiguousApplication) {
 		return connect.CodeFailedPrecondition
 	}
+	if errors.Is(err, services.ErrBrowserURLBinding) {
+		return connect.CodeFailedPrecondition
+	}
 	message := strings.ToLower(err.Error())
 	if strings.Contains(message, "workspace not found") || strings.Contains(message, "application not found") {
 		return connect.CodeNotFound

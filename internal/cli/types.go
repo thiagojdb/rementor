@@ -253,6 +253,41 @@ type RouteResolutionDTO struct {
 	PrecedenceReason string              `json:"precedenceReason"`
 }
 
+// BrowserURLResolutionDTO is the stable browser-entry result shared by the
+// CLI and MCP adapters. Target fields describe the current route destination
+// and intentionally do not replace URL/BrowserURL.
+type BrowserURLResolutionDTO struct {
+	WorkspaceID     string                     `json:"workspaceId"`
+	Environment     string                     `json:"environment"`
+	ApplicationRef  string                     `json:"applicationRef"`
+	CanonicalAppID  string                     `json:"appId"`
+	ServiceID       string                     `json:"serviceId,omitempty"`
+	Repository      string                     `json:"repository,omitempty"`
+	PublicHost      string                     `json:"publicHost"`
+	PublicPath      string                     `json:"publicPath"`
+	URL             string                     `json:"url"`
+	BrowserURL      string                     `json:"browserUrl"`
+	Target          string                     `json:"target,omitempty"`
+	LocalTarget     string                     `json:"localTarget,omitempty"`
+	RemoteTarget    string                     `json:"remoteTarget,omitempty"`
+	DesiredMode     string                     `json:"desiredMode"`
+	EffectiveMode   string                     `json:"effectiveMode"`
+	RouteVersion    uint64                     `json:"routeVersion"`
+	OperationID     string                     `json:"operationId,omitempty"`
+	CorrelationID   string                     `json:"correlationId,omitempty"`
+	Route           *NormalizedRouteDTO        `json:"route,omitempty"`
+	RouteState      *RouteStateDTO             `json:"routeState,omitempty"`
+	Identity        CanonicalApplicationRefDTO `json:"identity"`
+	EnvironmentRef  WorkspaceEnvironmentRefDTO `json:"environmentRef"`
+	Operation       *OperationMetadataDTO      `json:"operation,omitempty"`
+	Precedence      int                        `json:"precedence"`
+	MatchingPattern string                     `json:"matchingPattern,omitempty"`
+}
+
+// URLResolutionDTO is retained as a concise alias for callers that use the
+// command-oriented URL terminology.
+type URLResolutionDTO = BrowserURLResolutionDTO
+
 type RouteApplyResponse struct {
 	Changed            bool                  `json:"changed"`
 	Plan               RoutePlanDTO          `json:"plan"`

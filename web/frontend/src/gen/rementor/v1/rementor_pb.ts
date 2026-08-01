@@ -1623,6 +1623,272 @@ export class ResolveApplicationResponse extends Message<ResolveApplicationRespon
 }
 
 /**
+ * @generated from message rementor.v1.ResolveBrowserURLRequest
+ */
+export class ResolveBrowserURLRequest extends Message<ResolveBrowserURLRequest> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  /**
+   * @generated from field: string application_ref = 2;
+   */
+  applicationRef = "";
+
+  /**
+   * @generated from field: string correlation_id = 3;
+   */
+  correlationId = "";
+
+  constructor(data?: PartialMessage<ResolveBrowserURLRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.ResolveBrowserURLRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "application_ref", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "correlation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ResolveBrowserURLRequest {
+    return new ResolveBrowserURLRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ResolveBrowserURLRequest {
+    return new ResolveBrowserURLRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ResolveBrowserURLRequest {
+    return new ResolveBrowserURLRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ResolveBrowserURLRequest | PlainMessage<ResolveBrowserURLRequest> | undefined, b: ResolveBrowserURLRequest | PlainMessage<ResolveBrowserURLRequest> | undefined): boolean {
+    return proto3.util.equals(ResolveBrowserURLRequest, a, b);
+  }
+}
+
+/**
+ * BrowserURLResolution is the stable public entry point for an application.
+ * The URL is deliberately independent from target/local_target/remote_target:
+ * toggling a route changes where the proxy sends traffic, not where a browser
+ * should open the application.
+ *
+ * @generated from message rementor.v1.BrowserURLResolution
+ */
+export class BrowserURLResolution extends Message<BrowserURLResolution> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  /**
+   * @generated from field: string environment = 2;
+   */
+  environment = "";
+
+  /**
+   * @generated from field: string application_ref = 3;
+   */
+  applicationRef = "";
+
+  /**
+   * @generated from field: string canonical_app_id = 4;
+   */
+  canonicalAppId = "";
+
+  /**
+   * @generated from field: string service_id = 5;
+   */
+  serviceId = "";
+
+  /**
+   * @generated from field: string repository = 6;
+   */
+  repository = "";
+
+  /**
+   * @generated from field: string public_host = 7;
+   */
+  publicHost = "";
+
+  /**
+   * @generated from field: string public_path = 8;
+   */
+  publicPath = "";
+
+  /**
+   * @generated from field: string url = 9;
+   */
+  url = "";
+
+  /**
+   * @generated from field: string browser_url = 10;
+   */
+  browserUrl = "";
+
+  /**
+   * @generated from field: string target = 11;
+   */
+  target = "";
+
+  /**
+   * @generated from field: string local_target = 12;
+   */
+  localTarget = "";
+
+  /**
+   * @generated from field: string remote_target = 13;
+   */
+  remoteTarget = "";
+
+  /**
+   * @generated from field: rementor.v1.RouteMode desired_mode = 14;
+   */
+  desiredMode = RouteMode.UNSPECIFIED;
+
+  /**
+   * @generated from field: rementor.v1.RouteMode effective_mode = 15;
+   */
+  effectiveMode = RouteMode.UNSPECIFIED;
+
+  /**
+   * @generated from field: rementor.v1.RouteVersion route_version = 16;
+   */
+  routeVersion?: RouteVersion;
+
+  /**
+   * @generated from field: string operation_id = 17;
+   */
+  operationId = "";
+
+  /**
+   * @generated from field: string correlation_id = 18;
+   */
+  correlationId = "";
+
+  /**
+   * @generated from field: rementor.v1.RouteState route = 19;
+   */
+  route?: RouteState;
+
+  /**
+   * @generated from field: rementor.v1.CanonicalApplicationRef identity = 20;
+   */
+  identity?: CanonicalApplicationRef;
+
+  /**
+   * @generated from field: rementor.v1.WorkspaceEnvironmentRef environment_ref = 21;
+   */
+  environmentRef?: WorkspaceEnvironmentRef;
+
+  /**
+   * @generated from field: rementor.v1.OperationMetadata operation = 22;
+   */
+  operation?: OperationMetadata;
+
+  /**
+   * @generated from field: int32 precedence = 23;
+   */
+  precedence = 0;
+
+  /**
+   * @generated from field: string matching_pattern = 24;
+   */
+  matchingPattern = "";
+
+  constructor(data?: PartialMessage<BrowserURLResolution>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.BrowserURLResolution";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "environment", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "application_ref", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "canonical_app_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "service_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "repository", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "public_host", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 8, name: "public_path", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 9, name: "url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 10, name: "browser_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 11, name: "target", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 12, name: "local_target", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 13, name: "remote_target", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 14, name: "desired_mode", kind: "enum", T: proto3.getEnumType(RouteMode) },
+    { no: 15, name: "effective_mode", kind: "enum", T: proto3.getEnumType(RouteMode) },
+    { no: 16, name: "route_version", kind: "message", T: RouteVersion },
+    { no: 17, name: "operation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 18, name: "correlation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 19, name: "route", kind: "message", T: RouteState },
+    { no: 20, name: "identity", kind: "message", T: CanonicalApplicationRef },
+    { no: 21, name: "environment_ref", kind: "message", T: WorkspaceEnvironmentRef },
+    { no: 22, name: "operation", kind: "message", T: OperationMetadata },
+    { no: 23, name: "precedence", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 24, name: "matching_pattern", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): BrowserURLResolution {
+    return new BrowserURLResolution().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): BrowserURLResolution {
+    return new BrowserURLResolution().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): BrowserURLResolution {
+    return new BrowserURLResolution().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: BrowserURLResolution | PlainMessage<BrowserURLResolution> | undefined, b: BrowserURLResolution | PlainMessage<BrowserURLResolution> | undefined): boolean {
+    return proto3.util.equals(BrowserURLResolution, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.ResolveBrowserURLResponse
+ */
+export class ResolveBrowserURLResponse extends Message<ResolveBrowserURLResponse> {
+  /**
+   * @generated from field: rementor.v1.BrowserURLResolution resolution = 1;
+   */
+  resolution?: BrowserURLResolution;
+
+  constructor(data?: PartialMessage<ResolveBrowserURLResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.ResolveBrowserURLResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "resolution", kind: "message", T: BrowserURLResolution },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ResolveBrowserURLResponse {
+    return new ResolveBrowserURLResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ResolveBrowserURLResponse {
+    return new ResolveBrowserURLResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ResolveBrowserURLResponse {
+    return new ResolveBrowserURLResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ResolveBrowserURLResponse | PlainMessage<ResolveBrowserURLResponse> | undefined, b: ResolveBrowserURLResponse | PlainMessage<ResolveBrowserURLResponse> | undefined): boolean {
+    return proto3.util.equals(ResolveBrowserURLResponse, a, b);
+  }
+}
+
+/**
  * @generated from message rementor.v1.RegisterApplicationAliasRequest
  */
 export class RegisterApplicationAliasRequest extends Message<RegisterApplicationAliasRequest> {

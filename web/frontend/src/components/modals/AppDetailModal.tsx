@@ -1,5 +1,6 @@
-import { Component, createSignal, Show } from 'solid-js'
+import { Component, createResource, createSignal, Show } from 'solid-js'
 import type { ApplicationDTO, WorkspaceDTO } from '../../api/types'
+import { resolveBrowserURL } from '../../api/client'
 import Modal from '../ui/Modal'
 import StatusDot from '../ui/StatusDot'
 import RoutePatternForm from './RoutePatternForm'
@@ -12,6 +13,10 @@ interface AppDetailModalProps {
 
 const AppDetailModal: Component<AppDetailModalProps> = (props) => {
   const [showRoutePattern, setShowRoutePattern] = createSignal(false)
+  const [browserURL] = createResource(
+    () => [props.workspace.id, props.app.appId || props.app.id] as const,
+    ([workspaceID, appRef]) => resolveBrowserURL(workspaceID, appRef),
+  )
 
   const sectionStyle = {
     'background-color': 'var(--bg-primary)',
@@ -88,6 +93,16 @@ const AppDetailModal: Component<AppDetailModalProps> = (props) => {
               <span class="font-mono px-2 py-0.5 rounded text-xs" style={valueStyle}>{props.app.routePattern}</span>
             </div>
           )}
+          <Show when={browserURL()?.url}>
+            {(url) => (
+              <div class="flex items-center justify-between py-2">
+                <span class="text-sm" style={labelStyle}>Browser URL</span>
+                <a class="font-mono px-2 py-0.5 rounded text-xs" style={valueStyle} href={url()} target="_blank" rel="noreferrer">
+                  {url()}
+                </a>
+              </div>
+            )}
+          </Show>
         </div>
 
         {/* Actions section */}
