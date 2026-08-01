@@ -53,9 +53,9 @@ func routeGet(client *Client, jsonOutput bool, args []string) {
 	}
 	fmt.Printf("workspace %q route version %d (%d routes)\n", wsID, result.RouteVersion, len(result.Routes))
 	w := NewTabWriter()
-	fmt.Fprintln(w, "HOST\tPATTERN\tAPP\tMODE\tTARGET\tPRECEDENCE")
+	fmt.Fprintln(w, "HOST\tPATTERN\tAPP\tDESIRED\tEFFECTIVE\tTARGET\tPROXY\tVERIFY\tPRECEDENCE")
 	for _, route := range result.Routes {
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%d\n", route.PublicHost, route.Pattern, route.CanonicalAppID, route.DesiredMode, route.Target, route.Precedence)
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\n", route.PublicHost, route.Pattern, route.CanonicalAppID, route.DesiredMode, route.EffectiveMode, route.Target, route.ProxyHealth, route.VerificationStatus, route.Precedence)
 	}
 	w.Flush()
 	if len(result.Warnings) > 0 || len(result.Conflicts) > 0 {
@@ -89,7 +89,11 @@ func routeResolve(client *Client, jsonOutput bool, args []string) {
 		PrintJSON(result)
 		return
 	}
-	fmt.Printf("%s%s -> %s (%s, precedence %d)\n", result.Host, result.Path, result.Target, result.MatchingPattern, result.Precedence)
+	desired, effective, proxy, fallback := "unknown", "unknown", "unknown", false
+	if result.Route != nil {
+		desired, effective, proxy, fallback = result.Route.DesiredMode, result.Route.EffectiveMode, result.Route.ProxyHealth, result.Route.RemoteFallback
+	}
+	fmt.Printf("%s%s -> %s (%s, desired %s, effective %s, proxy %s, fallback %t, precedence %d)\n", result.Host, result.Path, result.Target, result.MatchingPattern, desired, effective, proxy, fallback, result.Precedence)
 }
 
 func routePlan(client *Client, jsonOutput bool, args []string) {

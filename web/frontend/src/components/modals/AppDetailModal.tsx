@@ -1,5 +1,5 @@
 import { Component, createSignal, Show } from 'solid-js'
-import type { ApplicationDTO, WorkspaceDTO } from '../../api/types'
+import { routeModeLabel, routeTimestampLabel, type ApplicationDTO, type WorkspaceDTO } from '../../api/types'
 import Modal from '../ui/Modal'
 import StatusDot from '../ui/StatusDot'
 import RoutePatternForm from './RoutePatternForm'
@@ -50,9 +50,25 @@ const AppDetailModal: Component<AppDetailModalProps> = (props) => {
               <span class="font-mono px-2 py-0.5 rounded text-xs" style={valueStyle}>{props.app.remoteStatus ?? 'unknown'}</span>
             </div>
           </div>
+          <div class="flex items-center justify-between py-2" style={{ 'border-bottom': '1px solid var(--border-subtle)' }}>
+            <span class="text-sm" style={labelStyle}>Desired route</span>
+            <span class="font-mono px-2 py-0.5 rounded text-xs" style={valueStyle}>{routeModeLabel(props.app.route?.desiredMode)}</span>
+          </div>
+          <div class="flex items-center justify-between py-2" style={{ 'border-bottom': '1px solid var(--border-subtle)' }}>
+            <span class="text-sm" style={labelStyle}>Effective route</span>
+            <span class="font-mono px-2 py-0.5 rounded text-xs" style={valueStyle}>{routeModeLabel(props.app.route?.effectiveMode)}</span>
+          </div>
+          <div class="flex items-center justify-between py-2" style={{ 'border-bottom': '1px solid var(--border-subtle)' }}>
+            <span class="text-sm" style={labelStyle}>Proxy</span>
+            <span class="font-mono px-2 py-0.5 rounded text-xs" style={valueStyle}>{props.app.route?.proxyHealth || 'unknown'}</span>
+          </div>
+          <div class="flex items-center justify-between py-2" style={{ 'border-bottom': '1px solid var(--border-subtle)' }}>
+            <span class="text-sm" style={labelStyle}>Remote fallback</span>
+            <span class="font-mono px-2 py-0.5 rounded text-xs" style={valueStyle}>{props.app.route?.remoteFallback ? 'confirmed' : 'no'}</span>
+          </div>
           <div class="flex items-center justify-between py-2">
-            <span class="text-sm" style={labelStyle}>Routing</span>
-            <span class="font-mono px-2 py-0.5 rounded text-xs" style={valueStyle}>{props.app.active ? 'local' : 'remote'}</span>
+            <span class="text-sm" style={labelStyle}>Verification</span>
+            <span class="font-mono px-2 py-0.5 rounded text-xs" style={valueStyle}>{props.app.route?.verificationStatus || 'unknown'}</span>
           </div>
         </div>
 
@@ -88,6 +104,30 @@ const AppDetailModal: Component<AppDetailModalProps> = (props) => {
               <span class="font-mono px-2 py-0.5 rounded text-xs" style={valueStyle}>{props.app.routePattern}</span>
             </div>
           )}
+          <div class="flex items-center justify-between py-2" style={{ 'border-bottom': '1px solid var(--border-subtle)' }}>
+            <span class="text-sm" style={labelStyle}>Target</span>
+            <span class="font-mono px-2 py-0.5 rounded text-xs max-w-[65%] truncate" style={valueStyle}>{props.app.route?.target || '—'}</span>
+          </div>
+          <div class="flex items-center justify-between py-2" style={{ 'border-bottom': '1px solid var(--border-subtle)' }}>
+            <span class="text-sm" style={labelStyle}>Local target</span>
+            <span class="font-mono px-2 py-0.5 rounded text-xs max-w-[65%] truncate" style={valueStyle}>{props.app.route?.localTarget || '—'}</span>
+          </div>
+          <div class="flex items-center justify-between py-2" style={{ 'border-bottom': '1px solid var(--border-subtle)' }}>
+            <span class="text-sm" style={labelStyle}>Remote target</span>
+            <span class="font-mono px-2 py-0.5 rounded text-xs max-w-[65%] truncate" style={valueStyle}>{props.app.route?.remoteTarget || '—'}</span>
+          </div>
+          <div class="flex items-center justify-between py-2">
+            <span class="text-sm" style={labelStyle}>Route version</span>
+            <span class="font-mono px-2 py-0.5 rounded text-xs" style={valueStyle}>{props.app.route?.version?.value?.toString() || '0'}</span>
+          </div>
+          <div class="flex items-center justify-between py-2" style={{ 'border-bottom': '1px solid var(--border-subtle)' }}>
+            <span class="text-sm" style={labelStyle}>Operation ID</span>
+            <span class="font-mono px-2 py-0.5 rounded text-xs max-w-[65%] truncate" style={valueStyle}>{props.app.route?.operationId || '—'}</span>
+          </div>
+          <div class="flex items-center justify-between py-2">
+            <span class="text-sm" style={labelStyle}>Verified at</span>
+            <span class="font-mono px-2 py-0.5 rounded text-xs max-w-[65%] truncate" style={valueStyle}>{routeTimestampLabel(props.app.route?.verifiedAt)}</span>
+          </div>
         </div>
 
         {/* Actions section */}

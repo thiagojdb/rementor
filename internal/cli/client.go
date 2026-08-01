@@ -12,6 +12,7 @@ import (
 	"connectrpc.com/connect"
 	rementorv1 "github.com/thiagojdb/rementor/internal/gen/rementor/v1"
 	"github.com/thiagojdb/rementor/internal/gen/rementor/v1/rementorv1connect"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // APIError represents a non-OK response from the RPC API.
@@ -463,7 +464,7 @@ func routeFromProto(route *rementorv1.RouteState) *RouteStateDTO {
 		verifiedAt = &value
 	}
 	return &RouteStateDTO{
-		DesiredMode: routeModeFromProto(route.GetDesiredMode()), EffectiveMode: routeModeFromProto(route.GetEffectiveMode()), Target: route.GetTarget(), LocalTarget: route.GetLocalTarget(), RemoteTarget: route.GetRemoteTarget(), RemoteFallback: route.GetRemoteFallback(), ProxyHealth: route.GetProxyHealth(), RouteVersion: version, OperationID: route.GetOperationId(), VerifiedAt: verifiedAt,
+		DesiredMode: routeModeFromProto(route.GetDesiredMode()), EffectiveMode: routeModeFromProto(route.GetEffectiveMode()), Target: route.GetTarget(), LocalTarget: route.GetLocalTarget(), RemoteTarget: route.GetRemoteTarget(), RemoteFallback: route.GetRemoteFallback(), ProxyHealth: route.GetProxyHealth(), RouteVersion: version, OperationID: route.GetOperationId(), VerifiedAt: verifiedAt, VerificationStatus: route.GetVerificationStatus(),
 	}
 }
 
@@ -475,6 +476,10 @@ func routeModeFromProto(mode rementorv1.RouteMode) string {
 		return "remote"
 	case rementorv1.RouteMode_ROUTE_MODE_FALLBACK:
 		return "fallback"
+	case rementorv1.RouteMode_ROUTE_MODE_UNKNOWN:
+		return "unknown"
+	case rementorv1.RouteMode_ROUTE_MODE_STALE:
+		return "stale"
 	default:
 		return ""
 	}
@@ -543,6 +548,12 @@ func routeModeToProto(mode string) rementorv1.RouteMode {
 		return rementorv1.RouteMode_ROUTE_MODE_LOCAL
 	case "remote":
 		return rementorv1.RouteMode_ROUTE_MODE_REMOTE
+	case "fallback":
+		return rementorv1.RouteMode_ROUTE_MODE_FALLBACK
+	case "unknown":
+		return rementorv1.RouteMode_ROUTE_MODE_UNKNOWN
+	case "stale":
+		return rementorv1.RouteMode_ROUTE_MODE_STALE
 	default:
 		return rementorv1.RouteMode_ROUTE_MODE_UNSPECIFIED
 	}
@@ -556,6 +567,10 @@ func routeModeFromProtoValue(mode rementorv1.RouteMode) string {
 		return "remote"
 	case rementorv1.RouteMode_ROUTE_MODE_FALLBACK:
 		return "fallback"
+	case rementorv1.RouteMode_ROUTE_MODE_UNKNOWN:
+		return "unknown"
+	case rementorv1.RouteMode_ROUTE_MODE_STALE:
+		return "stale"
 	default:
 		return ""
 	}
@@ -565,7 +580,16 @@ func normalizedRouteFromProto(route *rementorv1.NormalizedRoute) NormalizedRoute
 	if route == nil {
 		return NormalizedRouteDTO{}
 	}
-	return NormalizedRouteDTO{WorkspaceID: route.GetWorkspaceId(), Environment: route.GetEnvironment(), PublicHost: route.GetPublicHost(), Pattern: route.GetPattern(), CanonicalAppID: route.GetCanonicalAppId(), ServiceID: route.GetServiceId(), Repository: route.GetRepository(), DesiredMode: routeModeFromProtoValue(route.GetDesiredMode()), EffectiveMode: routeModeFromProtoValue(route.GetEffectiveMode()), Target: route.GetTarget(), LocalTarget: route.GetLocalTarget(), RemoteTarget: route.GetRemoteTarget(), RemoteFallback: route.GetRemoteFallback(), UpstreamContext: route.GetUpstreamContext(), Precedence: int(route.GetPrecedence()), PrecedenceReason: route.GetPrecedenceReason(), Exact: route.GetExact()}
+	var version uint64
+	if route.GetVersion() != nil {
+		version = route.GetVersion().GetValue()
+	}
+	var verifiedAt *time.Time
+	if timestamp := route.GetVerifiedAt(); timestamp != nil {
+		value := timestamp.AsTime()
+		verifiedAt = &value
+	}
+	return NormalizedRouteDTO{WorkspaceID: route.GetWorkspaceId(), Environment: route.GetEnvironment(), PublicHost: route.GetPublicHost(), Pattern: route.GetPattern(), CanonicalAppID: route.GetCanonicalAppId(), ServiceID: route.GetServiceId(), Repository: route.GetRepository(), DesiredMode: routeModeFromProtoValue(route.GetDesiredMode()), EffectiveMode: routeModeFromProtoValue(route.GetEffectiveMode()), Target: route.GetTarget(), LocalTarget: route.GetLocalTarget(), RemoteTarget: route.GetRemoteTarget(), RemoteFallback: route.GetRemoteFallback(), UpstreamContext: route.GetUpstreamContext(), Precedence: int(route.GetPrecedence()), PrecedenceReason: route.GetPrecedenceReason(), Exact: route.GetExact(), ProxyHealth: route.GetProxyHealth(), VerificationStatus: route.GetVerificationStatus(), RouteVersion: version, OperationID: route.GetOperationId(), VerifiedAt: verifiedAt}
 }
 
 func normalizedRoutesFromProto(routes []*rementorv1.NormalizedRoute) []NormalizedRouteDTO {
@@ -607,7 +631,11 @@ func routeConflictsFromProto(conflicts []*rementorv1.RouteConflict) []RouteConfl
 }
 
 func normalizedRouteToProto(route NormalizedRouteDTO) *rementorv1.NormalizedRoute {
-	return &rementorv1.NormalizedRoute{WorkspaceId: route.WorkspaceID, Environment: route.Environment, PublicHost: route.PublicHost, Pattern: route.Pattern, CanonicalAppId: route.CanonicalAppID, ServiceId: route.ServiceID, Repository: route.Repository, DesiredMode: routeModeToProto(route.DesiredMode), EffectiveMode: routeModeToProto(route.EffectiveMode), Target: route.Target, LocalTarget: route.LocalTarget, RemoteTarget: route.RemoteTarget, RemoteFallback: route.RemoteFallback, UpstreamContext: route.UpstreamContext, Precedence: int32(route.Precedence), PrecedenceReason: route.PrecedenceReason, Exact: route.Exact}
+	result := &rementorv1.NormalizedRoute{WorkspaceId: route.WorkspaceID, Environment: route.Environment, PublicHost: route.PublicHost, Pattern: route.Pattern, CanonicalAppId: route.CanonicalAppID, ServiceId: route.ServiceID, Repository: route.Repository, DesiredMode: routeModeToProto(route.DesiredMode), EffectiveMode: routeModeToProto(route.EffectiveMode), Target: route.Target, LocalTarget: route.LocalTarget, RemoteTarget: route.RemoteTarget, RemoteFallback: route.RemoteFallback, UpstreamContext: route.UpstreamContext, Precedence: int32(route.Precedence), PrecedenceReason: route.PrecedenceReason, Exact: route.Exact, ProxyHealth: route.ProxyHealth, VerificationStatus: route.VerificationStatus, Version: &rementorv1.RouteVersion{Value: route.RouteVersion}, OperationId: route.OperationID}
+	if route.VerifiedAt != nil && !route.VerifiedAt.IsZero() {
+		result.VerifiedAt = timestamppb.New(route.VerifiedAt.UTC())
+	}
+	return result
 }
 
 func routePlanToProto(plan RoutePlanDTO) *rementorv1.RoutePlan {

@@ -9,6 +9,7 @@ import (
 	"net"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/thiagojdb/rementor/internal/models"
 )
@@ -18,23 +19,28 @@ import (
 // semantics emitted by the nginx renderer instead of exposing the legacy
 // Application fields directly.
 type Route struct {
-	WorkspaceID      string `json:"workspaceId"`
-	Environment      string `json:"environment"`
-	PublicHost       string `json:"publicHost"`
-	Pattern          string `json:"pattern"`
-	CanonicalAppID   string `json:"appId,omitempty"`
-	ServiceID        string `json:"serviceId,omitempty"`
-	Repository       string `json:"repository,omitempty"`
-	DesiredMode      string `json:"desiredMode"`
-	EffectiveMode    string `json:"effectiveMode"`
-	Target           string `json:"target,omitempty"`
-	LocalTarget      string `json:"localTarget,omitempty"`
-	RemoteTarget     string `json:"remoteTarget,omitempty"`
-	RemoteFallback   bool   `json:"remoteFallback"`
-	UpstreamContext  string `json:"upstreamContext,omitempty"`
-	Precedence       int    `json:"precedence"`
-	PrecedenceReason string `json:"precedenceReason"`
-	Exact            bool   `json:"exact"`
+	WorkspaceID        string     `json:"workspaceId"`
+	Environment        string     `json:"environment"`
+	PublicHost         string     `json:"publicHost"`
+	Pattern            string     `json:"pattern"`
+	CanonicalAppID     string     `json:"appId,omitempty"`
+	ServiceID          string     `json:"serviceId,omitempty"`
+	Repository         string     `json:"repository,omitempty"`
+	DesiredMode        string     `json:"desiredMode"`
+	EffectiveMode      string     `json:"effectiveMode"`
+	Target             string     `json:"target,omitempty"`
+	LocalTarget        string     `json:"localTarget,omitempty"`
+	RemoteTarget       string     `json:"remoteTarget,omitempty"`
+	RemoteFallback     bool       `json:"remoteFallback"`
+	UpstreamContext    string     `json:"upstreamContext,omitempty"`
+	Precedence         int        `json:"precedence"`
+	PrecedenceReason   string     `json:"precedenceReason"`
+	Exact              bool       `json:"exact"`
+	ProxyHealth        string     `json:"proxyHealth,omitempty"`
+	VerificationStatus string     `json:"verificationStatus,omitempty"`
+	RouteVersion       uint64     `json:"routeVersion,omitempty"`
+	OperationID        string     `json:"operationId,omitempty"`
+	VerifiedAt         *time.Time `json:"verifiedAt,omitempty"`
 }
 
 // RouteWarning is a non-fatal issue surfaced by a plan or sync operation.
@@ -317,20 +323,20 @@ func cloneRoutes(routes []Route) []Route {
 	return result
 }
 
-func routeTarget(ws *models.Workspace, app *models.Application, mode string) (target, local, remote string, fallback bool) {
+func routeTarget(ws *models.Workspace, app *models.Application, mode string) (target, local, remote string) {
 	if app.Port > 0 {
 		local = fmt.Sprintf("http://localhost:%d", app.Port)
 	}
 	if ws != nil {
 		remote = app.GetRemoteBaseUrl(ws)
 	}
-	if mode == "local" && local != "" {
-		return local, local, remote, false
+	if mode == models.RouteModeLocal && local != "" {
+		return local, local, remote
 	}
 	if remote != "" {
-		return remote, local, remote, mode == "local"
+		return remote, local, remote
 	}
-	return "", local, remote, true
+	return "", local, remote
 }
 
 func buildRoute(ws *models.Workspace, app *models.Application, host, pattern string, mode string) Route {
@@ -350,13 +356,19 @@ func buildRouteWithExact(ws *models.Workspace, app *models.Application, host, pa
 		serviceID = app.ServiceID
 		repository = app.Repository
 	}
-	target, local, remote, fallback := "", "", "", false
+	target, local, remote := "", "", ""
 	if app != nil {
-		target, local, remote, fallback = routeTarget(ws, app, mode)
+		target, local, remote = routeTarget(ws, app, mode)
 	}
 	effectiveMode := mode
-	if mode == "remote" && target == "" {
-		effectiveMode = "fallback"
+	if mode == models.RouteModeLocal && target != local {
+		if target != "" {
+			effectiveMode = models.RouteModeRemote
+		} else {
+			effectiveMode = models.RouteModeUnknown
+		}
+	} else if mode == models.RouteModeRemote && target == "" {
+		effectiveMode = models.RouteModeFallback
 	}
 	precedence := length
 	if exact {
@@ -373,7 +385,7 @@ func buildRouteWithExact(ws *models.Workspace, app *models.Application, host, pa
 		PublicHost: normalizeHost(host), Pattern: pattern,
 		CanonicalAppID: canonical, ServiceID: serviceID, Repository: repository,
 		DesiredMode: mode, EffectiveMode: effectiveMode, Target: target,
-		LocalTarget: local, RemoteTarget: remote, RemoteFallback: fallback,
+		LocalTarget: local, RemoteTarget: remote, RemoteFallback: false,
 		UpstreamContext: func() string {
 			if app == nil {
 				return ""
@@ -395,9 +407,9 @@ func appendAppRoutes(routes *[]Route, ws *models.Workspace, app *models.Applicat
 
 func appMode(ws *models.Workspace, app *models.Application) string {
 	if ws.IsLocalApps() || app.Active {
-		return "local"
+		return models.RouteModeLocal
 	}
-	return "remote"
+	return models.RouteModeRemote
 }
 
 // buildNormalizedRoutes follows the same host and application ordering as the
@@ -426,23 +438,20 @@ func buildNormalizedRoutes(ws *models.Workspace) []Route {
 				continue
 			}
 			mode := appMode(ws, app)
-			if mode == "local" && app.Port == 0 {
-				mode = "remote"
+			if mode == models.RouteModeLocal && app.Port == 0 {
+				continue
 			}
-			if mode == "remote" && app.GetRemoteBaseUrl(ws) == "" {
+			if mode == models.RouteModeRemote && app.GetRemoteBaseUrl(ws) == "" {
 				continue
 			}
 			appendAppRoutes(&routes, ws, app, host, mode)
 		}
 		if domainApp != nil {
 			mode := appMode(ws, domainApp)
-			if mode == "local" && domainApp.Port == 0 {
-				mode = "remote"
-			}
 			// nginx only emits a remote location for a domain-bound app when
 			// that app declares its own remote base. The workspace default is
 			// reserved for the server fallback in this case.
-			if mode == "local" || (domainApp.RemoteBaseUrl != "" && domainApp.GetRemoteBaseUrl(ws) != "") {
+			if (mode == models.RouteModeLocal && domainApp.Port > 0) || (domainApp.RemoteBaseUrl != "" && domainApp.GetRemoteBaseUrl(ws) != "") {
 				appendAppRoutes(&routes, ws, domainApp, host, mode)
 			}
 		}
@@ -456,17 +465,20 @@ func buildNormalizedRoutes(ws *models.Workspace) []Route {
 			}
 		}
 		if rootApp != nil && rootApp.Active && rootApp.Port > 0 {
-			routes = append(routes, buildRoute(ws, rootApp, host, "/*", "local"))
+			routes = append(routes, buildRoute(ws, rootApp, host, "/*", models.RouteModeLocal))
 		} else {
-			fallbackMode := "remote"
-			if rootApp != nil && rootApp.GetRemoteBaseUrl(ws) == "" {
-				fallbackMode = "remote"
+			fallbackMode := models.RouteModeRemote
+			if rootApp != nil {
+				fallbackMode = appMode(ws, rootApp)
 			}
 			fallback := buildRoute(ws, rootApp, host, "/*", fallbackMode)
 			if rootApp == nil {
 				fallback.Target = ws.GetDefaultRemoteBaseURL()
 				fallback.RemoteTarget = fallback.Target
-				fallback.RemoteFallback = fallback.Target == ""
+				fallback.RemoteFallback = false
+				if fallback.Target != "" {
+					fallback.EffectiveMode = models.RouteModeRemote
+				}
 			}
 			routes = append(routes, fallback)
 		}
@@ -596,10 +608,10 @@ func conflictsForRoutes(routes []Route) []RouteConflict {
 
 func warningsForRoutes(ws *models.Workspace, app *models.Application, mode string, routes []Route) []RouteWarning {
 	warnings := make([]RouteWarning, 0)
-	if app != nil && mode == "local" && app.Port == 0 {
+	if app != nil && mode == models.RouteModeLocal && app.Port == 0 {
 		warnings = append(warnings, RouteWarning{Code: "LOCAL_TARGET_UNAVAILABLE", Message: fmt.Sprintf("application %q has no local port; the route will use its remote target", app.CanonicalAppID())})
 	}
-	if app != nil && mode == "remote" && app.GetRemoteBaseUrl(ws) == "" {
+	if app != nil && mode == models.RouteModeRemote && app.GetRemoteBaseUrl(ws) == "" {
 		warnings = append(warnings, RouteWarning{Code: "REMOTE_TARGET_UNAVAILABLE", Message: fmt.Sprintf("application %q has no remote target", app.CanonicalAppID())})
 	}
 	if len(conflictsForRoutes(routes)) > 0 {

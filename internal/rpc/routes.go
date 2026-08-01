@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"connectrpc.com/connect"
 	rementorv1 "github.com/thiagojdb/rementor/internal/gen/rementor/v1"
 	"github.com/thiagojdb/rementor/internal/services"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func (s *ControlPlaneService) GetRoute(ctx context.Context, req *connect.Request[rementorv1.GetRouteRequest]) (*connect.Response[rementorv1.GetRouteResponse], error) {
@@ -17,7 +19,7 @@ func (s *ControlPlaneService) GetRoute(ctx context.Context, req *connect.Request
 	if err != nil {
 		return nil, newRPCError(classifyRegistryError(err), err)
 	}
-	ws := s.registry.FindWorkspace(wsID)
+	ws := s.registry.GetWorkspaceView(wsID)
 	response := &rementorv1.GetRouteResponse{
 		WorkspaceId:  wsID,
 		Environment:  wsID,
@@ -163,6 +165,10 @@ func routeModeProto(mode string) rementorv1.RouteMode {
 		return rementorv1.RouteMode_ROUTE_MODE_REMOTE
 	case "fallback":
 		return rementorv1.RouteMode_ROUTE_MODE_FALLBACK
+	case "unknown":
+		return rementorv1.RouteMode_ROUTE_MODE_UNKNOWN
+	case "stale":
+		return rementorv1.RouteMode_ROUTE_MODE_STALE
 	default:
 		return rementorv1.RouteMode_ROUTE_MODE_UNSPECIFIED
 	}
@@ -170,24 +176,36 @@ func routeModeProto(mode string) rementorv1.RouteMode {
 
 func routeToProto(route services.Route) *rementorv1.NormalizedRoute {
 	return &rementorv1.NormalizedRoute{
-		WorkspaceId:      route.WorkspaceID,
-		Environment:      route.Environment,
-		PublicHost:       route.PublicHost,
-		Pattern:          route.Pattern,
-		CanonicalAppId:   route.CanonicalAppID,
-		ServiceId:        route.ServiceID,
-		Repository:       route.Repository,
-		DesiredMode:      routeModeProto(route.DesiredMode),
-		EffectiveMode:    routeModeProto(route.EffectiveMode),
-		Target:           route.Target,
-		LocalTarget:      route.LocalTarget,
-		RemoteTarget:     route.RemoteTarget,
-		RemoteFallback:   route.RemoteFallback,
-		UpstreamContext:  route.UpstreamContext,
-		Precedence:       int32(route.Precedence),
-		PrecedenceReason: route.PrecedenceReason,
-		Exact:            route.Exact,
+		WorkspaceId:        route.WorkspaceID,
+		Environment:        route.Environment,
+		PublicHost:         route.PublicHost,
+		Pattern:            route.Pattern,
+		CanonicalAppId:     route.CanonicalAppID,
+		ServiceId:          route.ServiceID,
+		Repository:         route.Repository,
+		DesiredMode:        routeModeProto(route.DesiredMode),
+		EffectiveMode:      routeModeProto(route.EffectiveMode),
+		Target:             route.Target,
+		LocalTarget:        route.LocalTarget,
+		RemoteTarget:       route.RemoteTarget,
+		RemoteFallback:     route.RemoteFallback,
+		UpstreamContext:    route.UpstreamContext,
+		Precedence:         int32(route.Precedence),
+		PrecedenceReason:   route.PrecedenceReason,
+		Exact:              route.Exact,
+		ProxyHealth:        route.ProxyHealth,
+		VerificationStatus: route.VerificationStatus,
+		Version:            &rementorv1.RouteVersion{Value: route.RouteVersion},
+		OperationId:        route.OperationID,
+		VerifiedAt:         routeTimestamp(route.VerifiedAt),
 	}
+}
+
+func routeTimestamp(value *time.Time) *timestamppb.Timestamp {
+	if value == nil || value.IsZero() {
+		return nil
+	}
+	return timestamppb.New(value.UTC())
 }
 
 func routeListToProto(routes []services.Route) []*rementorv1.NormalizedRoute {
@@ -261,7 +279,16 @@ func normalizedRouteFromProto(route *rementorv1.NormalizedRoute) services.Route 
 	if route == nil {
 		return services.Route{}
 	}
-	return services.Route{WorkspaceID: route.GetWorkspaceId(), Environment: route.GetEnvironment(), PublicHost: route.GetPublicHost(), Pattern: route.GetPattern(), CanonicalAppID: route.GetCanonicalAppId(), ServiceID: route.GetServiceId(), Repository: route.GetRepository(), DesiredMode: routeModeStringUnsafe(route.GetDesiredMode()), EffectiveMode: routeModeStringUnsafe(route.GetEffectiveMode()), Target: route.GetTarget(), LocalTarget: route.GetLocalTarget(), RemoteTarget: route.GetRemoteTarget(), RemoteFallback: route.GetRemoteFallback(), UpstreamContext: route.GetUpstreamContext(), Precedence: int(route.GetPrecedence()), PrecedenceReason: route.GetPrecedenceReason(), Exact: route.GetExact()}
+	var version uint64
+	if route.GetVersion() != nil {
+		version = route.GetVersion().GetValue()
+	}
+	var verifiedAt *time.Time
+	if timestamp := route.GetVerifiedAt(); timestamp != nil {
+		value := timestamp.AsTime()
+		verifiedAt = &value
+	}
+	return services.Route{WorkspaceID: route.GetWorkspaceId(), Environment: route.GetEnvironment(), PublicHost: route.GetPublicHost(), Pattern: route.GetPattern(), CanonicalAppID: route.GetCanonicalAppId(), ServiceID: route.GetServiceId(), Repository: route.GetRepository(), DesiredMode: routeModeStringUnsafe(route.GetDesiredMode()), EffectiveMode: routeModeStringUnsafe(route.GetEffectiveMode()), Target: route.GetTarget(), LocalTarget: route.GetLocalTarget(), RemoteTarget: route.GetRemoteTarget(), RemoteFallback: route.GetRemoteFallback(), UpstreamContext: route.GetUpstreamContext(), Precedence: int(route.GetPrecedence()), PrecedenceReason: route.GetPrecedenceReason(), Exact: route.GetExact(), ProxyHealth: route.GetProxyHealth(), VerificationStatus: route.GetVerificationStatus(), RouteVersion: version, OperationID: route.GetOperationId(), VerifiedAt: verifiedAt}
 }
 
 func routeModeStringUnsafe(mode rementorv1.RouteMode) string {
@@ -272,6 +299,10 @@ func routeModeStringUnsafe(mode rementorv1.RouteMode) string {
 		return "remote"
 	case rementorv1.RouteMode_ROUTE_MODE_FALLBACK:
 		return "fallback"
+	case rementorv1.RouteMode_ROUTE_MODE_UNKNOWN:
+		return "unknown"
+	case rementorv1.RouteMode_ROUTE_MODE_STALE:
+		return "stale"
 	default:
 		return ""
 	}

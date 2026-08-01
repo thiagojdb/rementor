@@ -1,5 +1,5 @@
 import { Component, createSignal, Show } from 'solid-js'
-import type { ApplicationDTO, WorkspaceDTO } from '../../api/types'
+import { routeModeLabel, type ApplicationDTO, type WorkspaceDTO } from '../../api/types'
 import StatusDot from '../ui/StatusDot'
 import { toggleApplication } from '../../stores/workspaces'
 import { toast } from '../../stores/toast'
@@ -14,6 +14,8 @@ const AppTableRow: Component<AppTableRowProps> = (props) => {
   const [toggling, setToggling] = createSignal(false)
 
   const isLocalApps = () => props.workspace.type === 'local-apps'
+  const desiredRoute = () => routeModeLabel(props.app.route?.desiredMode)
+  const effectiveRoute = () => routeModeLabel(props.app.route?.effectiveMode)
 
   const handleToggle = async (e: MouseEvent) => {
     e.stopPropagation()
@@ -78,7 +80,7 @@ const AppTableRow: Component<AppTableRowProps> = (props) => {
         </td>
       </Show>
       <td class="py-2.5 px-4">
-        {props.app.active ? (
+        {desiredRoute() === 'local' ? (
           <span
             class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide"
             style={{
@@ -86,7 +88,7 @@ const AppTableRow: Component<AppTableRowProps> = (props) => {
               color: 'var(--accent-400)'
             }}
           >
-            LOCAL
+            {desiredRoute()} → {effectiveRoute()}
           </span>
         ) : (
           <span
@@ -96,9 +98,12 @@ const AppTableRow: Component<AppTableRowProps> = (props) => {
               color: 'var(--text-tertiary)'
             }}
           >
-            {isLocalApps() ? 'PROXIED' : 'REMOTE'}
+            {desiredRoute()} → {effectiveRoute()}
           </span>
         )}
+        <span class="ml-1 font-mono text-[10px]" style={{ color: 'var(--text-tertiary)' }} title="Proxy verification">
+          {props.app.route?.proxyHealth ?? 'unknown'}
+        </span>
       </td>
       <Show when={!isLocalApps()}>
         <td class="py-2.5 px-4" onClick={(e) => e.stopPropagation()}>

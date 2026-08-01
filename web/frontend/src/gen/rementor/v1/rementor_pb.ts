@@ -33,6 +33,21 @@ export enum RouteMode {
    * @generated from enum value: ROUTE_MODE_FALLBACK = 3;
    */
   FALLBACK = 3,
+
+  /**
+   * UNKNOWN means no loaded proxy route could be verified for this entry.
+   *
+   * @generated from enum value: ROUTE_MODE_UNKNOWN = 4;
+   */
+  UNKNOWN = 4,
+
+  /**
+   * STALE is retained as a distinct wire value for clients that want to
+   * render an unverified projection without losing the last known mode.
+   *
+   * @generated from enum value: ROUTE_MODE_STALE = 5;
+   */
+  STALE = 5,
 }
 // Retrieve enum metadata with: proto3.getEnumType(RouteMode)
 proto3.util.setEnumType(RouteMode, "rementor.v1.RouteMode", [
@@ -40,6 +55,8 @@ proto3.util.setEnumType(RouteMode, "rementor.v1.RouteMode", [
   { no: 1, name: "ROUTE_MODE_LOCAL" },
   { no: 2, name: "ROUTE_MODE_REMOTE" },
   { no: 3, name: "ROUTE_MODE_FALLBACK" },
+  { no: 4, name: "ROUTE_MODE_UNKNOWN" },
+  { no: 5, name: "ROUTE_MODE_STALE" },
 ]);
 
 /**
@@ -392,6 +409,13 @@ export class RouteState extends Message<RouteState> {
    */
   verifiedAt?: Timestamp;
 
+  /**
+   * verified, stale, or unknown. This is independent from application health.
+   *
+   * @generated from field: string verification_status = 11;
+   */
+  verificationStatus = "";
+
   constructor(data?: PartialMessage<RouteState>) {
     super();
     proto3.util.initPartial(data, this);
@@ -410,6 +434,7 @@ export class RouteState extends Message<RouteState> {
     { no: 8, name: "version", kind: "message", T: RouteVersion },
     { no: 9, name: "operation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 10, name: "verified_at", kind: "message", T: Timestamp },
+    { no: 11, name: "verification_status", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RouteState {
@@ -2525,6 +2550,31 @@ export class NormalizedRoute extends Message<NormalizedRoute> {
    */
   exact = false;
 
+  /**
+   * @generated from field: string proxy_health = 18;
+   */
+  proxyHealth = "";
+
+  /**
+   * @generated from field: string verification_status = 19;
+   */
+  verificationStatus = "";
+
+  /**
+   * @generated from field: rementor.v1.RouteVersion version = 20;
+   */
+  version?: RouteVersion;
+
+  /**
+   * @generated from field: string operation_id = 21;
+   */
+  operationId = "";
+
+  /**
+   * @generated from field: google.protobuf.Timestamp verified_at = 22;
+   */
+  verifiedAt?: Timestamp;
+
   constructor(data?: PartialMessage<NormalizedRoute>) {
     super();
     proto3.util.initPartial(data, this);
@@ -2550,6 +2600,11 @@ export class NormalizedRoute extends Message<NormalizedRoute> {
     { no: 15, name: "precedence", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 16, name: "precedence_reason", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 17, name: "exact", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 18, name: "proxy_health", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 19, name: "verification_status", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 20, name: "version", kind: "message", T: RouteVersion },
+    { no: 21, name: "operation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 22, name: "verified_at", kind: "message", T: Timestamp },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): NormalizedRoute {

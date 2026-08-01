@@ -1,5 +1,5 @@
 import { Component, createSignal, Show } from "solid-js";
-import type { ApplicationDTO, WorkspaceDTO } from "../../api/types";
+import { routeModeLabel, type ApplicationDTO, type WorkspaceDTO } from "../../api/types";
 import StatusDot from "../ui/StatusDot";
 import { toggleApplication } from "../../stores/workspaces";
 import { toast } from "../../stores/toast";
@@ -14,6 +14,8 @@ const AppCard: Component<AppCardProps> = (props) => {
   const [toggling, setToggling] = createSignal(false);
 
   const isLocalApps = () => props.workspace.type === "local-apps";
+  const desiredRoute = () => routeModeLabel(props.app.route?.desiredMode);
+  const effectiveRoute = () => routeModeLabel(props.app.route?.effectiveMode);
 
   const handleToggle = async (e: MouseEvent) => {
     e.stopPropagation();
@@ -144,9 +146,9 @@ const AppCard: Component<AppCardProps> = (props) => {
             title={`Remote: ${props.app.remoteStatus ?? "unknown"}`}
           />
           <span class="text-[11px]" style={{ color: "var(--text-tertiary)" }}>
-            {props.app.active ? "local" : "remote"}
+            {desiredRoute()} → {effectiveRoute()}
           </span>
-          {props.app.active && (
+          {desiredRoute() === "local" && (
             <span
               class="ml-auto inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wide"
               style={{
