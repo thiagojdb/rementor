@@ -159,7 +159,7 @@ func appRegister(client *Client, jsonOutput bool, args []string) {
 	}
 
 	if jsonOutput {
-		PrintJSON(map[string]any{"status": status, "workspace": wsID, "application": result.Application})
+		PrintJSON(map[string]any{"status": status, "workspace": wsID, "application": result.Application, "operation": result.Operation})
 		return
 	}
 	fmt.Printf("app %q %s in workspace %q\n", appID, status, wsID)
@@ -192,12 +192,13 @@ func appUnregister(client *Client, jsonOutput bool, args []string) {
 	wsID := fs.Arg(0)
 	appID := fs.Arg(1)
 
-	if err := client.DeleteApplication(stdctx.Background(), wsID, appID); err != nil {
+	operation, err := client.DeleteApplicationWithMetadata(stdctx.Background(), wsID, appID)
+	if err != nil {
 		Die("%v", err)
 	}
 
 	if jsonOutput {
-		PrintJSON(map[string]string{"status": "unregistered", "app": appID, "workspace": wsID})
+		PrintJSON(map[string]any{"status": "unregistered", "app": appID, "workspace": wsID, "operation": operation})
 		return
 	}
 	fmt.Printf("app %q unregistered from workspace %q\n", appID, wsID)

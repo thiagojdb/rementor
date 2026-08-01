@@ -4,7 +4,541 @@
 // @ts-nocheck
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
-import { Message, proto3 } from "@bufbuild/protobuf";
+import { Message, proto3, protoInt64, Timestamp } from "@bufbuild/protobuf";
+
+/**
+ * RouteMode describes the desired or effective destination for a route. The
+ * numeric values are append-only so older clients can continue to decode the
+ * existing boolean active flag while newer clients use the explicit mode.
+ *
+ * @generated from enum rementor.v1.RouteMode
+ */
+export enum RouteMode {
+  /**
+   * @generated from enum value: ROUTE_MODE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: ROUTE_MODE_LOCAL = 1;
+   */
+  LOCAL = 1,
+
+  /**
+   * @generated from enum value: ROUTE_MODE_REMOTE = 2;
+   */
+  REMOTE = 2,
+
+  /**
+   * @generated from enum value: ROUTE_MODE_FALLBACK = 3;
+   */
+  FALLBACK = 3,
+}
+// Retrieve enum metadata with: proto3.getEnumType(RouteMode)
+proto3.util.setEnumType(RouteMode, "rementor.v1.RouteMode", [
+  { no: 0, name: "ROUTE_MODE_UNSPECIFIED" },
+  { no: 1, name: "ROUTE_MODE_LOCAL" },
+  { no: 2, name: "ROUTE_MODE_REMOTE" },
+  { no: 3, name: "ROUTE_MODE_FALLBACK" },
+]);
+
+/**
+ * RouteOperationKind identifies the mutation that produced operation
+ * metadata. It is intentionally broader than the current RPC set so the
+ * contract can be shared by future route planning/apply operations.
+ *
+ * @generated from enum rementor.v1.RouteOperationKind
+ */
+export enum RouteOperationKind {
+  /**
+   * @generated from enum value: ROUTE_OPERATION_KIND_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: ROUTE_OPERATION_KIND_TOGGLE = 1;
+   */
+  TOGGLE = 1,
+
+  /**
+   * @generated from enum value: ROUTE_OPERATION_KIND_TOGGLE_ALL = 2;
+   */
+  TOGGLE_ALL = 2,
+
+  /**
+   * @generated from enum value: ROUTE_OPERATION_KIND_SYNC = 3;
+   */
+  SYNC = 3,
+
+  /**
+   * @generated from enum value: ROUTE_OPERATION_KIND_UPDATE_PATTERN = 4;
+   */
+  UPDATE_PATTERN = 4,
+
+  /**
+   * @generated from enum value: ROUTE_OPERATION_KIND_UPSERT = 5;
+   */
+  UPSERT = 5,
+
+  /**
+   * @generated from enum value: ROUTE_OPERATION_KIND_DELETE = 6;
+   */
+  DELETE = 6,
+}
+// Retrieve enum metadata with: proto3.getEnumType(RouteOperationKind)
+proto3.util.setEnumType(RouteOperationKind, "rementor.v1.RouteOperationKind", [
+  { no: 0, name: "ROUTE_OPERATION_KIND_UNSPECIFIED" },
+  { no: 1, name: "ROUTE_OPERATION_KIND_TOGGLE" },
+  { no: 2, name: "ROUTE_OPERATION_KIND_TOGGLE_ALL" },
+  { no: 3, name: "ROUTE_OPERATION_KIND_SYNC" },
+  { no: 4, name: "ROUTE_OPERATION_KIND_UPDATE_PATTERN" },
+  { no: 5, name: "ROUTE_OPERATION_KIND_UPSERT" },
+  { no: 6, name: "ROUTE_OPERATION_KIND_DELETE" },
+]);
+
+/**
+ * ErrorCode is the stable, machine-readable error vocabulary shared by RPC,
+ * CLI, MCP, and the browser. The Connect status remains available as the
+ * transport-level classification.
+ *
+ * @generated from enum rementor.v1.ErrorCode
+ */
+export enum ErrorCode {
+  /**
+   * @generated from enum value: ERROR_CODE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: ERROR_CODE_INVALID_ARGUMENT = 1;
+   */
+  INVALID_ARGUMENT = 1,
+
+  /**
+   * @generated from enum value: ERROR_CODE_NOT_FOUND = 2;
+   */
+  NOT_FOUND = 2,
+
+  /**
+   * @generated from enum value: ERROR_CODE_ALREADY_EXISTS = 3;
+   */
+  ALREADY_EXISTS = 3,
+
+  /**
+   * @generated from enum value: ERROR_CODE_FAILED_PRECONDITION = 4;
+   */
+  FAILED_PRECONDITION = 4,
+
+  /**
+   * @generated from enum value: ERROR_CODE_PERMISSION_DENIED = 5;
+   */
+  PERMISSION_DENIED = 5,
+
+  /**
+   * @generated from enum value: ERROR_CODE_UNAUTHENTICATED = 6;
+   */
+  UNAUTHENTICATED = 6,
+
+  /**
+   * @generated from enum value: ERROR_CODE_UNAVAILABLE = 7;
+   */
+  UNAVAILABLE = 7,
+
+  /**
+   * @generated from enum value: ERROR_CODE_INTERNAL = 8;
+   */
+  INTERNAL = 8,
+
+  /**
+   * @generated from enum value: ERROR_CODE_CONFLICT = 9;
+   */
+  CONFLICT = 9,
+}
+// Retrieve enum metadata with: proto3.getEnumType(ErrorCode)
+proto3.util.setEnumType(ErrorCode, "rementor.v1.ErrorCode", [
+  { no: 0, name: "ERROR_CODE_UNSPECIFIED" },
+  { no: 1, name: "ERROR_CODE_INVALID_ARGUMENT" },
+  { no: 2, name: "ERROR_CODE_NOT_FOUND" },
+  { no: 3, name: "ERROR_CODE_ALREADY_EXISTS" },
+  { no: 4, name: "ERROR_CODE_FAILED_PRECONDITION" },
+  { no: 5, name: "ERROR_CODE_PERMISSION_DENIED" },
+  { no: 6, name: "ERROR_CODE_UNAUTHENTICATED" },
+  { no: 7, name: "ERROR_CODE_UNAVAILABLE" },
+  { no: 8, name: "ERROR_CODE_INTERNAL" },
+  { no: 9, name: "ERROR_CODE_CONFLICT" },
+]);
+
+/**
+ * CanonicalApplicationRef is the identity portion of an application. The
+ * legacy_id field is populated only when a response is serving an old
+ * workspace/application identifier; app_id remains the canonical key.
+ *
+ * @generated from message rementor.v1.CanonicalApplicationRef
+ */
+export class CanonicalApplicationRef extends Message<CanonicalApplicationRef> {
+  /**
+   * @generated from field: string app_id = 1;
+   */
+  appId = "";
+
+  /**
+   * @generated from field: string service_id = 2;
+   */
+  serviceId = "";
+
+  /**
+   * @generated from field: string repository = 3;
+   */
+  repository = "";
+
+  /**
+   * @generated from field: repeated string aliases = 4;
+   */
+  aliases: string[] = [];
+
+  /**
+   * @generated from field: string legacy_id = 5;
+   */
+  legacyId = "";
+
+  constructor(data?: PartialMessage<CanonicalApplicationRef>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.CanonicalApplicationRef";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "app_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "service_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "repository", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "aliases", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 5, name: "legacy_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CanonicalApplicationRef {
+    return new CanonicalApplicationRef().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CanonicalApplicationRef {
+    return new CanonicalApplicationRef().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CanonicalApplicationRef {
+    return new CanonicalApplicationRef().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: CanonicalApplicationRef | PlainMessage<CanonicalApplicationRef> | undefined, b: CanonicalApplicationRef | PlainMessage<CanonicalApplicationRef> | undefined): boolean {
+    return proto3.util.equals(CanonicalApplicationRef, a, b);
+  }
+}
+
+/**
+ * WorkspaceEnvironmentRef makes the environment boundary explicit while
+ * retaining workspace_id for compatibility with the original API.
+ *
+ * @generated from message rementor.v1.WorkspaceEnvironmentRef
+ */
+export class WorkspaceEnvironmentRef extends Message<WorkspaceEnvironmentRef> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  /**
+   * @generated from field: string environment = 2;
+   */
+  environment = "";
+
+  /**
+   * @generated from field: string legacy_id = 3;
+   */
+  legacyId = "";
+
+  constructor(data?: PartialMessage<WorkspaceEnvironmentRef>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.WorkspaceEnvironmentRef";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "environment", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "legacy_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceEnvironmentRef {
+    return new WorkspaceEnvironmentRef().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WorkspaceEnvironmentRef {
+    return new WorkspaceEnvironmentRef().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WorkspaceEnvironmentRef {
+    return new WorkspaceEnvironmentRef().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WorkspaceEnvironmentRef | PlainMessage<WorkspaceEnvironmentRef> | undefined, b: WorkspaceEnvironmentRef | PlainMessage<WorkspaceEnvironmentRef> | undefined): boolean {
+    return proto3.util.equals(WorkspaceEnvironmentRef, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.RouteVersion
+ */
+export class RouteVersion extends Message<RouteVersion> {
+  /**
+   * @generated from field: uint64 value = 1;
+   */
+  value = protoInt64.zero;
+
+  constructor(data?: PartialMessage<RouteVersion>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.RouteVersion";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "value", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RouteVersion {
+    return new RouteVersion().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): RouteVersion {
+    return new RouteVersion().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): RouteVersion {
+    return new RouteVersion().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: RouteVersion | PlainMessage<RouteVersion> | undefined, b: RouteVersion | PlainMessage<RouteVersion> | undefined): boolean {
+    return proto3.util.equals(RouteVersion, a, b);
+  }
+}
+
+/**
+ * RouteState is the normalized routing projection shared by all control
+ * surfaces. Existing fields such as Application.active and route_pattern stay
+ * wire-compatible; this message is the additive, typed representation.
+ *
+ * @generated from message rementor.v1.RouteState
+ */
+export class RouteState extends Message<RouteState> {
+  /**
+   * @generated from field: rementor.v1.RouteMode desired_mode = 1;
+   */
+  desiredMode = RouteMode.UNSPECIFIED;
+
+  /**
+   * @generated from field: rementor.v1.RouteMode effective_mode = 2;
+   */
+  effectiveMode = RouteMode.UNSPECIFIED;
+
+  /**
+   * @generated from field: string target = 3;
+   */
+  target = "";
+
+  /**
+   * @generated from field: string local_target = 4;
+   */
+  localTarget = "";
+
+  /**
+   * @generated from field: string remote_target = 5;
+   */
+  remoteTarget = "";
+
+  /**
+   * @generated from field: bool remote_fallback = 6;
+   */
+  remoteFallback = false;
+
+  /**
+   * @generated from field: string proxy_health = 7;
+   */
+  proxyHealth = "";
+
+  /**
+   * @generated from field: rementor.v1.RouteVersion version = 8;
+   */
+  version?: RouteVersion;
+
+  /**
+   * @generated from field: string operation_id = 9;
+   */
+  operationId = "";
+
+  /**
+   * @generated from field: google.protobuf.Timestamp verified_at = 10;
+   */
+  verifiedAt?: Timestamp;
+
+  constructor(data?: PartialMessage<RouteState>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.RouteState";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "desired_mode", kind: "enum", T: proto3.getEnumType(RouteMode) },
+    { no: 2, name: "effective_mode", kind: "enum", T: proto3.getEnumType(RouteMode) },
+    { no: 3, name: "target", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "local_target", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "remote_target", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "remote_fallback", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 7, name: "proxy_health", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 8, name: "version", kind: "message", T: RouteVersion },
+    { no: 9, name: "operation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 10, name: "verified_at", kind: "message", T: Timestamp },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RouteState {
+    return new RouteState().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): RouteState {
+    return new RouteState().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): RouteState {
+    return new RouteState().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: RouteState | PlainMessage<RouteState> | undefined, b: RouteState | PlainMessage<RouteState> | undefined): boolean {
+    return proto3.util.equals(RouteState, a, b);
+  }
+}
+
+/**
+ * OperationMetadata accompanies every route-affecting mutation. Timestamps
+ * are typed protobuf timestamps; clients should use correlation_id to join a
+ * request with logs and operation_id to inspect a particular mutation.
+ *
+ * @generated from message rementor.v1.OperationMetadata
+ */
+export class OperationMetadata extends Message<OperationMetadata> {
+  /**
+   * @generated from field: string operation_id = 1;
+   */
+  operationId = "";
+
+  /**
+   * @generated from field: string correlation_id = 2;
+   */
+  correlationId = "";
+
+  /**
+   * @generated from field: rementor.v1.RouteVersion route_version = 3;
+   */
+  routeVersion?: RouteVersion;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_at = 4;
+   */
+  createdAt?: Timestamp;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp completed_at = 5;
+   */
+  completedAt?: Timestamp;
+
+  /**
+   * @generated from field: rementor.v1.RouteOperationKind kind = 6;
+   */
+  kind = RouteOperationKind.UNSPECIFIED;
+
+  constructor(data?: PartialMessage<OperationMetadata>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.OperationMetadata";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "operation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "correlation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "route_version", kind: "message", T: RouteVersion },
+    { no: 4, name: "created_at", kind: "message", T: Timestamp },
+    { no: 5, name: "completed_at", kind: "message", T: Timestamp },
+    { no: 6, name: "kind", kind: "enum", T: proto3.getEnumType(RouteOperationKind) },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OperationMetadata {
+    return new OperationMetadata().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): OperationMetadata {
+    return new OperationMetadata().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): OperationMetadata {
+    return new OperationMetadata().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: OperationMetadata | PlainMessage<OperationMetadata> | undefined, b: OperationMetadata | PlainMessage<OperationMetadata> | undefined): boolean {
+    return proto3.util.equals(OperationMetadata, a, b);
+  }
+}
+
+/**
+ * StructuredError is transported as a Connect error detail and gives every
+ * client a stable code without changing the legacy human-readable message.
+ *
+ * @generated from message rementor.v1.StructuredError
+ */
+export class StructuredError extends Message<StructuredError> {
+  /**
+   * @generated from field: rementor.v1.ErrorCode code = 1;
+   */
+  code = ErrorCode.UNSPECIFIED;
+
+  /**
+   * @generated from field: string message = 2;
+   */
+  message = "";
+
+  /**
+   * @generated from field: map<string, string> metadata = 3;
+   */
+  metadata: { [key: string]: string } = {};
+
+  constructor(data?: PartialMessage<StructuredError>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.StructuredError";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "code", kind: "enum", T: proto3.getEnumType(ErrorCode) },
+    { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "metadata", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): StructuredError {
+    return new StructuredError().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): StructuredError {
+    return new StructuredError().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): StructuredError {
+    return new StructuredError().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: StructuredError | PlainMessage<StructuredError> | undefined, b: StructuredError | PlainMessage<StructuredError> | undefined): boolean {
+    return proto3.util.equals(StructuredError, a, b);
+  }
+}
 
 /**
  * @generated from message rementor.v1.Application
@@ -90,6 +624,21 @@ export class Application extends Message<Application> {
    */
   aliases: string[] = [];
 
+  /**
+   * @generated from field: rementor.v1.CanonicalApplicationRef identity = 17;
+   */
+  identity?: CanonicalApplicationRef;
+
+  /**
+   * @generated from field: rementor.v1.WorkspaceEnvironmentRef environment = 18;
+   */
+  environment?: WorkspaceEnvironmentRef;
+
+  /**
+   * @generated from field: rementor.v1.RouteState route = 19;
+   */
+  route?: RouteState;
+
   constructor(data?: PartialMessage<Application>) {
     super();
     proto3.util.initPartial(data, this);
@@ -114,6 +663,9 @@ export class Application extends Message<Application> {
     { no: 14, name: "service_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 15, name: "repository", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 16, name: "aliases", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 17, name: "identity", kind: "message", T: CanonicalApplicationRef },
+    { no: 18, name: "environment", kind: "message", T: WorkspaceEnvironmentRef },
+    { no: 19, name: "route", kind: "message", T: RouteState },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Application {
@@ -167,6 +719,16 @@ export class Workspace extends Message<Workspace> {
    */
   applications: Application[] = [];
 
+  /**
+   * @generated from field: rementor.v1.WorkspaceEnvironmentRef environment = 7;
+   */
+  environment?: WorkspaceEnvironmentRef;
+
+  /**
+   * @generated from field: rementor.v1.RouteState route = 8;
+   */
+  route?: RouteState;
+
   constructor(data?: PartialMessage<Workspace>) {
     super();
     proto3.util.initPartial(data, this);
@@ -181,6 +743,8 @@ export class Workspace extends Message<Workspace> {
     { no: 4, name: "color", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 5, name: "routing", kind: "message", T: Routing, opt: true },
     { no: 6, name: "applications", kind: "message", T: Application, repeated: true },
+    { no: 7, name: "environment", kind: "message", T: WorkspaceEnvironmentRef },
+    { no: 8, name: "route", kind: "message", T: RouteState },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Workspace {
@@ -533,6 +1097,11 @@ export class CreateWorkspaceRequest extends Message<CreateWorkspaceRequest> {
    */
   applications: ApplicationConfigInput[] = [];
 
+  /**
+   * @generated from field: string correlation_id = 8;
+   */
+  correlationId = "";
+
   constructor(data?: PartialMessage<CreateWorkspaceRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -548,6 +1117,7 @@ export class CreateWorkspaceRequest extends Message<CreateWorkspaceRequest> {
     { no: 5, name: "local_domain", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 6, name: "default_remote_base_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 7, name: "applications", kind: "message", T: ApplicationConfigInput, repeated: true },
+    { no: 8, name: "correlation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateWorkspaceRequest {
@@ -576,6 +1146,11 @@ export class CreateWorkspaceResponse extends Message<CreateWorkspaceResponse> {
    */
   workspace?: Workspace;
 
+  /**
+   * @generated from field: rementor.v1.OperationMetadata operation = 2;
+   */
+  operation?: OperationMetadata;
+
   constructor(data?: PartialMessage<CreateWorkspaceResponse>) {
     super();
     proto3.util.initPartial(data, this);
@@ -585,6 +1160,7 @@ export class CreateWorkspaceResponse extends Message<CreateWorkspaceResponse> {
   static readonly typeName = "rementor.v1.CreateWorkspaceResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "workspace", kind: "message", T: Workspace },
+    { no: 2, name: "operation", kind: "message", T: OperationMetadata },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateWorkspaceResponse {
@@ -628,6 +1204,11 @@ export class UpdateWorkspaceRequest extends Message<UpdateWorkspaceRequest> {
    */
   defaultRemoteBaseUrl = "";
 
+  /**
+   * @generated from field: string correlation_id = 5;
+   */
+  correlationId = "";
+
   constructor(data?: PartialMessage<UpdateWorkspaceRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -640,6 +1221,7 @@ export class UpdateWorkspaceRequest extends Message<UpdateWorkspaceRequest> {
     { no: 2, name: "applications", kind: "message", T: ApplicationConfigInput, repeated: true },
     { no: 3, name: "local_domain", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 4, name: "default_remote_base_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "correlation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateWorkspaceRequest {
@@ -668,6 +1250,11 @@ export class UpdateWorkspaceResponse extends Message<UpdateWorkspaceResponse> {
    */
   workspace?: Workspace;
 
+  /**
+   * @generated from field: rementor.v1.OperationMetadata operation = 2;
+   */
+  operation?: OperationMetadata;
+
   constructor(data?: PartialMessage<UpdateWorkspaceResponse>) {
     super();
     proto3.util.initPartial(data, this);
@@ -677,6 +1264,7 @@ export class UpdateWorkspaceResponse extends Message<UpdateWorkspaceResponse> {
   static readonly typeName = "rementor.v1.UpdateWorkspaceResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "workspace", kind: "message", T: Workspace },
+    { no: 2, name: "operation", kind: "message", T: OperationMetadata },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateWorkspaceResponse {
@@ -705,6 +1293,11 @@ export class DeleteWorkspaceRequest extends Message<DeleteWorkspaceRequest> {
    */
   workspaceId = "";
 
+  /**
+   * @generated from field: string correlation_id = 2;
+   */
+  correlationId = "";
+
   constructor(data?: PartialMessage<DeleteWorkspaceRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -714,6 +1307,7 @@ export class DeleteWorkspaceRequest extends Message<DeleteWorkspaceRequest> {
   static readonly typeName = "rementor.v1.DeleteWorkspaceRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "correlation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteWorkspaceRequest {
@@ -737,6 +1331,11 @@ export class DeleteWorkspaceRequest extends Message<DeleteWorkspaceRequest> {
  * @generated from message rementor.v1.DeleteWorkspaceResponse
  */
 export class DeleteWorkspaceResponse extends Message<DeleteWorkspaceResponse> {
+  /**
+   * @generated from field: rementor.v1.OperationMetadata operation = 1;
+   */
+  operation?: OperationMetadata;
+
   constructor(data?: PartialMessage<DeleteWorkspaceResponse>) {
     super();
     proto3.util.initPartial(data, this);
@@ -745,6 +1344,7 @@ export class DeleteWorkspaceResponse extends Message<DeleteWorkspaceResponse> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "rementor.v1.DeleteWorkspaceResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "operation", kind: "message", T: OperationMetadata },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteWorkspaceResponse {
@@ -1017,6 +1617,11 @@ export class RegisterApplicationAliasRequest extends Message<RegisterApplication
    */
   alias = "";
 
+  /**
+   * @generated from field: string correlation_id = 4;
+   */
+  correlationId = "";
+
   constructor(data?: PartialMessage<RegisterApplicationAliasRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1028,6 +1633,7 @@ export class RegisterApplicationAliasRequest extends Message<RegisterApplication
     { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "application_ref", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "alias", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "correlation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RegisterApplicationAliasRequest {
@@ -1056,6 +1662,11 @@ export class RegisterApplicationAliasResponse extends Message<RegisterApplicatio
    */
   application?: Application;
 
+  /**
+   * @generated from field: rementor.v1.OperationMetadata operation = 2;
+   */
+  operation?: OperationMetadata;
+
   constructor(data?: PartialMessage<RegisterApplicationAliasResponse>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1065,6 +1676,7 @@ export class RegisterApplicationAliasResponse extends Message<RegisterApplicatio
   static readonly typeName = "rementor.v1.RegisterApplicationAliasResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "application", kind: "message", T: Application },
+    { no: 2, name: "operation", kind: "message", T: OperationMetadata },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RegisterApplicationAliasResponse {
@@ -1098,6 +1710,11 @@ export class UpsertApplicationRequest extends Message<UpsertApplicationRequest> 
    */
   application?: ApplicationConfigInput;
 
+  /**
+   * @generated from field: string correlation_id = 3;
+   */
+  correlationId = "";
+
   constructor(data?: PartialMessage<UpsertApplicationRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1108,6 +1725,7 @@ export class UpsertApplicationRequest extends Message<UpsertApplicationRequest> 
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "application", kind: "message", T: ApplicationConfigInput },
+    { no: 3, name: "correlation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpsertApplicationRequest {
@@ -1141,6 +1759,11 @@ export class UpsertApplicationResponse extends Message<UpsertApplicationResponse
    */
   created = false;
 
+  /**
+   * @generated from field: rementor.v1.OperationMetadata operation = 3;
+   */
+  operation?: OperationMetadata;
+
   constructor(data?: PartialMessage<UpsertApplicationResponse>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1151,6 +1774,7 @@ export class UpsertApplicationResponse extends Message<UpsertApplicationResponse
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "application", kind: "message", T: Application },
     { no: 2, name: "created", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 3, name: "operation", kind: "message", T: OperationMetadata },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpsertApplicationResponse {
@@ -1184,6 +1808,11 @@ export class DeleteApplicationRequest extends Message<DeleteApplicationRequest> 
    */
   applicationId = "";
 
+  /**
+   * @generated from field: string correlation_id = 3;
+   */
+  correlationId = "";
+
   constructor(data?: PartialMessage<DeleteApplicationRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1194,6 +1823,7 @@ export class DeleteApplicationRequest extends Message<DeleteApplicationRequest> 
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "application_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "correlation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteApplicationRequest {
@@ -1217,6 +1847,11 @@ export class DeleteApplicationRequest extends Message<DeleteApplicationRequest> 
  * @generated from message rementor.v1.DeleteApplicationResponse
  */
 export class DeleteApplicationResponse extends Message<DeleteApplicationResponse> {
+  /**
+   * @generated from field: rementor.v1.OperationMetadata operation = 1;
+   */
+  operation?: OperationMetadata;
+
   constructor(data?: PartialMessage<DeleteApplicationResponse>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1225,6 +1860,7 @@ export class DeleteApplicationResponse extends Message<DeleteApplicationResponse
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "rementor.v1.DeleteApplicationResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "operation", kind: "message", T: OperationMetadata },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteApplicationResponse {
@@ -1258,6 +1894,11 @@ export class ToggleApplicationRequest extends Message<ToggleApplicationRequest> 
    */
   applicationId = "";
 
+  /**
+   * @generated from field: string correlation_id = 3;
+   */
+  correlationId = "";
+
   constructor(data?: PartialMessage<ToggleApplicationRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1268,6 +1909,7 @@ export class ToggleApplicationRequest extends Message<ToggleApplicationRequest> 
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "application_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "correlation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ToggleApplicationRequest {
@@ -1296,6 +1938,11 @@ export class ToggleApplicationResponse extends Message<ToggleApplicationResponse
    */
   application?: Application;
 
+  /**
+   * @generated from field: rementor.v1.OperationMetadata operation = 2;
+   */
+  operation?: OperationMetadata;
+
   constructor(data?: PartialMessage<ToggleApplicationResponse>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1305,6 +1952,7 @@ export class ToggleApplicationResponse extends Message<ToggleApplicationResponse
   static readonly typeName = "rementor.v1.ToggleApplicationResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "application", kind: "message", T: Application },
+    { no: 2, name: "operation", kind: "message", T: OperationMetadata },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ToggleApplicationResponse {
@@ -1333,6 +1981,11 @@ export class ToggleAllToRemoteRequest extends Message<ToggleAllToRemoteRequest> 
    */
   workspaceId = "";
 
+  /**
+   * @generated from field: string correlation_id = 2;
+   */
+  correlationId = "";
+
   constructor(data?: PartialMessage<ToggleAllToRemoteRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1342,6 +1995,7 @@ export class ToggleAllToRemoteRequest extends Message<ToggleAllToRemoteRequest> 
   static readonly typeName = "rementor.v1.ToggleAllToRemoteRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "correlation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ToggleAllToRemoteRequest {
@@ -1375,6 +2029,11 @@ export class ToggleAllToRemoteResponse extends Message<ToggleAllToRemoteResponse
    */
   failureCount = 0;
 
+  /**
+   * @generated from field: rementor.v1.OperationMetadata operation = 3;
+   */
+  operation?: OperationMetadata;
+
   constructor(data?: PartialMessage<ToggleAllToRemoteResponse>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1385,6 +2044,7 @@ export class ToggleAllToRemoteResponse extends Message<ToggleAllToRemoteResponse
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "success_count", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 2, name: "failure_count", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 3, name: "operation", kind: "message", T: OperationMetadata },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ToggleAllToRemoteResponse {
@@ -1413,6 +2073,11 @@ export class ToggleAllToLocalRequest extends Message<ToggleAllToLocalRequest> {
    */
   workspaceId = "";
 
+  /**
+   * @generated from field: string correlation_id = 2;
+   */
+  correlationId = "";
+
   constructor(data?: PartialMessage<ToggleAllToLocalRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1422,6 +2087,7 @@ export class ToggleAllToLocalRequest extends Message<ToggleAllToLocalRequest> {
   static readonly typeName = "rementor.v1.ToggleAllToLocalRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "correlation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ToggleAllToLocalRequest {
@@ -1455,6 +2121,11 @@ export class ToggleAllToLocalResponse extends Message<ToggleAllToLocalResponse> 
    */
   failureCount = 0;
 
+  /**
+   * @generated from field: rementor.v1.OperationMetadata operation = 3;
+   */
+  operation?: OperationMetadata;
+
   constructor(data?: PartialMessage<ToggleAllToLocalResponse>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1465,6 +2136,7 @@ export class ToggleAllToLocalResponse extends Message<ToggleAllToLocalResponse> 
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "success_count", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 2, name: "failure_count", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 3, name: "operation", kind: "message", T: OperationMetadata },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ToggleAllToLocalResponse {
@@ -1493,6 +2165,11 @@ export class SyncWorkspaceRoutingRequest extends Message<SyncWorkspaceRoutingReq
    */
   workspaceId = "";
 
+  /**
+   * @generated from field: string correlation_id = 2;
+   */
+  correlationId = "";
+
   constructor(data?: PartialMessage<SyncWorkspaceRoutingRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1502,6 +2179,7 @@ export class SyncWorkspaceRoutingRequest extends Message<SyncWorkspaceRoutingReq
   static readonly typeName = "rementor.v1.SyncWorkspaceRoutingRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "correlation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SyncWorkspaceRoutingRequest {
@@ -1530,6 +2208,11 @@ export class SyncWorkspaceRoutingResponse extends Message<SyncWorkspaceRoutingRe
    */
   status = "";
 
+  /**
+   * @generated from field: rementor.v1.OperationMetadata operation = 2;
+   */
+  operation?: OperationMetadata;
+
   constructor(data?: PartialMessage<SyncWorkspaceRoutingResponse>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1539,6 +2222,7 @@ export class SyncWorkspaceRoutingResponse extends Message<SyncWorkspaceRoutingRe
   static readonly typeName = "rementor.v1.SyncWorkspaceRoutingResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "status", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "operation", kind: "message", T: OperationMetadata },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SyncWorkspaceRoutingResponse {
@@ -1657,6 +2341,11 @@ export class UpdateRoutePatternRequest extends Message<UpdateRoutePatternRequest
    */
   pattern = "";
 
+  /**
+   * @generated from field: string correlation_id = 4;
+   */
+  correlationId = "";
+
   constructor(data?: PartialMessage<UpdateRoutePatternRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1668,6 +2357,7 @@ export class UpdateRoutePatternRequest extends Message<UpdateRoutePatternRequest
     { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "application_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "pattern", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "correlation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateRoutePatternRequest {
@@ -1696,6 +2386,11 @@ export class UpdateRoutePatternResponse extends Message<UpdateRoutePatternRespon
    */
   application?: Application;
 
+  /**
+   * @generated from field: rementor.v1.OperationMetadata operation = 2;
+   */
+  operation?: OperationMetadata;
+
   constructor(data?: PartialMessage<UpdateRoutePatternResponse>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1705,6 +2400,7 @@ export class UpdateRoutePatternResponse extends Message<UpdateRoutePatternRespon
   static readonly typeName = "rementor.v1.UpdateRoutePatternResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "application", kind: "message", T: Application },
+    { no: 2, name: "operation", kind: "message", T: OperationMetadata },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateRoutePatternResponse {
@@ -1800,6 +2496,26 @@ export class WatchHealthResponse extends Message<WatchHealthResponse> {
    */
   remoteChecked = "";
 
+  /**
+   * @generated from field: google.protobuf.Timestamp local_checked_at = 8;
+   */
+  localCheckedAt?: Timestamp;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp remote_checked_at = 9;
+   */
+  remoteCheckedAt?: Timestamp;
+
+  /**
+   * @generated from field: rementor.v1.CanonicalApplicationRef identity = 10;
+   */
+  identity?: CanonicalApplicationRef;
+
+  /**
+   * @generated from field: rementor.v1.WorkspaceEnvironmentRef environment = 11;
+   */
+  environment?: WorkspaceEnvironmentRef;
+
   constructor(data?: PartialMessage<WatchHealthResponse>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1815,6 +2531,10 @@ export class WatchHealthResponse extends Message<WatchHealthResponse> {
     { no: 5, name: "remote_ok", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 6, name: "local_checked", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 7, name: "remote_checked", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 8, name: "local_checked_at", kind: "message", T: Timestamp },
+    { no: 9, name: "remote_checked_at", kind: "message", T: Timestamp },
+    { no: 10, name: "identity", kind: "message", T: CanonicalApplicationRef },
+    { no: 11, name: "environment", kind: "message", T: WorkspaceEnvironmentRef },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WatchHealthResponse {
