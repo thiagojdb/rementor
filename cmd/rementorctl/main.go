@@ -86,7 +86,7 @@ Commands:
   workspace delete <id>
 
   app list <workspace>
-  app register <workspace> <app> --port <N> [--path /path] [--domain d.localhost] [--remote-base-url <url>] [--context /ctx] [--name <n>] [--health endpoint] [--app-id <id>] [--service-id <id>] [--repository <name>] [--aliases <a,b>]
+  app register <workspace> <app> --port <N> [--path /path] [--domain d.localhost] [--remote-base-url <url>] [--context /ctx] [--name <n>] [--health endpoint] [--app-id <id>] [--service-id <id>] [--repository <name>] [--aliases <a,b>] [--route-override]
   app unregister <workspace> <app>
   app toggle <workspace> <app>
   app alias <workspace> <app-or-alias> <alias>
@@ -94,8 +94,8 @@ Commands:
 
   announce --workspace <id> --app <id> --port <N> [--type routing|local-apps]
            [--local-domain <d>] [--path /path] [--domain <d>] [--remote-base-url <url>] [--context /ctx] [--name <n>]
-           [--health <endpoint>] [--no-activate]`)
+           [--health <endpoint>] [--route-override] [--no-activate]`)
 	fmt.Fprintln(os.Stderr, "  mcp")
 	fmt.Fprintln(os.Stderr, "  nginx load-routes")
-	fmt.Fprintln(os.Stderr, "  route get|resolve|plan|apply|sync")
+	fmt.Fprintln(os.Stderr, "  route get|conflicts|resolve|plan|apply|sync")
 }

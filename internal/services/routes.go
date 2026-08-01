@@ -35,6 +35,10 @@ type Route struct {
 	Precedence       int    `json:"precedence"`
 	PrecedenceReason string `json:"precedenceReason"`
 	Exact            bool   `json:"exact"`
+	// IntentionalOverride is copied from the owning application metadata (and
+	// set on generated server fallbacks) so consumers can distinguish accepted
+	// overlap from accidental ownership without changing nginx's behavior.
+	IntentionalOverride bool `json:"intentionalOverride,omitempty"`
 }
 
 // RouteWarning is a non-fatal issue surfaced by a plan or sync operation.
@@ -47,14 +51,35 @@ type RouteWarning struct {
 // Conflict detection is intentionally deterministic so a plan never depends
 // on application registration order.
 type RouteConflict struct {
-	WorkspaceID      string `json:"workspaceId"`
-	Environment      string `json:"environment"`
-	PublicHost       string `json:"publicHost"`
+	WorkspaceID string `json:"workspaceId"`
+	Environment string `json:"environment"`
+	PublicHost  string `json:"publicHost"`
+	// Pattern remains the normalized pattern that identifies the conflict. For
+	// shadowing conflicts it is the winning (narrower) pattern, while the
+	// explicit winning/shadowed fields carry both route entries.
 	Pattern          string `json:"pattern"`
 	AppID            string `json:"appId"`
 	ConflictingAppID string `json:"conflictingAppId"`
 	WinningAppID     string `json:"winningAppId"`
 	Reason           string `json:"reason"`
+
+	// The original pair fields above are retained for wire compatibility. The
+	// fields below make ownership and precedence explicit for API/MCP clients.
+	AppServiceID             string `json:"appServiceId,omitempty"`
+	ConflictingServiceID     string `json:"conflictingServiceId,omitempty"`
+	WinningServiceID         string `json:"winningServiceId,omitempty"`
+	ShadowedAppID            string `json:"shadowedAppId,omitempty"`
+	ShadowedServiceID        string `json:"shadowedServiceId,omitempty"`
+	WinningPattern           string `json:"winningPattern,omitempty"`
+	ShadowedPattern          string `json:"shadowedPattern,omitempty"`
+	WinningPrecedence        int    `json:"winningPrecedence,omitempty"`
+	ShadowedPrecedence       int    `json:"shadowedPrecedence,omitempty"`
+	WinningPrecedenceReason  string `json:"winningPrecedenceReason,omitempty"`
+	ShadowedPrecedenceReason string `json:"shadowedPrecedenceReason,omitempty"`
+	PrecedenceReason         string `json:"precedenceReason,omitempty"`
+	Intentional              bool   `json:"intentional"`
+	WinningRoute             *Route `json:"winningRoute,omitempty"`
+	ShadowedRoute            *Route `json:"shadowedRoute,omitempty"`
 }
 
 // RouteChange records the before/after route entries affected by a plan.
@@ -290,14 +315,20 @@ func sortRoutes(routes []Route) {
 }
 
 func dedupeNormalizedRoutes(routes []Route) []Route {
-	seen := make(map[string]struct{}, len(routes))
+	seen := make(map[string]int, len(routes))
 	result := make([]Route, 0, len(routes))
 	for _, route := range routes {
 		key := strings.Join([]string{normalizeHost(route.PublicHost), route.Pattern, route.CanonicalAppID, route.ServiceID}, "\x00")
-		if _, ok := seen[key]; ok {
+		if index, ok := seen[key]; ok {
+			// A generated server fallback and an application-owned wildcard can
+			// normalize to the same entry. Preserve the stronger metadata when
+			// coalescing them so conflict analysis remains accurate.
+			if route.IntentionalOverride {
+				result[index].IntentionalOverride = true
+			}
 			continue
 		}
-		seen[key] = struct{}{}
+		seen[key] = len(result)
 		result = append(result, route)
 	}
 	return result
@@ -381,6 +412,7 @@ func buildRouteWithExact(ws *models.Workspace, app *models.Application, host, pa
 			return app.Context
 		}(),
 		Precedence: precedence, PrecedenceReason: reason, Exact: exact,
+		IntentionalOverride: app != nil && app.RouteOverride,
 	}
 }
 
@@ -398,6 +430,30 @@ func appMode(ws *models.Workspace, app *models.Application) string {
 		return "local"
 	}
 	return "remote"
+}
+
+func rootAppSortKey(app *models.Application) string {
+	if app == nil {
+		return ""
+	}
+	return strings.Join([]string{app.CanonicalAppID(), app.ServiceID, app.ID}, "\x00")
+}
+
+// defaultRootApp selects a root application independently of registration
+// order. If multiple root applications exist, their duplicate /* ownership is
+// still reported; choosing the canonical first entry only keeps the generated
+// fallback metadata stable for the conflict report.
+func defaultRootApp(ws *models.Workspace) *models.Application {
+	var root *models.Application
+	for _, app := range ws.Applications {
+		if app == nil || app.Domain != "" || normalizeRequestPath(app.Path) != "/" {
+			continue
+		}
+		if root == nil || rootAppSortKey(app) < rootAppSortKey(root) {
+			root = app
+		}
+	}
+	return root
 }
 
 // buildNormalizedRoutes follows the same host and application ordering as the
@@ -448,21 +504,23 @@ func buildNormalizedRoutes(ws *models.Workspace) []Route {
 		}
 		rootApp := domainApp
 		if rootApp == nil {
-			for _, app := range ws.Applications {
-				if app.Domain == "" && normalizeRequestPath(app.Path) == "/" {
-					rootApp = app
-					break
-				}
-			}
+			rootApp = defaultRootApp(ws)
 		}
 		if rootApp != nil && rootApp.Active && rootApp.Port > 0 {
-			routes = append(routes, buildRoute(ws, rootApp, host, "/*", "local"))
+			fallback := buildRoute(ws, rootApp, host, "/*", "local")
+			fallback.IntentionalOverride = true
+			routes = append(routes, fallback)
 		} else {
 			fallbackMode := "remote"
 			if rootApp != nil && rootApp.GetRemoteBaseUrl(ws) == "" {
 				fallbackMode = "remote"
 			}
 			fallback := buildRoute(ws, rootApp, host, "/*", fallbackMode)
+			// The server-level fallback is a deliberate catch-all in nginx. It
+			// may be shadowed by application-specific routes by design, so mark
+			// the generated entry for intentional shadow classification while
+			// still treating duplicate ownership as accidental.
+			fallback.IntentionalOverride = true
 			if rootApp == nil {
 				fallback.Target = ws.GetDefaultRemoteBaseURL()
 				fallback.RemoteTarget = fallback.Target
@@ -486,6 +544,16 @@ func buildNormalizedRoutes(ws *models.Workspace) []Route {
 // adapters. The builder is read-only with respect to the supplied workspace.
 func NormalizedRoutes(ws *models.Workspace) []Route {
 	return buildNormalizedRoutes(ws)
+}
+
+// RouteConflicts exposes the canonical ownership analysis used by every
+// control surface and by the nginx renderer. The returned slice is stable for
+// a given normalized workspace and does not mutate the workspace.
+func RouteConflicts(ws *models.Workspace) []RouteConflict {
+	if ws == nil {
+		return nil
+	}
+	return conflictsForRoutes(buildNormalizedRoutes(cloneWorkspace(ws)))
 }
 
 // RoutePatterns returns the normalized wildcard patterns emitted for one
@@ -512,7 +580,7 @@ func RoutePatterns(ws *models.Workspace, app *models.Application) []string {
 }
 
 func routeEquivalent(left, right Route) bool {
-	return left.WorkspaceID == right.WorkspaceID && left.PublicHost == right.PublicHost && left.Pattern == right.Pattern && left.Exact == right.Exact && left.CanonicalAppID == right.CanonicalAppID && left.ServiceID == right.ServiceID && left.DesiredMode == right.DesiredMode && left.EffectiveMode == right.EffectiveMode && left.Target == right.Target && left.LocalTarget == right.LocalTarget && left.RemoteTarget == right.RemoteTarget && left.RemoteFallback == right.RemoteFallback && left.UpstreamContext == right.UpstreamContext
+	return left.WorkspaceID == right.WorkspaceID && left.PublicHost == right.PublicHost && left.Pattern == right.Pattern && left.Exact == right.Exact && left.CanonicalAppID == right.CanonicalAppID && left.ServiceID == right.ServiceID && left.DesiredMode == right.DesiredMode && left.EffectiveMode == right.EffectiveMode && left.Target == right.Target && left.LocalTarget == right.LocalTarget && left.RemoteTarget == right.RemoteTarget && left.RemoteFallback == right.RemoteFallback && left.UpstreamContext == right.UpstreamContext && left.IntentionalOverride == right.IntentionalOverride
 }
 
 func routeChangeKey(route Route) string {
@@ -562,36 +630,205 @@ func diffRoutes(before, after []Route) []RouteChange {
 	return changes
 }
 
+// routeOwnerKey identifies the route owner without relying on registration
+// order. A blank owner is a generated/default fallback rather than an
+// application-owned route and is intentionally excluded from ownership
+// conflicts.
+func routeOwnerKey(route Route) string {
+	appID := strings.TrimSpace(route.CanonicalAppID)
+	serviceID := strings.TrimSpace(route.ServiceID)
+	if appID == "" && serviceID == "" {
+		return ""
+	}
+	return appID + "\x00" + serviceID
+}
+
+// routeMatchersOverlap answers whether two normalized nginx locations can
+// receive the same request. Exact locations only overlap another exact
+// location at the same path; a prefix overlaps an exact path beneath it and
+// two prefixes overlap when either prefix contains the other.
+func routeMatchersOverlap(left, right Route) bool {
+	leftMatch, leftExact, _ := routeInfo(left)
+	rightMatch, rightExact, _ := routeInfo(right)
+	switch {
+	case leftExact && rightExact:
+		return leftMatch == rightMatch
+	case leftExact:
+		return prefixRouteContains(right, leftMatch)
+	case rightExact:
+		return prefixRouteContains(left, rightMatch)
+	default:
+		return prefixContains(leftMatch, rightMatch) || prefixContains(rightMatch, leftMatch)
+	}
+}
+
+func prefixRouteContains(route Route, path string) bool {
+	match, exact, _ := routeInfo(route)
+	if exact {
+		return normalizeRequestPath(path) == match
+	}
+	if match == "/" {
+		return true
+	}
+	// nginx's generated wildcard locations are rendered as `location
+	// /prefix/`, so `/prefix` itself belongs to an exact location (if one
+	// exists) rather than the wildcard prefix.
+	if strings.HasSuffix(route.Pattern, "/*") {
+		return strings.HasPrefix(normalizeRequestPath(path), match+"/")
+	}
+	path = normalizeRequestPath(path)
+	return path == match || strings.HasPrefix(path, match+"/")
+}
+
+func prefixContains(prefix, path string) bool {
+	prefix = normalizeRequestPath(prefix)
+	path = normalizeRequestPath(path)
+	if prefix == "/" {
+		return true
+	}
+	return path == prefix || strings.HasPrefix(path, prefix+"/")
+}
+
+func routeConflictSortKey(route Route) string {
+	match, exact, length := routeInfo(route)
+	return strings.Join([]string{
+		normalizeHost(route.PublicHost), match, fmt.Sprintf("%t", exact), fmt.Sprintf("%06d", length),
+		route.CanonicalAppID, route.ServiceID, route.Pattern,
+	}, "\x00")
+}
+
+// routeConflictWinner applies nginx's location precedence and uses canonical
+// identity as the final tie breaker. The latter is important for duplicate
+// patterns: insertion order must never decide ownership.
+func routeConflictWinner(left, right Route) (winning, shadowed Route, samePattern bool) {
+	leftMatch, leftExact, leftLength := routeInfo(left)
+	rightMatch, rightExact, rightLength := routeInfo(right)
+	if leftMatch == rightMatch && leftExact == rightExact {
+		samePattern = true
+		if routeOwnerKey(right) < routeOwnerKey(left) || (routeOwnerKey(right) == routeOwnerKey(left) && routeConflictSortKey(right) < routeConflictSortKey(left)) {
+			return right, left, true
+		}
+		return left, right, true
+	}
+	if leftExact != rightExact {
+		if leftExact {
+			return left, right, false
+		}
+		return right, left, false
+	}
+	if leftLength != rightLength {
+		if leftLength > rightLength {
+			return left, right, false
+		}
+		return right, left, false
+	}
+	// This is defensive for unusual manually constructed normalized routes.
+	if routeConflictSortKey(right) < routeConflictSortKey(left) {
+		return right, left, false
+	}
+	return left, right, false
+}
+
+func conflictPrecedenceReason(winning, shadowed Route, samePattern bool) string {
+	if samePattern {
+		return "same precedence; canonical identity tie-breaker"
+	}
+	_, winningExact, _ := routeInfo(winning)
+	_, shadowedExact, _ := routeInfo(shadowed)
+	if winningExact && !shadowedExact {
+		return "exact location takes precedence over prefix location"
+	}
+	if !winningExact && !shadowedExact {
+		return fmt.Sprintf("longer prefix %q takes precedence over %q", winning.Pattern, shadowed.Pattern)
+	}
+	return fmt.Sprintf("%s wins over %s", winning.PrecedenceReason, shadowed.PrecedenceReason)
+}
+
+func conflictIsIntentional(left, right Route, samePattern bool) bool {
+	if samePattern {
+		// Duplicate patterns have no nginx precedence winner, so every owner
+		// must explicitly accept the overlap before it is allowed.
+		return left.IntentionalOverride && right.IntentionalOverride
+	}
+	return left.IntentionalOverride || right.IntentionalOverride
+}
+
 func conflictsForRoutes(routes []Route) []RouteConflict {
 	conflicts := make([]RouteConflict, 0)
 	for i := 0; i < len(routes); i++ {
 		for j := i + 1; j < len(routes); j++ {
 			left, right := routes[i], routes[j]
-			if left.CanonicalAppID == "" || right.CanonicalAppID == "" || left.CanonicalAppID == right.CanonicalAppID || normalizeHost(left.PublicHost) != normalizeHost(right.PublicHost) {
+			if normalizeHost(left.PublicHost) != normalizeHost(right.PublicHost) {
 				continue
 			}
-			leftMatch, leftExact, leftLen := routeInfo(left)
-			rightMatch, rightExact, rightLen := routeInfo(right)
-			same := leftMatch == rightMatch && leftExact == rightExact
-			if !same {
+			leftOwner, rightOwner := routeOwnerKey(left), routeOwnerKey(right)
+			if leftOwner == "" || rightOwner == "" || leftOwner == rightOwner || !routeMatchersOverlap(left, right) {
 				continue
 			}
-			winning := left.CanonicalAppID
-			if right.CanonicalAppID < winning {
-				winning = right.CanonicalAppID
+
+			// Keep the pair itself stable regardless of the caller's route order.
+			pairLeft, pairRight := left, right
+			if routeConflictSortKey(pairRight) < routeConflictSortKey(pairLeft) {
+				pairLeft, pairRight = pairRight, pairLeft
 			}
-			reason := "same route pattern"
-			if leftLen != rightLen {
-				reason = "same pattern with different precedence"
+			winning, shadowed, samePattern := routeConflictWinner(pairLeft, pairRight)
+			reason := "narrower route shadows broader route"
+			if samePattern {
+				reason = "same route pattern"
 			}
-			conflicts = append(conflicts, RouteConflict{WorkspaceID: left.WorkspaceID, Environment: left.Environment, PublicHost: left.PublicHost, Pattern: left.Pattern, AppID: left.CanonicalAppID, ConflictingAppID: right.CanonicalAppID, WinningAppID: winning, Reason: reason})
+			precedenceReason := conflictPrecedenceReason(winning, shadowed, samePattern)
+			conflict := RouteConflict{
+				WorkspaceID:              pairLeft.WorkspaceID,
+				Environment:              pairLeft.Environment,
+				PublicHost:               normalizeHost(pairLeft.PublicHost),
+				Pattern:                  winning.Pattern,
+				AppID:                    pairLeft.CanonicalAppID,
+				ConflictingAppID:         pairRight.CanonicalAppID,
+				WinningAppID:             winning.CanonicalAppID,
+				Reason:                   reason,
+				AppServiceID:             pairLeft.ServiceID,
+				ConflictingServiceID:     pairRight.ServiceID,
+				WinningServiceID:         winning.ServiceID,
+				ShadowedAppID:            shadowed.CanonicalAppID,
+				ShadowedServiceID:        shadowed.ServiceID,
+				WinningPattern:           winning.Pattern,
+				ShadowedPattern:          shadowed.Pattern,
+				WinningPrecedence:        winning.Precedence,
+				ShadowedPrecedence:       shadowed.Precedence,
+				WinningPrecedenceReason:  winning.PrecedenceReason,
+				ShadowedPrecedenceReason: shadowed.PrecedenceReason,
+				PrecedenceReason:         precedenceReason,
+				Intentional:              conflictIsIntentional(left, right, samePattern),
+				WinningRoute:             cloneRoute(&winning),
+				ShadowedRoute:            cloneRoute(&shadowed),
+			}
+			conflicts = append(conflicts, conflict)
 		}
 	}
 	sort.Slice(conflicts, func(i, j int) bool {
 		left, right := conflicts[i], conflicts[j]
-		return strings.Join([]string{left.PublicHost, left.Pattern, left.AppID, left.ConflictingAppID}, "\x00") < strings.Join([]string{right.PublicHost, right.Pattern, right.AppID, right.ConflictingAppID}, "\x00")
+		return strings.Join([]string{left.PublicHost, left.WinningPattern, left.ShadowedPattern, left.AppID, left.AppServiceID, left.ConflictingAppID, left.ConflictingServiceID}, "\x00") < strings.Join([]string{right.PublicHost, right.WinningPattern, right.ShadowedPattern, right.AppID, right.AppServiceID, right.ConflictingAppID, right.ConflictingServiceID}, "\x00")
 	})
 	return conflicts
+}
+
+func hasAccidentalConflicts(conflicts []RouteConflict) bool {
+	for _, conflict := range conflicts {
+		if !conflict.Intentional {
+			return true
+		}
+	}
+	return false
+}
+
+func countAccidentalConflicts(conflicts []RouteConflict) int {
+	count := 0
+	for _, conflict := range conflicts {
+		if !conflict.Intentional {
+			count++
+		}
+	}
+	return count
 }
 
 func warningsForRoutes(ws *models.Workspace, app *models.Application, mode string, routes []Route) []RouteWarning {
@@ -602,7 +839,7 @@ func warningsForRoutes(ws *models.Workspace, app *models.Application, mode strin
 	if app != nil && mode == "remote" && app.GetRemoteBaseUrl(ws) == "" {
 		warnings = append(warnings, RouteWarning{Code: "REMOTE_TARGET_UNAVAILABLE", Message: fmt.Sprintf("application %q has no remote target", app.CanonicalAppID())})
 	}
-	if len(conflictsForRoutes(routes)) > 0 {
+	if hasAccidentalConflicts(conflictsForRoutes(routes)) {
 		warnings = append(warnings, RouteWarning{Code: "ROUTE_CONFLICT", Message: "one or more routes compete for the same host and pattern"})
 	}
 	return warnings

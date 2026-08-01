@@ -651,6 +651,11 @@ export class Application extends Message<Application> {
    */
   route?: RouteState;
 
+  /**
+   * @generated from field: bool route_override = 20;
+   */
+  routeOverride = false;
+
   constructor(data?: PartialMessage<Application>) {
     super();
     proto3.util.initPartial(data, this);
@@ -678,6 +683,7 @@ export class Application extends Message<Application> {
     { no: 17, name: "identity", kind: "message", T: CanonicalApplicationRef },
     { no: 18, name: "environment", kind: "message", T: WorkspaceEnvironmentRef },
     { no: 19, name: "route", kind: "message", T: RouteState },
+    { no: 20, name: "route_override", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Application {
@@ -889,6 +895,11 @@ export class ApplicationConfigInput extends Message<ApplicationConfigInput> {
    */
   aliases: string[] = [];
 
+  /**
+   * @generated from field: bool route_override = 13;
+   */
+  routeOverride = false;
+
   constructor(data?: PartialMessage<ApplicationConfigInput>) {
     super();
     proto3.util.initPartial(data, this);
@@ -909,6 +920,7 @@ export class ApplicationConfigInput extends Message<ApplicationConfigInput> {
     { no: 10, name: "service_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 11, name: "repository", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 12, name: "aliases", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 13, name: "route_override", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ApplicationConfigInput {
@@ -2525,6 +2537,11 @@ export class NormalizedRoute extends Message<NormalizedRoute> {
    */
   exact = false;
 
+  /**
+   * @generated from field: bool intentional_override = 18;
+   */
+  intentionalOverride = false;
+
   constructor(data?: PartialMessage<NormalizedRoute>) {
     super();
     proto3.util.initPartial(data, this);
@@ -2550,6 +2567,7 @@ export class NormalizedRoute extends Message<NormalizedRoute> {
     { no: 15, name: "precedence", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 16, name: "precedence_reason", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 17, name: "exact", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 18, name: "intentional_override", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): NormalizedRoute {
@@ -2656,6 +2674,81 @@ export class RouteConflict extends Message<RouteConflict> {
    */
   reason = "";
 
+  /**
+   * @generated from field: string app_service_id = 9;
+   */
+  appServiceId = "";
+
+  /**
+   * @generated from field: string conflicting_service_id = 10;
+   */
+  conflictingServiceId = "";
+
+  /**
+   * @generated from field: string winning_service_id = 11;
+   */
+  winningServiceId = "";
+
+  /**
+   * @generated from field: string shadowed_app_id = 12;
+   */
+  shadowedAppId = "";
+
+  /**
+   * @generated from field: string shadowed_service_id = 13;
+   */
+  shadowedServiceId = "";
+
+  /**
+   * @generated from field: string winning_pattern = 14;
+   */
+  winningPattern = "";
+
+  /**
+   * @generated from field: string shadowed_pattern = 15;
+   */
+  shadowedPattern = "";
+
+  /**
+   * @generated from field: int32 winning_precedence = 16;
+   */
+  winningPrecedence = 0;
+
+  /**
+   * @generated from field: int32 shadowed_precedence = 17;
+   */
+  shadowedPrecedence = 0;
+
+  /**
+   * @generated from field: string winning_precedence_reason = 18;
+   */
+  winningPrecedenceReason = "";
+
+  /**
+   * @generated from field: string shadowed_precedence_reason = 19;
+   */
+  shadowedPrecedenceReason = "";
+
+  /**
+   * @generated from field: bool intentional = 20;
+   */
+  intentional = false;
+
+  /**
+   * @generated from field: rementor.v1.NormalizedRoute winning_route = 21;
+   */
+  winningRoute?: NormalizedRoute;
+
+  /**
+   * @generated from field: rementor.v1.NormalizedRoute shadowed_route = 22;
+   */
+  shadowedRoute?: NormalizedRoute;
+
+  /**
+   * @generated from field: string precedence_reason = 23;
+   */
+  precedenceReason = "";
+
   constructor(data?: PartialMessage<RouteConflict>) {
     super();
     proto3.util.initPartial(data, this);
@@ -2672,6 +2765,21 @@ export class RouteConflict extends Message<RouteConflict> {
     { no: 6, name: "conflicting_app_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 7, name: "winning_app_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 8, name: "reason", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 9, name: "app_service_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 10, name: "conflicting_service_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 11, name: "winning_service_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 12, name: "shadowed_app_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 13, name: "shadowed_service_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 14, name: "winning_pattern", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 15, name: "shadowed_pattern", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 16, name: "winning_precedence", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 17, name: "shadowed_precedence", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 18, name: "winning_precedence_reason", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 19, name: "shadowed_precedence_reason", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 20, name: "intentional", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 21, name: "winning_route", kind: "message", T: NormalizedRoute },
+    { no: 22, name: "shadowed_route", kind: "message", T: NormalizedRoute },
+    { no: 23, name: "precedence_reason", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RouteConflict {
@@ -3047,6 +3155,104 @@ export class GetRouteResponse extends Message<GetRouteResponse> {
 
   static equals(a: GetRouteResponse | PlainMessage<GetRouteResponse> | undefined, b: GetRouteResponse | PlainMessage<GetRouteResponse> | undefined): boolean {
     return proto3.util.equals(GetRouteResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.GetRouteConflictsRequest
+ */
+export class GetRouteConflictsRequest extends Message<GetRouteConflictsRequest> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  constructor(data?: PartialMessage<GetRouteConflictsRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.GetRouteConflictsRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetRouteConflictsRequest {
+    return new GetRouteConflictsRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetRouteConflictsRequest {
+    return new GetRouteConflictsRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetRouteConflictsRequest {
+    return new GetRouteConflictsRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetRouteConflictsRequest | PlainMessage<GetRouteConflictsRequest> | undefined, b: GetRouteConflictsRequest | PlainMessage<GetRouteConflictsRequest> | undefined): boolean {
+    return proto3.util.equals(GetRouteConflictsRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.GetRouteConflictsResponse
+ */
+export class GetRouteConflictsResponse extends Message<GetRouteConflictsResponse> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  /**
+   * @generated from field: string environment = 2;
+   */
+  environment = "";
+
+  /**
+   * @generated from field: rementor.v1.RouteVersion route_version = 3;
+   */
+  routeVersion?: RouteVersion;
+
+  /**
+   * @generated from field: repeated rementor.v1.RouteConflict conflicts = 4;
+   */
+  conflicts: RouteConflict[] = [];
+
+  /**
+   * @generated from field: repeated rementor.v1.RouteWarning warnings = 5;
+   */
+  warnings: RouteWarning[] = [];
+
+  constructor(data?: PartialMessage<GetRouteConflictsResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.GetRouteConflictsResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "environment", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "route_version", kind: "message", T: RouteVersion },
+    { no: 4, name: "conflicts", kind: "message", T: RouteConflict, repeated: true },
+    { no: 5, name: "warnings", kind: "message", T: RouteWarning, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetRouteConflictsResponse {
+    return new GetRouteConflictsResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetRouteConflictsResponse {
+    return new GetRouteConflictsResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetRouteConflictsResponse {
+    return new GetRouteConflictsResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetRouteConflictsResponse | PlainMessage<GetRouteConflictsResponse> | undefined, b: GetRouteConflictsResponse | PlainMessage<GetRouteConflictsResponse> | undefined): boolean {
+    return proto3.util.equals(GetRouteConflictsResponse, a, b);
   }
 }
 

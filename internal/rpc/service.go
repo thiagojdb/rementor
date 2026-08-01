@@ -371,6 +371,7 @@ func toApplicationConfig(input *rementorv1.ApplicationConfigInput) models.Applic
 		Path: strings.TrimSpace(input.GetPath()), Domain: strings.TrimSpace(input.GetDomain()),
 		RemoteBaseUrl: strings.TrimSpace(input.GetRemoteBaseUrl()), Port: int(input.GetPort()),
 		Health: health, Context: strings.TrimSpace(input.GetContext()),
+		RouteOverride: input.GetRouteOverride(),
 	}
 }
 
@@ -381,7 +382,7 @@ func applicationConfigsFromWorkspace(ws *models.Workspace) []models.ApplicationC
 			ID: app.ID, AppID: app.CanonicalAppID(), ServiceID: app.ServiceID, Repository: app.Repository, Aliases: app.NormalizedAliases(), Name: app.Name, Path: app.Path, Domain: app.Domain,
 			RemoteBaseUrl: app.RemoteBaseUrl, Port: app.Port, Health: app.Health,
 			Active: app.Active, RoutePattern: app.RoutePattern, Context: app.Context,
-			StripOrigin: app.StripOrigin,
+			StripOrigin: app.StripOrigin, RouteOverride: app.RouteOverride,
 		})
 	}
 	return apps
@@ -491,6 +492,7 @@ func toProtoApplicationInWorkspace(ws *models.Workspace, app *models.Application
 		HealthStatus:  healthStatus,
 		RemoteStatus:  remoteStatus,
 		RoutePattern:  app.RoutePattern,
+		RouteOverride: app.RouteOverride,
 		Identity:      identity,
 		Environment:   environment,
 		Route:         routeStateToProto(state),
@@ -651,6 +653,9 @@ func classifyRegistryError(err error) connect.Code {
 	message := strings.ToLower(err.Error())
 	if strings.Contains(message, "workspace not found") || strings.Contains(message, "application not found") {
 		return connect.CodeNotFound
+	}
+	if strings.Contains(message, "route conflict") {
+		return connect.CodeFailedPrecondition
 	}
 	return connect.CodeInternal
 }

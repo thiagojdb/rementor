@@ -81,6 +81,7 @@ export interface ApplicationConfigInput {
   port?: number
   health?: string
   context?: string
+  routeOverride?: boolean
 }
 
 export interface UpdateRoutePatternRequest {

@@ -198,20 +198,25 @@ type Application struct {
 	// ID is retained as the wire-compatible canonical application identifier.
 	// AppID is the explicit identity field used by new callers; both values are
 	// kept in sync when configurations are loaded or registered.
-	ID            string             `json:"id"`
-	AppID         string             `json:"appId,omitempty"`
-	ServiceID     string             `json:"serviceId,omitempty"`
-	Repository    string             `json:"repository,omitempty"`
-	Aliases       []string           `json:"aliases,omitempty"`
-	Name          string             `json:"name,omitempty"`          // Display name
-	Path          string             `json:"path"`                    // URL path for routing (e.g., "/users")
-	Domain        string             `json:"domain,omitempty"`        // Per-app hostname for local-apps type
-	RemoteBaseUrl string             `json:"remoteBaseUrl,omitempty"` // Per-app remote base URL override
-	Context       string             `json:"context,omitempty"`       // Optional context path
-	Health        string             `json:"health"`
-	Port          int                `json:"port"`
-	Active        bool               `json:"active"`
-	RoutePattern  *string            `json:"routePattern,omitempty"`
+	ID            string   `json:"id"`
+	AppID         string   `json:"appId,omitempty"`
+	ServiceID     string   `json:"serviceId,omitempty"`
+	Repository    string   `json:"repository,omitempty"`
+	Aliases       []string `json:"aliases,omitempty"`
+	Name          string   `json:"name,omitempty"`          // Display name
+	Path          string   `json:"path"`                    // URL path for routing (e.g., "/users")
+	Domain        string   `json:"domain,omitempty"`        // Per-app hostname for local-apps type
+	RemoteBaseUrl string   `json:"remoteBaseUrl,omitempty"` // Per-app remote base URL override
+	Context       string   `json:"context,omitempty"`       // Optional context path
+	Health        string   `json:"health"`
+	Port          int      `json:"port"`
+	Active        bool     `json:"active"`
+	RoutePattern  *string  `json:"routePattern,omitempty"`
+	// RouteOverride explicitly marks this application's route ownership as an
+	// intentional override when it overlaps another application's route. The
+	// flag is metadata only: the normalized route detector still reports the
+	// overlap, but plans and applies may proceed when the overlap is marked.
+	RouteOverride bool               `json:"routeOverride,omitempty"`
 	StripOrigin   bool               `json:"stripOrigin,omitempty"` // Strip Origin header for local proxy (Quarkus Dev UI fix)
 	Route         RouteState         `json:"route"`
 	LastOperation *OperationMetadata `json:"lastOperation,omitempty"`
@@ -502,6 +507,7 @@ type ApplicationConfig struct {
 	Health        string             `json:"health,omitempty"`
 	Active        bool               `json:"active"`
 	RoutePattern  *string            `json:"routePattern,omitempty"`
+	RouteOverride bool               `json:"routeOverride,omitempty"`
 	Context       string             `json:"context,omitempty"`
 	StripOrigin   bool               `json:"stripOrigin,omitempty"` // Strip Origin header for local proxy (Quarkus Dev UI fix)
 	Route         RouteState         `json:"route,omitempty"`

@@ -408,10 +408,28 @@ func (r *Registry) GetRoutes(wsID string) ([]Route, uint64, []RouteWarning, []Ro
 	routes := buildNormalizedRoutes(snapshot)
 	conflicts := conflictsForRoutes(routes)
 	warnings := make([]RouteWarning, 0, 1)
-	if len(conflicts) > 0 {
+	if hasAccidentalConflicts(conflicts) {
 		warnings = append(warnings, RouteWarning{Code: "ROUTE_CONFLICT", Message: "one or more routes compete for the same host and pattern"})
 	}
 	return routes, snapshot.Route.RouteVersion, warnings, conflicts, nil
+}
+
+// GetRouteConflicts returns the deterministic ownership/shadowing analysis
+// for a workspace without requiring callers to inspect the full route list.
+// It is intentionally derived from the same normalized projection used by
+// GetRoutes, ResolveRoute, PlanRoute, and the nginx renderer.
+func (r *Registry) GetRouteConflicts(wsID string) ([]RouteConflict, uint64, []RouteWarning, error) {
+	ws := r.FindWorkspace(wsID)
+	if ws == nil {
+		return nil, 0, nil, fmt.Errorf("workspace not found: %s", wsID)
+	}
+	snapshot := cloneWorkspace(ws)
+	conflicts := conflictsForRoutes(buildNormalizedRoutes(snapshot))
+	warnings := make([]RouteWarning, 0, 1)
+	if hasAccidentalConflicts(conflicts) {
+		warnings = append(warnings, RouteWarning{Code: "ROUTE_CONFLICT", Message: "one or more routes compete for the same host and pattern"})
+	}
+	return conflicts, snapshot.Route.RouteVersion, warnings, nil
 }
 
 // ResolveRoute resolves a host/path request with nginx-compatible precedence.
@@ -526,8 +544,8 @@ func (r *Registry) ApplyRoutePlan(wsID string, plan RoutePlan, expectedVersion u
 	if plan.Fingerprint != "" && plan.Fingerprint != canonical.Fingerprint {
 		return RouteApplyResult{}, fmt.Errorf("route plan fingerprint does not match current desired state")
 	}
-	if len(canonical.Conflicts) > 0 {
-		return RouteApplyResult{}, fmt.Errorf("route plan contains %d route conflict(s)", len(canonical.Conflicts))
+	if hasAccidentalConflicts(canonical.Conflicts) {
+		return RouteApplyResult{}, fmt.Errorf("route plan contains %d accidental route conflict(s)", countAccidentalConflicts(canonical.Conflicts))
 	}
 	if len(canonical.Changes) == 0 {
 		result := RouteApplyResult{Changed: false, Plan: canonical, Routes: cloneRoutes(canonical.After), Verified: r.routesAreEffective(wsID, canonical.After), Verification: "unchanged"}
@@ -600,8 +618,12 @@ func (r *Registry) SyncRoute(wsID, correlationID string, repair bool) (RouteSync
 	desired := buildNormalizedRoutes(ws)
 	desiredHash := fingerprintRoutes(desired)
 	warnings := make([]RouteWarning, 0)
-	if len(conflictsForRoutes(desired)) > 0 {
+	conflicts := conflictsForRoutes(desired)
+	if hasAccidentalConflicts(conflicts) {
 		warnings = append(warnings, RouteWarning{Code: "ROUTE_CONFLICT", Message: "one or more routes compete for the same host and pattern"})
+		if repair {
+			return RouteSyncResult{}, fmt.Errorf("route sync blocked by %d accidental route conflict(s)", countAccidentalConflicts(conflicts))
+		}
 	}
 	if r.routesAreEffectiveHash(wsID, desiredHash) && r.effectiveVersion(wsID) == ws.Route.RouteVersion {
 		return RouteSyncResult{WorkspaceID: wsID, Changed: false, Verified: true, Status: "in-sync", DesiredRouteVersion: ws.Route.RouteVersion, EffectiveRouteVersion: r.effectiveVersion(wsID), Routes: desired, Warnings: warnings}, nil
@@ -1337,7 +1359,7 @@ func applicationsFromConfigs(workspace *models.Workspace, configs []models.Appli
 			ID: canonical, AppID: canonical, ServiceID: serviceID, Repository: config.Repository, Aliases: append([]string(nil), config.Aliases...), Name: config.Name, Path: config.Path, Domain: config.Domain,
 			RemoteBaseUrl: config.RemoteBaseUrl, Context: config.Context, Health: config.Health,
 			Port: config.Port, Active: config.Active, RoutePattern: cloneStringPtr(config.RoutePattern),
-			StripOrigin: config.StripOrigin,
+			RouteOverride: config.RouteOverride, StripOrigin: config.StripOrigin,
 		}
 		if app.Health == "" {
 			app.Health = models.DefaultHealthEndpoint
@@ -1384,7 +1406,7 @@ func cloneWorkspace(source *models.Workspace) *models.Workspace {
 			ID: sourceApp.ID, AppID: sourceApp.CanonicalAppID(), ServiceID: sourceApp.ServiceID, Repository: sourceApp.Repository, Aliases: append([]string(nil), sourceApp.Aliases...), Name: sourceApp.Name, Path: sourceApp.Path, Domain: sourceApp.Domain,
 			RemoteBaseUrl: sourceApp.RemoteBaseUrl, Context: sourceApp.Context, Health: sourceApp.Health,
 			Port: sourceApp.Port, Active: sourceApp.Active, RoutePattern: cloneStringPtr(sourceApp.RoutePattern),
-			StripOrigin:   sourceApp.StripOrigin,
+			RouteOverride: sourceApp.RouteOverride, StripOrigin: sourceApp.StripOrigin,
 			Route:         sourceApp.Route,
 			LastOperation: cloneOperation(sourceApp.LastOperation),
 		}
@@ -1430,7 +1452,7 @@ func applicationConfigs(apps []*models.Application) []models.ApplicationConfig {
 			ID: app.ID, AppID: app.CanonicalAppID(), ServiceID: app.ServiceID, Repository: app.Repository, Aliases: app.NormalizedAliases(), Name: app.Name, Path: app.Path, Domain: app.Domain,
 			RemoteBaseUrl: app.RemoteBaseUrl, Port: app.Port, Health: app.Health,
 			Active: app.Active, RoutePattern: app.RoutePattern, Context: app.Context,
-			StripOrigin: app.StripOrigin,
+			RouteOverride: app.RouteOverride, StripOrigin: app.StripOrigin,
 		})
 	}
 	return result

@@ -274,10 +274,11 @@ func TestSaveStatePersistsActiveAndRoutePatternInSQLite(t *testing.T) {
 		},
 		Applications: []models.ApplicationConfig{
 			{
-				ID:     "api",
-				Path:   "/api",
-				Port:   8080,
-				Active: false,
+				ID:            "api",
+				Path:          "/api",
+				Port:          8080,
+				Active:        false,
+				RouteOverride: true,
 			},
 		},
 	}); err != nil {
@@ -308,6 +309,9 @@ func TestSaveStatePersistsActiveAndRoutePatternInSQLite(t *testing.T) {
 	if app.RoutePattern == nil || *app.RoutePattern != pattern {
 		t.Fatalf("expected route pattern %q, got %#v", pattern, app.RoutePattern)
 	}
+	if !app.RouteOverride {
+		t.Fatalf("expected route override metadata to persist")
+	}
 }
 
 func TestUpdateWorkspaceApplicationsPreservesRoutingMetadata(t *testing.T) {
@@ -324,14 +328,14 @@ func TestUpdateWorkspaceApplicationsPreservesRoutingMetadata(t *testing.T) {
 		},
 		Applications: []models.ApplicationConfig{{
 			ID: "orders-api", Path: "/orders", Port: 8081, Active: true,
-			RoutePattern: &pattern, StripOrigin: true,
+			RoutePattern: &pattern, RouteOverride: true, StripOrigin: true,
 		}},
 	}); err != nil {
 		t.Fatalf("AppendWorkspace failed: %v", err)
 	}
 
 	if err := UpdateWorkspaceApplications("demo", []models.ApplicationConfig{{
-		ID: "orders-api", Name: "Orders", Path: "/orders", Port: 8082,
+		ID: "orders-api", Name: "Orders", Path: "/orders", Port: 8082, RouteOverride: true,
 	}}, "api.localhost", "https://remote.example.test"); err != nil {
 		t.Fatalf("UpdateWorkspaceApplications failed: %v", err)
 	}
@@ -341,7 +345,7 @@ func TestUpdateWorkspaceApplicationsPreservesRoutingMetadata(t *testing.T) {
 		t.Fatalf("LoadWorkspaces failed: %v", err)
 	}
 	app := workspaces[0].Applications[0]
-	if !app.Active || !app.StripOrigin || app.RoutePattern == nil || *app.RoutePattern != pattern {
+	if !app.Active || !app.StripOrigin || !app.RouteOverride || app.RoutePattern == nil || *app.RoutePattern != pattern {
 		t.Fatalf("runtime routing metadata was not preserved: %#v", app)
 	}
 }

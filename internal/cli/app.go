@@ -119,6 +119,7 @@ func appRegister(client *Client, jsonOutput bool, args []string) {
 	serviceID := fs.String("service-id", "", "canonical service identity")
 	repository := fs.String("repository", "", "source repository identity")
 	aliases := fs.String("aliases", "", "comma-separated application aliases")
+	routeOverride := fs.Bool("route-override", false, "mark overlapping route ownership as intentional")
 	if err := parseFlags(fs, args); err != nil {
 		Die("%v", err)
 	}
@@ -147,6 +148,7 @@ func appRegister(client *Client, jsonOutput bool, args []string) {
 		Port:          *port,
 		Health:        *health,
 		Context:       *context,
+		RouteOverride: *routeOverride,
 	}
 
 	result, err := client.UpsertApplication(stdctx.Background(), wsID, input)
@@ -251,6 +253,7 @@ func upsertApp(existing []ApplicationDTO, input ApplicationConfigInput) ([]Appli
 				(input.AppID == "" || app.AppID == input.AppID) &&
 				(input.ServiceID == "" || app.ServiceID == input.ServiceID) &&
 				(input.Repository == "" || app.Repository == input.Repository) &&
+				app.RouteOverride == input.RouteOverride &&
 				(input.Aliases == nil || sameAliases(app.Aliases, input.Aliases))
 
 			if same {
@@ -296,6 +299,7 @@ func upsertApp(existing []ApplicationDTO, input ApplicationConfigInput) ([]Appli
 			Port:          app.Port,
 			Health:        app.Health,
 			Context:       app.Context,
+			RouteOverride: app.RouteOverride,
 		})
 	}
 

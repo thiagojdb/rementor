@@ -25,6 +25,7 @@ func AnnounceCmd(client *Client, jsonOutput bool, args []string) {
 	serviceID := fs.String("service-id", "", "canonical service identity")
 	repository := fs.String("repository", "", "source repository identity")
 	aliases := fs.String("aliases", "", "comma-separated application aliases")
+	routeOverride := fs.Bool("route-override", false, "mark overlapping route ownership as intentional")
 	noActivate := fs.Bool("no-activate", false, "skip toggling app to local/active after registration")
 	if err := parseFlags(fs, args); err != nil {
 		Die("%v", err)
@@ -72,6 +73,7 @@ func AnnounceCmd(client *Client, jsonOutput bool, args []string) {
 		Port:          *port,
 		Health:        *health,
 		Context:       *context,
+		RouteOverride: *routeOverride,
 	}
 
 	upserted, err := client.UpsertApplication(stdctx.Background(), *wsID, input)
@@ -203,6 +205,7 @@ Options:
   --service-id <id>      canonical service identity
   --repository <name>    source repository identity
   --aliases <a,b>        comma-separated aliases
+  --route-override       mark overlapping route ownership as intentional
   --no-activate          skip toggling app to local/active`)
 	os.Exit(1)
 }

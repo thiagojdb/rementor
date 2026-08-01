@@ -100,6 +100,24 @@ func TestRenderConfigIncludesBackendServicesUsingDefaultRemoteBaseURL(t *testing
 	assertContains(t, conf, "proxy_pass http://127.0.0.1:18080;")
 }
 
+func TestRenderConfigRejectsAccidentalRouteOwnershipConflict(t *testing.T) {
+	_, err := RenderConfig([]*models.Workspace{{
+		WorkspaceID: "dev",
+		Type:        models.WorkspaceTypeRouting,
+		RoutingConfig: &models.RoutingConfig{
+			LocalDomain:          "api.localhost",
+			DefaultRemoteBaseURL: "https://remote.example.test",
+		},
+		Applications: []*models.Application{
+			{ID: "orders", Path: "/orders", RemoteBaseUrl: "https://orders.example.test"},
+			{ID: "billing", Path: "/orders", RemoteBaseUrl: "https://billing.example.test"},
+		},
+	}}, "rementor.localhost")
+	if err == nil || !strings.Contains(err.Error(), "route conflict") {
+		t.Fatalf("RenderConfig error = %v, want an accidental route conflict", err)
+	}
+}
+
 func TestRenderConfigRoutingAppDomainIncludesWorkspaceBackendRoutes(t *testing.T) {
 	frontend := &models.Application{
 		ID:            "web-frontend",

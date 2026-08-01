@@ -87,6 +87,9 @@ const (
 	// ControlPlaneServiceGetRouteProcedure is the fully-qualified name of the ControlPlaneService's
 	// GetRoute RPC.
 	ControlPlaneServiceGetRouteProcedure = "/rementor.v1.ControlPlaneService/GetRoute"
+	// ControlPlaneServiceGetRouteConflictsProcedure is the fully-qualified name of the
+	// ControlPlaneService's GetRouteConflicts RPC.
+	ControlPlaneServiceGetRouteConflictsProcedure = "/rementor.v1.ControlPlaneService/GetRouteConflicts"
 	// ControlPlaneServiceResolveRouteProcedure is the fully-qualified name of the ControlPlaneService's
 	// ResolveRoute RPC.
 	ControlPlaneServiceResolveRouteProcedure = "/rementor.v1.ControlPlaneService/ResolveRoute"
@@ -124,6 +127,7 @@ type ControlPlaneServiceClient interface {
 	GetRoutePattern(context.Context, *connect.Request[v1.GetRoutePatternRequest]) (*connect.Response[v1.GetRoutePatternResponse], error)
 	UpdateRoutePattern(context.Context, *connect.Request[v1.UpdateRoutePatternRequest]) (*connect.Response[v1.UpdateRoutePatternResponse], error)
 	GetRoute(context.Context, *connect.Request[v1.GetRouteRequest]) (*connect.Response[v1.GetRouteResponse], error)
+	GetRouteConflicts(context.Context, *connect.Request[v1.GetRouteConflictsRequest]) (*connect.Response[v1.GetRouteConflictsResponse], error)
 	ResolveRoute(context.Context, *connect.Request[v1.ResolveRouteRequest]) (*connect.Response[v1.ResolveRouteResponse], error)
 	PlanRoute(context.Context, *connect.Request[v1.PlanRouteRequest]) (*connect.Response[v1.PlanRouteResponse], error)
 	ApplyRoute(context.Context, *connect.Request[v1.ApplyRouteRequest]) (*connect.Response[v1.ApplyRouteResponse], error)
@@ -250,6 +254,12 @@ func NewControlPlaneServiceClient(httpClient connect.HTTPClient, baseURL string,
 			connect.WithSchema(controlPlaneServiceMethods.ByName("GetRoute")),
 			connect.WithClientOptions(opts...),
 		),
+		getRouteConflicts: connect.NewClient[v1.GetRouteConflictsRequest, v1.GetRouteConflictsResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceGetRouteConflictsProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("GetRouteConflicts")),
+			connect.WithClientOptions(opts...),
+		),
 		resolveRoute: connect.NewClient[v1.ResolveRouteRequest, v1.ResolveRouteResponse](
 			httpClient,
 			baseURL+ControlPlaneServiceResolveRouteProcedure,
@@ -303,6 +313,7 @@ type controlPlaneServiceClient struct {
 	getRoutePattern          *connect.Client[v1.GetRoutePatternRequest, v1.GetRoutePatternResponse]
 	updateRoutePattern       *connect.Client[v1.UpdateRoutePatternRequest, v1.UpdateRoutePatternResponse]
 	getRoute                 *connect.Client[v1.GetRouteRequest, v1.GetRouteResponse]
+	getRouteConflicts        *connect.Client[v1.GetRouteConflictsRequest, v1.GetRouteConflictsResponse]
 	resolveRoute             *connect.Client[v1.ResolveRouteRequest, v1.ResolveRouteResponse]
 	planRoute                *connect.Client[v1.PlanRouteRequest, v1.PlanRouteResponse]
 	applyRoute               *connect.Client[v1.ApplyRouteRequest, v1.ApplyRouteResponse]
@@ -400,6 +411,11 @@ func (c *controlPlaneServiceClient) GetRoute(ctx context.Context, req *connect.R
 	return c.getRoute.CallUnary(ctx, req)
 }
 
+// GetRouteConflicts calls rementor.v1.ControlPlaneService.GetRouteConflicts.
+func (c *controlPlaneServiceClient) GetRouteConflicts(ctx context.Context, req *connect.Request[v1.GetRouteConflictsRequest]) (*connect.Response[v1.GetRouteConflictsResponse], error) {
+	return c.getRouteConflicts.CallUnary(ctx, req)
+}
+
 // ResolveRoute calls rementor.v1.ControlPlaneService.ResolveRoute.
 func (c *controlPlaneServiceClient) ResolveRoute(ctx context.Context, req *connect.Request[v1.ResolveRouteRequest]) (*connect.Response[v1.ResolveRouteResponse], error) {
 	return c.resolveRoute.CallUnary(ctx, req)
@@ -445,6 +461,7 @@ type ControlPlaneServiceHandler interface {
 	GetRoutePattern(context.Context, *connect.Request[v1.GetRoutePatternRequest]) (*connect.Response[v1.GetRoutePatternResponse], error)
 	UpdateRoutePattern(context.Context, *connect.Request[v1.UpdateRoutePatternRequest]) (*connect.Response[v1.UpdateRoutePatternResponse], error)
 	GetRoute(context.Context, *connect.Request[v1.GetRouteRequest]) (*connect.Response[v1.GetRouteResponse], error)
+	GetRouteConflicts(context.Context, *connect.Request[v1.GetRouteConflictsRequest]) (*connect.Response[v1.GetRouteConflictsResponse], error)
 	ResolveRoute(context.Context, *connect.Request[v1.ResolveRouteRequest]) (*connect.Response[v1.ResolveRouteResponse], error)
 	PlanRoute(context.Context, *connect.Request[v1.PlanRouteRequest]) (*connect.Response[v1.PlanRouteResponse], error)
 	ApplyRoute(context.Context, *connect.Request[v1.ApplyRouteRequest]) (*connect.Response[v1.ApplyRouteResponse], error)
@@ -567,6 +584,12 @@ func NewControlPlaneServiceHandler(svc ControlPlaneServiceHandler, opts ...conne
 		connect.WithSchema(controlPlaneServiceMethods.ByName("GetRoute")),
 		connect.WithHandlerOptions(opts...),
 	)
+	controlPlaneServiceGetRouteConflictsHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceGetRouteConflictsProcedure,
+		svc.GetRouteConflicts,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("GetRouteConflicts")),
+		connect.WithHandlerOptions(opts...),
+	)
 	controlPlaneServiceResolveRouteHandler := connect.NewUnaryHandler(
 		ControlPlaneServiceResolveRouteProcedure,
 		svc.ResolveRoute,
@@ -635,6 +658,8 @@ func NewControlPlaneServiceHandler(svc ControlPlaneServiceHandler, opts ...conne
 			controlPlaneServiceUpdateRoutePatternHandler.ServeHTTP(w, r)
 		case ControlPlaneServiceGetRouteProcedure:
 			controlPlaneServiceGetRouteHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceGetRouteConflictsProcedure:
+			controlPlaneServiceGetRouteConflictsHandler.ServeHTTP(w, r)
 		case ControlPlaneServiceResolveRouteProcedure:
 			controlPlaneServiceResolveRouteHandler.ServeHTTP(w, r)
 		case ControlPlaneServicePlanRouteProcedure:
@@ -724,6 +749,10 @@ func (UnimplementedControlPlaneServiceHandler) UpdateRoutePattern(context.Contex
 
 func (UnimplementedControlPlaneServiceHandler) GetRoute(context.Context, *connect.Request[v1.GetRouteRequest]) (*connect.Response[v1.GetRouteResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.GetRoute is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) GetRouteConflicts(context.Context, *connect.Request[v1.GetRouteConflictsRequest]) (*connect.Response[v1.GetRouteConflictsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.GetRouteConflicts is not implemented"))
 }
 
 func (UnimplementedControlPlaneServiceHandler) ResolveRoute(context.Context, *connect.Request[v1.ResolveRouteRequest]) (*connect.Response[v1.ResolveRouteResponse], error) {

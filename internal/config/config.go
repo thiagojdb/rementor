@@ -507,6 +507,7 @@ func initDB(db *sql.DB) error {
 			route_pattern TEXT,
 			context TEXT NOT NULL DEFAULT '',
 			strip_origin INTEGER NOT NULL DEFAULT 0,
+			route_override INTEGER NOT NULL DEFAULT 0,
 			sort_order INTEGER NOT NULL DEFAULT 0,
 			route_version INTEGER NOT NULL DEFAULT 0,
 			operation_id TEXT NOT NULL DEFAULT '',
@@ -554,6 +555,7 @@ func initDB(db *sql.DB) error {
 		{"applications", "operation_kind", "TEXT NOT NULL DEFAULT ''"},
 		{"applications", "operation_created_at", "TEXT"},
 		{"applications", "operation_completed_at", "TEXT"},
+		{"applications", "route_override", "INTEGER NOT NULL DEFAULT 0"},
 	} {
 		if err := ensureColumn(db, migration.table, migration.column, migration.def); err != nil {
 			return err
@@ -735,7 +737,7 @@ func loadWorkspacesFromDB(db *sql.DB) ([]*models.Workspace, error) {
 func loadApplicationConfigs(db *sql.DB, wsID string) ([]models.ApplicationConfig, error) {
 	rows, err := db.Query(`
 		SELECT
-			a.id, a.name, a.path, a.domain, a.remote_base_url, a.port, a.health, a.active, a.route_pattern, a.context, a.strip_origin,
+			a.id, a.name, a.path, a.domain, a.remote_base_url, a.port, a.health, a.active, a.route_pattern, a.context, a.strip_origin, a.route_override,
 			COALESCE(i.app_id, a.id), COALESCE(i.service_id, a.id), COALESCE(i.repository, ''),
 			a.route_version, a.operation_id, a.correlation_id, a.operation_kind, a.operation_created_at, a.operation_completed_at
 		FROM applications a
@@ -752,18 +754,20 @@ func loadApplicationConfigs(db *sql.DB, wsID string) ([]models.ApplicationConfig
 	for rows.Next() {
 		var app models.ApplicationConfig
 		var active int
+		var routeOverride int
 		var routePattern sql.NullString
 		var routeVersion int64
 		var operationID, correlationID, operationKind string
 		var operationCreatedAt, operationCompletedAt sql.NullString
 		if err := rows.Scan(
 			&app.ID, &app.Name, &app.Path, &app.Domain, &app.RemoteBaseUrl, &app.Port, &app.Health, &active,
-			&routePattern, &app.Context, &app.StripOrigin, &app.AppID, &app.ServiceID, &app.Repository,
+			&routePattern, &app.Context, &app.StripOrigin, &routeOverride, &app.AppID, &app.ServiceID, &app.Repository,
 			&routeVersion, &operationID, &correlationID, &operationKind, &operationCreatedAt, &operationCompletedAt,
 		); err != nil {
 			return nil, fmt.Errorf("failed to scan sqlite application: %w", err)
 		}
 		app.Active = active != 0
+		app.RouteOverride = routeOverride != 0
 		app.RoutePattern = nullStringPtr(routePattern)
 		app.Route.RouteVersion = uint64(routeVersion)
 		app.Route.OperationID = operationID
@@ -857,8 +861,8 @@ func workspaceConfigFromWorkspace(workspace *models.Workspace) models.WorkspaceC
 			ID: app.ID, AppID: app.CanonicalAppID(), ServiceID: app.ServiceID, Repository: app.Repository, Aliases: app.NormalizedAliases(), Name: app.Name, Path: app.Path, Domain: app.Domain,
 			RemoteBaseUrl: app.RemoteBaseUrl, Port: app.Port, Health: app.Health,
 			Active: app.Active, RoutePattern: app.RoutePattern, Context: app.Context,
-			StripOrigin: app.StripOrigin,
-			Route:       app.Route, LastOperation: app.LastOperation,
+			StripOrigin: app.StripOrigin, RouteOverride: app.RouteOverride,
+			Route: app.Route, LastOperation: app.LastOperation,
 		})
 	}
 	return config
@@ -897,6 +901,7 @@ func convertAppConfigs(configs []models.ApplicationConfig) []*models.Application
 			Port:          appConfig.Port,
 			Active:        appConfig.Active,
 			RoutePattern:  appConfig.RoutePattern,
+			RouteOverride: appConfig.RouteOverride,
 			StripOrigin:   appConfig.StripOrigin,
 			Route:         appConfig.Route,
 			LastOperation: appConfig.LastOperation,
@@ -964,10 +969,10 @@ func insertApplicationConfig(tx *sql.Tx, wsID string, app models.ApplicationConf
 	_, err := tx.Exec(`
 		INSERT INTO applications (
 			workspace_id, id, name, path, domain, remote_base_url, port, health, active, route_pattern, context,
-			strip_origin, sort_order, route_version, operation_id, correlation_id, operation_kind, operation_created_at, operation_completed_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			strip_origin, route_override, sort_order, route_version, operation_id, correlation_id, operation_kind, operation_created_at, operation_completed_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`, wsID, appID, app.Name, app.Path, app.Domain, app.RemoteBaseUrl, app.Port, health, boolInt(app.Active),
-		ptrValue(app.RoutePattern), app.Context, boolInt(app.StripOrigin), order, app.Route.RouteVersion, app.Route.OperationID,
+		ptrValue(app.RoutePattern), app.Context, boolInt(app.StripOrigin), boolInt(app.RouteOverride), order, app.Route.RouteVersion, app.Route.OperationID,
 		operationCorrelation(app.LastOperation), operationKind(app.LastOperation), operationCreatedAt(app.LastOperation), operationCompletedAt(app.LastOperation))
 	if err != nil {
 		return fmt.Errorf("failed to insert application %s/%s: %w", wsID, appID, err)
