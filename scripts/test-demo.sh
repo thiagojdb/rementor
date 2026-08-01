@@ -25,12 +25,21 @@ request() {
 assert_source() {
   local path=$1
   local expected=$2
-  local response
-  response=$(request "$path")
-  if [[ "$response" != *"\"source\":\"${expected}\""* ]]; then
-    printf 'expected %s to return source=%s; response: %s\n' "$path" "$expected" "$response" >&2
-    return 1
-  fi
+  local response=''
+  local deadline=$((SECONDS + 5))
+
+  # nginx reloads workers asynchronously. Give the new route projection a
+  # short window to become active before reporting a routing failure.
+  while ((SECONDS < deadline)); do
+    response=$(request "$path" 2>/dev/null || true)
+    if [[ "$response" == *"\"source\":\"${expected}\""* ]]; then
+      return 0
+    fi
+    sleep 0.1
+  done
+
+  printf 'expected %s to return source=%s; response: %s\n' "$path" "$expected" "$response" >&2
+  return 1
 }
 
 compose up --build --detach --wait
