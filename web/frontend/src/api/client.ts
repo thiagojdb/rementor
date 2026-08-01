@@ -4,9 +4,7 @@ import { ControlPlaneService } from '../gen/rementor/v1/rementor_connect'
 import type {
   ApplicationDTO,
   CreateWorkspaceRequest,
-  LoggersResponseDTO,
   RoutePatternDTO,
-  SetLoggerLevelRequest,
   ToggleResultDTO,
   UpdateRoutePatternRequest,
   UpdateWorkspaceRequest,
@@ -75,6 +73,14 @@ export function getApplication(wsId: string, appId: string): Promise<Application
   return call(async () => (await client.getApplication({ workspaceId: wsId, applicationId: appId })).application as ApplicationDTO)
 }
 
+export function resolveApplication(wsId: string, applicationRef: string): Promise<ApplicationDTO> {
+  return call(async () => (await client.resolveApplication({ workspaceId: wsId, applicationRef })).application as ApplicationDTO)
+}
+
+export function registerApplicationAlias(wsId: string, applicationRef: string, alias: string): Promise<ApplicationDTO> {
+  return call(async () => (await client.registerApplicationAlias({ workspaceId: wsId, applicationRef, alias })).application as ApplicationDTO)
+}
+
 export function toggleApplication(wsId: string, appId: string): Promise<ApplicationDTO> {
   return call(async () => (await client.toggleApplication({ workspaceId: wsId, applicationId: appId })).application as ApplicationDTO)
 }
@@ -102,26 +108,6 @@ export function updateRoutePattern(
 ): Promise<ApplicationDTO> {
   return call(async () =>
     (await client.updateRoutePattern({ workspaceId: wsId, applicationId: appId, pattern: req.pattern })).application as ApplicationDTO
-  )
-}
-
-export function getLoggers(wsId: string, appId: string): Promise<LoggersResponseDTO> {
-  return call(() => client.getLoggers({ workspaceId: wsId, applicationId: appId }) as Promise<LoggersResponseDTO>)
-}
-
-export async function setLoggerLevel(
-  wsId: string,
-  appId: string,
-  loggerName: string,
-  req: SetLoggerLevelRequest
-): Promise<void> {
-  await call(() =>
-    client.setLoggerLevel({
-      workspaceId: wsId,
-      applicationId: appId,
-      loggerName,
-      level: req.level,
-    })
   )
 }
 

@@ -111,6 +111,22 @@ func (c *Client) GetApplication(ctx context.Context, workspaceID, appID string) 
 	return applicationFromProto(res.Msg.GetApplication()), nil
 }
 
+func (c *Client) ResolveApplication(ctx context.Context, workspaceID, applicationRef string) (ApplicationDTO, error) {
+	res, err := c.rpc.ResolveApplication(ctx, connect.NewRequest(&rementorv1.ResolveApplicationRequest{WorkspaceId: workspaceID, ApplicationRef: applicationRef}))
+	if err != nil {
+		return ApplicationDTO{}, apiError(err)
+	}
+	return applicationFromProto(res.Msg.GetApplication()), nil
+}
+
+func (c *Client) RegisterApplicationAlias(ctx context.Context, workspaceID, applicationRef, alias string) (ApplicationDTO, error) {
+	res, err := c.rpc.RegisterApplicationAlias(ctx, connect.NewRequest(&rementorv1.RegisterApplicationAliasRequest{WorkspaceId: workspaceID, ApplicationRef: applicationRef, Alias: alias}))
+	if err != nil {
+		return ApplicationDTO{}, apiError(err)
+	}
+	return applicationFromProto(res.Msg.GetApplication()), nil
+}
+
 func (c *Client) UpsertApplication(ctx context.Context, workspaceID string, input ApplicationConfigInput) (UpsertApplicationResponse, error) {
 	res, err := c.rpc.UpsertApplication(ctx, connect.NewRequest(&rementorv1.UpsertApplicationRequest{
 		WorkspaceId: workspaceID,
@@ -184,35 +200,6 @@ func (c *Client) UpdateRoutePattern(ctx context.Context, workspaceID, appID stri
 	return applicationFromProto(res.Msg.GetApplication()), nil
 }
 
-func (c *Client) GetLoggers(ctx context.Context, workspaceID, appID string) (LoggersResponse, error) {
-	res, err := c.rpc.GetLoggers(ctx, connect.NewRequest(&rementorv1.GetLoggersRequest{WorkspaceId: workspaceID, ApplicationId: appID}))
-	if err != nil {
-		return LoggersResponse{}, apiError(err)
-	}
-	loggers := make([]LoggerDTO, 0, len(res.Msg.GetLoggers()))
-	for _, logger := range res.Msg.GetLoggers() {
-		loggers = append(loggers, LoggerDTO{
-			Name:            logger.GetName(),
-			EffectiveLevel:  logger.GetEffectiveLevel(),
-			ConfiguredLevel: logger.GetConfiguredLevel(),
-		})
-	}
-	return LoggersResponse{Levels: res.Msg.GetLevels(), Loggers: loggers}, nil
-}
-
-func (c *Client) SetLoggerLevel(ctx context.Context, workspaceID, appID, loggerName string, req SetLoggerLevelRequest) (map[string]string, error) {
-	res, err := c.rpc.SetLoggerLevel(ctx, connect.NewRequest(&rementorv1.SetLoggerLevelRequest{
-		WorkspaceId:   workspaceID,
-		ApplicationId: appID,
-		LoggerName:    loggerName,
-		Level:         req.Level,
-	}))
-	if err != nil {
-		return nil, apiError(err)
-	}
-	return map[string]string{"status": res.Msg.GetStatus(), "logger": res.Msg.GetLogger(), "level": res.Msg.GetLevel()}, nil
-}
-
 func apiError(err error) error {
 	if err == nil {
 		return nil
@@ -232,6 +219,8 @@ func httpStatusFromCode(code connect.Code) int {
 		return http.StatusNotFound
 	case connect.CodeAlreadyExists:
 		return http.StatusConflict
+	case connect.CodeFailedPrecondition:
+		return http.StatusPreconditionFailed
 	case connect.CodePermissionDenied, connect.CodeUnauthenticated:
 		return http.StatusForbidden
 	case connect.CodeUnavailable:
@@ -286,6 +275,10 @@ func applicationFromProto(app *rementorv1.Application) ApplicationDTO {
 	}
 	return ApplicationDTO{
 		ID:            app.GetId(),
+		AppID:         app.GetAppId(),
+		ServiceID:     app.GetServiceId(),
+		Repository:    app.GetRepository(),
+		Aliases:       append([]string(nil), app.GetAliases()...),
 		Name:          app.GetName(),
 		Path:          app.GetPath(),
 		Domain:        app.GetDomain(),
@@ -310,7 +303,7 @@ func applicationInputsToProto(inputs []ApplicationConfigInput) []*rementorv1.App
 
 func applicationInputToProto(input ApplicationConfigInput) *rementorv1.ApplicationConfigInput {
 	return &rementorv1.ApplicationConfigInput{
-		Id: input.ID, Name: input.Name, Path: input.Path, Domain: input.Domain,
+		Id: input.ID, AppId: input.AppID, ServiceId: input.ServiceID, Repository: input.Repository, Aliases: input.Aliases, Name: input.Name, Path: input.Path, Domain: input.Domain,
 		RemoteBaseUrl: input.RemoteBaseUrl, Port: int32(input.Port),
 		Health: input.Health, Context: input.Context,
 	}

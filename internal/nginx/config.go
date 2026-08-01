@@ -60,7 +60,7 @@ func RenderConfig(workspaces []*models.Workspace, rementorDomain string) (string
 				ID: app.ID, Name: app.Name, Path: app.Path, Domain: app.Domain,
 				RemoteBaseUrl: app.RemoteBaseUrl, Port: app.Port, Health: app.Health,
 				Active: app.Active, RoutePattern: app.RoutePattern, Context: app.Context,
-				LoggerConfig: app.LoggerConfig, StripOrigin: app.StripOrigin,
+				StripOrigin: app.StripOrigin,
 			})
 		}
 		localDomain := ""

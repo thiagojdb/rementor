@@ -28,7 +28,15 @@ export function findWorkspace(wsId: string): WorkspaceDTO | undefined {
 }
 
 export function findApplication(wsId: string, appId: string): ApplicationDTO | undefined {
-  return findWorkspace(wsId)?.applications.find((a) => a.id === appId)
+  const normalized = normalizeIdentityToken(appId)
+  return findWorkspace(wsId)?.applications.find((a) => {
+    if (normalizeIdentityToken(a.id || a.appId) === normalized) return true
+    return a.aliases.some((alias) => normalizeIdentityToken(alias) === normalized)
+  })
+}
+
+function normalizeIdentityToken(value: string): string {
+  return value.trim().toLowerCase().replace(/[\s_]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
 }
 
 export async function toggleApplication(wsId: string, appId: string): Promise<void> {

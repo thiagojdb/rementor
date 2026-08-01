@@ -2,18 +2,22 @@ package cli
 
 // ApplicationDTO is the CLI-friendly view of the protobuf Application message.
 type ApplicationDTO struct {
-	ID            string  `json:"id"`
-	Name          string  `json:"name"`
-	Path          string  `json:"path"`
-	Domain        string  `json:"domain,omitempty"`
-	RemoteBaseUrl string  `json:"remoteBaseUrl,omitempty"`
-	Context       string  `json:"context,omitempty"`
-	Port          int     `json:"port"`
-	Health        string  `json:"health,omitempty"`
-	Active        bool    `json:"active"`
-	HealthStatus  string  `json:"healthStatus"`
-	RemoteStatus  string  `json:"remoteStatus,omitempty"`
-	RoutePattern  *string `json:"routePattern,omitempty"`
+	ID            string   `json:"id"`
+	AppID         string   `json:"appId,omitempty"`
+	ServiceID     string   `json:"serviceId,omitempty"`
+	Repository    string   `json:"repository,omitempty"`
+	Aliases       []string `json:"aliases,omitempty"`
+	Name          string   `json:"name"`
+	Path          string   `json:"path"`
+	Domain        string   `json:"domain,omitempty"`
+	RemoteBaseUrl string   `json:"remoteBaseUrl,omitempty"`
+	Context       string   `json:"context,omitempty"`
+	Port          int      `json:"port"`
+	Health        string   `json:"health,omitempty"`
+	Active        bool     `json:"active"`
+	HealthStatus  string   `json:"healthStatus"`
+	RemoteStatus  string   `json:"remoteStatus,omitempty"`
+	RoutePattern  *string  `json:"routePattern,omitempty"`
 }
 
 // RoutingDTO is the CLI-friendly view of the protobuf Routing message.
@@ -58,14 +62,18 @@ type UpdateWorkspaceRequest struct {
 
 // ApplicationConfigInput is the CLI-friendly application config input.
 type ApplicationConfigInput struct {
-	ID            string `json:"id"`
-	Name          string `json:"name"`
-	Path          string `json:"path"`
-	Domain        string `json:"domain"`
-	RemoteBaseUrl string `json:"remoteBaseUrl"`
-	Port          int    `json:"port"`
-	Health        string `json:"health"`
-	Context       string `json:"context"`
+	ID            string   `json:"id"`
+	AppID         string   `json:"appId,omitempty"`
+	ServiceID     string   `json:"serviceId,omitempty"`
+	Repository    string   `json:"repository,omitempty"`
+	Aliases       []string `json:"aliases,omitempty"`
+	Name          string   `json:"name"`
+	Path          string   `json:"path"`
+	Domain        string   `json:"domain"`
+	RemoteBaseUrl string   `json:"remoteBaseUrl"`
+	Port          int      `json:"port"`
+	Health        string   `json:"health"`
+	Context       string   `json:"context"`
 }
 
 type UpsertApplicationResponse struct {
@@ -82,24 +90,6 @@ type RoutePatternResponse struct {
 type ToggleResultResponse struct {
 	SuccessCount int `json:"successCount"`
 	FailureCount int `json:"failureCount"`
-}
-
-// LoggerDTO is the CLI-friendly logger view.
-type LoggerDTO struct {
-	Name            string `json:"name"`
-	EffectiveLevel  string `json:"effectiveLevel"`
-	ConfiguredLevel string `json:"configuredLevel,omitempty"`
-}
-
-// LoggersResponse is the CLI-friendly loggers response.
-type LoggersResponse struct {
-	Levels  []string    `json:"levels"`
-	Loggers []LoggerDTO `json:"loggers"`
-}
-
-// SetLoggerLevelRequest is the CLI-friendly set-level input.
-type SetLoggerLevelRequest struct {
-	Level string `json:"level"`
 }
 
 // UpdateRoutePatternRequest is the CLI-friendly route-pattern input.

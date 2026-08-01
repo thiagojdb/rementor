@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/thiagojdb/rementor/internal/config"
 	"github.com/thiagojdb/rementor/internal/models"
 )
 
@@ -272,6 +273,109 @@ http {
 			t.Skipf("nginx config parses, but test user cannot bind port 80:\n%s", string(out))
 		}
 		t.Fatalf("nginx config did not parse: %v\n%s", err, string(out))
+	}
+}
+
+func TestLoadInitialConfigRejectsNginxThatDoesNotLoadGeneratedConfig(t *testing.T) {
+	confDir := filepath.Join(t.TempDir(), "routes")
+	if err := os.MkdirAll(confDir, 0o755); err != nil {
+		t.Fatalf("mkdir routes: %v", err)
+	}
+	target := filepath.Join(confDir, workspacesConfigFile)
+	previous := []byte("# previous config\n")
+	if err := os.WriteFile(target, previous, 0o644); err != nil {
+		t.Fatalf("write previous config: %v", err)
+	}
+
+	logPath := filepath.Join(t.TempDir(), "nginx.log")
+	t.Setenv("FAKE_NGINX_LOG", logPath)
+	t.Setenv("FAKE_NGINX_TARGET", filepath.Join(t.TempDir(), "different.conf"))
+	provider := &RoutingProvider{confDir: confDir, binary: fakeNginx(t)}
+	setTestRementorDomain(t)
+
+	err := provider.LoadInitialConfig(nil)
+	if err == nil {
+		t.Fatal("expected unloaded generated config to be rejected")
+	}
+	assertContains(t, err.Error(), "nginx does not load generated config")
+	assertContains(t, err.Error(), "include "+filepath.Join(confDir, "*.conf")+";")
+
+	got, readErr := os.ReadFile(target)
+	if readErr != nil {
+		t.Fatalf("read restored config: %v", readErr)
+	}
+	if string(got) != string(previous) {
+		t.Fatalf("generated config was not rolled back: got %q, want %q", got, previous)
+	}
+	assertCommandNotRun(t, logPath, "-s reload")
+}
+
+func TestLoadInitialConfigReloadsNginxWhenGeneratedConfigIsLoaded(t *testing.T) {
+	confDir := filepath.Join(t.TempDir(), "routes")
+	target := filepath.Join(confDir, workspacesConfigFile)
+	logPath := filepath.Join(t.TempDir(), "nginx.log")
+	t.Setenv("FAKE_NGINX_LOG", logPath)
+	t.Setenv("FAKE_NGINX_TARGET", target)
+	provider := &RoutingProvider{confDir: confDir, binary: fakeNginx(t)}
+	setTestRementorDomain(t)
+
+	if err := provider.LoadInitialConfig(nil); err != nil {
+		t.Fatalf("LoadInitialConfig failed: %v", err)
+	}
+
+	assertCommandRun(t, logPath, "-t")
+	assertCommandRun(t, logPath, "-T")
+	assertCommandRun(t, logPath, "-s reload")
+}
+
+func fakeNginx(t *testing.T) string {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "nginx")
+	script := `#!/bin/sh
+printf '%s\n' "$*" >> "$FAKE_NGINX_LOG"
+if [ "$1" = "-T" ]; then
+    printf '# configuration file %s:\n' "$FAKE_NGINX_TARGET"
+fi
+`
+	if err := os.WriteFile(path, []byte(script), 0o755); err != nil {
+		t.Fatalf("write fake nginx: %v", err)
+	}
+	return path
+}
+
+func setTestRementorDomain(t *testing.T) {
+	t.Helper()
+	previous := config.Config.RementorDomain
+	config.Config.RementorDomain = "rementor.localhost"
+	t.Cleanup(func() {
+		config.Config.RementorDomain = previous
+	})
+}
+
+func assertCommandRun(t *testing.T, logPath, command string) {
+	t.Helper()
+	got, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatalf("read command log: %v", err)
+	}
+	for _, line := range strings.Split(string(got), "\n") {
+		if line == command {
+			return
+		}
+	}
+	t.Fatalf("expected command %q in log:\n%s", command, got)
+}
+
+func assertCommandNotRun(t *testing.T, logPath, command string) {
+	t.Helper()
+	got, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatalf("read command log: %v", err)
+	}
+	for _, line := range strings.Split(string(got), "\n") {
+		if line == command {
+			t.Fatalf("did not expect command %q in log:\n%s", command, got)
+		}
 	}
 }
 

@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateWorkspaceRequest, CreateWorkspaceResponse, DeleteApplicationRequest, DeleteApplicationResponse, DeleteWorkspaceRequest, DeleteWorkspaceResponse, GetApplicationRequest, GetApplicationResponse, GetLoggersRequest, GetLoggersResponse, GetRoutePatternRequest, GetRoutePatternResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListApplicationsRequest, ListApplicationsResponse, ListWorkspacesRequest, ListWorkspacesResponse, SetLoggerLevelRequest, SetLoggerLevelResponse, SyncWorkspaceRoutingRequest, SyncWorkspaceRoutingResponse, ToggleAllToLocalRequest, ToggleAllToLocalResponse, ToggleAllToRemoteRequest, ToggleAllToRemoteResponse, ToggleApplicationRequest, ToggleApplicationResponse, UpdateRoutePatternRequest, UpdateRoutePatternResponse, UpdateWorkspaceRequest, UpdateWorkspaceResponse, UpsertApplicationRequest, UpsertApplicationResponse, WatchHealthRequest, WatchHealthResponse } from "./rementor_pb.js";
+import { CreateWorkspaceRequest, CreateWorkspaceResponse, DeleteApplicationRequest, DeleteApplicationResponse, DeleteWorkspaceRequest, DeleteWorkspaceResponse, GetApplicationRequest, GetApplicationResponse, GetRoutePatternRequest, GetRoutePatternResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListApplicationsRequest, ListApplicationsResponse, ListWorkspacesRequest, ListWorkspacesResponse, RegisterApplicationAliasRequest, RegisterApplicationAliasResponse, ResolveApplicationRequest, ResolveApplicationResponse, SyncWorkspaceRoutingRequest, SyncWorkspaceRoutingResponse, ToggleAllToLocalRequest, ToggleAllToLocalResponse, ToggleAllToRemoteRequest, ToggleAllToRemoteResponse, ToggleApplicationRequest, ToggleApplicationResponse, UpdateRoutePatternRequest, UpdateRoutePatternResponse, UpdateWorkspaceRequest, UpdateWorkspaceResponse, UpsertApplicationRequest, UpsertApplicationResponse, WatchHealthRequest, WatchHealthResponse } from "./rementor_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -76,6 +76,24 @@ export const ControlPlaneService = {
       kind: MethodKind.Unary,
     },
     /**
+     * @generated from rpc rementor.v1.ControlPlaneService.ResolveApplication
+     */
+    resolveApplication: {
+      name: "ResolveApplication",
+      I: ResolveApplicationRequest,
+      O: ResolveApplicationResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.RegisterApplicationAlias
+     */
+    registerApplicationAlias: {
+      name: "RegisterApplicationAlias",
+      I: RegisterApplicationAliasRequest,
+      O: RegisterApplicationAliasResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
      * @generated from rpc rementor.v1.ControlPlaneService.UpsertApplication
      */
     upsertApplication: {
@@ -145,24 +163,6 @@ export const ControlPlaneService = {
       name: "UpdateRoutePattern",
       I: UpdateRoutePatternRequest,
       O: UpdateRoutePatternResponse,
-      kind: MethodKind.Unary,
-    },
-    /**
-     * @generated from rpc rementor.v1.ControlPlaneService.GetLoggers
-     */
-    getLoggers: {
-      name: "GetLoggers",
-      I: GetLoggersRequest,
-      O: GetLoggersResponse,
-      kind: MethodKind.Unary,
-    },
-    /**
-     * @generated from rpc rementor.v1.ControlPlaneService.SetLoggerLevel
-     */
-    setLoggerLevel: {
-      name: "SetLoggerLevel",
-      I: SetLoggerLevelRequest,
-      O: SetLoggerLevelResponse,
       kind: MethodKind.Unary,
     },
     /**

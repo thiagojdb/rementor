@@ -2,7 +2,6 @@ import { Component, createSignal, Show } from 'solid-js'
 import type { ApplicationDTO, WorkspaceDTO } from '../../api/types'
 import Modal from '../ui/Modal'
 import StatusDot from '../ui/StatusDot'
-import LoggersModal from './LoggersModal'
 import RoutePatternForm from './RoutePatternForm'
 
 interface AppDetailModalProps {
@@ -12,7 +11,6 @@ interface AppDetailModalProps {
 }
 
 const AppDetailModal: Component<AppDetailModalProps> = (props) => {
-  const [showLoggers, setShowLoggers] = createSignal(false)
   const [showRoutePattern, setShowRoutePattern] = createSignal(false)
 
   const sectionStyle = {
@@ -107,29 +105,8 @@ const AppDetailModal: Component<AppDetailModalProps> = (props) => {
               Route Pattern
             </button>
           </Show>
-          <Show when={props.app.loggerConfig?.enabled || props.app.port > 0}>
-            <button
-              class="inline-flex items-center justify-center gap-1.5 px-3 py-2 font-mono text-xs font-semibold border rounded-lg transition-colors"
-              style={{
-                'background-color': 'transparent',
-                'border-color': 'var(--border-default)',
-                color: 'var(--text-primary)'
-              }}
-              onClick={() => setShowLoggers(true)}
-            >
-              Loggers
-            </button>
-          </Show>
         </div>
       </Modal>
-
-      <Show when={showLoggers()}>
-        <LoggersModal
-          workspace={props.workspace}
-          app={props.app}
-          onClose={() => setShowLoggers(false)}
-        />
-      </Show>
 
       <Show when={showRoutePattern()}>
         <RoutePatternForm

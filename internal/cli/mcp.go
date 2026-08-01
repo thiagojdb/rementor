@@ -261,6 +261,10 @@ func (s *mcpServer) handleToolCall(raw json.RawMessage) (any, error) {
 		return s.toolApps(params.Arguments)
 	case "rementor.app_get":
 		return s.toolAppGet(params.Arguments)
+	case "rementor.app_resolve":
+		return s.toolAppResolve(params.Arguments)
+	case "rementor.app_alias":
+		return s.toolAppAlias(params.Arguments)
 	case "rementor.app_register":
 		return s.toolAppRegister(params.Arguments)
 	case "rementor.app_announce":
@@ -279,10 +283,6 @@ func (s *mcpServer) handleToolCall(raw json.RawMessage) (any, error) {
 		return s.toolRoutePatternGet(params.Arguments)
 	case "rementor.route_pattern_set":
 		return s.toolRoutePatternSet(params.Arguments)
-	case "rementor.loggers":
-		return s.toolLoggers(params.Arguments)
-	case "rementor.logger_set_level":
-		return s.toolLoggerSetLevel(params.Arguments)
 	default:
 		return nil, fmt.Errorf("unknown tool: %s", params.Name)
 	}
@@ -392,6 +392,27 @@ func (s *mcpServer) toolAppGet(args map[string]any) (any, error) {
 		return nil, err
 	}
 	return toolResult(fmt.Sprintf("App %s is routed %s", app.ID, routeOf(app)), app), nil
+}
+
+func (s *mcpServer) toolAppResolve(args map[string]any) (any, error) {
+	workspace := requiredString(args, "workspace")
+	ref := requiredString(args, "app")
+	app, err := s.client.ResolveApplication(context.Background(), workspace, ref)
+	if err != nil {
+		return nil, err
+	}
+	return toolResult(fmt.Sprintf("Resolved %s to app %s", ref, app.ID), app), nil
+}
+
+func (s *mcpServer) toolAppAlias(args map[string]any) (any, error) {
+	workspace := requiredString(args, "workspace")
+	ref := requiredString(args, "app")
+	alias := requiredString(args, "alias")
+	app, err := s.client.RegisterApplicationAlias(context.Background(), workspace, ref, alias)
+	if err != nil {
+		return nil, err
+	}
+	return toolResult(fmt.Sprintf("Alias %s registered for app %s", alias, app.ID), app), nil
 }
 
 func (s *mcpServer) toolAppRegister(args map[string]any) (any, error) {
@@ -523,22 +544,6 @@ func (s *mcpServer) toolRoutePatternSet(args map[string]any) (any, error) {
 	return toolResult("Route pattern updated", app), nil
 }
 
-func (s *mcpServer) toolLoggers(args map[string]any) (any, error) {
-	result, err := s.client.GetLoggers(context.Background(), requiredString(args, "workspace"), requiredString(args, "app"))
-	if err != nil {
-		return nil, err
-	}
-	return toolResult(fmt.Sprintf("Resolved %d logger(s)", len(result.Loggers)), result), nil
-}
-
-func (s *mcpServer) toolLoggerSetLevel(args map[string]any) (any, error) {
-	result, err := s.client.SetLoggerLevel(context.Background(), requiredString(args, "workspace"), requiredString(args, "app"), requiredString(args, "logger"), SetLoggerLevelRequest{Level: requiredString(args, "level")})
-	if err != nil {
-		return nil, err
-	}
-	return toolResult(fmt.Sprintf("Logger %s set to %s", result["logger"], result["level"]), result), nil
-}
-
 func (s *mcpServer) listWorkspaces() ([]WorkspaceDTO, error) {
 	return s.client.ListWorkspaces(context.Background())
 }
@@ -636,6 +641,10 @@ func mcpToolList() []map[string]any {
 		}, []string{"workspace"})),
 		toolSchema("rementor.apps", "List applications in a workspace in compact form.", workspaceSchema()),
 		toolSchema("rementor.app_get", "Get full application details.", workspaceAppSchema()),
+		toolSchema("rementor.app_resolve", "Resolve a canonical application ID or alias in a workspace.", workspaceAppSchema()),
+		toolSchema("rementor.app_alias", "Register an unambiguous normalized alias for an application identity.", objectSchema(map[string]any{
+			"workspace": map[string]any{"type": "string"}, "app": map[string]any{"type": "string"}, "alias": map[string]any{"type": "string"},
+		}, []string{"workspace", "app", "alias"})),
 		toolSchema("rementor.app_register", "Upsert application metadata without changing its current local/remote route.", appMetadataSchema(false)),
 		toolSchema("rementor.app_announce", "Ensure workspace/app exists and activate local routing unless no_activate is true.", appMetadataSchema(true)),
 		toolSchema("rementor.app_unregister", "Remove an application from a workspace.", workspaceAppSchema()),
@@ -647,10 +656,6 @@ func mcpToolList() []map[string]any {
 		toolSchema("rementor.route_pattern_set", "Set or clear the route pattern for an application. Omit pattern or pass empty string to clear.", objectSchema(map[string]any{
 			"workspace": map[string]any{"type": "string"}, "app": map[string]any{"type": "string"}, "pattern": map[string]any{"type": "string"},
 		}, []string{"workspace", "app"})),
-		toolSchema("rementor.loggers", "List loggers for an application through its current local/remote route.", workspaceAppSchema()),
-		toolSchema("rementor.logger_set_level", "Set a logger level for an application.", objectSchema(map[string]any{
-			"workspace": map[string]any{"type": "string"}, "app": map[string]any{"type": "string"}, "logger": map[string]any{"type": "string"}, "level": map[string]any{"type": "string"},
-		}, []string{"workspace", "app", "logger", "level"})),
 	}
 }
 
@@ -689,6 +694,10 @@ func appMetadataSchema(announce bool) map[string]any {
 		"context":         map[string]any{"type": "string"},
 		"name":            map[string]any{"type": "string"},
 		"health":          map[string]any{"type": "string"},
+		"app_id":          map[string]any{"type": "string"},
+		"service_id":      map[string]any{"type": "string"},
+		"repository":      map[string]any{"type": "string"},
+		"aliases":         map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
 	}
 	if announce {
 		props["type"] = map[string]any{"type": "string", "enum": []string{"routing", "local-apps"}, "default": "routing"}
@@ -764,6 +773,10 @@ func requiredRoute(args map[string]any) string {
 func appInputFromArgs(appID string, args map[string]any) ApplicationConfigInput {
 	return ApplicationConfigInput{
 		ID:            appID,
+		AppID:         optionalString(args, "app_id"),
+		ServiceID:     optionalString(args, "service_id"),
+		Repository:    optionalString(args, "repository"),
+		Aliases:       optionalStrings(args, "aliases"),
 		Name:          optionalString(args, "name"),
 		Path:          optionalString(args, "path"),
 		Domain:        optionalString(args, "domain"),
@@ -772,6 +785,20 @@ func appInputFromArgs(appID string, args map[string]any) ApplicationConfigInput 
 		Health:        optionalString(args, "health"),
 		Context:       optionalString(args, "context"),
 	}
+}
+
+func optionalStrings(args map[string]any, name string) []string {
+	values, _ := args[name].([]any)
+	if len(values) == 0 {
+		return nil
+	}
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		if text, ok := value.(string); ok && strings.TrimSpace(text) != "" {
+			result = append(result, text)
+		}
+	}
+	return result
 }
 
 func compactWorkspace(ws WorkspaceDTO) mcpCompactWorkspace {

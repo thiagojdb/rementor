@@ -54,6 +54,12 @@ const (
 	// ControlPlaneServiceGetApplicationProcedure is the fully-qualified name of the
 	// ControlPlaneService's GetApplication RPC.
 	ControlPlaneServiceGetApplicationProcedure = "/rementor.v1.ControlPlaneService/GetApplication"
+	// ControlPlaneServiceResolveApplicationProcedure is the fully-qualified name of the
+	// ControlPlaneService's ResolveApplication RPC.
+	ControlPlaneServiceResolveApplicationProcedure = "/rementor.v1.ControlPlaneService/ResolveApplication"
+	// ControlPlaneServiceRegisterApplicationAliasProcedure is the fully-qualified name of the
+	// ControlPlaneService's RegisterApplicationAlias RPC.
+	ControlPlaneServiceRegisterApplicationAliasProcedure = "/rementor.v1.ControlPlaneService/RegisterApplicationAlias"
 	// ControlPlaneServiceUpsertApplicationProcedure is the fully-qualified name of the
 	// ControlPlaneService's UpsertApplication RPC.
 	ControlPlaneServiceUpsertApplicationProcedure = "/rementor.v1.ControlPlaneService/UpsertApplication"
@@ -78,12 +84,6 @@ const (
 	// ControlPlaneServiceUpdateRoutePatternProcedure is the fully-qualified name of the
 	// ControlPlaneService's UpdateRoutePattern RPC.
 	ControlPlaneServiceUpdateRoutePatternProcedure = "/rementor.v1.ControlPlaneService/UpdateRoutePattern"
-	// ControlPlaneServiceGetLoggersProcedure is the fully-qualified name of the ControlPlaneService's
-	// GetLoggers RPC.
-	ControlPlaneServiceGetLoggersProcedure = "/rementor.v1.ControlPlaneService/GetLoggers"
-	// ControlPlaneServiceSetLoggerLevelProcedure is the fully-qualified name of the
-	// ControlPlaneService's SetLoggerLevel RPC.
-	ControlPlaneServiceSetLoggerLevelProcedure = "/rementor.v1.ControlPlaneService/SetLoggerLevel"
 	// ControlPlaneServiceWatchHealthProcedure is the fully-qualified name of the ControlPlaneService's
 	// WatchHealth RPC.
 	ControlPlaneServiceWatchHealthProcedure = "/rementor.v1.ControlPlaneService/WatchHealth"
@@ -98,6 +98,8 @@ type ControlPlaneServiceClient interface {
 	DeleteWorkspace(context.Context, *connect.Request[v1.DeleteWorkspaceRequest]) (*connect.Response[v1.DeleteWorkspaceResponse], error)
 	ListApplications(context.Context, *connect.Request[v1.ListApplicationsRequest]) (*connect.Response[v1.ListApplicationsResponse], error)
 	GetApplication(context.Context, *connect.Request[v1.GetApplicationRequest]) (*connect.Response[v1.GetApplicationResponse], error)
+	ResolveApplication(context.Context, *connect.Request[v1.ResolveApplicationRequest]) (*connect.Response[v1.ResolveApplicationResponse], error)
+	RegisterApplicationAlias(context.Context, *connect.Request[v1.RegisterApplicationAliasRequest]) (*connect.Response[v1.RegisterApplicationAliasResponse], error)
 	UpsertApplication(context.Context, *connect.Request[v1.UpsertApplicationRequest]) (*connect.Response[v1.UpsertApplicationResponse], error)
 	DeleteApplication(context.Context, *connect.Request[v1.DeleteApplicationRequest]) (*connect.Response[v1.DeleteApplicationResponse], error)
 	ToggleApplication(context.Context, *connect.Request[v1.ToggleApplicationRequest]) (*connect.Response[v1.ToggleApplicationResponse], error)
@@ -106,8 +108,6 @@ type ControlPlaneServiceClient interface {
 	SyncWorkspaceRouting(context.Context, *connect.Request[v1.SyncWorkspaceRoutingRequest]) (*connect.Response[v1.SyncWorkspaceRoutingResponse], error)
 	GetRoutePattern(context.Context, *connect.Request[v1.GetRoutePatternRequest]) (*connect.Response[v1.GetRoutePatternResponse], error)
 	UpdateRoutePattern(context.Context, *connect.Request[v1.UpdateRoutePatternRequest]) (*connect.Response[v1.UpdateRoutePatternResponse], error)
-	GetLoggers(context.Context, *connect.Request[v1.GetLoggersRequest]) (*connect.Response[v1.GetLoggersResponse], error)
-	SetLoggerLevel(context.Context, *connect.Request[v1.SetLoggerLevelRequest]) (*connect.Response[v1.SetLoggerLevelResponse], error)
 	WatchHealth(context.Context, *connect.Request[v1.WatchHealthRequest]) (*connect.ServerStreamForClient[v1.WatchHealthResponse], error)
 }
 
@@ -164,6 +164,18 @@ func NewControlPlaneServiceClient(httpClient connect.HTTPClient, baseURL string,
 			connect.WithSchema(controlPlaneServiceMethods.ByName("GetApplication")),
 			connect.WithClientOptions(opts...),
 		),
+		resolveApplication: connect.NewClient[v1.ResolveApplicationRequest, v1.ResolveApplicationResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceResolveApplicationProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("ResolveApplication")),
+			connect.WithClientOptions(opts...),
+		),
+		registerApplicationAlias: connect.NewClient[v1.RegisterApplicationAliasRequest, v1.RegisterApplicationAliasResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceRegisterApplicationAliasProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("RegisterApplicationAlias")),
+			connect.WithClientOptions(opts...),
+		),
 		upsertApplication: connect.NewClient[v1.UpsertApplicationRequest, v1.UpsertApplicationResponse](
 			httpClient,
 			baseURL+ControlPlaneServiceUpsertApplicationProcedure,
@@ -212,18 +224,6 @@ func NewControlPlaneServiceClient(httpClient connect.HTTPClient, baseURL string,
 			connect.WithSchema(controlPlaneServiceMethods.ByName("UpdateRoutePattern")),
 			connect.WithClientOptions(opts...),
 		),
-		getLoggers: connect.NewClient[v1.GetLoggersRequest, v1.GetLoggersResponse](
-			httpClient,
-			baseURL+ControlPlaneServiceGetLoggersProcedure,
-			connect.WithSchema(controlPlaneServiceMethods.ByName("GetLoggers")),
-			connect.WithClientOptions(opts...),
-		),
-		setLoggerLevel: connect.NewClient[v1.SetLoggerLevelRequest, v1.SetLoggerLevelResponse](
-			httpClient,
-			baseURL+ControlPlaneServiceSetLoggerLevelProcedure,
-			connect.WithSchema(controlPlaneServiceMethods.ByName("SetLoggerLevel")),
-			connect.WithClientOptions(opts...),
-		),
 		watchHealth: connect.NewClient[v1.WatchHealthRequest, v1.WatchHealthResponse](
 			httpClient,
 			baseURL+ControlPlaneServiceWatchHealthProcedure,
@@ -235,24 +235,24 @@ func NewControlPlaneServiceClient(httpClient connect.HTTPClient, baseURL string,
 
 // controlPlaneServiceClient implements ControlPlaneServiceClient.
 type controlPlaneServiceClient struct {
-	listWorkspaces       *connect.Client[v1.ListWorkspacesRequest, v1.ListWorkspacesResponse]
-	getWorkspace         *connect.Client[v1.GetWorkspaceRequest, v1.GetWorkspaceResponse]
-	createWorkspace      *connect.Client[v1.CreateWorkspaceRequest, v1.CreateWorkspaceResponse]
-	updateWorkspace      *connect.Client[v1.UpdateWorkspaceRequest, v1.UpdateWorkspaceResponse]
-	deleteWorkspace      *connect.Client[v1.DeleteWorkspaceRequest, v1.DeleteWorkspaceResponse]
-	listApplications     *connect.Client[v1.ListApplicationsRequest, v1.ListApplicationsResponse]
-	getApplication       *connect.Client[v1.GetApplicationRequest, v1.GetApplicationResponse]
-	upsertApplication    *connect.Client[v1.UpsertApplicationRequest, v1.UpsertApplicationResponse]
-	deleteApplication    *connect.Client[v1.DeleteApplicationRequest, v1.DeleteApplicationResponse]
-	toggleApplication    *connect.Client[v1.ToggleApplicationRequest, v1.ToggleApplicationResponse]
-	toggleAllToRemote    *connect.Client[v1.ToggleAllToRemoteRequest, v1.ToggleAllToRemoteResponse]
-	toggleAllToLocal     *connect.Client[v1.ToggleAllToLocalRequest, v1.ToggleAllToLocalResponse]
-	syncWorkspaceRouting *connect.Client[v1.SyncWorkspaceRoutingRequest, v1.SyncWorkspaceRoutingResponse]
-	getRoutePattern      *connect.Client[v1.GetRoutePatternRequest, v1.GetRoutePatternResponse]
-	updateRoutePattern   *connect.Client[v1.UpdateRoutePatternRequest, v1.UpdateRoutePatternResponse]
-	getLoggers           *connect.Client[v1.GetLoggersRequest, v1.GetLoggersResponse]
-	setLoggerLevel       *connect.Client[v1.SetLoggerLevelRequest, v1.SetLoggerLevelResponse]
-	watchHealth          *connect.Client[v1.WatchHealthRequest, v1.WatchHealthResponse]
+	listWorkspaces           *connect.Client[v1.ListWorkspacesRequest, v1.ListWorkspacesResponse]
+	getWorkspace             *connect.Client[v1.GetWorkspaceRequest, v1.GetWorkspaceResponse]
+	createWorkspace          *connect.Client[v1.CreateWorkspaceRequest, v1.CreateWorkspaceResponse]
+	updateWorkspace          *connect.Client[v1.UpdateWorkspaceRequest, v1.UpdateWorkspaceResponse]
+	deleteWorkspace          *connect.Client[v1.DeleteWorkspaceRequest, v1.DeleteWorkspaceResponse]
+	listApplications         *connect.Client[v1.ListApplicationsRequest, v1.ListApplicationsResponse]
+	getApplication           *connect.Client[v1.GetApplicationRequest, v1.GetApplicationResponse]
+	resolveApplication       *connect.Client[v1.ResolveApplicationRequest, v1.ResolveApplicationResponse]
+	registerApplicationAlias *connect.Client[v1.RegisterApplicationAliasRequest, v1.RegisterApplicationAliasResponse]
+	upsertApplication        *connect.Client[v1.UpsertApplicationRequest, v1.UpsertApplicationResponse]
+	deleteApplication        *connect.Client[v1.DeleteApplicationRequest, v1.DeleteApplicationResponse]
+	toggleApplication        *connect.Client[v1.ToggleApplicationRequest, v1.ToggleApplicationResponse]
+	toggleAllToRemote        *connect.Client[v1.ToggleAllToRemoteRequest, v1.ToggleAllToRemoteResponse]
+	toggleAllToLocal         *connect.Client[v1.ToggleAllToLocalRequest, v1.ToggleAllToLocalResponse]
+	syncWorkspaceRouting     *connect.Client[v1.SyncWorkspaceRoutingRequest, v1.SyncWorkspaceRoutingResponse]
+	getRoutePattern          *connect.Client[v1.GetRoutePatternRequest, v1.GetRoutePatternResponse]
+	updateRoutePattern       *connect.Client[v1.UpdateRoutePatternRequest, v1.UpdateRoutePatternResponse]
+	watchHealth              *connect.Client[v1.WatchHealthRequest, v1.WatchHealthResponse]
 }
 
 // ListWorkspaces calls rementor.v1.ControlPlaneService.ListWorkspaces.
@@ -288,6 +288,16 @@ func (c *controlPlaneServiceClient) ListApplications(ctx context.Context, req *c
 // GetApplication calls rementor.v1.ControlPlaneService.GetApplication.
 func (c *controlPlaneServiceClient) GetApplication(ctx context.Context, req *connect.Request[v1.GetApplicationRequest]) (*connect.Response[v1.GetApplicationResponse], error) {
 	return c.getApplication.CallUnary(ctx, req)
+}
+
+// ResolveApplication calls rementor.v1.ControlPlaneService.ResolveApplication.
+func (c *controlPlaneServiceClient) ResolveApplication(ctx context.Context, req *connect.Request[v1.ResolveApplicationRequest]) (*connect.Response[v1.ResolveApplicationResponse], error) {
+	return c.resolveApplication.CallUnary(ctx, req)
+}
+
+// RegisterApplicationAlias calls rementor.v1.ControlPlaneService.RegisterApplicationAlias.
+func (c *controlPlaneServiceClient) RegisterApplicationAlias(ctx context.Context, req *connect.Request[v1.RegisterApplicationAliasRequest]) (*connect.Response[v1.RegisterApplicationAliasResponse], error) {
+	return c.registerApplicationAlias.CallUnary(ctx, req)
 }
 
 // UpsertApplication calls rementor.v1.ControlPlaneService.UpsertApplication.
@@ -330,16 +340,6 @@ func (c *controlPlaneServiceClient) UpdateRoutePattern(ctx context.Context, req 
 	return c.updateRoutePattern.CallUnary(ctx, req)
 }
 
-// GetLoggers calls rementor.v1.ControlPlaneService.GetLoggers.
-func (c *controlPlaneServiceClient) GetLoggers(ctx context.Context, req *connect.Request[v1.GetLoggersRequest]) (*connect.Response[v1.GetLoggersResponse], error) {
-	return c.getLoggers.CallUnary(ctx, req)
-}
-
-// SetLoggerLevel calls rementor.v1.ControlPlaneService.SetLoggerLevel.
-func (c *controlPlaneServiceClient) SetLoggerLevel(ctx context.Context, req *connect.Request[v1.SetLoggerLevelRequest]) (*connect.Response[v1.SetLoggerLevelResponse], error) {
-	return c.setLoggerLevel.CallUnary(ctx, req)
-}
-
 // WatchHealth calls rementor.v1.ControlPlaneService.WatchHealth.
 func (c *controlPlaneServiceClient) WatchHealth(ctx context.Context, req *connect.Request[v1.WatchHealthRequest]) (*connect.ServerStreamForClient[v1.WatchHealthResponse], error) {
 	return c.watchHealth.CallServerStream(ctx, req)
@@ -354,6 +354,8 @@ type ControlPlaneServiceHandler interface {
 	DeleteWorkspace(context.Context, *connect.Request[v1.DeleteWorkspaceRequest]) (*connect.Response[v1.DeleteWorkspaceResponse], error)
 	ListApplications(context.Context, *connect.Request[v1.ListApplicationsRequest]) (*connect.Response[v1.ListApplicationsResponse], error)
 	GetApplication(context.Context, *connect.Request[v1.GetApplicationRequest]) (*connect.Response[v1.GetApplicationResponse], error)
+	ResolveApplication(context.Context, *connect.Request[v1.ResolveApplicationRequest]) (*connect.Response[v1.ResolveApplicationResponse], error)
+	RegisterApplicationAlias(context.Context, *connect.Request[v1.RegisterApplicationAliasRequest]) (*connect.Response[v1.RegisterApplicationAliasResponse], error)
 	UpsertApplication(context.Context, *connect.Request[v1.UpsertApplicationRequest]) (*connect.Response[v1.UpsertApplicationResponse], error)
 	DeleteApplication(context.Context, *connect.Request[v1.DeleteApplicationRequest]) (*connect.Response[v1.DeleteApplicationResponse], error)
 	ToggleApplication(context.Context, *connect.Request[v1.ToggleApplicationRequest]) (*connect.Response[v1.ToggleApplicationResponse], error)
@@ -362,8 +364,6 @@ type ControlPlaneServiceHandler interface {
 	SyncWorkspaceRouting(context.Context, *connect.Request[v1.SyncWorkspaceRoutingRequest]) (*connect.Response[v1.SyncWorkspaceRoutingResponse], error)
 	GetRoutePattern(context.Context, *connect.Request[v1.GetRoutePatternRequest]) (*connect.Response[v1.GetRoutePatternResponse], error)
 	UpdateRoutePattern(context.Context, *connect.Request[v1.UpdateRoutePatternRequest]) (*connect.Response[v1.UpdateRoutePatternResponse], error)
-	GetLoggers(context.Context, *connect.Request[v1.GetLoggersRequest]) (*connect.Response[v1.GetLoggersResponse], error)
-	SetLoggerLevel(context.Context, *connect.Request[v1.SetLoggerLevelRequest]) (*connect.Response[v1.SetLoggerLevelResponse], error)
 	WatchHealth(context.Context, *connect.Request[v1.WatchHealthRequest], *connect.ServerStream[v1.WatchHealthResponse]) error
 }
 
@@ -416,6 +416,18 @@ func NewControlPlaneServiceHandler(svc ControlPlaneServiceHandler, opts ...conne
 		connect.WithSchema(controlPlaneServiceMethods.ByName("GetApplication")),
 		connect.WithHandlerOptions(opts...),
 	)
+	controlPlaneServiceResolveApplicationHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceResolveApplicationProcedure,
+		svc.ResolveApplication,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("ResolveApplication")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceRegisterApplicationAliasHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceRegisterApplicationAliasProcedure,
+		svc.RegisterApplicationAlias,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("RegisterApplicationAlias")),
+		connect.WithHandlerOptions(opts...),
+	)
 	controlPlaneServiceUpsertApplicationHandler := connect.NewUnaryHandler(
 		ControlPlaneServiceUpsertApplicationProcedure,
 		svc.UpsertApplication,
@@ -464,18 +476,6 @@ func NewControlPlaneServiceHandler(svc ControlPlaneServiceHandler, opts ...conne
 		connect.WithSchema(controlPlaneServiceMethods.ByName("UpdateRoutePattern")),
 		connect.WithHandlerOptions(opts...),
 	)
-	controlPlaneServiceGetLoggersHandler := connect.NewUnaryHandler(
-		ControlPlaneServiceGetLoggersProcedure,
-		svc.GetLoggers,
-		connect.WithSchema(controlPlaneServiceMethods.ByName("GetLoggers")),
-		connect.WithHandlerOptions(opts...),
-	)
-	controlPlaneServiceSetLoggerLevelHandler := connect.NewUnaryHandler(
-		ControlPlaneServiceSetLoggerLevelProcedure,
-		svc.SetLoggerLevel,
-		connect.WithSchema(controlPlaneServiceMethods.ByName("SetLoggerLevel")),
-		connect.WithHandlerOptions(opts...),
-	)
 	controlPlaneServiceWatchHealthHandler := connect.NewServerStreamHandler(
 		ControlPlaneServiceWatchHealthProcedure,
 		svc.WatchHealth,
@@ -498,6 +498,10 @@ func NewControlPlaneServiceHandler(svc ControlPlaneServiceHandler, opts ...conne
 			controlPlaneServiceListApplicationsHandler.ServeHTTP(w, r)
 		case ControlPlaneServiceGetApplicationProcedure:
 			controlPlaneServiceGetApplicationHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceResolveApplicationProcedure:
+			controlPlaneServiceResolveApplicationHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceRegisterApplicationAliasProcedure:
+			controlPlaneServiceRegisterApplicationAliasHandler.ServeHTTP(w, r)
 		case ControlPlaneServiceUpsertApplicationProcedure:
 			controlPlaneServiceUpsertApplicationHandler.ServeHTTP(w, r)
 		case ControlPlaneServiceDeleteApplicationProcedure:
@@ -514,10 +518,6 @@ func NewControlPlaneServiceHandler(svc ControlPlaneServiceHandler, opts ...conne
 			controlPlaneServiceGetRoutePatternHandler.ServeHTTP(w, r)
 		case ControlPlaneServiceUpdateRoutePatternProcedure:
 			controlPlaneServiceUpdateRoutePatternHandler.ServeHTTP(w, r)
-		case ControlPlaneServiceGetLoggersProcedure:
-			controlPlaneServiceGetLoggersHandler.ServeHTTP(w, r)
-		case ControlPlaneServiceSetLoggerLevelProcedure:
-			controlPlaneServiceSetLoggerLevelHandler.ServeHTTP(w, r)
 		case ControlPlaneServiceWatchHealthProcedure:
 			controlPlaneServiceWatchHealthHandler.ServeHTTP(w, r)
 		default:
@@ -557,6 +557,14 @@ func (UnimplementedControlPlaneServiceHandler) GetApplication(context.Context, *
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.GetApplication is not implemented"))
 }
 
+func (UnimplementedControlPlaneServiceHandler) ResolveApplication(context.Context, *connect.Request[v1.ResolveApplicationRequest]) (*connect.Response[v1.ResolveApplicationResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.ResolveApplication is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) RegisterApplicationAlias(context.Context, *connect.Request[v1.RegisterApplicationAliasRequest]) (*connect.Response[v1.RegisterApplicationAliasResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.RegisterApplicationAlias is not implemented"))
+}
+
 func (UnimplementedControlPlaneServiceHandler) UpsertApplication(context.Context, *connect.Request[v1.UpsertApplicationRequest]) (*connect.Response[v1.UpsertApplicationResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.UpsertApplication is not implemented"))
 }
@@ -587,14 +595,6 @@ func (UnimplementedControlPlaneServiceHandler) GetRoutePattern(context.Context, 
 
 func (UnimplementedControlPlaneServiceHandler) UpdateRoutePattern(context.Context, *connect.Request[v1.UpdateRoutePatternRequest]) (*connect.Response[v1.UpdateRoutePatternResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.UpdateRoutePattern is not implemented"))
-}
-
-func (UnimplementedControlPlaneServiceHandler) GetLoggers(context.Context, *connect.Request[v1.GetLoggersRequest]) (*connect.Response[v1.GetLoggersResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.GetLoggers is not implemented"))
-}
-
-func (UnimplementedControlPlaneServiceHandler) SetLoggerLevel(context.Context, *connect.Request[v1.SetLoggerLevelRequest]) (*connect.Response[v1.SetLoggerLevelResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.SetLoggerLevel is not implemented"))
 }
 
 func (UnimplementedControlPlaneServiceHandler) WatchHealth(context.Context, *connect.Request[v1.WatchHealthRequest], *connect.ServerStream[v1.WatchHealthResponse]) error {

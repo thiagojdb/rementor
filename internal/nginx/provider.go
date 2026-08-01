@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/thiagojdb/rementor/internal/config"
 	"github.com/thiagojdb/rementor/internal/models"
@@ -63,6 +64,10 @@ func (rp *RoutingProvider) LoadInitialConfig(workspaces []*models.Workspace) err
 		rp.restore(target, previous, hadPrevious)
 		return fmt.Errorf("validate nginx config: %w", err)
 	}
+	if err := rp.verifyLoaded(target); err != nil {
+		rp.restore(target, previous, hadPrevious)
+		return err
+	}
 	if err := rp.run("-s", "reload"); err != nil {
 		rp.restore(target, previous, hadPrevious)
 		_ = rp.run("-s", "reload")
@@ -83,19 +88,46 @@ func (rp *RoutingProvider) Close() error {
 	return nil
 }
 
+func (rp *RoutingProvider) verifyLoaded(target string) error {
+	out, err := rp.output("-T")
+	if err != nil {
+		return fmt.Errorf("inspect nginx config: %w", err)
+	}
+
+	absoluteTarget, err := filepath.Abs(target)
+	if err != nil {
+		return fmt.Errorf("resolve nginx config path: %w", err)
+	}
+	marker := "# configuration file " + filepath.Clean(absoluteTarget) + ":"
+	if strings.Contains(string(out), marker) {
+		return nil
+	}
+
+	return fmt.Errorf(
+		"nginx does not load generated config %s; add %q to the nginx http block",
+		absoluteTarget,
+		"include "+filepath.Join(filepath.Clean(rp.confDir), "*.conf")+";",
+	)
+}
+
 func (rp *RoutingProvider) run(args ...string) error {
+	_, err := rp.output(args...)
+	return err
+}
+
+func (rp *RoutingProvider) output(args ...string) ([]byte, error) {
 	cmd := exec.Command(rp.binary, args...)
 	out, err := cmd.CombinedOutput()
 	if err == nil {
-		return nil
+		return out, nil
 	}
 
 	sudoArgs := append([]string{"-n", rp.binary}, args...)
 	sudoCmd := exec.Command("sudo", sudoArgs...)
 	sudoOut, sudoErr := sudoCmd.CombinedOutput()
 	if sudoErr == nil {
-		return nil
+		return sudoOut, nil
 	}
 
-	return fmt.Errorf("%s %v failed: %w: %s; sudo %v failed: %w: %s", rp.binary, args, err, string(out), sudoArgs, sudoErr, string(sudoOut))
+	return nil, fmt.Errorf("%s %v failed: %w: %s; sudo %v failed: %w: %s", rp.binary, args, err, string(out), sudoArgs, sudoErr, string(sudoOut))
 }

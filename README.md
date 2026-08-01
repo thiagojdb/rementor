@@ -158,6 +158,13 @@ Flags may appear before or after positional arguments.
 | Automation | CLI plus MCP tools backed by the generated Connect client |
 | Observability | Local/remote health checks and per-client streaming updates |
 
+SQLite stores durable workspace configuration and route state. The daemon keeps
+an in-memory runtime projection for low-latency routing operations, health
+checks, connected UI streams, and routing-provider state. Mutations build and
+validate a detached candidate, apply nginx routing from it, persist the durable
+state, then publish it to the runtime projection. A persistence failure triggers
+a compensating nginx reload from the previous snapshot.
+
 Key directories:
 
 ```text
@@ -175,21 +182,24 @@ examples/docker/         Rootless nginx demo runtime
 ## nginx Integration
 
 Rementor runs without nginx for the UI, CLI, MCP, configuration, and health
-features. Traffic switching requires an nginx instance whose `http` block
-includes:
+features. On a host with nginx installed, `make install` creates a private,
+unprivileged nginx instance on `127.0.0.1:18080`. Point an existing system
+reverse proxy at that upstream to expose Rementor's local domains on port 80.
+
+For manually managed nginx instances, the `http` block must include:
 
 ```nginx
 include /home/you/.config/rementor/nginx/*.conf;
 ```
 
-Rementor writes generated routes to that XDG directory and validates the entire
-nginx configuration before reloading. It does not edit `/etc/nginx/nginx.conf`,
-install sudoers rules, modify `/etc/hosts`, or configure DNS.
+Rementor writes generated routes to that XDG directory and verifies with
+`nginx -T` that the generated file is part of the effective configuration
+before reloading. It does not edit `/etc/nginx/nginx.conf`, install sudoers
+rules, modify `/etc/hosts`, or configure DNS.
 
-The container demo is the reference setup. For a host installation, use a
-dedicated user-owned nginx instance or configure permissions explicitly. Do not
-make a privileged nginx master load files from a directory writable by
-untrusted users.
+The container demo and the user-owned host nginx follow the same privilege
+boundary. Do not make a privileged nginx master load files from a directory
+writable by untrusted users.
 
 ## Security Model
 
@@ -204,12 +214,35 @@ untrusted users.
   persistence or nginx rendering.
 - Remote URLs containing embedded credentials are rejected.
 - The demo container runs as an unprivileged user.
-- Local SQLite data may contain logger credentials and must be treated as
-  sensitive.
 
 See [SECURITY.md](SECURITY.md) for operational guidance and reporting.
 
 ## Development
+
+### Canonical application identities
+
+Each registered application has a stable `appId` and `serviceId`. The legacy
+`id` field remains an alias for `appId`, so existing workspace files continue to
+load unchanged. A single identity can be bound in multiple environments while
+keeping environment-specific route metadata separate:
+
+```text
+appId: rtc
+serviceId: reforma-tributaria-consumo
+aliases: [reforma-tributaria-consumo, front-giss-v2]
+workspace: desenvolvimento  -> /rtc
+workspace: qualidade        -> /rtc
+```
+
+Aliases are normalized (case, whitespace, and separators), and collisions are
+rejected instead of selecting an arbitrary application. Resolve or register an
+alias with the CLI:
+
+```bash
+rementorctl app resolve desenvolvimento front-giss-v2
+rementorctl app alias desenvolvimento rtc front-giss-v2
+```
+
 
 Prerequisites:
 

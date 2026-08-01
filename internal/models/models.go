@@ -5,13 +5,12 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 )
 
 // Constants for the application
 const (
 	DefaultHealthEndpoint          = "actuator/health"
-	DefaultLoggersEndpoint         = "actuator/loggers"
-	FallbackLoggersEndpoint        = "loggers"
 	DefaultHealthCheckIntervalSecs = 30
 	DefaultHTTPPort                = 80
 	DefaultHTTPSPort               = 443
@@ -38,6 +37,26 @@ type RoutingConfig struct {
 	Mode                 string `json:"mode"`                 // "path-based"
 	LocalDomain          string `json:"localDomain"`          // e.g., "api.localhost"
 	DefaultRemoteBaseURL string `json:"defaultRemoteBaseUrl"` // e.g., "https://api.remote.example.test"
+}
+
+// ApplicationIdentity is the environment-independent identity shared by all
+// workspace bindings of a service.
+type ApplicationIdentity struct {
+	AppID      string   `json:"appId"`
+	ServiceID  string   `json:"serviceId"`
+	Repository string   `json:"repository,omitempty"`
+	Aliases    []string `json:"aliases,omitempty"`
+}
+
+// ApplicationBinding is the environment-specific route configuration for an
+// application identity. WorkspaceID acts as the environment boundary while
+// path/domain/context remain binding metadata rather than identity fields.
+type ApplicationBinding struct {
+	WorkspaceID     string `json:"workspaceId"`
+	AppID           string `json:"appId"`
+	PublicHost      string `json:"publicHost,omitempty"`
+	PublicPath      string `json:"publicPath,omitempty"`
+	UpstreamContext string `json:"upstreamContext,omitempty"`
 }
 
 // AppRuntime holds runtime health status information
@@ -148,20 +167,82 @@ func (ar *AppRuntime) UpdateBothStatuses(healthOk bool, healthLast *time.Time, r
 
 // Application represents an application in a workspace
 type Application struct {
-	ID            string        `json:"id"`
-	Name          string        `json:"name,omitempty"`          // Display name
-	Path          string        `json:"path"`                    // URL path for routing (e.g., "/users")
-	Domain        string        `json:"domain,omitempty"`        // Per-app hostname for local-apps type
-	RemoteBaseUrl string        `json:"remoteBaseUrl,omitempty"` // Per-app remote base URL override
-	Context       string        `json:"context,omitempty"`       // Optional context path
-	Health        string        `json:"health"`
-	Port          int           `json:"port"`
-	Active        bool          `json:"active"`
-	RoutePattern  *string       `json:"routePattern,omitempty"`
-	LoggerConfig  *LoggerConfig `json:"loggerConfig,omitempty"`
-	StripOrigin   bool          `json:"stripOrigin,omitempty"` // Strip Origin header for local proxy (Quarkus Dev UI fix)
-	Runtime       AppRuntime    `json:"-"`
-	wsID          string        `json:"-"`
+	// ID is retained as the wire-compatible canonical application identifier.
+	// AppID is the explicit identity field used by new callers; both values are
+	// kept in sync when configurations are loaded or registered.
+	ID            string     `json:"id"`
+	AppID         string     `json:"appId,omitempty"`
+	ServiceID     string     `json:"serviceId,omitempty"`
+	Repository    string     `json:"repository,omitempty"`
+	Aliases       []string   `json:"aliases,omitempty"`
+	Name          string     `json:"name,omitempty"`          // Display name
+	Path          string     `json:"path"`                    // URL path for routing (e.g., "/users")
+	Domain        string     `json:"domain,omitempty"`        // Per-app hostname for local-apps type
+	RemoteBaseUrl string     `json:"remoteBaseUrl,omitempty"` // Per-app remote base URL override
+	Context       string     `json:"context,omitempty"`       // Optional context path
+	Health        string     `json:"health"`
+	Port          int        `json:"port"`
+	Active        bool       `json:"active"`
+	RoutePattern  *string    `json:"routePattern,omitempty"`
+	StripOrigin   bool       `json:"stripOrigin,omitempty"` // Strip Origin header for local proxy (Quarkus Dev UI fix)
+	Runtime       AppRuntime `json:"-"`
+	wsID          string     `json:"-"`
+}
+
+// CanonicalAppID returns the stable identity key while preserving the legacy
+// ID field for clients that still use it.
+func (a *Application) CanonicalAppID() string {
+	if a == nil {
+		return ""
+	}
+	if strings.TrimSpace(a.AppID) != "" {
+		return strings.TrimSpace(a.AppID)
+	}
+	return strings.TrimSpace(a.ID)
+}
+
+// NormalizeIdentityToken normalizes a canonical ID or alias for lookup.
+// Separators are normalized so human-facing repository names remain usable;
+// callers still validate the resulting token before persisting it.
+func NormalizeIdentityToken(value string) string {
+	value = strings.ToLower(strings.TrimSpace(value))
+	var b strings.Builder
+	lastDash := false
+	for _, r := range value {
+		switch {
+		case unicode.IsLetter(r) || unicode.IsDigit(r):
+			b.WriteRune(r)
+			lastDash = false
+		case r == '-' || r == '_' || unicode.IsSpace(r):
+			if b.Len() > 0 && !lastDash {
+				b.WriteByte('-')
+				lastDash = true
+			}
+		}
+	}
+	return strings.Trim(b.String(), "-")
+}
+
+// NormalizedAliases returns de-duplicated, normalized aliases in stable order.
+func (a *Application) NormalizedAliases() []string {
+	if a == nil {
+		return nil
+	}
+	canonical := NormalizeIdentityToken(a.CanonicalAppID())
+	seen := make(map[string]struct{}, len(a.Aliases))
+	aliases := make([]string, 0, len(a.Aliases))
+	for _, raw := range a.Aliases {
+		alias := NormalizeIdentityToken(raw)
+		if alias == "" || alias == canonical {
+			continue
+		}
+		if _, ok := seen[alias]; ok {
+			continue
+		}
+		seen[alias] = struct{}{}
+		aliases = append(aliases, alias)
+	}
+	return aliases
 }
 
 // SetWsID sets the workspace ID for this application
@@ -207,72 +288,6 @@ func (a *Application) RemoteHealthURL(defaultRemoteBaseUrl string) string {
 		return fmt.Sprintf("%s/%s", strings.TrimRight(defaultRemoteBaseUrl, "/"), strings.TrimLeft(a.Health, "/"))
 	}
 	return fmt.Sprintf("%s/%s/%s", strings.TrimRight(defaultRemoteBaseUrl, "/"), context, strings.TrimLeft(a.Health, "/"))
-}
-
-// LoggerConfig represents the logger configuration for an application
-type LoggerConfig struct {
-	Enabled          bool   `json:"enabled"`
-	Endpoint         string `json:"endpoint,omitempty"`
-	AuthType         string `json:"authType,omitempty"` // "basic", "bearer", "none"
-	AuthUsername     string `json:"authUsername,omitempty"`
-	AuthPassword     string `json:"authPassword,omitempty"`
-	AuthToken        string `json:"authToken,omitempty"`
-	UseProjectConfig bool   `json:"useProjectConfig"`
-}
-
-// GetLoggersEndpoint returns the appropriate loggers endpoint
-func (a *Application) GetLoggersEndpoint() string {
-	if a.LoggerConfig != nil && a.LoggerConfig.Endpoint != "" {
-		return a.LoggerConfig.Endpoint
-	}
-	if a.Health == DefaultHealthEndpoint || (len(a.Health) >= 9 && a.Health[:9] == "actuator/") {
-		return DefaultLoggersEndpoint
-	}
-	return FallbackLoggersEndpoint
-}
-
-// LoggerAuthConfig holds the global logger configuration
-type LoggerAuthConfig struct {
-	Type     string `json:"type"` // "basic", "bearer", "none"
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Token    string `json:"token"`
-}
-
-// AppLoggerState represents the persisted state of a logger for an application
-type AppLoggerState struct {
-	Level     string    `json:"level"`
-	UpdatedAt time.Time `json:"updatedAt"`
-}
-
-// LoggersURL returns the local loggers URL
-func (a *Application) LoggersURL() string {
-	return fmt.Sprintf("%s://%s:%d%s/%s", ProtocolHTTP, Localhost, a.Port, a.Path, a.GetLoggersEndpoint())
-}
-
-// LoggersURLWithHost returns the loggers URL with the given host (path-based routing)
-func (a *Application) LoggersURLWithHost(defaultRemoteBaseUrl string) (string, error) {
-	if a.Active && a.HasLocal() {
-		return a.LoggersURL(), nil
-	}
-	if defaultRemoteBaseUrl != "" {
-		return fmt.Sprintf("%s%s/%s", defaultRemoteBaseUrl, a.Path, a.GetLoggersEndpoint()), nil
-	}
-	return "", fmt.Errorf("default remote base URL not available when application is not routed locally")
-}
-
-// LoggerURL returns the URL for a specific logger
-func (a *Application) LoggerURL(loggerName string) string {
-	return fmt.Sprintf("%s/%s", a.LoggersURL(), loggerName)
-}
-
-// LoggerURLWithHost returns the URL for a specific logger with the given host (path-based routing)
-func (a *Application) LoggerURLWithHost(loggerName string, defaultRemoteBaseUrl string) (string, error) {
-	baseURL, err := a.LoggersURLWithHost(defaultRemoteBaseUrl)
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("%s/%s", baseURL, loggerName), nil
 }
 
 // Workspace represents a workspace with its applications
@@ -363,18 +378,36 @@ type HealthUpdate struct {
 
 // ApplicationConfig represents a persisted application definition.
 type ApplicationConfig struct {
-	ID            string        `json:"id"`
-	Name          string        `json:"name,omitempty"`
-	Path          string        `json:"path"`
-	Domain        string        `json:"domain,omitempty"`
-	RemoteBaseUrl string        `json:"remoteBaseUrl,omitempty"` // Per-app remote base URL override
-	Port          int           `json:"port"`
-	Health        string        `json:"health,omitempty"`
-	Active        bool          `json:"active"`
-	RoutePattern  *string       `json:"routePattern,omitempty"`
-	Context       string        `json:"context,omitempty"`
-	LoggerConfig  *LoggerConfig `json:"loggerConfig,omitempty"`
-	StripOrigin   bool          `json:"stripOrigin,omitempty"` // Strip Origin header for local proxy (Quarkus Dev UI fix)
+	ID            string   `json:"id"`
+	AppID         string   `json:"appId,omitempty"`
+	ServiceID     string   `json:"serviceId,omitempty"`
+	Repository    string   `json:"repository,omitempty"`
+	Aliases       []string `json:"aliases,omitempty"`
+	Name          string   `json:"name,omitempty"`
+	Path          string   `json:"path"`
+	Domain        string   `json:"domain,omitempty"`
+	RemoteBaseUrl string   `json:"remoteBaseUrl,omitempty"` // Per-app remote base URL override
+	Port          int      `json:"port"`
+	Health        string   `json:"health,omitempty"`
+	Active        bool     `json:"active"`
+	RoutePattern  *string  `json:"routePattern,omitempty"`
+	Context       string   `json:"context,omitempty"`
+	StripOrigin   bool     `json:"stripOrigin,omitempty"` // Strip Origin header for local proxy (Quarkus Dev UI fix)
+}
+
+// CanonicalAppID returns the stable application identity, falling back to the
+// legacy ID field for persisted configurations created before identity support.
+func (a ApplicationConfig) CanonicalAppID() string {
+	if strings.TrimSpace(a.AppID) != "" {
+		return strings.TrimSpace(a.AppID)
+	}
+	return strings.TrimSpace(a.ID)
+}
+
+// NormalizedAliases returns the normalized aliases configured for this app.
+func (a ApplicationConfig) NormalizedAliases() []string {
+	app := Application{ID: a.ID, AppID: a.AppID, Aliases: a.Aliases}
+	return app.NormalizedAliases()
 }
 
 // WorkspaceConfig represents a persisted workspace definition.

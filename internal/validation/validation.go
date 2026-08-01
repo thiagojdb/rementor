@@ -26,22 +26,49 @@ func Workspace(workspaceType, localDomain, remoteBaseURL string, apps []models.A
 		}
 	}
 
-	seen := make(map[string]struct{}, len(apps))
+	seen := make(map[string]string, len(apps))
 	for i, app := range apps {
-		if _, ok := seen[app.ID]; ok {
-			return fmt.Errorf("application %q is duplicated", app.ID)
+		canonical := models.NormalizeIdentityToken(app.CanonicalAppID())
+		if previous, ok := seen[canonical]; ok {
+			return fmt.Errorf("application identity %q is duplicated by %q and %q", canonical, previous, app.CanonicalAppID())
 		}
-		seen[app.ID] = struct{}{}
+		seen[canonical] = app.CanonicalAppID()
 		if err := Application(workspaceType, app); err != nil {
 			return fmt.Errorf("application %d: %w", i+1, err)
+		}
+		for _, alias := range app.NormalizedAliases() {
+			if previous, ok := seen[alias]; ok {
+				return fmt.Errorf("application alias %q conflicts with %q", alias, previous)
+			}
+			seen[alias] = app.CanonicalAppID()
 		}
 	}
 	return nil
 }
 
 func Application(workspaceType string, app models.ApplicationConfig) error {
-	if err := Identifier("application ID", app.ID); err != nil {
+	canonical := models.NormalizeIdentityToken(app.CanonicalAppID())
+	if err := IdentityIdentifier("application ID", app.CanonicalAppID()); err != nil {
 		return err
+	}
+	if app.ServiceID != "" {
+		if err := IdentityIdentifier("service ID", app.ServiceID); err != nil {
+			return err
+		}
+	}
+	if app.Repository != "" {
+		if err := IdentityIdentifier("repository", app.Repository); err != nil {
+			return err
+		}
+	}
+	for _, alias := range app.Aliases {
+		normalizedAlias := models.NormalizeIdentityToken(alias)
+		if err := IdentityIdentifier("application alias", alias); err != nil {
+			return err
+		}
+		if normalizedAlias == canonical {
+			return fmt.Errorf("application alias %q duplicates its canonical ID", alias)
+		}
 	}
 	if app.Port < 0 || app.Port > 65535 {
 		return fmt.Errorf("port must be between 0 and 65535")
@@ -85,6 +112,22 @@ func Identifier(label, value string) error {
 		return fmt.Errorf("%s must use lowercase letters, numbers, and hyphens", label)
 	}
 	return nil
+}
+
+// IdentityIdentifier accepts the human-facing separators normalized by the
+// identity resolver while rejecting URL/path syntax and other punctuation.
+func IdentityIdentifier(label, value string) error {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return fmt.Errorf("%s is required", label)
+	}
+	for _, r := range value {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) || r == '-' || r == '_' || unicode.IsSpace(r) {
+			continue
+		}
+		return fmt.Errorf("%s contains unsupported characters", label)
+	}
+	return Identifier(label, models.NormalizeIdentityToken(value))
 }
 
 func LocalHostname(value string) error {
