@@ -17,16 +17,17 @@ type WorkspaceEnvironmentRefDTO struct {
 }
 
 type RouteStateDTO struct {
-	DesiredMode    string     `json:"desiredMode"`
-	EffectiveMode  string     `json:"effectiveMode"`
-	Target         string     `json:"target,omitempty"`
-	LocalTarget    string     `json:"localTarget,omitempty"`
-	RemoteTarget   string     `json:"remoteTarget,omitempty"`
-	RemoteFallback bool       `json:"remoteFallback"`
-	ProxyHealth    string     `json:"proxyHealth,omitempty"`
-	RouteVersion   uint64     `json:"routeVersion"`
-	OperationID    string     `json:"operationId,omitempty"`
-	VerifiedAt     *time.Time `json:"verifiedAt,omitempty"`
+	DesiredMode        string     `json:"desiredMode"`
+	EffectiveMode      string     `json:"effectiveMode"`
+	Target             string     `json:"target,omitempty"`
+	LocalTarget        string     `json:"localTarget,omitempty"`
+	RemoteTarget       string     `json:"remoteTarget,omitempty"`
+	RemoteFallback     bool       `json:"remoteFallback"`
+	ProxyHealth        string     `json:"proxyHealth,omitempty"`
+	RouteVersion       uint64     `json:"routeVersion"`
+	OperationID        string     `json:"operationId,omitempty"`
+	VerifiedAt         *time.Time `json:"verifiedAt,omitempty"`
+	VerificationStatus string     `json:"verificationStatus,omitempty"`
 }
 
 type OperationMetadataDTO struct {
@@ -152,24 +153,29 @@ type UpdateRoutePatternRequest struct {
 }
 
 type NormalizedRouteDTO struct {
-	WorkspaceID         string `json:"workspaceId"`
-	Environment         string `json:"environment"`
-	PublicHost          string `json:"publicHost"`
-	Pattern             string `json:"pattern"`
-	CanonicalAppID      string `json:"appId,omitempty"`
-	ServiceID           string `json:"serviceId,omitempty"`
-	Repository          string `json:"repository,omitempty"`
-	DesiredMode         string `json:"desiredMode"`
-	EffectiveMode       string `json:"effectiveMode"`
-	Target              string `json:"target,omitempty"`
-	LocalTarget         string `json:"localTarget,omitempty"`
-	RemoteTarget        string `json:"remoteTarget,omitempty"`
-	RemoteFallback      bool   `json:"remoteFallback"`
-	UpstreamContext     string `json:"upstreamContext,omitempty"`
-	Precedence          int    `json:"precedence"`
-	PrecedenceReason    string `json:"precedenceReason"`
-	Exact               bool   `json:"exact"`
-	IntentionalOverride bool   `json:"intentionalOverride,omitempty"`
+	WorkspaceID         string     `json:"workspaceId"`
+	Environment         string     `json:"environment"`
+	PublicHost          string     `json:"publicHost"`
+	Pattern             string     `json:"pattern"`
+	CanonicalAppID      string     `json:"appId,omitempty"`
+	ServiceID           string     `json:"serviceId,omitempty"`
+	Repository          string     `json:"repository,omitempty"`
+	DesiredMode         string     `json:"desiredMode"`
+	EffectiveMode       string     `json:"effectiveMode"`
+	Target              string     `json:"target,omitempty"`
+	LocalTarget         string     `json:"localTarget,omitempty"`
+	RemoteTarget        string     `json:"remoteTarget,omitempty"`
+	RemoteFallback      bool       `json:"remoteFallback"`
+	UpstreamContext     string     `json:"upstreamContext,omitempty"`
+	Precedence          int        `json:"precedence"`
+	PrecedenceReason    string     `json:"precedenceReason"`
+	Exact               bool       `json:"exact"`
+	ProxyHealth         string     `json:"proxyHealth,omitempty"`
+	VerificationStatus  string     `json:"verificationStatus,omitempty"`
+	RouteVersion        uint64     `json:"routeVersion,omitempty"`
+	OperationID         string     `json:"operationId,omitempty"`
+	VerifiedAt          *time.Time `json:"verifiedAt,omitempty"`
+	IntentionalOverride bool       `json:"intentionalOverride,omitempty"`
 }
 
 type RouteWarningDTO struct {

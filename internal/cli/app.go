@@ -98,10 +98,14 @@ func appList(client *Client, jsonOutput bool, args []string) {
 	}
 
 	w := NewTabWriter()
-	fmt.Fprintln(w, "ID\tNAME\tPORT\tPATH\tDOMAIN\tACTIVE\tHEALTH")
+	fmt.Fprintln(w, "ID\tNAME\tPORT\tPATH\tDOMAIN\tDESIRED\tEFFECTIVE\tPROXY\tHEALTH")
 	for _, app := range apps {
-		fmt.Fprintf(w, "%s\t%s\t%d\t%s\t%s\t%v\t%s\n",
-			app.ID, app.Name, app.Port, app.Path, app.Domain, app.Active, app.HealthStatus)
+		desired, effective, proxy := "unknown", "unknown", "unknown"
+		if app.Route != nil {
+			desired, effective, proxy = app.Route.DesiredMode, app.Route.EffectiveMode, app.Route.ProxyHealth
+		}
+		fmt.Fprintf(w, "%s\t%s\t%d\t%s\t%s\t%s\t%s\t%s\t%s\n",
+			app.ID, app.Name, app.Port, app.Path, app.Domain, desired, effective, proxy, app.HealthStatus)
 	}
 	w.Flush()
 }

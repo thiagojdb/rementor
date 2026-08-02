@@ -22,26 +22,28 @@ import (
 // route state; the registry adds runtime-only state such as health results,
 // subscribers, streams, and the routing provider.
 type Registry struct {
-	workspaces        []*models.Workspace
-	workspacesMu      sync.RWMutex
-	mutationMu        sync.Mutex
-	store             WorkspaceStore
-	routingProvider   RoutingProvider
-	stopChan          chan struct{}
-	httpClient        *http.Client
-	subscribers       map[string]int // workspaceID -> count of active subscribers
-	subscribersMu     sync.RWMutex
-	healthStreams     map[uint64]healthStream
-	healthStreamsMu   sync.RWMutex
-	nextHealthStream  uint64
-	lastFullCheck     time.Time
-	nextRouteVersion  uint64
-	routingStateMu    sync.RWMutex
-	effectiveRoutes   map[string][]Route
-	effectiveHashes   map[string]string
-	effectiveVersions map[string]uint64
-	idempotencyMu     sync.Mutex
-	routeIdempotency  map[string]routeApplyRecord
+	workspaces          []*models.Workspace
+	workspacesMu        sync.RWMutex
+	mutationMu          sync.Mutex
+	store               WorkspaceStore
+	routingProvider     RoutingProvider
+	stopChan            chan struct{}
+	httpClient          *http.Client
+	subscribers         map[string]int // workspaceID -> count of active subscribers
+	subscribersMu       sync.RWMutex
+	healthStreams       map[uint64]healthStream
+	healthStreamsMu     sync.RWMutex
+	nextHealthStream    uint64
+	lastFullCheck       time.Time
+	nextRouteVersion    uint64
+	routingStateMu      sync.RWMutex
+	effectiveRoutes     map[string][]Route
+	effectiveHashes     map[string]string
+	effectiveVersions   map[string]uint64
+	effectiveVerifiedAt map[string]time.Time
+	effectiveStatus     map[string]string
+	idempotencyMu       sync.Mutex
+	routeIdempotency    map[string]routeApplyRecord
 }
 
 type routeApplyRecord struct {
@@ -110,16 +112,18 @@ var (
 func GetRegistry() *Registry {
 	registryOnce.Do(func() {
 		globalRegistry = &Registry{
-			store:             NewConfigWorkspaceStore(),
-			stopChan:          make(chan struct{}),
-			httpClient:        &http.Client{Timeout: 5 * time.Second},
-			subscribers:       make(map[string]int),
-			healthStreams:     make(map[uint64]healthStream),
-			lastFullCheck:     time.Time{},
-			effectiveRoutes:   make(map[string][]Route),
-			effectiveHashes:   make(map[string]string),
-			effectiveVersions: make(map[string]uint64),
-			routeIdempotency:  make(map[string]routeApplyRecord),
+			store:               NewConfigWorkspaceStore(),
+			stopChan:            make(chan struct{}),
+			httpClient:          &http.Client{Timeout: 5 * time.Second},
+			subscribers:         make(map[string]int),
+			healthStreams:       make(map[uint64]healthStream),
+			lastFullCheck:       time.Time{},
+			effectiveRoutes:     make(map[string][]Route),
+			effectiveHashes:     make(map[string]string),
+			effectiveVersions:   make(map[string]uint64),
+			effectiveVerifiedAt: make(map[string]time.Time),
+			effectiveStatus:     make(map[string]string),
+			routeIdempotency:    make(map[string]routeApplyRecord),
 		}
 	})
 	return globalRegistry
@@ -187,10 +191,6 @@ func (r *Registry) Load() error {
 		log.Printf("Warning: failed to load route operation journal: %v", err)
 	}
 
-	// Warm health checks (non-blocking)
-	log.Println("Warming health checks...")
-	go r.warmHealth()
-
 	// Load initial config if routing provider is available
 	if r.routingProvider != nil {
 		log.Printf("Loading initial routing config for %d workspaces", len(r.workspaces))
@@ -201,7 +201,15 @@ func (r *Registry) Load() error {
 		}
 	} else {
 		log.Println("Routing provider not available, running without routing")
+		r.workspacesMu.Lock()
+		r.markRoutingState(workspaces, models.RouteVerificationProviderUnavailable)
+		r.workspacesMu.Unlock()
 	}
+
+	// Warm health checks (non-blocking). Start this after the initial route
+	// projection so health goroutines cannot race the provider-unavailable view.
+	log.Println("Warming health checks...")
+	go r.warmHealth()
 
 	log.Println("Registry loaded successfully")
 
@@ -264,7 +272,6 @@ func (r *Registry) warmHealth() {
 
 				now := time.Now()
 				a.Runtime.UpdateBothStatuses(healthOk, &now, remoteOk, &now)
-				a.RefreshRouteState(w, &now)
 
 				// Only send updates when there are changes
 				if oldLocalOk != healthOk || oldRemoteOk != remoteOk {
@@ -397,7 +404,6 @@ func (r *Registry) refreshAllHealth() {
 
 				now := time.Now()
 				a.Runtime.UpdateBothStatuses(newLocalOk, &now, newRemoteOk, &now)
-				a.RefreshRouteState(w, &now)
 			}(ws, app)
 		}
 	}
@@ -407,16 +413,51 @@ func (r *Registry) refreshAllHealth() {
 		checkType, wsNames, totalApps, elapsed)
 }
 
-// GetWorkspaces returns a shallow copy of the runtime projection. Callers must
-// treat returned workspaces as read-only.
+// GetWorkspaces returns detached, projected runtime views. Callers may treat
+// them as read-only snapshots without mutating registry state.
 func (r *Registry) GetWorkspaces() []*models.Workspace {
 	r.workspacesMu.RLock()
 	defer r.workspacesMu.RUnlock()
 
-	// Return a copy to prevent external modification
-	result := make([]*models.Workspace, len(r.workspaces))
-	copy(result, r.workspaces)
+	// Return detached, projected views so callers cannot mutate runtime state
+	// and effective mode always reflects the last proxy snapshot we verified.
+	result := cloneWorkspaces(r.workspaces)
+	r.projectRouteStates(result)
 	return result
+}
+
+// GetWorkspaceView returns a detached workspace view with desired/effective
+// route state projected from the last proxy configuration known to the
+// registry. Mutation code should continue using FindWorkspace or snapshots.
+func (r *Registry) GetWorkspaceView(wsID string) *models.Workspace {
+	r.workspacesMu.RLock()
+	var found *models.Workspace
+	for _, ws := range r.workspaces {
+		if ws != nil && ws.WorkspaceID == wsID {
+			found = cloneWorkspace(ws)
+			break
+		}
+	}
+	r.workspacesMu.RUnlock()
+	if found == nil {
+		return nil
+	}
+	r.projectRouteStates([]*models.Workspace{found})
+	return found
+}
+
+// GetApplicationView returns a detached application view with the same route
+// projection used by every control surface.
+func (r *Registry) GetApplicationView(wsID, appRef string) (*models.Workspace, *models.Application, error) {
+	ws := r.GetWorkspaceView(wsID)
+	if ws == nil {
+		return nil, nil, fmt.Errorf("workspace not found: %s", wsID)
+	}
+	_, app, err := findAppInWorkspace(ws, appRef)
+	if err != nil {
+		return nil, nil, err
+	}
+	return ws, app, nil
 }
 
 // FindWorkspace finds a workspace by ID
@@ -441,22 +482,21 @@ func (r *Registry) FindApp(wsID, appName string) (*models.Workspace, *models.App
 	return findAppInWorkspace(ws, appName)
 }
 
-// GetRoutes returns the normalized desired routes for a workspace. The
-// representation is shared by all control-plane surfaces and is independent
-// of whether nginx is installed on the host.
+// GetRoutes returns normalized routes with desired intent and the last loaded
+// proxy projection side by side. The representation is shared by all
+// control-plane surfaces and remains useful when the provider is unavailable.
 func (r *Registry) GetRoutes(wsID string) ([]Route, uint64, []RouteWarning, []RouteConflict, error) {
-	ws := r.FindWorkspace(wsID)
+	ws := r.GetWorkspaceView(wsID)
 	if ws == nil {
 		return nil, 0, nil, nil, fmt.Errorf("workspace not found: %s", wsID)
 	}
-	snapshot := cloneWorkspace(ws)
-	routes := buildNormalizedRoutes(snapshot)
+	routes := r.projectedRoutes(ws)
 	conflicts := conflictsForRoutes(routes)
 	warnings := make([]RouteWarning, 0, 1)
 	if hasAccidentalConflicts(conflicts) {
 		warnings = append(warnings, RouteWarning{Code: "ROUTE_CONFLICT", Message: "one or more routes compete for the same host and pattern"})
 	}
-	return routes, snapshot.Route.RouteVersion, warnings, conflicts, nil
+	return routes, ws.Route.RouteVersion, warnings, conflicts, nil
 }
 
 // GetRouteConflicts returns the deterministic ownership/shadowing analysis
@@ -479,7 +519,7 @@ func (r *Registry) GetRouteConflicts(wsID string) ([]RouteConflict, uint64, []Ro
 
 // ResolveRoute resolves a host/path request with nginx-compatible precedence.
 func (r *Registry) ResolveRoute(wsID, host, path string) (RouteResolution, error) {
-	ws := r.FindWorkspace(wsID)
+	ws := r.GetWorkspaceView(wsID)
 	if ws == nil {
 		return RouteResolution{}, fmt.Errorf("workspace not found: %s", wsID)
 	}
@@ -495,7 +535,17 @@ func (r *Registry) ResolveRoute(wsID, host, path string) (RouteResolution, error
 			host = ws.GetLocalDomain()
 		}
 	}
-	return resolveRoutes(buildNormalizedRoutes(cloneWorkspace(ws)), wsID, host, path)
+	resolution, err := resolveRoutes(r.projectedRoutes(ws), wsID, host, path)
+	if err != nil {
+		return RouteResolution{}, err
+	}
+	// A fallback is a request-level fact, not a property of a desired route
+	// list. Only mark it after resolution found a loaded remote route for an
+	// application whose persisted intent is local.
+	if resolution.Route != nil && resolution.Route.DesiredMode == models.RouteModeLocal && resolution.Route.EffectiveMode == models.RouteModeRemote && resolution.Route.Target != "" {
+		resolution.Route.RemoteFallback = true
+	}
+	return resolution, nil
 }
 
 // PlanRoute creates a deterministic, non-mutating route plan.
@@ -709,7 +759,7 @@ func (r *Registry) ApplyRoutePlan(wsID string, plan RoutePlan, expectedVersion u
 	r.workspaces = candidate
 	r.workspacesMu.Unlock()
 	after := buildNormalizedRoutes(candidateWS)
-	result := RouteApplyResult{Changed: true, Plan: canonical, Routes: after, Verified: r.routesAreEffective(wsID, after), Verification: "verified", Status: "committed", Rollback: "not-needed", Operation: cloneOperation(operation)}
+	result := RouteApplyResult{Changed: true, Plan: canonical, Routes: r.projectedRoutes(candidateWS), Verified: r.routesAreEffective(wsID, after), Verification: "verified", Status: "committed", Rollback: "not-needed", Operation: cloneOperation(operation)}
 	if journalEnabled {
 		journal.Status = "committed"
 		journal.Phase = "committed"
@@ -782,10 +832,10 @@ func (r *Registry) SyncRoute(wsID, correlationID string, repair bool) (RouteSync
 		}
 	}
 	if proxyInSync {
-		return RouteSyncResult{WorkspaceID: wsID, Changed: false, Verified: true, Status: "in-sync", DesiredRouteVersion: ws.Route.RouteVersion, EffectiveRouteVersion: r.effectiveVersion(wsID), Routes: desired, Warnings: warnings, Operation: r.routeNoopOperation(ws, correlationID, "route-sync")}, nil
+		return RouteSyncResult{WorkspaceID: wsID, Changed: false, Verified: true, Status: "in-sync", DesiredRouteVersion: ws.Route.RouteVersion, EffectiveRouteVersion: r.effectiveVersion(wsID), Routes: r.projectedRoutes(ws), Warnings: warnings, Operation: r.routeNoopOperation(ws, correlationID, "route-sync")}, nil
 	}
 	if !repair {
-		return RouteSyncResult{WorkspaceID: wsID, Changed: false, Verified: false, Status: "drift", DesiredRouteVersion: ws.Route.RouteVersion, EffectiveRouteVersion: r.effectiveVersion(wsID), Routes: desired, Warnings: warnings}, nil
+		return RouteSyncResult{WorkspaceID: wsID, Changed: false, Verified: false, Status: "drift", DesiredRouteVersion: ws.Route.RouteVersion, EffectiveRouteVersion: r.effectiveVersion(wsID), Routes: r.projectedRoutes(ws), Warnings: warnings}, nil
 	}
 	candidate := cloneWorkspaces(previous)
 	candidateWS := findWorkspace(candidate, wsID)
@@ -793,12 +843,7 @@ func (r *Registry) SyncRoute(wsID, correlationID string, repair bool) (RouteSync
 	operation := r.beginOperation("route-sync", correlationID)
 	r.applyOperation(candidateWS, nil, operation)
 	for _, app := range candidateWS.Applications {
-		app.LastOperation = cloneOperation(operation)
-		app.Route.RouteVersion = operation.RouteVersion
-		app.Route.OperationID = operation.OperationID
-		app.RefreshRouteState(candidateWS, &operation.CompletedAt)
-		app.Route.RouteVersion = operation.RouteVersion
-		app.Route.OperationID = operation.OperationID
+		setAppOperation(candidateWS, app, operation)
 	}
 	journal := models.RouteOperationJournal{
 		OperationID:     operation.OperationID,
@@ -877,7 +922,7 @@ func (r *Registry) SyncRoute(wsID, correlationID string, repair bool) (RouteSync
 	r.workspacesMu.Lock()
 	r.workspaces = candidate
 	r.workspacesMu.Unlock()
-	result := RouteSyncResult{WorkspaceID: wsID, Changed: true, Verified: r.routesAreEffectiveHash(wsID, desiredHash), Status: "repaired", DesiredRouteVersion: operation.RouteVersion, EffectiveRouteVersion: operation.RouteVersion, Routes: buildNormalizedRoutes(candidateWS), Warnings: warnings, Rollback: "not-needed", Operation: cloneOperation(operation)}
+	result := RouteSyncResult{WorkspaceID: wsID, Changed: true, Verified: r.routesAreEffectiveHash(wsID, desiredHash), Status: "repaired", DesiredRouteVersion: operation.RouteVersion, EffectiveRouteVersion: operation.RouteVersion, Routes: r.projectedRoutes(candidateWS), Warnings: warnings, Rollback: "not-needed", Operation: cloneOperation(operation)}
 	if journalEnabled {
 		journal.Status = "committed"
 		journal.Phase = "committed"
@@ -945,12 +990,7 @@ func (r *Registry) RegisterApplicationAliasWithMetadata(wsID, appRef, alias, cor
 				if !already {
 					binding.Aliases = append(binding.Aliases, alias)
 				}
-				binding.LastOperation = cloneOperation(operation)
-				binding.Route.RouteVersion = operation.RouteVersion
-				binding.Route.OperationID = operation.OperationID
-				binding.RefreshRouteState(workspace, &operation.CompletedAt)
-				binding.Route.RouteVersion = operation.RouteVersion
-				binding.Route.OperationID = operation.OperationID
+				setAppOperation(workspace, binding, operation)
 				result = binding
 			}
 		}
@@ -1132,15 +1172,18 @@ func (r *Registry) applyOperation(workspace *models.Workspace, app *models.Appli
 	workspace.Route.RouteVersion = operation.RouteVersion
 	workspace.Route.OperationID = operation.OperationID
 	if app != nil {
-		app.LastOperation = cloneOperation(operation)
-		app.Route.RouteVersion = operation.RouteVersion
-		app.Route.OperationID = operation.OperationID
-		app.RefreshRouteState(workspace, &operation.CompletedAt)
-		// RefreshRouteState derives the projection from legacy fields. Restore
-		// operation metadata after that derivation so it cannot be lost.
-		app.Route.RouteVersion = operation.RouteVersion
-		app.Route.OperationID = operation.OperationID
+		setAppOperation(workspace, app, operation)
 	}
+}
+
+func setAppOperation(workspace *models.Workspace, app *models.Application, operation *models.OperationMetadata) {
+	if workspace == nil || app == nil || operation == nil {
+		return
+	}
+	app.Route = app.RouteStateFor(workspace)
+	app.LastOperation = cloneOperation(operation)
+	app.Route.RouteVersion = operation.RouteVersion
+	app.Route.OperationID = operation.OperationID
 }
 
 // ToggleApp toggles an application between local and remote. It retains the
@@ -1205,12 +1248,7 @@ func (r *Registry) ToggleAllToRemoteWithMetadata(wsID, correlationID string) (*T
 		operation = r.beginOperation("toggle-all", correlationID)
 		r.applyOperation(ws, nil, operation)
 		for _, app := range ws.Applications {
-			app.LastOperation = cloneOperation(operation)
-			app.Route.RouteVersion = operation.RouteVersion
-			app.Route.OperationID = operation.OperationID
-			app.RefreshRouteState(ws, &operation.CompletedAt)
-			app.Route.RouteVersion = operation.RouteVersion
-			app.Route.OperationID = operation.OperationID
+			setAppOperation(ws, app, operation)
 		}
 		return nil
 	}, r.workspaceStore().SaveState)
@@ -1246,12 +1284,7 @@ func (r *Registry) ToggleAllToLocalWithMetadata(wsID, correlationID string) (*To
 		operation = r.beginOperation("toggle-all", correlationID)
 		r.applyOperation(ws, nil, operation)
 		for _, app := range ws.Applications {
-			app.LastOperation = cloneOperation(operation)
-			app.Route.RouteVersion = operation.RouteVersion
-			app.Route.OperationID = operation.OperationID
-			app.RefreshRouteState(ws, &operation.CompletedAt)
-			app.Route.RouteVersion = operation.RouteVersion
-			app.Route.OperationID = operation.OperationID
+			setAppOperation(ws, app, operation)
 		}
 		return nil
 	}, r.workspaceStore().SaveState)
@@ -1278,12 +1311,7 @@ func (r *Registry) SyncRoutingWithMetadata(correlationID string) (*models.Operat
 		for _, ws := range *candidate {
 			r.applyOperation(ws, nil, operation)
 			for _, app := range ws.Applications {
-				app.LastOperation = cloneOperation(operation)
-				app.Route.RouteVersion = operation.RouteVersion
-				app.Route.OperationID = operation.OperationID
-				app.RefreshRouteState(ws, &operation.CompletedAt)
-				app.Route.RouteVersion = operation.RouteVersion
-				app.Route.OperationID = operation.OperationID
+				setAppOperation(ws, app, operation)
 			}
 		}
 		return nil
@@ -1324,12 +1352,7 @@ func (r *Registry) UpdateWorkspaceApplicationsWithMetadata(wsID string, apps []m
 		operation = r.beginOperation("upsert", correlationID)
 		r.applyOperation(workspace, nil, operation)
 		for _, app := range workspace.Applications {
-			app.LastOperation = cloneOperation(operation)
-			app.Route.RouteVersion = operation.RouteVersion
-			app.Route.OperationID = operation.OperationID
-			app.RefreshRouteState(workspace, &operation.CompletedAt)
-			app.Route.RouteVersion = operation.RouteVersion
-			app.Route.OperationID = operation.OperationID
+			setAppOperation(workspace, app, operation)
 		}
 		return nil
 	}, r.workspaceStore().ReplaceWorkspaces)
@@ -1357,12 +1380,7 @@ func (r *Registry) CreateWorkspaceWithMetadata(wsConfig models.WorkspaceConfig, 
 		operation = r.beginOperation("upsert", correlationID)
 		r.applyOperation(result, nil, operation)
 		for _, app := range result.Applications {
-			app.LastOperation = cloneOperation(operation)
-			app.Route.RouteVersion = operation.RouteVersion
-			app.Route.OperationID = operation.OperationID
-			app.RefreshRouteState(result, &operation.CompletedAt)
-			app.Route.RouteVersion = operation.RouteVersion
-			app.Route.OperationID = operation.OperationID
+			setAppOperation(result, app, operation)
 		}
 		*candidate = append(*candidate, result)
 		return nil
@@ -1497,7 +1515,6 @@ func (r *Registry) checkApplicationHealth(app *models.Application, workspace *mo
 	}
 	now := time.Now()
 	app.Runtime.UpdateBothStatuses(localOK, &now, remoteOK, &now)
-	app.RefreshRouteState(workspace, &now)
 }
 
 func findWorkspace(workspaces []*models.Workspace, wsID string) *models.Workspace {
@@ -1723,6 +1740,12 @@ func (r *Registry) ensureRouteState() {
 	if r.effectiveVersions == nil {
 		r.effectiveVersions = make(map[string]uint64)
 	}
+	if r.effectiveVerifiedAt == nil {
+		r.effectiveVerifiedAt = make(map[string]time.Time)
+	}
+	if r.effectiveStatus == nil {
+		r.effectiveStatus = make(map[string]string)
+	}
 	r.routingStateMu.Unlock()
 	r.idempotencyMu.Lock()
 	if r.routeIdempotency == nil {
@@ -1788,7 +1811,7 @@ func (r *Registry) routeNoopResult(ws *models.Workspace, plan RoutePlan, correla
 	return RouteApplyResult{
 		Changed:      false,
 		Plan:         plan,
-		Routes:       cloneRoutes(plan.After),
+		Routes:       r.projectedRoutes(ws),
 		Verified:     r.routesAreEffective(ws.WorkspaceID, plan.After),
 		Verification: "unchanged",
 		Status:       "unchanged",
@@ -1974,6 +1997,7 @@ func journalIntentFingerprint(operation models.RouteOperationJournal, result Rou
 
 func (r *Registry) recordEffectiveRoutes(workspaces []*models.Workspace) {
 	r.ensureRouteState()
+	verifiedAt := time.Now().UTC()
 	r.routingStateMu.Lock()
 	defer r.routingStateMu.Unlock()
 	for _, ws := range workspaces {
@@ -1984,6 +2008,8 @@ func (r *Registry) recordEffectiveRoutes(workspaces []*models.Workspace) {
 		r.effectiveRoutes[ws.WorkspaceID] = cloneRoutes(routes)
 		r.effectiveHashes[ws.WorkspaceID] = fingerprintRoutes(routes)
 		r.effectiveVersions[ws.WorkspaceID] = ws.Route.RouteVersion
+		r.effectiveVerifiedAt[ws.WorkspaceID] = verifiedAt
+		r.effectiveStatus[ws.WorkspaceID] = models.RouteVerificationVerified
 	}
 }
 
@@ -1991,7 +2017,10 @@ func (r *Registry) routesAreEffectiveHash(wsID, hash string) bool {
 	r.ensureRouteState()
 	r.routingStateMu.RLock()
 	defer r.routingStateMu.RUnlock()
-	return hash != "" && r.effectiveHashes[wsID] == hash
+	// A matching last-known hash is not enough to claim a current verification:
+	// the provider may have gone away or the snapshot may belong to an older
+	// desired route version. Keep lifecycle responses honest about that state.
+	return hash != "" && r.effectiveHashes[wsID] == hash && r.effectiveStatus[wsID] == models.RouteVerificationVerified
 }
 
 func (r *Registry) routesAreEffective(wsID string, routes []Route) bool {
@@ -2005,21 +2034,188 @@ func (r *Registry) effectiveVersion(wsID string) uint64 {
 	return r.effectiveVersions[wsID]
 }
 
+type effectiveRouteSnapshot struct {
+	routes     []Route
+	version    uint64
+	verifiedAt time.Time
+	status     string
+	present    bool
+}
+
+func (r *Registry) effectiveSnapshot(wsID string) effectiveRouteSnapshot {
+	r.ensureRouteState()
+	r.routingStateMu.RLock()
+	defer r.routingStateMu.RUnlock()
+	routes, present := r.effectiveRoutes[wsID]
+	return effectiveRouteSnapshot{
+		routes:     cloneRoutes(routes),
+		version:    r.effectiveVersions[wsID],
+		verifiedAt: r.effectiveVerifiedAt[wsID],
+		status:     r.effectiveStatus[wsID],
+		present:    present,
+	}
+}
+
+func routeKeyForProjection(route Route) string {
+	return strings.Join([]string{normalizeHost(route.PublicHost), route.Pattern, route.CanonicalAppID, route.ServiceID}, "\x00")
+}
+
+func proxyHealthForSnapshot(snapshot effectiveRouteSnapshot, current bool) string {
+	if snapshot.status == models.RouteVerificationProviderUnavailable {
+		return models.ProxyHealthUnavailable
+	}
+	if current && snapshot.present {
+		return models.ProxyHealthUp
+	}
+	if snapshot.present {
+		return models.ProxyHealthStale
+	}
+	return models.ProxyHealthUnknown
+}
+
+func verificationStatusForSnapshot(snapshot effectiveRouteSnapshot, current bool) string {
+	if snapshot.present && snapshot.status == models.RouteVerificationVerified && current {
+		return models.RouteVerificationVerified
+	}
+	if snapshot.present {
+		return models.RouteVerificationStale
+	}
+	return models.RouteVerificationUnknown
+}
+
+func (r *Registry) projectedRoutes(ws *models.Workspace) []Route {
+	if ws == nil {
+		return nil
+	}
+	desired := buildNormalizedRoutes(ws)
+	snapshot := r.effectiveSnapshot(ws.WorkspaceID)
+	current := snapshot.present && snapshot.status == models.RouteVerificationVerified && snapshot.version == ws.Route.RouteVersion
+	actualByKey := make(map[string]Route, len(snapshot.routes))
+	for _, route := range snapshot.routes {
+		actualByKey[routeKeyForProjection(route)] = route
+	}
+	status := verificationStatusForSnapshot(snapshot, current)
+	proxyHealth := proxyHealthForSnapshot(snapshot, current)
+	verifiedAt := cloneTimeValue(snapshot.verifiedAt)
+	for i := range desired {
+		route := &desired[i]
+		route.RouteVersion = ws.Route.RouteVersion
+		route.OperationID = ws.Route.OperationID
+		route.VerificationStatus = status
+		route.ProxyHealth = proxyHealth
+		route.VerifiedAt = verifiedAt
+		actual, ok := actualByKey[routeKeyForProjection(*route)]
+		if !ok {
+			route.EffectiveMode = models.RouteModeUnknown
+			route.Target = ""
+			route.RemoteFallback = false
+			continue
+		}
+		route.EffectiveMode = actual.EffectiveMode
+		route.Target = actual.Target
+		route.RemoteFallback = false
+		// Local and remote targets describe application configuration and are
+		// intentionally retained from the desired projection.
+	}
+	return desired
+}
+
+func (r *Registry) projectApplicationRoute(ws *models.Workspace, app *models.Application) models.RouteState {
+	if app == nil {
+		return models.RouteState{}
+	}
+	state := app.RouteStateFor(ws)
+	desiredMode := models.RouteModeRemote
+	if ws != nil && (ws.IsLocalApps() || app.Active) {
+		desiredMode = models.RouteModeLocal
+	}
+	state.DesiredMode = desiredMode
+	state.RemoteFallback = false
+	if ws == nil {
+		return state
+	}
+	snapshot := r.effectiveSnapshot(ws.WorkspaceID)
+	current := snapshot.present && snapshot.status == models.RouteVerificationVerified && snapshot.version == ws.Route.RouteVersion
+	status := verificationStatusForSnapshot(snapshot, current)
+	state.VerificationStatus = status
+	state.ProxyHealth = proxyHealthForSnapshot(snapshot, current)
+	state.RouteVersion = ws.Route.RouteVersion
+	state.OperationID = ws.Route.OperationID
+	state.VerifiedAt = cloneTimeValue(snapshot.verifiedAt)
+	state.EffectiveMode = models.RouteModeUnknown
+	state.Target = ""
+	for _, route := range snapshot.routes {
+		if route.CanonicalAppID != app.CanonicalAppID() {
+			continue
+		}
+		// Prefer a concrete route over a root/fallback entry with no target.
+		if state.EffectiveMode == models.RouteModeUnknown || route.Target != "" {
+			state.EffectiveMode = route.EffectiveMode
+			state.Target = route.Target
+		}
+		if route.Target != "" {
+			break
+		}
+	}
+	return state
+}
+
+func (r *Registry) projectRouteStates(workspaces []*models.Workspace) {
+	for _, ws := range workspaces {
+		if ws == nil {
+			continue
+		}
+		snapshot := r.effectiveSnapshot(ws.WorkspaceID)
+		current := snapshot.present && snapshot.status == models.RouteVerificationVerified && snapshot.version == ws.Route.RouteVersion
+		ws.Route.VerificationStatus = verificationStatusForSnapshot(snapshot, current)
+		ws.Route.ProxyHealth = proxyHealthForSnapshot(snapshot, current)
+		ws.Route.VerifiedAt = cloneTimeValue(snapshot.verifiedAt)
+		for _, app := range ws.Applications {
+			app.Route = r.projectApplicationRoute(ws, app)
+		}
+	}
+}
+
+func cloneTimeValue(value time.Time) *time.Time {
+	if value.IsZero() {
+		return nil
+	}
+	cloned := value.UTC()
+	return &cloned
+}
+
+func (r *Registry) markRoutingState(workspaces []*models.Workspace, status string) {
+	r.ensureRouteState()
+	r.routingStateMu.Lock()
+	for _, ws := range workspaces {
+		if ws == nil {
+			continue
+		}
+		r.effectiveStatus[ws.WorkspaceID] = status
+	}
+	r.routingStateMu.Unlock()
+	r.projectRouteStates(workspaces)
+}
+
 func (r *Registry) applyRouting(workspaces []*models.Workspace, required bool) error {
 	provider := r.GetRoutingProvider()
 	if provider == nil {
+		r.markRoutingState(workspaces, models.RouteVerificationProviderUnavailable)
 		if required {
 			return fmt.Errorf("routing provider not set")
 		}
 		return nil
 	}
 	if !provider.IsAvailable() {
+		r.markRoutingState(workspaces, models.RouteVerificationProviderUnavailable)
 		if required {
 			return fmt.Errorf("routing provider is unavailable")
 		}
 		return nil
 	}
 	if err := r.loadProxyWithRetry(workspaces); err != nil {
+		// Keep the last successful snapshot untouched. Callers must never see
+		// the candidate desired route as effective after a failed reload.
 		return err
 	}
 	if verifier, ok := provider.(RoutingVerifier); ok {
@@ -2038,6 +2234,7 @@ func (r *Registry) applyRouting(workspaces []*models.Workspace, required bool) e
 		}
 	}
 	r.recordEffectiveRoutes(workspaces)
+	r.projectRouteStates(workspaces)
 	return nil
 }
 

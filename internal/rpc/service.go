@@ -38,7 +38,7 @@ func (s *ControlPlaneService) ListWorkspaces(ctx context.Context, req *connect.R
 }
 
 func (s *ControlPlaneService) GetWorkspace(ctx context.Context, req *connect.Request[rementorv1.GetWorkspaceRequest]) (*connect.Response[rementorv1.GetWorkspaceResponse], error) {
-	ws := s.registry.FindWorkspace(req.Msg.GetWorkspaceId())
+	ws := s.registry.GetWorkspaceView(req.Msg.GetWorkspaceId())
 	if ws == nil {
 		return nil, newRPCError(connect.CodeNotFound, fmt.Errorf("workspace not found"))
 	}
@@ -116,7 +116,7 @@ func (s *ControlPlaneService) UpdateWorkspace(ctx context.Context, req *connect.
 		log.Printf("Error updating workspace %s applications: %v", wsID, err)
 		return nil, newRPCError(connect.CodeInternal, fmt.Errorf("failed to update workspace: %w", err))
 	}
-	return connect.NewResponse(&rementorv1.UpdateWorkspaceResponse{Workspace: toProtoWorkspace(s.registry.FindWorkspace(wsID)), Operation: toProtoOperation(operation)}), nil
+	return connect.NewResponse(&rementorv1.UpdateWorkspaceResponse{Workspace: toProtoWorkspace(s.registry.GetWorkspaceView(wsID)), Operation: toProtoOperation(operation)}), nil
 }
 
 func (s *ControlPlaneService) DeleteWorkspace(ctx context.Context, req *connect.Request[rementorv1.DeleteWorkspaceRequest]) (*connect.Response[rementorv1.DeleteWorkspaceResponse], error) {
@@ -133,7 +133,7 @@ func (s *ControlPlaneService) DeleteWorkspace(ctx context.Context, req *connect.
 }
 
 func (s *ControlPlaneService) ListApplications(ctx context.Context, req *connect.Request[rementorv1.ListApplicationsRequest]) (*connect.Response[rementorv1.ListApplicationsResponse], error) {
-	ws := s.registry.FindWorkspace(req.Msg.GetWorkspaceId())
+	ws := s.registry.GetWorkspaceView(req.Msg.GetWorkspaceId())
 	if ws == nil {
 		return nil, newRPCError(connect.CodeNotFound, fmt.Errorf("workspace not found"))
 	}
@@ -145,7 +145,7 @@ func (s *ControlPlaneService) ListApplications(ctx context.Context, req *connect
 }
 
 func (s *ControlPlaneService) GetApplication(ctx context.Context, req *connect.Request[rementorv1.GetApplicationRequest]) (*connect.Response[rementorv1.GetApplicationResponse], error) {
-	ws, app, err := s.registry.FindApp(req.Msg.GetWorkspaceId(), req.Msg.GetApplicationId())
+	ws, app, err := s.registry.GetApplicationView(req.Msg.GetWorkspaceId(), req.Msg.GetApplicationId())
 	if err != nil {
 		return nil, newRPCError(connect.CodeNotFound, err)
 	}
@@ -153,7 +153,7 @@ func (s *ControlPlaneService) GetApplication(ctx context.Context, req *connect.R
 }
 
 func (s *ControlPlaneService) ResolveApplication(ctx context.Context, req *connect.Request[rementorv1.ResolveApplicationRequest]) (*connect.Response[rementorv1.ResolveApplicationResponse], error) {
-	ws, app, err := s.registry.FindApp(req.Msg.GetWorkspaceId(), req.Msg.GetApplicationRef())
+	ws, app, err := s.registry.GetApplicationView(req.Msg.GetWorkspaceId(), req.Msg.GetApplicationRef())
 	if err != nil {
 		if errors.Is(err, models.ErrAmbiguousApplication) {
 			return nil, newRPCError(connect.CodeFailedPrecondition, err)
@@ -174,7 +174,7 @@ func (s *ControlPlaneService) RegisterApplicationAlias(ctx context.Context, req 
 		}
 		return nil, newRPCError(connect.CodeInvalidArgument, err)
 	}
-	return connect.NewResponse(&rementorv1.RegisterApplicationAliasResponse{Application: toProtoApplicationInWorkspace(s.registry.FindWorkspace(req.Msg.GetWorkspaceId()), app), Operation: toProtoOperation(operation)}), nil
+	return connect.NewResponse(&rementorv1.RegisterApplicationAliasResponse{Application: toProtoApplicationInWorkspace(s.registry.GetWorkspaceView(req.Msg.GetWorkspaceId()), app), Operation: toProtoOperation(operation)}), nil
 }
 
 func (s *ControlPlaneService) UpsertApplication(ctx context.Context, req *connect.Request[rementorv1.UpsertApplicationRequest]) (*connect.Response[rementorv1.UpsertApplicationResponse], error) {
@@ -226,8 +226,8 @@ func (s *ControlPlaneService) UpsertApplication(ctx context.Context, req *connec
 	if err != nil {
 		return nil, newRPCError(connect.CodeInternal, err)
 	}
-	ws = s.registry.FindWorkspace(ws.WorkspaceID)
-	_, app, err := s.registry.FindApp(ws.WorkspaceID, appConfig.ID)
+	ws = s.registry.GetWorkspaceView(ws.WorkspaceID)
+	_, app, err := s.registry.GetApplicationView(ws.WorkspaceID, appConfig.ID)
 	if err != nil {
 		return nil, newRPCError(connect.CodeInternal, err)
 	}
@@ -274,7 +274,7 @@ func (s *ControlPlaneService) ToggleApplication(ctx context.Context, req *connec
 	if err != nil {
 		return nil, newRPCError(classifyRegistryError(err), err)
 	}
-	return connect.NewResponse(&rementorv1.ToggleApplicationResponse{Application: toProtoApplicationInWorkspace(s.registry.FindWorkspace(req.Msg.GetWorkspaceId()), app), Operation: toProtoOperation(operation)}), nil
+	return connect.NewResponse(&rementorv1.ToggleApplicationResponse{Application: toProtoApplicationInWorkspace(s.registry.GetWorkspaceView(req.Msg.GetWorkspaceId()), app), Operation: toProtoOperation(operation)}), nil
 }
 
 func (s *ControlPlaneService) ToggleAllToRemote(ctx context.Context, req *connect.Request[rementorv1.ToggleAllToRemoteRequest]) (*connect.Response[rementorv1.ToggleAllToRemoteResponse], error) {
@@ -325,7 +325,7 @@ func (s *ControlPlaneService) UpdateRoutePattern(ctx context.Context, req *conne
 	if err != nil {
 		return nil, newRPCError(classifyRegistryError(err), err)
 	}
-	return connect.NewResponse(&rementorv1.UpdateRoutePatternResponse{Application: toProtoApplicationInWorkspace(s.registry.FindWorkspace(req.Msg.GetWorkspaceId()), app), Operation: toProtoOperation(operation)}), nil
+	return connect.NewResponse(&rementorv1.UpdateRoutePatternResponse{Application: toProtoApplicationInWorkspace(s.registry.GetWorkspaceView(req.Msg.GetWorkspaceId()), app), Operation: toProtoOperation(operation)}), nil
 }
 
 func (s *ControlPlaneService) WatchHealth(ctx context.Context, req *connect.Request[rementorv1.WatchHealthRequest], stream *connect.ServerStream[rementorv1.WatchHealthResponse]) error {
@@ -343,7 +343,7 @@ func (s *ControlPlaneService) WatchHealth(ctx context.Context, req *connect.Requ
 		select {
 		case update := <-updateChan:
 			if wsID == "" || update.WsID == wsID {
-				if err := stream.Send(toProtoHealthUpdate(update, s.registry.FindWorkspace(update.WsID))); err != nil {
+				if err := stream.Send(toProtoHealthUpdate(update, s.registry.GetWorkspaceView(update.WsID))); err != nil {
 					return err
 				}
 			}
@@ -473,7 +473,7 @@ func toProtoApplicationInWorkspace(ws *models.Workspace, app *models.Application
 	}
 	state := app.Route
 	if state.DesiredMode == "" && state.EffectiveMode == "" {
-		state = app.RouteStateFor(ws, nil)
+		state = app.RouteStateFor(ws)
 	}
 	return &rementorv1.Application{
 		Id:            app.ID,
@@ -500,20 +500,21 @@ func toProtoApplicationInWorkspace(ws *models.Workspace, app *models.Application
 }
 
 func routeStateToProto(state models.RouteState) *rementorv1.RouteState {
-	if state.DesiredMode == "" && state.EffectiveMode == "" && state.RouteVersion == 0 && state.OperationID == "" {
+	if state.DesiredMode == "" && state.EffectiveMode == "" && state.RouteVersion == 0 && state.OperationID == "" && state.VerificationStatus == "" {
 		return nil
 	}
 	return &rementorv1.RouteState{
-		DesiredMode:    routeMode(state.DesiredMode),
-		EffectiveMode:  routeMode(state.EffectiveMode),
-		Target:         state.Target,
-		LocalTarget:    state.LocalTarget,
-		RemoteTarget:   state.RemoteTarget,
-		RemoteFallback: state.RemoteFallback,
-		ProxyHealth:    state.ProxyHealth,
-		Version:        &rementorv1.RouteVersion{Value: state.RouteVersion},
-		OperationId:    state.OperationID,
-		VerifiedAt:     timestampOrNil(state.VerifiedAt),
+		DesiredMode:        routeMode(state.DesiredMode),
+		EffectiveMode:      routeMode(state.EffectiveMode),
+		Target:             state.Target,
+		LocalTarget:        state.LocalTarget,
+		RemoteTarget:       state.RemoteTarget,
+		RemoteFallback:     state.RemoteFallback,
+		ProxyHealth:        state.ProxyHealth,
+		Version:            &rementorv1.RouteVersion{Value: state.RouteVersion},
+		OperationId:        state.OperationID,
+		VerifiedAt:         timestampOrNil(state.VerifiedAt),
+		VerificationStatus: state.VerificationStatus,
 	}
 }
 
@@ -525,6 +526,10 @@ func routeMode(mode string) rementorv1.RouteMode {
 		return rementorv1.RouteMode_ROUTE_MODE_REMOTE
 	case "fallback":
 		return rementorv1.RouteMode_ROUTE_MODE_FALLBACK
+	case "unknown":
+		return rementorv1.RouteMode_ROUTE_MODE_UNKNOWN
+	case "stale":
+		return rementorv1.RouteMode_ROUTE_MODE_STALE
 	default:
 		return rementorv1.RouteMode_ROUTE_MODE_UNSPECIFIED
 	}

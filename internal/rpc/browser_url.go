@@ -51,7 +51,7 @@ func browserURLResolutionToProto(res services.BrowserURLResolution) *rementorv1.
 		CorrelationId:   res.CorrelationID,
 		Identity:        &rementorv1.CanonicalApplicationRef{AppId: res.Identity.AppID, ServiceId: res.Identity.ServiceID, Repository: res.Identity.Repository, Aliases: append([]string(nil), res.Identity.Aliases...), LegacyId: res.Identity.LegacyID},
 		EnvironmentRef:  &rementorv1.WorkspaceEnvironmentRef{WorkspaceId: res.EnvironmentRef.WorkspaceID, Environment: res.EnvironmentRef.Environment, LegacyId: res.EnvironmentRef.LegacyID},
-		Precedence:      int32(res.Precedence),
+		Precedence:      models.ClampInt32(res.Precedence),
 		MatchingPattern: res.MatchingPattern,
 		Route:           routeStateToProto(res.RouteState),
 		Operation:       toProtoOperation(res.Operation),

@@ -46,6 +46,11 @@ enum RouteMode {
   ROUTE_MODE_LOCAL = 1;
   ROUTE_MODE_REMOTE = 2;
   ROUTE_MODE_FALLBACK = 3;
+  // UNKNOWN means no loaded proxy route could be verified for this entry.
+  ROUTE_MODE_UNKNOWN = 4;
+  // STALE is reserved for future use; current staleness is represented by
+  // verification_status while preserving this append-only wire value.
+  ROUTE_MODE_STALE = 5;
 }
 
 // RouteOperationKind identifies the mutation that produced operation
@@ -116,6 +121,8 @@ message RouteState {
   RouteVersion version = 8;
   string operation_id = 9;
   google.protobuf.Timestamp verified_at = 10;
+  // verified, stale, or unknown. This is independent from application health.
+  string verification_status = 11;
 }
 
 // OperationMetadata accompanies every route-affecting mutation. Timestamps
@@ -433,6 +440,11 @@ message NormalizedRoute {
   string precedence_reason = 16;
   bool exact = 17;
   bool intentional_override = 18;
+  string proxy_health = 23;
+  string verification_status = 24;
+  RouteVersion version = 25;
+  string operation_id = 26;
+  google.protobuf.Timestamp verified_at = 27;
 }
 
 message RouteWarning {

@@ -149,7 +149,7 @@ func (r *Registry) ResolveBrowserURL(workspaceID, applicationRef string) (Browse
 		return BrowserURLResolution{}, &BrowserURLBindingError{WorkspaceID: ws.WorkspaceID, AppID: app.CanonicalAppID(), Field: "remote target"}
 	}
 
-	state := app.RouteStateFor(ws, nil)
+	state := app.RouteStateFor(ws)
 	state.DesiredMode = resolvedRoute.DesiredMode
 	state.EffectiveMode = resolvedRoute.EffectiveMode
 	state.Target = resolvedRoute.Target

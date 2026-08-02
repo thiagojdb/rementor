@@ -1,4 +1,5 @@
 import type { PlainMessage } from '@bufbuild/protobuf'
+import { RouteMode } from '../gen/rementor/v1/rementor_pb'
 import type {
   Application,
   BrowserURLResolution,
@@ -25,6 +26,30 @@ export type WorkspaceEnvironmentRefDTO = PlainMessage<WorkspaceEnvironmentRef>
 export type RouteStateDTO = PlainMessage<RouteState>
 export type OperationMetadataDTO = PlainMessage<OperationMetadata>
 export type BrowserURLResolutionDTO = PlainMessage<BrowserURLResolution>
+
+export function routeTimestampLabel(timestamp: RouteStateDTO['verifiedAt']): string {
+  if (!timestamp) return '—'
+  const seconds = Number(timestamp.seconds)
+  if (!Number.isFinite(seconds)) return '—'
+  return new Date(seconds * 1000 + timestamp.nanos / 1_000_000).toISOString()
+}
+
+export function routeModeLabel(mode: RouteMode | undefined): string {
+  switch (mode) {
+    case RouteMode.LOCAL:
+      return 'local'
+    case RouteMode.REMOTE:
+      return 'remote'
+    case RouteMode.FALLBACK:
+      return 'fallback'
+    case RouteMode.UNKNOWN:
+      return 'unknown'
+    case RouteMode.STALE:
+      return 'stale'
+    default:
+      return 'unknown'
+  }
+}
 
 export interface RoutingDTO {
   mode: string

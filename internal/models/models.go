@@ -38,6 +38,24 @@ const (
 	RouteGroupRemote               = "group2"
 	AuthHeaderHost                 = "Host"
 
+	// Route modes describe intent and the route that was actually loaded by
+	// the proxy. Unknown is intentionally not inferred from application health.
+	RouteModeLocal    = "local"
+	RouteModeRemote   = "remote"
+	RouteModeFallback = "fallback"
+	RouteModeUnknown  = "unknown"
+	RouteModeStale    = "stale"
+
+	RouteVerificationVerified            = "verified"
+	RouteVerificationStale               = "stale"
+	RouteVerificationUnknown             = "unknown"
+	RouteVerificationProviderUnavailable = "provider-unavailable"
+
+	ProxyHealthUp          = "up"
+	ProxyHealthUnknown     = "unknown"
+	ProxyHealthUnavailable = "unavailable"
+	ProxyHealthStale       = "stale"
+
 	// WorkspaceTypeRouting is the default path-based routing type
 	WorkspaceTypeRouting = "routing"
 	// WorkspaceTypeLocalApps is the always-on local app proxy type
@@ -122,16 +140,17 @@ type RouteOperationJournal struct {
 // surface. DesiredMode and EffectiveMode intentionally remain strings in the
 // domain model; the RPC adapter maps them to the typed protobuf enum.
 type RouteState struct {
-	DesiredMode    string     `json:"desiredMode"`
-	EffectiveMode  string     `json:"effectiveMode"`
-	Target         string     `json:"target,omitempty"`
-	LocalTarget    string     `json:"localTarget,omitempty"`
-	RemoteTarget   string     `json:"remoteTarget,omitempty"`
-	RemoteFallback bool       `json:"remoteFallback"`
-	ProxyHealth    string     `json:"proxyHealth,omitempty"`
-	RouteVersion   uint64     `json:"routeVersion"`
-	OperationID    string     `json:"operationId,omitempty"`
-	VerifiedAt     *time.Time `json:"verifiedAt,omitempty"`
+	DesiredMode        string     `json:"desiredMode"`
+	EffectiveMode      string     `json:"effectiveMode"`
+	Target             string     `json:"target,omitempty"`
+	LocalTarget        string     `json:"localTarget,omitempty"`
+	RemoteTarget       string     `json:"remoteTarget,omitempty"`
+	RemoteFallback     bool       `json:"remoteFallback"`
+	ProxyHealth        string     `json:"proxyHealth,omitempty"`
+	RouteVersion       uint64     `json:"routeVersion"`
+	OperationID        string     `json:"operationId,omitempty"`
+	VerifiedAt         *time.Time `json:"verifiedAt,omitempty"`
+	VerificationStatus string     `json:"verificationStatus,omitempty"`
 }
 
 // AppRuntime holds runtime health status information
@@ -286,17 +305,16 @@ func (a *Application) CanonicalAppID() string {
 // RouteStateFor derives the typed route projection from legacy fields without
 // mutating the application. This is useful to adapters that need to project a
 // route while the application contains runtime state protected by a mutex.
-func (a *Application) RouteStateFor(workspace *Workspace, verifiedAt *time.Time) RouteState {
+func (a *Application) RouteStateFor(workspace *Workspace) RouteState {
 	if a == nil {
 		return RouteState{}
 	}
 	state := a.Route
-	mode := "remote"
+	mode := RouteModeRemote
 	if a.Active || (workspace != nil && workspace.IsLocalApps()) {
-		mode = "local"
+		mode = RouteModeLocal
 	}
 	state.DesiredMode = mode
-	state.EffectiveMode = mode
 	state.LocalTarget = ""
 	state.RemoteTarget = ""
 	if a.Port > 0 {
@@ -305,41 +323,26 @@ func (a *Application) RouteStateFor(workspace *Workspace, verifiedAt *time.Time)
 	if workspace != nil && !workspace.IsLocalApps() {
 		state.RemoteTarget = a.GetRemoteBaseUrl(workspace)
 	}
-	state.Target = state.RemoteTarget
-	if mode == "local" {
-		state.Target = state.LocalTarget
-	}
-	if state.Target == "" {
-		state.Target = a.Path
-	}
-	if state.EffectiveMode == "remote" && state.RemoteTarget == "" {
-		state.EffectiveMode = "fallback"
-		state.RemoteFallback = true
-	} else {
-		state.RemoteFallback = false
-	}
-	if a.Runtime.GetHealthLast() != nil {
-		if a.Runtime.GetHealthOk() {
-			state.ProxyHealth = "healthy"
-		} else {
-			state.ProxyHealth = "unhealthy"
-		}
-	}
-	if verifiedAt != nil {
-		state.VerifiedAt = cloneTime(verifiedAt)
-	}
+	// A model-only projection has no knowledge of the proxy's loaded config.
+	// Always clear effective fields here: retaining values from a previous
+	// projection would make a provider outage or failed reload look verified.
+	state.EffectiveMode = RouteModeUnknown
+	state.Target = ""
+	state.ProxyHealth = ProxyHealthUnknown
+	state.VerificationStatus = RouteVerificationUnknown
+	state.VerifiedAt = nil
+	state.RemoteFallback = false
 	return state
 }
 
-// RefreshRouteState derives the typed route projection from legacy fields.
-// Keeping this derivation in the domain model guarantees that RPC, CLI, MCP,
-// and UI adapters report the same desired/effective mode while old persisted
-// configurations continue to use Active and Path.
-func (a *Application) RefreshRouteState(workspace *Workspace, verifiedAt *time.Time) {
+// RefreshRouteState derives the intent/static portion of the typed route
+// projection from legacy fields. Effective mode and verification metadata are
+// supplied by the registry after a proxy snapshot is loaded.
+func (a *Application) RefreshRouteState(workspace *Workspace) {
 	if a == nil {
 		return
 	}
-	a.Route = a.RouteStateFor(workspace, verifiedAt)
+	a.Route = a.RouteStateFor(workspace)
 }
 
 func cloneTime(value *time.Time) *time.Time {
@@ -514,18 +517,19 @@ func (w *Workspace) SetDefaults() {
 	// Set workspace reference on all applications
 	for _, app := range w.Applications {
 		app.SetWsID(w.WorkspaceID)
-		app.RefreshRouteState(w, nil)
+		app.RefreshRouteState(w)
 	}
 }
 
-// RefreshRouteStates recalculates route projections for all applications in a
-// workspace after a health or routing mutation.
-func (w *Workspace) RefreshRouteStates(verifiedAt *time.Time) {
+// RefreshRouteStates recalculates persisted intent and static targets for all
+// applications in a workspace. Effective proxy state is supplied by the
+// registry after a successful proxy load.
+func (w *Workspace) RefreshRouteStates() {
 	if w == nil {
 		return
 	}
 	for _, app := range w.Applications {
-		app.RefreshRouteState(w, verifiedAt)
+		app.RefreshRouteState(w)
 	}
 }
 

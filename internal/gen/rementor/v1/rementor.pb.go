@@ -32,6 +32,11 @@ const (
 	RouteMode_ROUTE_MODE_LOCAL       RouteMode = 1
 	RouteMode_ROUTE_MODE_REMOTE      RouteMode = 2
 	RouteMode_ROUTE_MODE_FALLBACK    RouteMode = 3
+	// UNKNOWN means no loaded proxy route could be verified for this entry.
+	RouteMode_ROUTE_MODE_UNKNOWN RouteMode = 4
+	// STALE is reserved for future use; current staleness is represented by
+	// verification_status while preserving this append-only wire value.
+	RouteMode_ROUTE_MODE_STALE RouteMode = 5
 )
 
 // Enum value maps for RouteMode.
@@ -41,12 +46,16 @@ var (
 		1: "ROUTE_MODE_LOCAL",
 		2: "ROUTE_MODE_REMOTE",
 		3: "ROUTE_MODE_FALLBACK",
+		4: "ROUTE_MODE_UNKNOWN",
+		5: "ROUTE_MODE_STALE",
 	}
 	RouteMode_value = map[string]int32{
 		"ROUTE_MODE_UNSPECIFIED": 0,
 		"ROUTE_MODE_LOCAL":       1,
 		"ROUTE_MODE_REMOTE":      2,
 		"ROUTE_MODE_FALLBACK":    3,
+		"ROUTE_MODE_UNKNOWN":     4,
+		"ROUTE_MODE_STALE":       5,
 	}
 )
 
@@ -420,8 +429,10 @@ type RouteState struct {
 	Version        *RouteVersion          `protobuf:"bytes,8,opt,name=version,proto3" json:"version,omitempty"`
 	OperationId    string                 `protobuf:"bytes,9,opt,name=operation_id,json=operationId,proto3" json:"operation_id,omitempty"`
 	VerifiedAt     *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=verified_at,json=verifiedAt,proto3" json:"verified_at,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// verified, stale, or unknown. This is independent from application health.
+	VerificationStatus string `protobuf:"bytes,11,opt,name=verification_status,json=verificationStatus,proto3" json:"verification_status,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *RouteState) Reset() {
@@ -522,6 +533,13 @@ func (x *RouteState) GetVerifiedAt() *timestamppb.Timestamp {
 		return x.VerifiedAt
 	}
 	return nil
+}
+
+func (x *RouteState) GetVerificationStatus() string {
+	if x != nil {
+		return x.VerificationStatus
+	}
+	return ""
 }
 
 // OperationMetadata accompanies every route-affecting mutation. Timestamps
@@ -3352,6 +3370,11 @@ type NormalizedRoute struct {
 	PrecedenceReason    string                 `protobuf:"bytes,16,opt,name=precedence_reason,json=precedenceReason,proto3" json:"precedence_reason,omitempty"`
 	Exact               bool                   `protobuf:"varint,17,opt,name=exact,proto3" json:"exact,omitempty"`
 	IntentionalOverride bool                   `protobuf:"varint,18,opt,name=intentional_override,json=intentionalOverride,proto3" json:"intentional_override,omitempty"`
+	ProxyHealth         string                 `protobuf:"bytes,23,opt,name=proxy_health,json=proxyHealth,proto3" json:"proxy_health,omitempty"`
+	VerificationStatus  string                 `protobuf:"bytes,24,opt,name=verification_status,json=verificationStatus,proto3" json:"verification_status,omitempty"`
+	Version             *RouteVersion          `protobuf:"bytes,25,opt,name=version,proto3" json:"version,omitempty"`
+	OperationId         string                 `protobuf:"bytes,26,opt,name=operation_id,json=operationId,proto3" json:"operation_id,omitempty"`
+	VerifiedAt          *timestamppb.Timestamp `protobuf:"bytes,27,opt,name=verified_at,json=verifiedAt,proto3" json:"verified_at,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -3510,6 +3533,41 @@ func (x *NormalizedRoute) GetIntentionalOverride() bool {
 		return x.IntentionalOverride
 	}
 	return false
+}
+
+func (x *NormalizedRoute) GetProxyHealth() string {
+	if x != nil {
+		return x.ProxyHealth
+	}
+	return ""
+}
+
+func (x *NormalizedRoute) GetVerificationStatus() string {
+	if x != nil {
+		return x.VerificationStatus
+	}
+	return ""
+}
+
+func (x *NormalizedRoute) GetVersion() *RouteVersion {
+	if x != nil {
+		return x.Version
+	}
+	return nil
+}
+
+func (x *NormalizedRoute) GetOperationId() string {
+	if x != nil {
+		return x.OperationId
+	}
+	return ""
+}
+
+func (x *NormalizedRoute) GetVerifiedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.VerifiedAt
+	}
+	return nil
 }
 
 type RouteWarning struct {
@@ -5183,7 +5241,7 @@ const file_rementor_v1_rementor_proto_rawDesc = "" +
 	"\venvironment\x18\x02 \x01(\tR\venvironment\x12\x1b\n" +
 	"\tlegacy_id\x18\x03 \x01(\tR\blegacyId\"$\n" +
 	"\fRouteVersion\x12\x14\n" +
-	"\x05value\x18\x01 \x01(\x04R\x05value\"\xc7\x03\n" +
+	"\x05value\x18\x01 \x01(\x04R\x05value\"\xf8\x03\n" +
 	"\n" +
 	"RouteState\x129\n" +
 	"\fdesired_mode\x18\x01 \x01(\x0e2\x16.rementor.v1.RouteModeR\vdesiredMode\x12=\n" +
@@ -5197,7 +5255,8 @@ const file_rementor_v1_rementor_proto_rawDesc = "" +
 	"\foperation_id\x18\t \x01(\tR\voperationId\x12;\n" +
 	"\vverified_at\x18\n" +
 	" \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"verifiedAt\"\xcc\x02\n" +
+	"verifiedAt\x12/\n" +
+	"\x13verification_status\x18\v \x01(\tR\x12verificationStatus\"\xcc\x02\n" +
 	"\x11OperationMetadata\x12!\n" +
 	"\foperation_id\x18\x01 \x01(\tR\voperationId\x12%\n" +
 	"\x0ecorrelation_id\x18\x02 \x01(\tR\rcorrelationId\x12>\n" +
@@ -5427,7 +5486,7 @@ const file_rementor_v1_rementor_proto_rawDesc = "" +
 	"\x0ecorrelation_id\x18\x04 \x01(\tR\rcorrelationId\"\x96\x01\n" +
 	"\x1aUpdateRoutePatternResponse\x12:\n" +
 	"\vapplication\x18\x01 \x01(\v2\x18.rementor.v1.ApplicationR\vapplication\x12<\n" +
-	"\toperation\x18\x02 \x01(\v2\x1e.rementor.v1.OperationMetadataR\toperation\"\xbe\x05\n" +
+	"\toperation\x18\x02 \x01(\v2\x1e.rementor.v1.OperationMetadataR\toperation\"\xa7\a\n" +
 	"\x0fNormalizedRoute\x12!\n" +
 	"\fworkspace_id\x18\x01 \x01(\tR\vworkspaceId\x12 \n" +
 	"\venvironment\x18\x02 \x01(\tR\venvironment\x12\x1f\n" +
@@ -5453,7 +5512,13 @@ const file_rementor_v1_rementor_proto_rawDesc = "" +
 	"precedence\x12+\n" +
 	"\x11precedence_reason\x18\x10 \x01(\tR\x10precedenceReason\x12\x14\n" +
 	"\x05exact\x18\x11 \x01(\bR\x05exact\x121\n" +
-	"\x14intentional_override\x18\x12 \x01(\bR\x13intentionalOverride\"<\n" +
+	"\x14intentional_override\x18\x12 \x01(\bR\x13intentionalOverride\x12!\n" +
+	"\fproxy_health\x18\x17 \x01(\tR\vproxyHealth\x12/\n" +
+	"\x13verification_status\x18\x18 \x01(\tR\x12verificationStatus\x123\n" +
+	"\aversion\x18\x19 \x01(\v2\x19.rementor.v1.RouteVersionR\aversion\x12!\n" +
+	"\foperation_id\x18\x1a \x01(\tR\voperationId\x12;\n" +
+	"\vverified_at\x18\x1b \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"verifiedAt\"<\n" +
 	"\fRouteWarning\x12\x12\n" +
 	"\x04code\x18\x01 \x01(\tR\x04code\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\"\xf9\a\n" +
@@ -5608,12 +5673,14 @@ const file_rementor_v1_rementor_proto_rawDesc = "" +
 	"\x11remote_checked_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\x0fremoteCheckedAt\x12@\n" +
 	"\bidentity\x18\n" +
 	" \x01(\v2$.rementor.v1.CanonicalApplicationRefR\bidentity\x12F\n" +
-	"\venvironment\x18\v \x01(\v2$.rementor.v1.WorkspaceEnvironmentRefR\venvironment*m\n" +
+	"\venvironment\x18\v \x01(\v2$.rementor.v1.WorkspaceEnvironmentRefR\venvironment*\x9b\x01\n" +
 	"\tRouteMode\x12\x1a\n" +
 	"\x16ROUTE_MODE_UNSPECIFIED\x10\x00\x12\x14\n" +
 	"\x10ROUTE_MODE_LOCAL\x10\x01\x12\x15\n" +
 	"\x11ROUTE_MODE_REMOTE\x10\x02\x12\x17\n" +
-	"\x13ROUTE_MODE_FALLBACK\x10\x03*\xd5\x02\n" +
+	"\x13ROUTE_MODE_FALLBACK\x10\x03\x12\x16\n" +
+	"\x12ROUTE_MODE_UNKNOWN\x10\x04\x12\x14\n" +
+	"\x10ROUTE_MODE_STALE\x10\x05*\xd5\x02\n" +
 	"\x12RouteOperationKind\x12$\n" +
 	" ROUTE_OPERATION_KIND_UNSPECIFIED\x10\x00\x12\x1f\n" +
 	"\x1bROUTE_OPERATION_KIND_TOGGLE\x10\x01\x12#\n" +
@@ -5804,99 +5871,101 @@ var file_rementor_v1_rementor_proto_depIdxs = []int32{
 	7,   // 49: rementor.v1.UpdateRoutePatternResponse.operation:type_name -> rementor.v1.OperationMetadata
 	0,   // 50: rementor.v1.NormalizedRoute.desired_mode:type_name -> rementor.v1.RouteMode
 	0,   // 51: rementor.v1.NormalizedRoute.effective_mode:type_name -> rementor.v1.RouteMode
-	50,  // 52: rementor.v1.RouteConflict.winning_route:type_name -> rementor.v1.NormalizedRoute
-	50,  // 53: rementor.v1.RouteConflict.shadowed_route:type_name -> rementor.v1.NormalizedRoute
-	50,  // 54: rementor.v1.RouteChange.before:type_name -> rementor.v1.NormalizedRoute
-	50,  // 55: rementor.v1.RouteChange.after:type_name -> rementor.v1.NormalizedRoute
-	5,   // 56: rementor.v1.RoutePlan.base_route_version:type_name -> rementor.v1.RouteVersion
-	0,   // 57: rementor.v1.RoutePlan.desired_mode:type_name -> rementor.v1.RouteMode
-	50,  // 58: rementor.v1.RoutePlan.before_routes:type_name -> rementor.v1.NormalizedRoute
-	50,  // 59: rementor.v1.RoutePlan.after_routes:type_name -> rementor.v1.NormalizedRoute
-	53,  // 60: rementor.v1.RoutePlan.changes:type_name -> rementor.v1.RouteChange
-	51,  // 61: rementor.v1.RoutePlan.warnings:type_name -> rementor.v1.RouteWarning
-	52,  // 62: rementor.v1.RoutePlan.conflicts:type_name -> rementor.v1.RouteConflict
-	50,  // 63: rementor.v1.RouteResolution.route:type_name -> rementor.v1.NormalizedRoute
-	5,   // 64: rementor.v1.GetRouteResponse.route_version:type_name -> rementor.v1.RouteVersion
-	50,  // 65: rementor.v1.GetRouteResponse.routes:type_name -> rementor.v1.NormalizedRoute
-	51,  // 66: rementor.v1.GetRouteResponse.warnings:type_name -> rementor.v1.RouteWarning
-	52,  // 67: rementor.v1.GetRouteResponse.conflicts:type_name -> rementor.v1.RouteConflict
-	5,   // 68: rementor.v1.GetRouteConflictsResponse.route_version:type_name -> rementor.v1.RouteVersion
-	52,  // 69: rementor.v1.GetRouteConflictsResponse.conflicts:type_name -> rementor.v1.RouteConflict
-	51,  // 70: rementor.v1.GetRouteConflictsResponse.warnings:type_name -> rementor.v1.RouteWarning
-	55,  // 71: rementor.v1.ResolveRouteResponse.resolution:type_name -> rementor.v1.RouteResolution
-	0,   // 72: rementor.v1.PlanRouteRequest.desired_mode:type_name -> rementor.v1.RouteMode
-	5,   // 73: rementor.v1.PlanRouteRequest.expected_route_version:type_name -> rementor.v1.RouteVersion
-	54,  // 74: rementor.v1.PlanRouteResponse.plan:type_name -> rementor.v1.RoutePlan
-	54,  // 75: rementor.v1.ApplyRouteRequest.plan:type_name -> rementor.v1.RoutePlan
-	5,   // 76: rementor.v1.ApplyRouteRequest.expected_route_version:type_name -> rementor.v1.RouteVersion
-	0,   // 77: rementor.v1.ApplyRouteRequest.desired_mode:type_name -> rementor.v1.RouteMode
-	54,  // 78: rementor.v1.ApplyRouteResponse.plan:type_name -> rementor.v1.RoutePlan
-	50,  // 79: rementor.v1.ApplyRouteResponse.routes:type_name -> rementor.v1.NormalizedRoute
-	7,   // 80: rementor.v1.ApplyRouteResponse.operation:type_name -> rementor.v1.OperationMetadata
-	5,   // 81: rementor.v1.SyncRouteResponse.desired_route_version:type_name -> rementor.v1.RouteVersion
-	5,   // 82: rementor.v1.SyncRouteResponse.effective_route_version:type_name -> rementor.v1.RouteVersion
-	50,  // 83: rementor.v1.SyncRouteResponse.routes:type_name -> rementor.v1.NormalizedRoute
-	51,  // 84: rementor.v1.SyncRouteResponse.warnings:type_name -> rementor.v1.RouteWarning
-	7,   // 85: rementor.v1.SyncRouteResponse.operation:type_name -> rementor.v1.OperationMetadata
-	71,  // 86: rementor.v1.WatchHealthResponse.local_checked_at:type_name -> google.protobuf.Timestamp
-	71,  // 87: rementor.v1.WatchHealthResponse.remote_checked_at:type_name -> google.protobuf.Timestamp
-	3,   // 88: rementor.v1.WatchHealthResponse.identity:type_name -> rementor.v1.CanonicalApplicationRef
-	4,   // 89: rementor.v1.WatchHealthResponse.environment:type_name -> rementor.v1.WorkspaceEnvironmentRef
-	13,  // 90: rementor.v1.ControlPlaneService.ListWorkspaces:input_type -> rementor.v1.ListWorkspacesRequest
-	15,  // 91: rementor.v1.ControlPlaneService.GetWorkspace:input_type -> rementor.v1.GetWorkspaceRequest
-	17,  // 92: rementor.v1.ControlPlaneService.CreateWorkspace:input_type -> rementor.v1.CreateWorkspaceRequest
-	19,  // 93: rementor.v1.ControlPlaneService.UpdateWorkspace:input_type -> rementor.v1.UpdateWorkspaceRequest
-	21,  // 94: rementor.v1.ControlPlaneService.DeleteWorkspace:input_type -> rementor.v1.DeleteWorkspaceRequest
-	23,  // 95: rementor.v1.ControlPlaneService.ListApplications:input_type -> rementor.v1.ListApplicationsRequest
-	25,  // 96: rementor.v1.ControlPlaneService.GetApplication:input_type -> rementor.v1.GetApplicationRequest
-	27,  // 97: rementor.v1.ControlPlaneService.ResolveApplication:input_type -> rementor.v1.ResolveApplicationRequest
-	29,  // 98: rementor.v1.ControlPlaneService.ResolveBrowserURL:input_type -> rementor.v1.ResolveBrowserURLRequest
-	32,  // 99: rementor.v1.ControlPlaneService.RegisterApplicationAlias:input_type -> rementor.v1.RegisterApplicationAliasRequest
-	34,  // 100: rementor.v1.ControlPlaneService.UpsertApplication:input_type -> rementor.v1.UpsertApplicationRequest
-	36,  // 101: rementor.v1.ControlPlaneService.DeleteApplication:input_type -> rementor.v1.DeleteApplicationRequest
-	38,  // 102: rementor.v1.ControlPlaneService.ToggleApplication:input_type -> rementor.v1.ToggleApplicationRequest
-	40,  // 103: rementor.v1.ControlPlaneService.ToggleAllToRemote:input_type -> rementor.v1.ToggleAllToRemoteRequest
-	42,  // 104: rementor.v1.ControlPlaneService.ToggleAllToLocal:input_type -> rementor.v1.ToggleAllToLocalRequest
-	44,  // 105: rementor.v1.ControlPlaneService.SyncWorkspaceRouting:input_type -> rementor.v1.SyncWorkspaceRoutingRequest
-	46,  // 106: rementor.v1.ControlPlaneService.GetRoutePattern:input_type -> rementor.v1.GetRoutePatternRequest
-	48,  // 107: rementor.v1.ControlPlaneService.UpdateRoutePattern:input_type -> rementor.v1.UpdateRoutePatternRequest
-	56,  // 108: rementor.v1.ControlPlaneService.GetRoute:input_type -> rementor.v1.GetRouteRequest
-	58,  // 109: rementor.v1.ControlPlaneService.GetRouteConflicts:input_type -> rementor.v1.GetRouteConflictsRequest
-	60,  // 110: rementor.v1.ControlPlaneService.ResolveRoute:input_type -> rementor.v1.ResolveRouteRequest
-	62,  // 111: rementor.v1.ControlPlaneService.PlanRoute:input_type -> rementor.v1.PlanRouteRequest
-	64,  // 112: rementor.v1.ControlPlaneService.ApplyRoute:input_type -> rementor.v1.ApplyRouteRequest
-	66,  // 113: rementor.v1.ControlPlaneService.SyncRoute:input_type -> rementor.v1.SyncRouteRequest
-	68,  // 114: rementor.v1.ControlPlaneService.WatchHealth:input_type -> rementor.v1.WatchHealthRequest
-	14,  // 115: rementor.v1.ControlPlaneService.ListWorkspaces:output_type -> rementor.v1.ListWorkspacesResponse
-	16,  // 116: rementor.v1.ControlPlaneService.GetWorkspace:output_type -> rementor.v1.GetWorkspaceResponse
-	18,  // 117: rementor.v1.ControlPlaneService.CreateWorkspace:output_type -> rementor.v1.CreateWorkspaceResponse
-	20,  // 118: rementor.v1.ControlPlaneService.UpdateWorkspace:output_type -> rementor.v1.UpdateWorkspaceResponse
-	22,  // 119: rementor.v1.ControlPlaneService.DeleteWorkspace:output_type -> rementor.v1.DeleteWorkspaceResponse
-	24,  // 120: rementor.v1.ControlPlaneService.ListApplications:output_type -> rementor.v1.ListApplicationsResponse
-	26,  // 121: rementor.v1.ControlPlaneService.GetApplication:output_type -> rementor.v1.GetApplicationResponse
-	28,  // 122: rementor.v1.ControlPlaneService.ResolveApplication:output_type -> rementor.v1.ResolveApplicationResponse
-	31,  // 123: rementor.v1.ControlPlaneService.ResolveBrowserURL:output_type -> rementor.v1.ResolveBrowserURLResponse
-	33,  // 124: rementor.v1.ControlPlaneService.RegisterApplicationAlias:output_type -> rementor.v1.RegisterApplicationAliasResponse
-	35,  // 125: rementor.v1.ControlPlaneService.UpsertApplication:output_type -> rementor.v1.UpsertApplicationResponse
-	37,  // 126: rementor.v1.ControlPlaneService.DeleteApplication:output_type -> rementor.v1.DeleteApplicationResponse
-	39,  // 127: rementor.v1.ControlPlaneService.ToggleApplication:output_type -> rementor.v1.ToggleApplicationResponse
-	41,  // 128: rementor.v1.ControlPlaneService.ToggleAllToRemote:output_type -> rementor.v1.ToggleAllToRemoteResponse
-	43,  // 129: rementor.v1.ControlPlaneService.ToggleAllToLocal:output_type -> rementor.v1.ToggleAllToLocalResponse
-	45,  // 130: rementor.v1.ControlPlaneService.SyncWorkspaceRouting:output_type -> rementor.v1.SyncWorkspaceRoutingResponse
-	47,  // 131: rementor.v1.ControlPlaneService.GetRoutePattern:output_type -> rementor.v1.GetRoutePatternResponse
-	49,  // 132: rementor.v1.ControlPlaneService.UpdateRoutePattern:output_type -> rementor.v1.UpdateRoutePatternResponse
-	57,  // 133: rementor.v1.ControlPlaneService.GetRoute:output_type -> rementor.v1.GetRouteResponse
-	59,  // 134: rementor.v1.ControlPlaneService.GetRouteConflicts:output_type -> rementor.v1.GetRouteConflictsResponse
-	61,  // 135: rementor.v1.ControlPlaneService.ResolveRoute:output_type -> rementor.v1.ResolveRouteResponse
-	63,  // 136: rementor.v1.ControlPlaneService.PlanRoute:output_type -> rementor.v1.PlanRouteResponse
-	65,  // 137: rementor.v1.ControlPlaneService.ApplyRoute:output_type -> rementor.v1.ApplyRouteResponse
-	67,  // 138: rementor.v1.ControlPlaneService.SyncRoute:output_type -> rementor.v1.SyncRouteResponse
-	69,  // 139: rementor.v1.ControlPlaneService.WatchHealth:output_type -> rementor.v1.WatchHealthResponse
-	115, // [115:140] is the sub-list for method output_type
-	90,  // [90:115] is the sub-list for method input_type
-	90,  // [90:90] is the sub-list for extension type_name
-	90,  // [90:90] is the sub-list for extension extendee
-	0,   // [0:90] is the sub-list for field type_name
+	5,   // 52: rementor.v1.NormalizedRoute.version:type_name -> rementor.v1.RouteVersion
+	71,  // 53: rementor.v1.NormalizedRoute.verified_at:type_name -> google.protobuf.Timestamp
+	50,  // 54: rementor.v1.RouteConflict.winning_route:type_name -> rementor.v1.NormalizedRoute
+	50,  // 55: rementor.v1.RouteConflict.shadowed_route:type_name -> rementor.v1.NormalizedRoute
+	50,  // 56: rementor.v1.RouteChange.before:type_name -> rementor.v1.NormalizedRoute
+	50,  // 57: rementor.v1.RouteChange.after:type_name -> rementor.v1.NormalizedRoute
+	5,   // 58: rementor.v1.RoutePlan.base_route_version:type_name -> rementor.v1.RouteVersion
+	0,   // 59: rementor.v1.RoutePlan.desired_mode:type_name -> rementor.v1.RouteMode
+	50,  // 60: rementor.v1.RoutePlan.before_routes:type_name -> rementor.v1.NormalizedRoute
+	50,  // 61: rementor.v1.RoutePlan.after_routes:type_name -> rementor.v1.NormalizedRoute
+	53,  // 62: rementor.v1.RoutePlan.changes:type_name -> rementor.v1.RouteChange
+	51,  // 63: rementor.v1.RoutePlan.warnings:type_name -> rementor.v1.RouteWarning
+	52,  // 64: rementor.v1.RoutePlan.conflicts:type_name -> rementor.v1.RouteConflict
+	50,  // 65: rementor.v1.RouteResolution.route:type_name -> rementor.v1.NormalizedRoute
+	5,   // 66: rementor.v1.GetRouteResponse.route_version:type_name -> rementor.v1.RouteVersion
+	50,  // 67: rementor.v1.GetRouteResponse.routes:type_name -> rementor.v1.NormalizedRoute
+	51,  // 68: rementor.v1.GetRouteResponse.warnings:type_name -> rementor.v1.RouteWarning
+	52,  // 69: rementor.v1.GetRouteResponse.conflicts:type_name -> rementor.v1.RouteConflict
+	5,   // 70: rementor.v1.GetRouteConflictsResponse.route_version:type_name -> rementor.v1.RouteVersion
+	52,  // 71: rementor.v1.GetRouteConflictsResponse.conflicts:type_name -> rementor.v1.RouteConflict
+	51,  // 72: rementor.v1.GetRouteConflictsResponse.warnings:type_name -> rementor.v1.RouteWarning
+	55,  // 73: rementor.v1.ResolveRouteResponse.resolution:type_name -> rementor.v1.RouteResolution
+	0,   // 74: rementor.v1.PlanRouteRequest.desired_mode:type_name -> rementor.v1.RouteMode
+	5,   // 75: rementor.v1.PlanRouteRequest.expected_route_version:type_name -> rementor.v1.RouteVersion
+	54,  // 76: rementor.v1.PlanRouteResponse.plan:type_name -> rementor.v1.RoutePlan
+	54,  // 77: rementor.v1.ApplyRouteRequest.plan:type_name -> rementor.v1.RoutePlan
+	5,   // 78: rementor.v1.ApplyRouteRequest.expected_route_version:type_name -> rementor.v1.RouteVersion
+	0,   // 79: rementor.v1.ApplyRouteRequest.desired_mode:type_name -> rementor.v1.RouteMode
+	54,  // 80: rementor.v1.ApplyRouteResponse.plan:type_name -> rementor.v1.RoutePlan
+	50,  // 81: rementor.v1.ApplyRouteResponse.routes:type_name -> rementor.v1.NormalizedRoute
+	7,   // 82: rementor.v1.ApplyRouteResponse.operation:type_name -> rementor.v1.OperationMetadata
+	5,   // 83: rementor.v1.SyncRouteResponse.desired_route_version:type_name -> rementor.v1.RouteVersion
+	5,   // 84: rementor.v1.SyncRouteResponse.effective_route_version:type_name -> rementor.v1.RouteVersion
+	50,  // 85: rementor.v1.SyncRouteResponse.routes:type_name -> rementor.v1.NormalizedRoute
+	51,  // 86: rementor.v1.SyncRouteResponse.warnings:type_name -> rementor.v1.RouteWarning
+	7,   // 87: rementor.v1.SyncRouteResponse.operation:type_name -> rementor.v1.OperationMetadata
+	71,  // 88: rementor.v1.WatchHealthResponse.local_checked_at:type_name -> google.protobuf.Timestamp
+	71,  // 89: rementor.v1.WatchHealthResponse.remote_checked_at:type_name -> google.protobuf.Timestamp
+	3,   // 90: rementor.v1.WatchHealthResponse.identity:type_name -> rementor.v1.CanonicalApplicationRef
+	4,   // 91: rementor.v1.WatchHealthResponse.environment:type_name -> rementor.v1.WorkspaceEnvironmentRef
+	13,  // 92: rementor.v1.ControlPlaneService.ListWorkspaces:input_type -> rementor.v1.ListWorkspacesRequest
+	15,  // 93: rementor.v1.ControlPlaneService.GetWorkspace:input_type -> rementor.v1.GetWorkspaceRequest
+	17,  // 94: rementor.v1.ControlPlaneService.CreateWorkspace:input_type -> rementor.v1.CreateWorkspaceRequest
+	19,  // 95: rementor.v1.ControlPlaneService.UpdateWorkspace:input_type -> rementor.v1.UpdateWorkspaceRequest
+	21,  // 96: rementor.v1.ControlPlaneService.DeleteWorkspace:input_type -> rementor.v1.DeleteWorkspaceRequest
+	23,  // 97: rementor.v1.ControlPlaneService.ListApplications:input_type -> rementor.v1.ListApplicationsRequest
+	25,  // 98: rementor.v1.ControlPlaneService.GetApplication:input_type -> rementor.v1.GetApplicationRequest
+	27,  // 99: rementor.v1.ControlPlaneService.ResolveApplication:input_type -> rementor.v1.ResolveApplicationRequest
+	29,  // 100: rementor.v1.ControlPlaneService.ResolveBrowserURL:input_type -> rementor.v1.ResolveBrowserURLRequest
+	32,  // 101: rementor.v1.ControlPlaneService.RegisterApplicationAlias:input_type -> rementor.v1.RegisterApplicationAliasRequest
+	34,  // 102: rementor.v1.ControlPlaneService.UpsertApplication:input_type -> rementor.v1.UpsertApplicationRequest
+	36,  // 103: rementor.v1.ControlPlaneService.DeleteApplication:input_type -> rementor.v1.DeleteApplicationRequest
+	38,  // 104: rementor.v1.ControlPlaneService.ToggleApplication:input_type -> rementor.v1.ToggleApplicationRequest
+	40,  // 105: rementor.v1.ControlPlaneService.ToggleAllToRemote:input_type -> rementor.v1.ToggleAllToRemoteRequest
+	42,  // 106: rementor.v1.ControlPlaneService.ToggleAllToLocal:input_type -> rementor.v1.ToggleAllToLocalRequest
+	44,  // 107: rementor.v1.ControlPlaneService.SyncWorkspaceRouting:input_type -> rementor.v1.SyncWorkspaceRoutingRequest
+	46,  // 108: rementor.v1.ControlPlaneService.GetRoutePattern:input_type -> rementor.v1.GetRoutePatternRequest
+	48,  // 109: rementor.v1.ControlPlaneService.UpdateRoutePattern:input_type -> rementor.v1.UpdateRoutePatternRequest
+	56,  // 110: rementor.v1.ControlPlaneService.GetRoute:input_type -> rementor.v1.GetRouteRequest
+	58,  // 111: rementor.v1.ControlPlaneService.GetRouteConflicts:input_type -> rementor.v1.GetRouteConflictsRequest
+	60,  // 112: rementor.v1.ControlPlaneService.ResolveRoute:input_type -> rementor.v1.ResolveRouteRequest
+	62,  // 113: rementor.v1.ControlPlaneService.PlanRoute:input_type -> rementor.v1.PlanRouteRequest
+	64,  // 114: rementor.v1.ControlPlaneService.ApplyRoute:input_type -> rementor.v1.ApplyRouteRequest
+	66,  // 115: rementor.v1.ControlPlaneService.SyncRoute:input_type -> rementor.v1.SyncRouteRequest
+	68,  // 116: rementor.v1.ControlPlaneService.WatchHealth:input_type -> rementor.v1.WatchHealthRequest
+	14,  // 117: rementor.v1.ControlPlaneService.ListWorkspaces:output_type -> rementor.v1.ListWorkspacesResponse
+	16,  // 118: rementor.v1.ControlPlaneService.GetWorkspace:output_type -> rementor.v1.GetWorkspaceResponse
+	18,  // 119: rementor.v1.ControlPlaneService.CreateWorkspace:output_type -> rementor.v1.CreateWorkspaceResponse
+	20,  // 120: rementor.v1.ControlPlaneService.UpdateWorkspace:output_type -> rementor.v1.UpdateWorkspaceResponse
+	22,  // 121: rementor.v1.ControlPlaneService.DeleteWorkspace:output_type -> rementor.v1.DeleteWorkspaceResponse
+	24,  // 122: rementor.v1.ControlPlaneService.ListApplications:output_type -> rementor.v1.ListApplicationsResponse
+	26,  // 123: rementor.v1.ControlPlaneService.GetApplication:output_type -> rementor.v1.GetApplicationResponse
+	28,  // 124: rementor.v1.ControlPlaneService.ResolveApplication:output_type -> rementor.v1.ResolveApplicationResponse
+	31,  // 125: rementor.v1.ControlPlaneService.ResolveBrowserURL:output_type -> rementor.v1.ResolveBrowserURLResponse
+	33,  // 126: rementor.v1.ControlPlaneService.RegisterApplicationAlias:output_type -> rementor.v1.RegisterApplicationAliasResponse
+	35,  // 127: rementor.v1.ControlPlaneService.UpsertApplication:output_type -> rementor.v1.UpsertApplicationResponse
+	37,  // 128: rementor.v1.ControlPlaneService.DeleteApplication:output_type -> rementor.v1.DeleteApplicationResponse
+	39,  // 129: rementor.v1.ControlPlaneService.ToggleApplication:output_type -> rementor.v1.ToggleApplicationResponse
+	41,  // 130: rementor.v1.ControlPlaneService.ToggleAllToRemote:output_type -> rementor.v1.ToggleAllToRemoteResponse
+	43,  // 131: rementor.v1.ControlPlaneService.ToggleAllToLocal:output_type -> rementor.v1.ToggleAllToLocalResponse
+	45,  // 132: rementor.v1.ControlPlaneService.SyncWorkspaceRouting:output_type -> rementor.v1.SyncWorkspaceRoutingResponse
+	47,  // 133: rementor.v1.ControlPlaneService.GetRoutePattern:output_type -> rementor.v1.GetRoutePatternResponse
+	49,  // 134: rementor.v1.ControlPlaneService.UpdateRoutePattern:output_type -> rementor.v1.UpdateRoutePatternResponse
+	57,  // 135: rementor.v1.ControlPlaneService.GetRoute:output_type -> rementor.v1.GetRouteResponse
+	59,  // 136: rementor.v1.ControlPlaneService.GetRouteConflicts:output_type -> rementor.v1.GetRouteConflictsResponse
+	61,  // 137: rementor.v1.ControlPlaneService.ResolveRoute:output_type -> rementor.v1.ResolveRouteResponse
+	63,  // 138: rementor.v1.ControlPlaneService.PlanRoute:output_type -> rementor.v1.PlanRouteResponse
+	65,  // 139: rementor.v1.ControlPlaneService.ApplyRoute:output_type -> rementor.v1.ApplyRouteResponse
+	67,  // 140: rementor.v1.ControlPlaneService.SyncRoute:output_type -> rementor.v1.SyncRouteResponse
+	69,  // 141: rementor.v1.ControlPlaneService.WatchHealth:output_type -> rementor.v1.WatchHealthResponse
+	117, // [117:142] is the sub-list for method output_type
+	92,  // [92:117] is the sub-list for method input_type
+	92,  // [92:92] is the sub-list for extension type_name
+	92,  // [92:92] is the sub-list for extension extendee
+	0,   // [0:92] is the sub-list for field type_name
 }
 
 func init() { file_rementor_v1_rementor_proto_init() }
