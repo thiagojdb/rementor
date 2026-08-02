@@ -90,21 +90,22 @@ type mcpCompactWorkspace struct {
 }
 
 type mcpCompactApplication struct {
-	ID           string                     `json:"id"`
-	AppID        string                     `json:"appId,omitempty"`
-	ServiceID    string                     `json:"serviceId,omitempty"`
-	Repository   string                     `json:"repository,omitempty"`
-	Aliases      []string                   `json:"aliases,omitempty"`
-	Name         string                     `json:"name"`
-	Route        string                     `json:"route"`
-	RouteState   *RouteStateDTO             `json:"routeState,omitempty"`
-	Path         string                     `json:"path"`
-	Domain       string                     `json:"domain,omitempty"`
-	Port         int                        `json:"port"`
-	HealthStatus string                     `json:"healthStatus"`
-	RemoteStatus string                     `json:"remoteStatus,omitempty"`
-	URL          string                     `json:"url,omitempty"`
-	Environment  WorkspaceEnvironmentRefDTO `json:"environment"`
+	ID            string                     `json:"id"`
+	AppID         string                     `json:"appId,omitempty"`
+	ServiceID     string                     `json:"serviceId,omitempty"`
+	Repository    string                     `json:"repository,omitempty"`
+	Aliases       []string                   `json:"aliases,omitempty"`
+	Name          string                     `json:"name"`
+	Route         string                     `json:"route"`
+	RouteState    *RouteStateDTO             `json:"routeState,omitempty"`
+	Path          string                     `json:"path"`
+	Domain        string                     `json:"domain,omitempty"`
+	Port          int                        `json:"port"`
+	HealthStatus  string                     `json:"healthStatus"`
+	RemoteStatus  string                     `json:"remoteStatus,omitempty"`
+	URL           string                     `json:"url,omitempty"`
+	Environment   WorkspaceEnvironmentRefDTO `json:"environment"`
+	RouteOverride bool                       `json:"routeOverride,omitempty"`
 }
 
 type mcpApplicationUpsertResult struct {
@@ -306,6 +307,8 @@ func (s *mcpServer) handleToolCall(raw json.RawMessage) (any, error) {
 		return s.toolSyncRouting(params.Arguments)
 	case "rementor_route_get":
 		return s.toolRouteGet(params.Arguments)
+	case "rementor_route_conflicts", "rementor.route_conflicts":
+		return s.toolRouteConflicts(params.Arguments)
 	case "rementor_route_resolve":
 		return s.toolRouteResolve(params.Arguments)
 	case "rementor_route_plan":
@@ -599,6 +602,14 @@ func (s *mcpServer) toolRouteGet(args map[string]any) (any, error) {
 	return toolResult(fmt.Sprintf("Resolved %d route(s)", len(result.Routes)), result), nil
 }
 
+func (s *mcpServer) toolRouteConflicts(args map[string]any) (any, error) {
+	result, err := s.client.GetRouteConflicts(context.Background(), requiredString(args, "workspace"))
+	if err != nil {
+		return nil, err
+	}
+	return toolResult(fmt.Sprintf("Detected %d route conflict(s)", len(result.Conflicts)), result), nil
+}
+
 func (s *mcpServer) toolRouteResolve(args map[string]any) (any, error) {
 	result, err := s.client.ResolveRoute(context.Background(), requiredString(args, "workspace"), optionalString(args, "host"), optionalString(args, "path"))
 	if err != nil {
@@ -808,6 +819,7 @@ func mcpToolList() []map[string]any {
 		toolSchema("rementor.workspace_set_all", "Route all applications in a workspace to local or remote.", workspaceRouteSchema()),
 		toolSchema("rementor.sync_routing", "Force Rementor to regenerate and reload routing for a workspace.", workspaceSchema()),
 		toolSchema("rementor_route_get", "Inspect the normalized routes for a workspace.", workspaceSchema()),
+		toolSchema("rementor_route_conflicts", "Detect same-pattern ownership conflicts and nginx-style route shadowing.", workspaceSchema()),
 		toolSchema("rementor_route_resolve", "Resolve a public host and request path to its winning route.", objectSchema(map[string]any{"workspace": map[string]any{"type": "string"}, "host": map[string]any{"type": "string"}, "path": map[string]any{"type": "string", "default": "/"}}, []string{"workspace"})),
 		toolSchema("rementor_route_plan", "Create a deterministic, non-mutating route plan.", objectSchema(map[string]any{"workspace": map[string]any{"type": "string"}, "app": map[string]any{"type": "string"}, "mode": map[string]any{"type": "string", "enum": []string{"local", "remote"}}, "pattern": map[string]any{"type": "string"}, "clear_pattern": map[string]any{"type": "boolean"}, "expected_version": map[string]any{"type": "integer"}}, []string{"workspace", "app", "mode"})),
 		toolSchema("rementor_route_apply", "Apply a route plan with version and idempotency checks.", objectSchema(map[string]any{"workspace": map[string]any{"type": "string"}, "app": map[string]any{"type": "string"}, "mode": map[string]any{"type": "string", "enum": []string{"local", "remote"}}, "plan": map[string]any{"type": "object"}, "pattern": map[string]any{"type": "string"}, "clear_pattern": map[string]any{"type": "boolean"}, "expected_version": map[string]any{"type": "integer"}, "idempotency_key": map[string]any{"type": "string"}, "correlation_id": map[string]any{"type": "string"}}, []string{"workspace"})),
@@ -858,6 +870,7 @@ func appMetadataSchema(announce bool) map[string]any {
 		"service_id":      map[string]any{"type": "string"},
 		"repository":      map[string]any{"type": "string"},
 		"aliases":         map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
+		"route_override":  map[string]any{"type": "boolean", "description": "mark overlapping route ownership as intentional"},
 	}
 	if announce {
 		props["type"] = map[string]any{"type": "string", "enum": []string{"routing", "local-apps"}, "default": "routing"}
@@ -909,6 +922,14 @@ func optionalString(args map[string]any, name string) string {
 func optionalBool(args map[string]any, name string) bool {
 	value, _ := args[name].(bool)
 	return value
+}
+
+func optionalBoolPtr(args map[string]any, name string) *bool {
+	value, ok := args[name].(bool)
+	if !ok {
+		return nil
+	}
+	return boolPtr(value)
 }
 
 func optionalUint64(args map[string]any, name string) uint64 {
@@ -963,6 +984,7 @@ func appInputFromArgs(appID string, args map[string]any) ApplicationConfigInput 
 		Port:          requiredInt(args, "port"),
 		Health:        optionalString(args, "health"),
 		Context:       optionalString(args, "context"),
+		RouteOverride: optionalBoolPtr(args, "route_override"),
 	}
 }
 
@@ -1000,7 +1022,7 @@ func compactWorkspace(ws WorkspaceDTO) mcpCompactWorkspace {
 }
 
 func compactApplication(ws WorkspaceDTO, app ApplicationDTO) mcpCompactApplication {
-	return mcpCompactApplication{ID: app.ID, AppID: app.AppID, ServiceID: app.ServiceID, Repository: app.Repository, Aliases: append([]string(nil), app.Aliases...), Name: app.Name, Route: routeOf(app), RouteState: app.Route, Path: app.Path, Domain: app.Domain, Port: app.Port, HealthStatus: app.HealthStatus, RemoteStatus: app.RemoteStatus, URL: buildMCPAppURL(ws, app.Path, app.Domain), Environment: ws.Environment}
+	return mcpCompactApplication{ID: app.ID, AppID: app.AppID, ServiceID: app.ServiceID, Repository: app.Repository, Aliases: append([]string(nil), app.Aliases...), Name: app.Name, Route: routeOf(app), RouteState: app.Route, Path: app.Path, Domain: app.Domain, Port: app.Port, HealthStatus: app.HealthStatus, RemoteStatus: app.RemoteStatus, URL: buildMCPAppURL(ws, app.Path, app.Domain), Environment: ws.Environment, RouteOverride: app.RouteOverride}
 }
 
 func routeOf(app ApplicationDTO) string {

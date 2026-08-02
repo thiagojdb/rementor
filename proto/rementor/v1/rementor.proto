@@ -29,6 +29,7 @@ service ControlPlaneService {
   rpc UpdateRoutePattern(UpdateRoutePatternRequest) returns (UpdateRoutePatternResponse);
 
   rpc GetRoute(GetRouteRequest) returns (GetRouteResponse);
+  rpc GetRouteConflicts(GetRouteConflictsRequest) returns (GetRouteConflictsResponse);
   rpc ResolveRoute(ResolveRouteRequest) returns (ResolveRouteResponse);
   rpc PlanRoute(PlanRouteRequest) returns (PlanRouteResponse);
   rpc ApplyRoute(ApplyRouteRequest) returns (ApplyRouteResponse);
@@ -157,6 +158,7 @@ message Application {
   CanonicalApplicationRef identity = 17;
   WorkspaceEnvironmentRef environment = 18;
   RouteState route = 19;
+  bool route_override = 20;
 }
 
 message Workspace {
@@ -189,6 +191,7 @@ message ApplicationConfigInput {
   string service_id = 10;
   string repository = 11;
   repeated string aliases = 12;
+  optional bool route_override = 13;
 }
 
 message ListWorkspacesRequest {}
@@ -429,6 +432,7 @@ message NormalizedRoute {
   int32 precedence = 15;
   string precedence_reason = 16;
   bool exact = 17;
+  bool intentional_override = 18;
 }
 
 message RouteWarning {
@@ -445,6 +449,21 @@ message RouteConflict {
   string conflicting_app_id = 6;
   string winning_app_id = 7;
   string reason = 8;
+  string app_service_id = 9;
+  string conflicting_service_id = 10;
+  string winning_service_id = 11;
+  string shadowed_app_id = 12;
+  string shadowed_service_id = 13;
+  string winning_pattern = 14;
+  string shadowed_pattern = 15;
+  int32 winning_precedence = 16;
+  int32 shadowed_precedence = 17;
+  string winning_precedence_reason = 18;
+  string shadowed_precedence_reason = 19;
+  bool intentional = 20;
+  NormalizedRoute winning_route = 21;
+  NormalizedRoute shadowed_route = 22;
+  string precedence_reason = 23;
 }
 
 message RouteChange {
@@ -494,6 +513,18 @@ message GetRouteResponse {
   repeated NormalizedRoute routes = 4;
   repeated RouteWarning warnings = 5;
   repeated RouteConflict conflicts = 6;
+}
+
+message GetRouteConflictsRequest {
+  string workspace_id = 1;
+}
+
+message GetRouteConflictsResponse {
+  string workspace_id = 1;
+  string environment = 2;
+  RouteVersion route_version = 3;
+  repeated RouteConflict conflicts = 4;
+  repeated RouteWarning warnings = 5;
 }
 
 message ResolveRouteRequest {

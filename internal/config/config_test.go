@@ -317,10 +317,11 @@ func TestSaveStatePersistsActiveAndRoutePatternInSQLite(t *testing.T) {
 		},
 		Applications: []models.ApplicationConfig{
 			{
-				ID:     "api",
-				Path:   "/api",
-				Port:   8080,
-				Active: false,
+				ID:            "api",
+				Path:          "/api",
+				Port:          8080,
+				Active:        false,
+				RouteOverride: true,
 			},
 		},
 	}); err != nil {
@@ -351,6 +352,9 @@ func TestSaveStatePersistsActiveAndRoutePatternInSQLite(t *testing.T) {
 	if app.RoutePattern == nil || *app.RoutePattern != pattern {
 		t.Fatalf("expected route pattern %q, got %#v", pattern, app.RoutePattern)
 	}
+	if !app.RouteOverride {
+		t.Fatalf("expected route override metadata to persist")
+	}
 }
 
 func TestUpdateWorkspaceApplicationsPreservesRoutingMetadata(t *testing.T) {
@@ -367,14 +371,14 @@ func TestUpdateWorkspaceApplicationsPreservesRoutingMetadata(t *testing.T) {
 		},
 		Applications: []models.ApplicationConfig{{
 			ID: "orders-api", Path: "/orders", Port: 8081, Active: true,
-			RoutePattern: &pattern, StripOrigin: true,
+			RoutePattern: &pattern, RouteOverride: true, StripOrigin: true,
 		}},
 	}); err != nil {
 		t.Fatalf("AppendWorkspace failed: %v", err)
 	}
 
 	if err := UpdateWorkspaceApplications("demo", []models.ApplicationConfig{{
-		ID: "orders-api", Name: "Orders", Path: "/orders", Port: 8082,
+		ID: "orders-api", Name: "Orders", Path: "/orders", Port: 8082, RouteOverride: true,
 	}}, "api.localhost", "https://remote.example.test"); err != nil {
 		t.Fatalf("UpdateWorkspaceApplications failed: %v", err)
 	}
@@ -384,8 +388,47 @@ func TestUpdateWorkspaceApplicationsPreservesRoutingMetadata(t *testing.T) {
 		t.Fatalf("LoadWorkspaces failed: %v", err)
 	}
 	app := workspaces[0].Applications[0]
-	if !app.Active || !app.StripOrigin || app.RoutePattern == nil || *app.RoutePattern != pattern {
+	if !app.Active || !app.StripOrigin || !app.RouteOverride || app.RoutePattern == nil || *app.RoutePattern != pattern {
 		t.Fatalf("runtime routing metadata was not preserved: %#v", app)
+	}
+}
+
+func TestUpdateWorkspaceApplicationsPreservesOmittedRouteOverrideAndAcceptsExplicitFalse(t *testing.T) {
+	t.Setenv("XDG_DATA_HOME", filepath.Join(t.TempDir(), "data"))
+	t.Setenv("XDG_CACHE_HOME", filepath.Join(t.TempDir(), "cache"))
+
+	if err := AppendWorkspace(models.WorkspaceConfig{
+		ID: "demo", Type: models.WorkspaceTypeRouting,
+		Routing:      models.RoutingConfig{LocalDomain: "api.localhost"},
+		Applications: []models.ApplicationConfig{{ID: "orders-api", Path: "/orders", RouteOverride: true}},
+	}); err != nil {
+		t.Fatalf("AppendWorkspace failed: %v", err)
+	}
+
+	if err := UpdateWorkspaceApplications("demo", []models.ApplicationConfig{{
+		ID: "orders-api", Path: "/orders", RouteOverride: false,
+	}}, "api.localhost", ""); err != nil {
+		t.Fatalf("omitted route override update failed: %v", err)
+	}
+	workspaces, err := LoadWorkspaces()
+	if err != nil {
+		t.Fatalf("LoadWorkspaces after omitted update failed: %v", err)
+	}
+	if !workspaces[0].Applications[0].RouteOverride {
+		t.Fatal("omitted route override should preserve the stored true value")
+	}
+
+	if err := UpdateWorkspaceApplications("demo", []models.ApplicationConfig{{
+		ID: "orders-api", Path: "/orders", RouteOverride: false, RouteOverrideSet: true,
+	}}, "api.localhost", ""); err != nil {
+		t.Fatalf("explicit false route override update failed: %v", err)
+	}
+	workspaces, err = LoadWorkspaces()
+	if err != nil {
+		t.Fatalf("LoadWorkspaces after explicit false update failed: %v", err)
+	}
+	if workspaces[0].Applications[0].RouteOverride {
+		t.Fatal("explicit false route override should replace the stored true value")
 	}
 }
 

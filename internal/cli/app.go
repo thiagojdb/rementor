@@ -119,9 +119,16 @@ func appRegister(client *Client, jsonOutput bool, args []string) {
 	serviceID := fs.String("service-id", "", "canonical service identity")
 	repository := fs.String("repository", "", "source repository identity")
 	aliases := fs.String("aliases", "", "comma-separated application aliases")
+	routeOverride := fs.Bool("route-override", false, "mark overlapping route ownership as intentional")
 	if err := parseFlags(fs, args); err != nil {
 		Die("%v", err)
 	}
+	var routeOverrideValue *bool
+	fs.Visit(func(flag *flag.Flag) {
+		if flag.Name == "route-override" {
+			routeOverrideValue = routeOverride
+		}
+	})
 
 	if fs.NArg() < 2 {
 		fmt.Fprintln(os.Stderr, "usage: rementorctl app register <workspace> <app> [options]")
@@ -147,6 +154,7 @@ func appRegister(client *Client, jsonOutput bool, args []string) {
 		Port:          *port,
 		Health:        *health,
 		Context:       *context,
+		RouteOverride: routeOverrideValue,
 	}
 
 	result, err := client.UpsertApplication(stdctx.Background(), wsID, input)
@@ -251,6 +259,7 @@ func upsertApp(existing []ApplicationDTO, input ApplicationConfigInput) ([]Appli
 				(input.AppID == "" || app.AppID == input.AppID) &&
 				(input.ServiceID == "" || app.ServiceID == input.ServiceID) &&
 				(input.Repository == "" || app.Repository == input.Repository) &&
+				(input.RouteOverride == nil || *input.RouteOverride == app.RouteOverride) &&
 				(input.Aliases == nil || sameAliases(app.Aliases, input.Aliases))
 
 			if same {
@@ -276,6 +285,9 @@ func upsertApp(existing []ApplicationDTO, input ApplicationConfigInput) ([]Appli
 			if input.Repository == "" {
 				input.Repository = app.Repository
 			}
+			if input.RouteOverride == nil {
+				input.RouteOverride = boolPtr(app.RouteOverride)
+			}
 			if input.Aliases == nil {
 				input.Aliases = append([]string(nil), app.Aliases...)
 			}
@@ -296,6 +308,7 @@ func upsertApp(existing []ApplicationDTO, input ApplicationConfigInput) ([]Appli
 			Port:          app.Port,
 			Health:        app.Health,
 			Context:       app.Context,
+			RouteOverride: boolPtr(app.RouteOverride),
 		})
 	}
 

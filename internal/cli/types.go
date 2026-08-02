@@ -56,6 +56,7 @@ type ApplicationDTO struct {
 	HealthStatus  string                     `json:"healthStatus"`
 	RemoteStatus  string                     `json:"remoteStatus,omitempty"`
 	RoutePattern  *string                    `json:"routePattern,omitempty"`
+	RouteOverride bool                       `json:"routeOverride,omitempty"`
 	Identity      CanonicalApplicationRefDTO `json:"identity"`
 	Environment   WorkspaceEnvironmentRefDTO `json:"environment"`
 	Route         *RouteStateDTO             `json:"route,omitempty"`
@@ -121,7 +122,10 @@ type ApplicationConfigInput struct {
 	Port          int      `json:"port"`
 	Health        string   `json:"health"`
 	Context       string   `json:"context"`
+	RouteOverride *bool    `json:"routeOverride,omitempty"`
 }
+
+func boolPtr(value bool) *bool { return &value }
 
 type UpsertApplicationResponse struct {
 	Application ApplicationDTO        `json:"application"`
@@ -148,23 +152,24 @@ type UpdateRoutePatternRequest struct {
 }
 
 type NormalizedRouteDTO struct {
-	WorkspaceID      string `json:"workspaceId"`
-	Environment      string `json:"environment"`
-	PublicHost       string `json:"publicHost"`
-	Pattern          string `json:"pattern"`
-	CanonicalAppID   string `json:"appId,omitempty"`
-	ServiceID        string `json:"serviceId,omitempty"`
-	Repository       string `json:"repository,omitempty"`
-	DesiredMode      string `json:"desiredMode"`
-	EffectiveMode    string `json:"effectiveMode"`
-	Target           string `json:"target,omitempty"`
-	LocalTarget      string `json:"localTarget,omitempty"`
-	RemoteTarget     string `json:"remoteTarget,omitempty"`
-	RemoteFallback   bool   `json:"remoteFallback"`
-	UpstreamContext  string `json:"upstreamContext,omitempty"`
-	Precedence       int    `json:"precedence"`
-	PrecedenceReason string `json:"precedenceReason"`
-	Exact            bool   `json:"exact"`
+	WorkspaceID         string `json:"workspaceId"`
+	Environment         string `json:"environment"`
+	PublicHost          string `json:"publicHost"`
+	Pattern             string `json:"pattern"`
+	CanonicalAppID      string `json:"appId,omitempty"`
+	ServiceID           string `json:"serviceId,omitempty"`
+	Repository          string `json:"repository,omitempty"`
+	DesiredMode         string `json:"desiredMode"`
+	EffectiveMode       string `json:"effectiveMode"`
+	Target              string `json:"target,omitempty"`
+	LocalTarget         string `json:"localTarget,omitempty"`
+	RemoteTarget        string `json:"remoteTarget,omitempty"`
+	RemoteFallback      bool   `json:"remoteFallback"`
+	UpstreamContext     string `json:"upstreamContext,omitempty"`
+	Precedence          int    `json:"precedence"`
+	PrecedenceReason    string `json:"precedenceReason"`
+	Exact               bool   `json:"exact"`
+	IntentionalOverride bool   `json:"intentionalOverride,omitempty"`
 }
 
 type RouteWarningDTO struct {
@@ -173,14 +178,29 @@ type RouteWarningDTO struct {
 }
 
 type RouteConflictDTO struct {
-	WorkspaceID      string `json:"workspaceId"`
-	Environment      string `json:"environment"`
-	PublicHost       string `json:"publicHost"`
-	Pattern          string `json:"pattern"`
-	AppID            string `json:"appId"`
-	ConflictingAppID string `json:"conflictingAppId"`
-	WinningAppID     string `json:"winningAppId"`
-	Reason           string `json:"reason"`
+	WorkspaceID              string              `json:"workspaceId"`
+	Environment              string              `json:"environment"`
+	PublicHost               string              `json:"publicHost"`
+	Pattern                  string              `json:"pattern"`
+	AppID                    string              `json:"appId"`
+	ConflictingAppID         string              `json:"conflictingAppId"`
+	WinningAppID             string              `json:"winningAppId"`
+	Reason                   string              `json:"reason"`
+	AppServiceID             string              `json:"appServiceId,omitempty"`
+	ConflictingServiceID     string              `json:"conflictingServiceId,omitempty"`
+	WinningServiceID         string              `json:"winningServiceId,omitempty"`
+	ShadowedAppID            string              `json:"shadowedAppId,omitempty"`
+	ShadowedServiceID        string              `json:"shadowedServiceId,omitempty"`
+	WinningPattern           string              `json:"winningPattern,omitempty"`
+	ShadowedPattern          string              `json:"shadowedPattern,omitempty"`
+	WinningPrecedence        int                 `json:"winningPrecedence,omitempty"`
+	ShadowedPrecedence       int                 `json:"shadowedPrecedence,omitempty"`
+	WinningPrecedenceReason  string              `json:"winningPrecedenceReason,omitempty"`
+	ShadowedPrecedenceReason string              `json:"shadowedPrecedenceReason,omitempty"`
+	PrecedenceReason         string              `json:"precedenceReason,omitempty"`
+	Intentional              bool                `json:"intentional"`
+	WinningRoute             *NormalizedRouteDTO `json:"winningRoute,omitempty"`
+	ShadowedRoute            *NormalizedRouteDTO `json:"shadowedRoute,omitempty"`
 }
 
 type RouteChangeDTO struct {
@@ -211,6 +231,14 @@ type RouteGetResponse struct {
 	Routes       []NormalizedRouteDTO `json:"routes"`
 	Warnings     []RouteWarningDTO    `json:"warnings"`
 	Conflicts    []RouteConflictDTO   `json:"conflicts"`
+}
+
+type RouteConflictsResponse struct {
+	WorkspaceID  string             `json:"workspaceId"`
+	Environment  string             `json:"environment"`
+	RouteVersion uint64             `json:"routeVersion"`
+	Conflicts    []RouteConflictDTO `json:"conflicts"`
+	Warnings     []RouteWarningDTO  `json:"warnings"`
 }
 
 type RouteResolutionDTO struct {
