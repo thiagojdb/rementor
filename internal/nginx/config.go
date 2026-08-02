@@ -80,7 +80,7 @@ func RenderConfig(workspaces []*models.Workspace, rementorDomain string) (string
 			apps = append(apps, models.ApplicationConfig{
 				ID: app.ID, Name: app.Name, Path: app.Path, Domain: app.Domain,
 				RemoteBaseUrl: app.RemoteBaseUrl, Port: app.Port, Health: app.Health,
-				Active: app.Active, RoutePattern: app.RoutePattern, Context: app.Context,
+				Active: app.Active, RoutePattern: app.RoutePattern, RouteOverride: app.RouteOverride, Context: app.Context,
 				StripOrigin: app.StripOrigin,
 			})
 		}
@@ -90,6 +90,16 @@ func RenderConfig(workspaces []*models.Workspace, rementorDomain string) (string
 		}
 		if err := validation.Workspace(ws.GetType(), localDomain, ws.GetDefaultRemoteBaseURL(), apps); err != nil {
 			return "", fmt.Errorf("workspace %q: %w", ws.WorkspaceID, err)
+		}
+		details := make([]string, 0)
+		for _, conflict := range services.RouteConflicts(ws) {
+			if conflict.Intentional {
+				continue
+			}
+			details = append(details, fmt.Sprintf("%q and %q on %s %s (%s)", conflict.AppID, conflict.ConflictingAppID, conflict.PublicHost, conflict.Pattern, conflict.Reason))
+		}
+		if len(details) > 0 {
+			return "", fmt.Errorf("workspace %q: %d route conflict(s): %s; set routeOverride on both owners or change their paths", ws.WorkspaceID, len(details), strings.Join(details, "; "))
 		}
 	}
 	cfg := buildConfig(workspaces, rementorDomain)
@@ -311,6 +321,7 @@ func appWithRemoteBase(app *models.Application, remoteBase string) *models.Appli
 		Port:          app.Port,
 		Active:        app.Active,
 		RoutePattern:  app.RoutePattern,
+		RouteOverride: app.RouteOverride,
 		StripOrigin:   app.StripOrigin,
 		Route:         app.Route,
 		LastOperation: app.LastOperation,

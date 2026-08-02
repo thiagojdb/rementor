@@ -67,3 +67,19 @@ func TestUpsertAppReportsUnchangedForIdenticalConfig(t *testing.T) {
 		t.Fatalf("expected nil updated list for unchanged app, got %#v", updated)
 	}
 }
+
+func TestUpsertAppPreservesOmittedRouteOverrideAndAcceptsExplicitFalse(t *testing.T) {
+	existing := []ApplicationDTO{{
+		ID: "orders-api", Path: "/orders", Port: 28082, Health: "health", RouteOverride: true,
+	}}
+
+	updated, status := upsertApp(existing, ApplicationConfigInput{ID: "orders-api", Path: "/orders", Port: 28083, Health: "health"})
+	if status != "updated" || len(updated) != 1 || updated[0].RouteOverride == nil || !*updated[0].RouteOverride {
+		t.Fatalf("omitted route override was not preserved: status=%q updated=%#v", status, updated)
+	}
+
+	updated, status = upsertApp(existing, ApplicationConfigInput{ID: "orders-api", Path: "/orders", Port: 28083, Health: "health", RouteOverride: boolPtr(false)})
+	if status != "updated" || len(updated) != 1 || updated[0].RouteOverride == nil || *updated[0].RouteOverride {
+		t.Fatalf("explicit false route override was not retained: status=%q updated=%#v", status, updated)
+	}
+}

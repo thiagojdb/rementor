@@ -276,6 +276,18 @@ func (c *Client) GetRoutes(ctx context.Context, workspaceID string) (RouteGetRes
 	return RouteGetResponse{WorkspaceID: res.Msg.GetWorkspaceId(), Environment: res.Msg.GetEnvironment(), RouteVersion: version, Routes: normalizedRoutesFromProto(res.Msg.GetRoutes()), Warnings: routeWarningsFromProto(res.Msg.GetWarnings()), Conflicts: routeConflictsFromProto(res.Msg.GetConflicts())}, nil
 }
 
+func (c *Client) GetRouteConflicts(ctx context.Context, workspaceID string) (RouteConflictsResponse, error) {
+	res, err := c.rpc.GetRouteConflicts(ctx, connect.NewRequest(&rementorv1.GetRouteConflictsRequest{WorkspaceId: workspaceID}))
+	if err != nil {
+		return RouteConflictsResponse{}, apiError(err)
+	}
+	var version uint64
+	if res.Msg.GetRouteVersion() != nil {
+		version = res.Msg.GetRouteVersion().GetValue()
+	}
+	return RouteConflictsResponse{WorkspaceID: res.Msg.GetWorkspaceId(), Environment: res.Msg.GetEnvironment(), RouteVersion: version, Conflicts: routeConflictsFromProto(res.Msg.GetConflicts()), Warnings: routeWarningsFromProto(res.Msg.GetWarnings())}, nil
+}
+
 func (c *Client) ResolveRoute(ctx context.Context, workspaceID, host, path string) (RouteResolutionDTO, error) {
 	res, err := c.rpc.ResolveRoute(ctx, connect.NewRequest(&rementorv1.ResolveRouteRequest{WorkspaceId: workspaceID, Host: host, Path: path}))
 	if err != nil {
@@ -455,6 +467,7 @@ func applicationFromProto(app *rementorv1.Application) ApplicationDTO {
 		HealthStatus:  app.GetHealthStatus(),
 		RemoteStatus:  app.GetRemoteStatus(),
 		RoutePattern:  app.RoutePattern,
+		RouteOverride: app.GetRouteOverride(),
 		Identity:      identity,
 		Environment:   environmentFromProto(app.GetEnvironment()),
 		Route:         routeFromProto(app.GetRoute()),
@@ -564,6 +577,7 @@ func applicationInputToProto(input ApplicationConfigInput) *rementorv1.Applicati
 		Id: input.ID, AppId: input.AppID, ServiceId: input.ServiceID, Repository: input.Repository, Aliases: input.Aliases, Name: input.Name, Path: input.Path, Domain: input.Domain,
 		RemoteBaseUrl: input.RemoteBaseUrl, Port: int32(input.Port),
 		Health: input.Health, Context: input.Context,
+		RouteOverride: input.RouteOverride,
 	}
 }
 
@@ -614,7 +628,7 @@ func normalizedRouteFromProto(route *rementorv1.NormalizedRoute) NormalizedRoute
 		value := timestamp.AsTime()
 		verifiedAt = &value
 	}
-	return NormalizedRouteDTO{WorkspaceID: route.GetWorkspaceId(), Environment: route.GetEnvironment(), PublicHost: route.GetPublicHost(), Pattern: route.GetPattern(), CanonicalAppID: route.GetCanonicalAppId(), ServiceID: route.GetServiceId(), Repository: route.GetRepository(), DesiredMode: routeModeFromProtoValue(route.GetDesiredMode()), EffectiveMode: routeModeFromProtoValue(route.GetEffectiveMode()), Target: route.GetTarget(), LocalTarget: route.GetLocalTarget(), RemoteTarget: route.GetRemoteTarget(), RemoteFallback: route.GetRemoteFallback(), UpstreamContext: route.GetUpstreamContext(), Precedence: int(route.GetPrecedence()), PrecedenceReason: route.GetPrecedenceReason(), Exact: route.GetExact(), ProxyHealth: route.GetProxyHealth(), VerificationStatus: route.GetVerificationStatus(), RouteVersion: version, OperationID: route.GetOperationId(), VerifiedAt: verifiedAt}
+	return NormalizedRouteDTO{WorkspaceID: route.GetWorkspaceId(), Environment: route.GetEnvironment(), PublicHost: route.GetPublicHost(), Pattern: route.GetPattern(), CanonicalAppID: route.GetCanonicalAppId(), ServiceID: route.GetServiceId(), Repository: route.GetRepository(), DesiredMode: routeModeFromProtoValue(route.GetDesiredMode()), EffectiveMode: routeModeFromProtoValue(route.GetEffectiveMode()), Target: route.GetTarget(), LocalTarget: route.GetLocalTarget(), RemoteTarget: route.GetRemoteTarget(), RemoteFallback: route.GetRemoteFallback(), UpstreamContext: route.GetUpstreamContext(), Precedence: int(route.GetPrecedence()), PrecedenceReason: route.GetPrecedenceReason(), Exact: route.GetExact(), ProxyHealth: route.GetProxyHealth(), VerificationStatus: route.GetVerificationStatus(), RouteVersion: version, OperationID: route.GetOperationId(), VerifiedAt: verifiedAt, IntentionalOverride: route.GetIntentionalOverride()}
 }
 
 func normalizedRoutesFromProto(routes []*rementorv1.NormalizedRoute) []NormalizedRouteDTO {
@@ -644,7 +658,16 @@ func routeConflictFromProto(conflict *rementorv1.RouteConflict) RouteConflictDTO
 	if conflict == nil {
 		return RouteConflictDTO{}
 	}
-	return RouteConflictDTO{WorkspaceID: conflict.GetWorkspaceId(), Environment: conflict.GetEnvironment(), PublicHost: conflict.GetPublicHost(), Pattern: conflict.GetPattern(), AppID: conflict.GetAppId(), ConflictingAppID: conflict.GetConflictingAppId(), WinningAppID: conflict.GetWinningAppId(), Reason: conflict.GetReason()}
+	result := RouteConflictDTO{WorkspaceID: conflict.GetWorkspaceId(), Environment: conflict.GetEnvironment(), PublicHost: conflict.GetPublicHost(), Pattern: conflict.GetPattern(), AppID: conflict.GetAppId(), ConflictingAppID: conflict.GetConflictingAppId(), WinningAppID: conflict.GetWinningAppId(), Reason: conflict.GetReason(), AppServiceID: conflict.GetAppServiceId(), ConflictingServiceID: conflict.GetConflictingServiceId(), WinningServiceID: conflict.GetWinningServiceId(), ShadowedAppID: conflict.GetShadowedAppId(), ShadowedServiceID: conflict.GetShadowedServiceId(), WinningPattern: conflict.GetWinningPattern(), ShadowedPattern: conflict.GetShadowedPattern(), WinningPrecedence: int(conflict.GetWinningPrecedence()), ShadowedPrecedence: int(conflict.GetShadowedPrecedence()), WinningPrecedenceReason: conflict.GetWinningPrecedenceReason(), ShadowedPrecedenceReason: conflict.GetShadowedPrecedenceReason(), PrecedenceReason: conflict.GetPrecedenceReason(), Intentional: conflict.GetIntentional()}
+	if conflict.GetWinningRoute() != nil {
+		value := normalizedRouteFromProto(conflict.GetWinningRoute())
+		result.WinningRoute = &value
+	}
+	if conflict.GetShadowedRoute() != nil {
+		value := normalizedRouteFromProto(conflict.GetShadowedRoute())
+		result.ShadowedRoute = &value
+	}
+	return result
 }
 
 func routeConflictsFromProto(conflicts []*rementorv1.RouteConflict) []RouteConflictDTO {
@@ -656,9 +679,20 @@ func routeConflictsFromProto(conflicts []*rementorv1.RouteConflict) []RouteConfl
 }
 
 func normalizedRouteToProto(route NormalizedRouteDTO) *rementorv1.NormalizedRoute {
-	result := &rementorv1.NormalizedRoute{WorkspaceId: route.WorkspaceID, Environment: route.Environment, PublicHost: route.PublicHost, Pattern: route.Pattern, CanonicalAppId: route.CanonicalAppID, ServiceId: route.ServiceID, Repository: route.Repository, DesiredMode: routeModeToProto(route.DesiredMode), EffectiveMode: routeModeToProto(route.EffectiveMode), Target: route.Target, LocalTarget: route.LocalTarget, RemoteTarget: route.RemoteTarget, RemoteFallback: route.RemoteFallback, UpstreamContext: route.UpstreamContext, Precedence: models.ClampInt32(route.Precedence), PrecedenceReason: route.PrecedenceReason, Exact: route.Exact, ProxyHealth: route.ProxyHealth, VerificationStatus: route.VerificationStatus, Version: &rementorv1.RouteVersion{Value: route.RouteVersion}, OperationId: route.OperationID}
+	result := &rementorv1.NormalizedRoute{WorkspaceId: route.WorkspaceID, Environment: route.Environment, PublicHost: route.PublicHost, Pattern: route.Pattern, CanonicalAppId: route.CanonicalAppID, ServiceId: route.ServiceID, Repository: route.Repository, DesiredMode: routeModeToProto(route.DesiredMode), EffectiveMode: routeModeToProto(route.EffectiveMode), Target: route.Target, LocalTarget: route.LocalTarget, RemoteTarget: route.RemoteTarget, RemoteFallback: route.RemoteFallback, UpstreamContext: route.UpstreamContext, Precedence: models.ClampInt32(route.Precedence), PrecedenceReason: route.PrecedenceReason, Exact: route.Exact, ProxyHealth: route.ProxyHealth, VerificationStatus: route.VerificationStatus, Version: &rementorv1.RouteVersion{Value: route.RouteVersion}, OperationId: route.OperationID, IntentionalOverride: route.IntentionalOverride}
 	if route.VerifiedAt != nil && !route.VerifiedAt.IsZero() {
 		result.VerifiedAt = timestamppb.New(route.VerifiedAt.UTC())
+	}
+	return result
+}
+
+func routeConflictToProto(conflict RouteConflictDTO) *rementorv1.RouteConflict {
+	result := &rementorv1.RouteConflict{WorkspaceId: conflict.WorkspaceID, Environment: conflict.Environment, PublicHost: conflict.PublicHost, Pattern: conflict.Pattern, AppId: conflict.AppID, ConflictingAppId: conflict.ConflictingAppID, WinningAppId: conflict.WinningAppID, Reason: conflict.Reason, AppServiceId: conflict.AppServiceID, ConflictingServiceId: conflict.ConflictingServiceID, WinningServiceId: conflict.WinningServiceID, ShadowedAppId: conflict.ShadowedAppID, ShadowedServiceId: conflict.ShadowedServiceID, WinningPattern: conflict.WinningPattern, ShadowedPattern: conflict.ShadowedPattern, WinningPrecedence: models.ClampInt32(conflict.WinningPrecedence), ShadowedPrecedence: models.ClampInt32(conflict.ShadowedPrecedence), WinningPrecedenceReason: conflict.WinningPrecedenceReason, ShadowedPrecedenceReason: conflict.ShadowedPrecedenceReason, PrecedenceReason: conflict.PrecedenceReason, Intentional: conflict.Intentional}
+	if conflict.WinningRoute != nil {
+		result.WinningRoute = normalizedRouteToProto(*conflict.WinningRoute)
+	}
+	if conflict.ShadowedRoute != nil {
+		result.ShadowedRoute = normalizedRouteToProto(*conflict.ShadowedRoute)
 	}
 	return result
 }
@@ -679,7 +713,7 @@ func routePlanToProto(plan RoutePlanDTO) *rementorv1.RoutePlan {
 		result.Warnings = append(result.Warnings, &rementorv1.RouteWarning{Code: warning.Code, Message: warning.Message})
 	}
 	for _, conflict := range plan.Conflicts {
-		result.Conflicts = append(result.Conflicts, &rementorv1.RouteConflict{WorkspaceId: conflict.WorkspaceID, Environment: conflict.Environment, PublicHost: conflict.PublicHost, Pattern: conflict.Pattern, AppId: conflict.AppID, ConflictingAppId: conflict.ConflictingAppID, WinningAppId: conflict.WinningAppID, Reason: conflict.Reason})
+		result.Conflicts = append(result.Conflicts, routeConflictToProto(conflict))
 	}
 	for _, change := range plan.Changes {
 		protoChange := &rementorv1.RouteChange{ApplicationId: change.ApplicationID}
