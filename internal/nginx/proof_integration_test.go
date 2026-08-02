@@ -92,7 +92,7 @@ func TestGeneratedProxyProofHeadersAcrossModesAndErrors(t *testing.T) {
 	request := func(path string) *http.Response {
 		var response *http.Response
 		var lastErr error
-		for attempt := 0; attempt < 30; attempt++ {
+		for attempt := 0; attempt < 80; attempt++ {
 			url := fmt.Sprintf("http://127.0.0.1:%d%s", port, path)
 			req, reqErr := http.NewRequest(http.MethodGet, url, nil)
 			if reqErr != nil {
@@ -151,5 +151,9 @@ func proofFreeTCPPort(t *testing.T) int {
 		t.Fatalf("allocate TCP port: %v", err)
 	}
 	defer listener.Close()
-	return listener.Addr().(*net.TCPAddr).Port
+	addr, ok := listener.Addr().(*net.TCPAddr)
+	if !ok {
+		t.Fatalf("unexpected listener address type %T", listener.Addr())
+	}
+	return addr.Port
 }

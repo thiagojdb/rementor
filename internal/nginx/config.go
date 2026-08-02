@@ -232,8 +232,10 @@ func controlPlaneProof() ResponseProof {
 func traceLocation(ws *models.Workspace) Location {
 	proof := controlPlaneProof()
 	if ws != nil {
-		proof.Workspace = ws.WorkspaceID
-		proof.Environment = ws.WorkspaceID
+		if ws.WorkspaceID != "" {
+			proof.Workspace = ws.WorkspaceID
+			proof.Environment = ws.WorkspaceID
+		}
 		proof.RouteVersion = routeVersion(ws.Route.RouteVersion)
 		if ws.Route.OperationID != "" {
 			proof.OperationID = ws.Route.OperationID
@@ -328,10 +330,6 @@ func localAppLocations(ws *models.Workspace, app *models.Application) []Location
 	return locationsForPatternsWithProof(routePathPatterns(ws, app), localProxy(app.Port, false, ""), app.StripOrigin, proof)
 }
 
-func remoteAppLocations(ws *models.Workspace, app *models.Application) []Location {
-	return remoteAppLocationsWithMode(ws, app, "remote")
-}
-
 func remoteAppLocationsWithMode(ws *models.Workspace, app *models.Application, effectiveMode string) []Location {
 	proof := routeProof(ws, app, effectiveMode)
 	if app.Path == "/" && app.Context != "" && app.Context != "/" {
@@ -351,10 +349,6 @@ func remoteEffectiveMode(app *models.Application) string {
 		return "fallback"
 	}
 	return "remote"
-}
-
-func locationsForPatterns(patterns []string, proxy Proxy, stripOrigin bool) []Location {
-	return locationsForPatternsWithProof(patterns, proxy, stripOrigin, ResponseProof{})
 }
 
 func locationsForPatternsWithProof(patterns []string, proxy Proxy, stripOrigin bool, proof ResponseProof) []Location {
@@ -429,16 +423,22 @@ func routeProof(ws *models.Workspace, app *models.Application, effectiveMode str
 		OperationID:   "none",
 	}
 	if ws != nil {
-		proof.Workspace = ws.WorkspaceID
-		proof.Environment = ws.WorkspaceID
+		if ws.WorkspaceID != "" {
+			proof.Workspace = ws.WorkspaceID
+			proof.Environment = ws.WorkspaceID
+		}
 		proof.RouteVersion = routeVersion(ws.Route.RouteVersion)
 		if ws.Route.OperationID != "" {
 			proof.OperationID = ws.Route.OperationID
 		}
 	}
 	if app != nil {
-		proof.AppID = app.CanonicalAppID()
-		proof.ServiceID = app.ServiceID
+		if id := app.CanonicalAppID(); id != "" {
+			proof.AppID = id
+		}
+		if app.ServiceID != "" {
+			proof.ServiceID = app.ServiceID
+		}
 		if proof.ServiceID == "" {
 			proof.ServiceID = proof.AppID
 		}

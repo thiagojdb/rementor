@@ -659,6 +659,9 @@ func classifyRegistryError(err error) connect.Code {
 }
 
 func correlationID(requested string, header http.Header) string {
+	if value := candidateCorrelationID(requested, false); value != "" {
+		return value
+	}
 	for _, candidate := range []struct {
 		value       string
 		traceparent bool
@@ -671,9 +674,6 @@ func correlationID(requested string, header http.Header) string {
 		if value := candidateCorrelationID(candidate.value, candidate.traceparent); value != "" {
 			return value
 		}
-	}
-	if value := candidateCorrelationID(requested, false); value != "" {
-		return value
 	}
 	return generatedCorrelationID()
 }

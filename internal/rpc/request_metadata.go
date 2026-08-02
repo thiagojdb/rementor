@@ -28,8 +28,12 @@ func CorrelationMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		request := c.Request()
 		correlation := correlationID("", request.Header)
-		request.Header.Set("X-Correlation-ID", correlation)
-		request.Header.Set("X-Request-ID", correlation)
+		if !validCorrelationID(request.Header.Get("X-Correlation-ID")) {
+			request.Header.Set("X-Correlation-ID", correlation)
+		}
+		if !validCorrelationID(request.Header.Get("X-Request-ID")) {
+			request.Header.Set("X-Request-ID", correlation)
+		}
 		c.Set(CorrelationHeader, correlation)
 		c.Response().Header().Set(CorrelationHeader, correlation)
 		c.Response().Header().Set(RequestIDHeader, correlation)

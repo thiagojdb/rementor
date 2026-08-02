@@ -26,6 +26,33 @@ func TestCorrelationIDPreservesOnlyValidatedValues(t *testing.T) {
 	}
 }
 
+func TestCorrelationIDPrefersRPCRequestedValue(t *testing.T) {
+	headers := make(http.Header)
+	headers.Set("X-Correlation-ID", "generated-by-middleware")
+	if got := correlationID("rpc-request-7", headers); got != "rpc-request-7" {
+		t.Fatalf("correlationID() = %q, want rpc-request-7", got)
+	}
+}
+
+func TestCorrelationMiddlewarePreservesValidRequestHeaders(t *testing.T) {
+	e := echo.New()
+	e.Use(CorrelationMiddleware)
+	e.GET("/", func(c echo.Context) error { return c.NoContent(http.StatusNoContent) })
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("X-Correlation-ID", "caller-correlation")
+	req.Header.Set("X-Request-ID", "caller-request")
+	res := httptest.NewRecorder()
+	e.ServeHTTP(res, req)
+
+	if got := req.Header.Get("X-Correlation-ID"); got != "caller-correlation" {
+		t.Fatalf("request correlation header = %q, want caller-correlation", got)
+	}
+	if got := req.Header.Get("X-Request-ID"); got != "caller-request" {
+		t.Fatalf("request ID header = %q, want caller-request", got)
+	}
+}
+
 func TestTraceHandlerReturnsRequestInspectionPayload(t *testing.T) {
 	e := echo.New()
 	e.Use(CorrelationMiddleware)
