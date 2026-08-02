@@ -29,11 +29,15 @@ const ApplicationManager: Component<ApplicationManagerProps> = (props) => {
       id: '',
       name: '',
       path: isLocalApps() ? '' : '/',
+      publicPath: isLocalApps() ? '' : '/',
       domain: isLocalApps() ? '' : undefined,
       remoteBaseUrl: '',
       port: 0,
       health: 'actuator/health',
       context: '',
+      upstreamContext: '',
+      frontendRoot: '',
+      frontendRootSource: '',
     }
     setApps(produce((draft) => draft.push(newApp)))
     setExpandedIndex(apps.length)
@@ -87,9 +91,10 @@ const ApplicationManager: Component<ApplicationManagerProps> = (props) => {
         newErrors[`${idx}-domain`] = 'Domain is required for local-apps'
       }
     } else {
-      if (!app.path?.trim()) {
+      const publicPath = app.publicPath?.trim() || app.path?.trim()
+      if (!publicPath) {
         newErrors[`${idx}-path`] = 'Path is required'
-      } else if (!app.path.startsWith('/')) {
+      } else if (!publicPath.startsWith('/')) {
         newErrors[`${idx}-path`] = 'Path must start with /'
       }
     }
@@ -468,15 +473,18 @@ const ApplicationManager: Component<ApplicationManagerProps> = (props) => {
                       </label>
                       <input
                         type="text"
-                        value={app.path}
-                        onInput={(e) => updateApp(idx(), 'path', e.currentTarget.value)}
+                        value={app.publicPath || app.path}
+                        onInput={(e) => {
+                          updateApp(idx(), 'publicPath', e.currentTarget.value)
+                          updateApp(idx(), 'path', e.currentTarget.value)
+                        }}
                         placeholder="/api/users"
                         disabled={props.readOnly}
                         class="w-full h-9 px-3 rounded-lg border text-sm font-mono focus:outline-none transition-colors disabled:opacity-50"
                         style={errors()[`${idx()}-path`] ? inputErrorStyle : inputStyle}
                       />
                       <p class="text-[10px]" style={helpStyle}>
-                        URL path prefix (e.g., /api, /users)
+                        Public/browser path prefix (e.g., /portal, /users)
                       </p>
                     </div>
                   </Show>
@@ -524,24 +532,48 @@ const ApplicationManager: Component<ApplicationManagerProps> = (props) => {
                     </p>
                   </div>
 
-                  {/* Context Field */}
+                  {/* Upstream Context Field */}
                   <div class="space-y-1">
                     <label class="text-xs font-medium" style={labelStyle}>
-                      Context Path
+                      Upstream Context
                     </label>
                     <input
                       type="text"
-                      value={app.context || ''}
-                      onInput={(e) => updateApp(idx(), 'context', e.currentTarget.value)}
-                      placeholder="/app"
+                      value={app.upstreamContext || app.context || ''}
+                      onInput={(e) => {
+                        updateApp(idx(), 'upstreamContext', e.currentTarget.value)
+                        updateApp(idx(), 'context', e.currentTarget.value)
+                      }}
+                      placeholder="/service"
                       disabled={props.readOnly}
                       class="w-full h-9 px-3 rounded-lg border text-sm font-mono focus:outline-none transition-colors disabled:opacity-50"
                       style={inputStyle}
                     />
                     <p class="text-[10px]" style={helpStyle}>
-                      Optional servlet context path
+                      Backend context/prefix. This is independent from the public path.
                     </p>
                   </div>
+
+                  {/* Frontend Root Field */}
+                  <Show when={!isLocalApps()}>
+                    <div class="space-y-1">
+                      <label class="text-xs font-medium" style={labelStyle}>
+                        Frontend Root
+                      </label>
+                      <input
+                        type="text"
+                        value={app.frontendRoot || ''}
+                        onInput={(e) => updateApp(idx(), 'frontendRoot', e.currentTarget.value)}
+                        placeholder="/portal"
+                        disabled={props.readOnly}
+                        class="w-full h-9 px-3 rounded-lg border text-sm font-mono focus:outline-none transition-colors disabled:opacity-50"
+                        style={inputStyle}
+                      />
+                      <p class="text-[10px]" style={helpStyle}>
+                        Optional manifest/registration base used to verify SPA asset routing.
+                      </p>
+                    </div>
+                  </Show>
 
                   {/* Remote Base URL Field */}
                   <Show when={!isLocalApps()}>

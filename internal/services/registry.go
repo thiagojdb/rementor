@@ -492,9 +492,9 @@ func (r *Registry) GetRoutes(wsID string) ([]Route, uint64, []RouteWarning, []Ro
 	}
 	routes := r.projectedRoutes(ws)
 	conflicts := conflictsForRoutes(routes)
-	warnings := make([]RouteWarning, 0, 1)
+	warnings := metadataWarningsForWorkspace(ws)
 	if hasAccidentalConflicts(conflicts) {
-		warnings = append(warnings, RouteWarning{Code: "ROUTE_CONFLICT", Message: "one or more routes compete for the same host and pattern"})
+		warnings = append(warnings, RouteWarning{Code: "ROUTE_CONFLICT", Field: "pattern", Severity: "error", Message: "one or more routes compete for the same host and pattern", Remediation: "Choose distinct public paths or domains before applying the plan."})
 	}
 	return routes, ws.Route.RouteVersion, warnings, conflicts, nil
 }
@@ -553,6 +553,13 @@ func (r *Registry) PlanRoute(wsID, application, desiredMode string, routePattern
 	return r.planRoute(routePlanInput{WorkspaceID: wsID, Application: application, DesiredMode: desiredMode, RoutePattern: routePattern})
 }
 
+// PlanRouteWithOptions is the strict-aware route planning entry point. The
+// legacy PlanRoute method remains permissive so unknown frontend roots are
+// visible warnings for existing clients.
+func (r *Registry) PlanRouteWithOptions(wsID, application, desiredMode string, routePattern *string, strictMetadata bool) (RoutePlan, error) {
+	return r.planRoute(routePlanInput{WorkspaceID: wsID, Application: application, DesiredMode: desiredMode, RoutePattern: routePattern, StrictMetadata: strictMetadata})
+}
+
 // ApplyRoutePlan applies a previously generated plan. It performs all checks
 // while holding the same mutation lock used by legacy operations, so a plan
 // cannot become stale between its version check and proxy reload.
@@ -608,6 +615,16 @@ func (r *Registry) ApplyRoutePlan(wsID string, plan RoutePlan, expectedVersion u
 	if ws == nil {
 		return RouteApplyResult{}, fmt.Errorf("workspace not found: %s", wsID)
 	}
+	if plan.StrictMetadata {
+		_, currentApp, metadataErr := findAppInWorkspace(ws, plan.ApplicationID)
+		if metadataErr != nil {
+			return RouteApplyResult{}, metadataErr
+		}
+		metadata := models.ApplicationConfig{ID: currentApp.ID, AppID: currentApp.CanonicalAppID(), Path: currentApp.Path, PublicPath: currentApp.PublicPath, Context: currentApp.Context, UpstreamContext: currentApp.UpstreamContext, FrontendRoot: currentApp.FrontendRoot, FrontendRootSource: currentApp.FrontendRootSource, LegacyPublicPath: currentApp.LegacyPublicPath, LegacyUpstreamContext: currentApp.LegacyUpstreamContext}
+		if _, metadataErr := validation.ValidateApplicationMetadata(ws.GetType(), metadata, validation.MetadataValidationOptions{Strict: true}); metadataErr != nil {
+			return RouteApplyResult{}, metadataErr
+		}
+	}
 	currentVersion := ws.Route.RouteVersion
 	if r.nextRouteVersion < currentVersion {
 		r.nextRouteVersion = currentVersion
@@ -615,7 +632,7 @@ func (r *Registry) ApplyRoutePlan(wsID string, plan RoutePlan, expectedVersion u
 	if expectedVersion == 0 {
 		expectedVersion = plan.BaseRouteVersion
 	}
-	canonical, err := planForWorkspace(ws, routePlanInput{WorkspaceID: wsID, Application: plan.ApplicationID, DesiredMode: mode, RoutePattern: plan.RoutePattern})
+	canonical, err := planForWorkspace(ws, routePlanInput{WorkspaceID: wsID, Application: plan.ApplicationID, DesiredMode: mode, RoutePattern: plan.RoutePattern, StrictMetadata: plan.StrictMetadata})
 	if err != nil {
 		return RouteApplyResult{}, err
 	}
@@ -795,10 +812,10 @@ func (r *Registry) SyncRoute(wsID, correlationID string, repair bool) (RouteSync
 	}
 	desired := buildNormalizedRoutes(ws)
 	desiredHash := fingerprintRoutes(desired)
-	warnings := make([]RouteWarning, 0)
+	warnings := metadataWarningsForWorkspace(ws)
 	conflicts := conflictsForRoutes(desired)
 	if hasAccidentalConflicts(conflicts) {
-		warnings = append(warnings, RouteWarning{Code: "ROUTE_CONFLICT", Message: "one or more routes compete for the same host and pattern"})
+		warnings = append(warnings, RouteWarning{Code: "ROUTE_CONFLICT", Field: "pattern", Severity: "error", Message: "one or more routes compete for the same host and pattern", Remediation: "Choose distinct public paths or domains before repairing routes."})
 		if repair {
 			return RouteSyncResult{}, fmt.Errorf("route sync blocked by %d accidental route conflict(s)", countAccidentalConflicts(conflicts))
 		}
@@ -1614,9 +1631,11 @@ func applicationsFromConfigs(workspace *models.Workspace, configs []models.Appli
 		if serviceID == "" {
 			serviceID = canonical
 		}
+		config.NormalizeRouteMetadata()
 		app := &models.Application{
-			ID: canonical, AppID: canonical, ServiceID: serviceID, Repository: config.Repository, Aliases: append([]string(nil), config.Aliases...), Name: config.Name, Path: config.Path, Domain: config.Domain,
-			RemoteBaseUrl: config.RemoteBaseUrl, Context: config.Context, Health: config.Health,
+			ID: canonical, AppID: canonical, ServiceID: serviceID, Repository: config.Repository, Aliases: append([]string(nil), config.Aliases...), Name: config.Name, Path: config.Path, PublicPath: config.PublicPath, Domain: config.Domain,
+			RemoteBaseUrl: config.RemoteBaseUrl, Context: config.Context, UpstreamContext: config.UpstreamContext, FrontendRoot: config.FrontendRoot, FrontendRootSource: config.FrontendRootSource, Health: config.Health,
+			LegacyPublicPath: config.LegacyPublicPath, LegacyUpstreamContext: config.LegacyUpstreamContext,
 			Port: config.Port, Active: config.Active, RoutePattern: cloneStringPtr(config.RoutePattern),
 			RouteOverride: config.RouteOverride, StripOrigin: config.StripOrigin,
 		}
@@ -1665,8 +1684,9 @@ func cloneWorkspace(source *models.Workspace) *models.Workspace {
 	}
 	for _, sourceApp := range source.Applications {
 		app := &models.Application{
-			ID: sourceApp.ID, AppID: sourceApp.CanonicalAppID(), ServiceID: sourceApp.ServiceID, Repository: sourceApp.Repository, Aliases: append([]string(nil), sourceApp.Aliases...), Name: sourceApp.Name, Path: sourceApp.Path, Domain: sourceApp.Domain,
-			RemoteBaseUrl: sourceApp.RemoteBaseUrl, Context: sourceApp.Context, Health: sourceApp.Health,
+			ID: sourceApp.ID, AppID: sourceApp.CanonicalAppID(), ServiceID: sourceApp.ServiceID, Repository: sourceApp.Repository, Aliases: append([]string(nil), sourceApp.Aliases...), Name: sourceApp.Name, Path: sourceApp.Path, PublicPath: sourceApp.PublicPath, Domain: sourceApp.Domain,
+			RemoteBaseUrl: sourceApp.RemoteBaseUrl, Context: sourceApp.Context, UpstreamContext: sourceApp.UpstreamContext, FrontendRoot: sourceApp.FrontendRoot, FrontendRootSource: sourceApp.FrontendRootSource, Health: sourceApp.Health,
+			LegacyPublicPath: sourceApp.LegacyPublicPath, LegacyUpstreamContext: sourceApp.LegacyUpstreamContext,
 			Port: sourceApp.Port, Active: sourceApp.Active, RoutePattern: cloneStringPtr(sourceApp.RoutePattern),
 			RouteOverride: sourceApp.RouteOverride, StripOrigin: sourceApp.StripOrigin,
 			Route:         sourceApp.Route,
@@ -1711,9 +1731,11 @@ func applicationConfigs(apps []*models.Application) []models.ApplicationConfig {
 	result := make([]models.ApplicationConfig, 0, len(apps))
 	for _, app := range apps {
 		result = append(result, models.ApplicationConfig{
-			ID: app.ID, AppID: app.CanonicalAppID(), ServiceID: app.ServiceID, Repository: app.Repository, Aliases: app.NormalizedAliases(), Name: app.Name, Path: app.Path, Domain: app.Domain,
+			ID: app.ID, AppID: app.CanonicalAppID(), ServiceID: app.ServiceID, Repository: app.Repository, Aliases: app.NormalizedAliases(), Name: app.Name, Path: app.Path, PublicPath: app.PublicPath, Domain: app.Domain,
 			RemoteBaseUrl: app.RemoteBaseUrl, Port: app.Port, Health: app.Health,
-			Active: app.Active, RoutePattern: app.RoutePattern, Context: app.Context,
+			Active: app.Active, RoutePattern: app.RoutePattern, Context: app.Context, UpstreamContext: app.UpstreamContext,
+			FrontendRoot: app.FrontendRoot, FrontendRootSource: app.FrontendRootSource,
+			LegacyPublicPath: app.LegacyPublicPath, LegacyUpstreamContext: app.LegacyUpstreamContext,
 			RouteOverride: app.RouteOverride, RouteOverrideSet: true, StripOrigin: app.StripOrigin,
 		})
 	}
@@ -2198,6 +2220,12 @@ func (r *Registry) markRoutingState(workspaces []*models.Workspace, status strin
 }
 
 func (r *Registry) applyRouting(workspaces []*models.Workspace, required bool) error {
+	// Validate route metadata before handing any projection to the proxy. This
+	// also protects startup/reconciliation paths that load legacy or externally
+	// edited SQLite state without going through mutate.
+	if err := validateWorkspaces(workspaces); err != nil {
+		return fmt.Errorf("validate routing metadata: %w", err)
+	}
 	provider := r.GetRoutingProvider()
 	if provider == nil {
 		r.markRoutingState(workspaces, models.RouteVerificationProviderUnavailable)

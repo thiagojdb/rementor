@@ -681,6 +681,26 @@ export class Application extends Message<Application> {
    */
   routeOverride = false;
 
+  /**
+   * @generated from field: string public_path = 21;
+   */
+  publicPath = "";
+
+  /**
+   * @generated from field: string upstream_context = 22;
+   */
+  upstreamContext = "";
+
+  /**
+   * @generated from field: string frontend_root = 23;
+   */
+  frontendRoot = "";
+
+  /**
+   * @generated from field: string frontend_root_source = 24;
+   */
+  frontendRootSource = "";
+
   constructor(data?: PartialMessage<Application>) {
     super();
     proto3.util.initPartial(data, this);
@@ -709,6 +729,10 @@ export class Application extends Message<Application> {
     { no: 18, name: "environment", kind: "message", T: WorkspaceEnvironmentRef },
     { no: 19, name: "route", kind: "message", T: RouteState },
     { no: 20, name: "route_override", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 21, name: "public_path", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 22, name: "upstream_context", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 23, name: "frontend_root", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 24, name: "frontend_root_source", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Application {
@@ -925,6 +949,26 @@ export class ApplicationConfigInput extends Message<ApplicationConfigInput> {
    */
   routeOverride?: boolean;
 
+  /**
+   * @generated from field: string public_path = 14;
+   */
+  publicPath = "";
+
+  /**
+   * @generated from field: string upstream_context = 15;
+   */
+  upstreamContext = "";
+
+  /**
+   * @generated from field: string frontend_root = 16;
+   */
+  frontendRoot = "";
+
+  /**
+   * @generated from field: string frontend_root_source = 17;
+   */
+  frontendRootSource = "";
+
   constructor(data?: PartialMessage<ApplicationConfigInput>) {
     super();
     proto3.util.initPartial(data, this);
@@ -946,6 +990,10 @@ export class ApplicationConfigInput extends Message<ApplicationConfigInput> {
     { no: 11, name: "repository", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 12, name: "aliases", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 13, name: "route_override", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 14, name: "public_path", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 15, name: "upstream_context", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 16, name: "frontend_root", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 17, name: "frontend_root_source", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ApplicationConfigInput {
@@ -1151,6 +1199,11 @@ export class CreateWorkspaceRequest extends Message<CreateWorkspaceRequest> {
    */
   correlationId = "";
 
+  /**
+   * @generated from field: bool strict_metadata = 9;
+   */
+  strictMetadata = false;
+
   constructor(data?: PartialMessage<CreateWorkspaceRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1167,6 +1220,7 @@ export class CreateWorkspaceRequest extends Message<CreateWorkspaceRequest> {
     { no: 6, name: "default_remote_base_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 7, name: "applications", kind: "message", T: ApplicationConfigInput, repeated: true },
     { no: 8, name: "correlation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 9, name: "strict_metadata", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateWorkspaceRequest {
@@ -1200,6 +1254,11 @@ export class CreateWorkspaceResponse extends Message<CreateWorkspaceResponse> {
    */
   operation?: OperationMetadata;
 
+  /**
+   * @generated from field: repeated rementor.v1.RouteWarning warnings = 3;
+   */
+  warnings: RouteWarning[] = [];
+
   constructor(data?: PartialMessage<CreateWorkspaceResponse>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1210,6 +1269,7 @@ export class CreateWorkspaceResponse extends Message<CreateWorkspaceResponse> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "workspace", kind: "message", T: Workspace },
     { no: 2, name: "operation", kind: "message", T: OperationMetadata },
+    { no: 3, name: "warnings", kind: "message", T: RouteWarning, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateWorkspaceResponse {
@@ -1258,6 +1318,11 @@ export class UpdateWorkspaceRequest extends Message<UpdateWorkspaceRequest> {
    */
   correlationId = "";
 
+  /**
+   * @generated from field: bool strict_metadata = 6;
+   */
+  strictMetadata = false;
+
   constructor(data?: PartialMessage<UpdateWorkspaceRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1271,6 +1336,7 @@ export class UpdateWorkspaceRequest extends Message<UpdateWorkspaceRequest> {
     { no: 3, name: "local_domain", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 4, name: "default_remote_base_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 5, name: "correlation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "strict_metadata", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateWorkspaceRequest {
@@ -1304,6 +1370,11 @@ export class UpdateWorkspaceResponse extends Message<UpdateWorkspaceResponse> {
    */
   operation?: OperationMetadata;
 
+  /**
+   * @generated from field: repeated rementor.v1.RouteWarning warnings = 3;
+   */
+  warnings: RouteWarning[] = [];
+
   constructor(data?: PartialMessage<UpdateWorkspaceResponse>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1314,6 +1385,7 @@ export class UpdateWorkspaceResponse extends Message<UpdateWorkspaceResponse> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "workspace", kind: "message", T: Workspace },
     { no: 2, name: "operation", kind: "message", T: OperationMetadata },
+    { no: 3, name: "warnings", kind: "message", T: RouteWarning, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateWorkspaceResponse {
@@ -2030,6 +2102,11 @@ export class UpsertApplicationRequest extends Message<UpsertApplicationRequest> 
    */
   correlationId = "";
 
+  /**
+   * @generated from field: bool strict_metadata = 4;
+   */
+  strictMetadata = false;
+
   constructor(data?: PartialMessage<UpsertApplicationRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -2041,6 +2118,7 @@ export class UpsertApplicationRequest extends Message<UpsertApplicationRequest> 
     { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "application", kind: "message", T: ApplicationConfigInput },
     { no: 3, name: "correlation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "strict_metadata", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpsertApplicationRequest {
@@ -2079,6 +2157,11 @@ export class UpsertApplicationResponse extends Message<UpsertApplicationResponse
    */
   operation?: OperationMetadata;
 
+  /**
+   * @generated from field: repeated rementor.v1.RouteWarning warnings = 4;
+   */
+  warnings: RouteWarning[] = [];
+
   constructor(data?: PartialMessage<UpsertApplicationResponse>) {
     super();
     proto3.util.initPartial(data, this);
@@ -2090,6 +2173,7 @@ export class UpsertApplicationResponse extends Message<UpsertApplicationResponse
     { no: 1, name: "application", kind: "message", T: Application },
     { no: 2, name: "created", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 3, name: "operation", kind: "message", T: OperationMetadata },
+    { no: 4, name: "warnings", kind: "message", T: RouteWarning, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpsertApplicationResponse {
@@ -2922,6 +3006,21 @@ export class RouteWarning extends Message<RouteWarning> {
    */
   message = "";
 
+  /**
+   * @generated from field: string field = 3;
+   */
+  field = "";
+
+  /**
+   * @generated from field: string severity = 4;
+   */
+  severity = "";
+
+  /**
+   * @generated from field: string remediation = 5;
+   */
+  remediation = "";
+
   constructor(data?: PartialMessage<RouteWarning>) {
     super();
     proto3.util.initPartial(data, this);
@@ -2932,6 +3031,9 @@ export class RouteWarning extends Message<RouteWarning> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "code", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "field", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "severity", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "remediation", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RouteWarning {
@@ -3238,6 +3340,11 @@ export class RoutePlan extends Message<RoutePlan> {
    */
   baseVersion = protoInt64.zero;
 
+  /**
+   * @generated from field: bool strict_metadata = 14;
+   */
+  strictMetadata = false;
+
   constructor(data?: PartialMessage<RoutePlan>) {
     super();
     proto3.util.initPartial(data, this);
@@ -3259,6 +3366,7 @@ export class RoutePlan extends Message<RoutePlan> {
     { no: 11, name: "conflicts", kind: "message", T: RouteConflict, repeated: true },
     { no: 12, name: "fingerprint", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 13, name: "base_version", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
+    { no: 14, name: "strict_metadata", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RoutePlan {
@@ -3702,6 +3810,11 @@ export class PlanRouteRequest extends Message<PlanRouteRequest> {
    */
   expectedVersion = protoInt64.zero;
 
+  /**
+   * @generated from field: bool strict_metadata = 8;
+   */
+  strictMetadata = false;
+
   constructor(data?: PartialMessage<PlanRouteRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -3717,6 +3830,7 @@ export class PlanRouteRequest extends Message<PlanRouteRequest> {
     { no: 5, name: "expected_route_version", kind: "message", T: RouteVersion },
     { no: 6, name: "correlation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 7, name: "expected_version", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
+    { no: 8, name: "strict_metadata", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PlanRouteRequest {
@@ -3822,6 +3936,11 @@ export class ApplyRouteRequest extends Message<ApplyRouteRequest> {
    */
   expectedVersion = protoInt64.zero;
 
+  /**
+   * @generated from field: bool strict_metadata = 10;
+   */
+  strictMetadata = false;
+
   constructor(data?: PartialMessage<ApplyRouteRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -3839,6 +3958,7 @@ export class ApplyRouteRequest extends Message<ApplyRouteRequest> {
     { no: 7, name: "desired_mode", kind: "enum", T: proto3.getEnumType(RouteMode) },
     { no: 8, name: "route_pattern", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 9, name: "expected_version", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
+    { no: 10, name: "strict_metadata", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ApplyRouteRequest {

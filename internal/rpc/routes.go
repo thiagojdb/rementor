@@ -73,7 +73,7 @@ func (s *ControlPlaneService) PlanRoute(ctx context.Context, req *connect.Reques
 		value := req.Msg.GetRoutePattern()
 		pattern = &value
 	}
-	plan, err := s.registry.PlanRoute(req.Msg.GetWorkspaceId(), req.Msg.GetApplicationRef(), mode, pattern)
+	plan, err := s.registry.PlanRouteWithOptions(req.Msg.GetWorkspaceId(), req.Msg.GetApplicationRef(), mode, pattern, req.Msg.GetStrictMetadata())
 	if err != nil {
 		return nil, newRPCError(classifyRegistryError(err), err)
 	}
@@ -99,6 +99,7 @@ func (s *ControlPlaneService) ApplyRoute(ctx context.Context, req *connect.Reque
 		if err != nil {
 			return nil, newRPCError(connect.CodeInvalidArgument, err)
 		}
+		plan.StrictMetadata = plan.StrictMetadata || req.Msg.GetStrictMetadata()
 	} else {
 		mode, modeErr := routeModeString(req.Msg.GetDesiredMode())
 		if modeErr != nil {
@@ -109,7 +110,7 @@ func (s *ControlPlaneService) ApplyRoute(ctx context.Context, req *connect.Reque
 			value := req.Msg.GetRoutePattern()
 			pattern = &value
 		}
-		plan, err = s.registry.PlanRoute(wsID, req.Msg.GetApplicationRef(), mode, pattern)
+		plan, err = s.registry.PlanRouteWithOptions(wsID, req.Msg.GetApplicationRef(), mode, pattern, req.Msg.GetStrictMetadata())
 		if err != nil {
 			return nil, newRPCError(classifyRegistryError(err), err)
 		}
@@ -254,7 +255,7 @@ func routeListToProto(routes []services.Route) []*rementorv1.NormalizedRoute {
 }
 
 func routeWarningToProto(warning services.RouteWarning) *rementorv1.RouteWarning {
-	return &rementorv1.RouteWarning{Code: warning.Code, Message: warning.Message}
+	return &rementorv1.RouteWarning{Code: warning.Code, Message: warning.Message, Field: warning.Field, Severity: warning.Severity, Remediation: warning.Remediation}
 }
 
 func routeWarningsToProto(warnings []services.RouteWarning) []*rementorv1.RouteWarning {
@@ -316,6 +317,7 @@ func routePlanToProto(plan services.RoutePlan) *rementorv1.RoutePlan {
 		BeforeRoutes:     routeListToProto(plan.Before),
 		AfterRoutes:      routeListToProto(plan.After),
 		Fingerprint:      plan.Fingerprint,
+		StrictMetadata:   plan.StrictMetadata,
 	}
 	if plan.RoutePattern != nil {
 		value := *plan.RoutePattern
@@ -370,7 +372,7 @@ func routePlanFromProto(plan *rementorv1.RoutePlan) (services.RoutePlan, error) 
 	if err != nil {
 		return services.RoutePlan{}, err
 	}
-	result := services.RoutePlan{WorkspaceID: plan.GetWorkspaceId(), Environment: plan.GetEnvironment(), ApplicationID: plan.GetApplicationId(), DesiredMode: mode, Fingerprint: plan.GetFingerprint()}
+	result := services.RoutePlan{WorkspaceID: plan.GetWorkspaceId(), Environment: plan.GetEnvironment(), ApplicationID: plan.GetApplicationId(), DesiredMode: mode, Fingerprint: plan.GetFingerprint(), StrictMetadata: plan.GetStrictMetadata()}
 	if plan.GetBaseRouteVersion() != nil {
 		result.BaseRouteVersion = plan.GetBaseRouteVersion().GetValue()
 	} else {
@@ -387,7 +389,7 @@ func routePlanFromProto(plan *rementorv1.RoutePlan) (services.RoutePlan, error) 
 		result.After = append(result.After, normalizedRouteFromProto(route))
 	}
 	for _, warning := range plan.GetWarnings() {
-		result.Warnings = append(result.Warnings, services.RouteWarning{Code: warning.GetCode(), Message: warning.GetMessage()})
+		result.Warnings = append(result.Warnings, services.RouteWarning{Code: warning.GetCode(), Message: warning.GetMessage(), Field: warning.GetField(), Severity: warning.GetSeverity(), Remediation: warning.GetRemediation()})
 	}
 	for _, conflict := range plan.GetConflicts() {
 		result.Conflicts = append(result.Conflicts, routeConflictFromProto(conflict))

@@ -88,13 +88,13 @@ Commands:
   workspace delete <id>
 
   app list <workspace>
-  app register <workspace> <app> --port <N> [--path /path] [--domain d.localhost] [--remote-base-url <url>] [--context /ctx] [--name <n>] [--health endpoint] [--app-id <id>] [--service-id <id>] [--repository <name>] [--aliases <a,b>] [--route-override]
+  app register <workspace> <app> --port <N> [--path /path] [--public-path /path] [--domain d.localhost] [--remote-base-url <url>] [--context /ctx] [--upstream-context /ctx] [--frontend-root /root] [--strict-metadata] [--name <n>] [--health endpoint] [--app-id <id>] [--service-id <id>] [--repository <name>] [--aliases <a,b>] [--route-override]
   app unregister <workspace> <app>
   app toggle <workspace> <app>
   app alias <workspace> <app-or-alias> <alias>
   app resolve <workspace> <app-or-alias>
 
-  announce --workspace <id> --app <id> --port <N> [--type routing|local-apps]
+  announce --workspace <id> --app <id> --port <N> [--type routing|local-apps] [--public-path /path] [--upstream-context /ctx] [--frontend-root /root] [--strict-metadata]
            [--local-domain <d>] [--path /path] [--domain <d>] [--remote-base-url <url>] [--context /ctx] [--name <n>]
            [--health <endpoint>] [--route-override] [--no-activate]`)
 	fmt.Fprintln(os.Stderr, "  mcp")

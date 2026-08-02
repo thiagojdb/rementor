@@ -62,10 +62,6 @@ type mcpAppRouteResult struct {
 	CurrentRoute  string                `json:"currentRoute"`
 	Application   ApplicationDTO        `json:"application"`
 	Plan          *RoutePlanDTO         `json:"plan,omitempty"`
-	Status        string                `json:"status,omitempty"`
-	Verified      bool                  `json:"verified"`
-	Degraded      bool                  `json:"degraded,omitempty"`
-	Rollback      string                `json:"rollbackStatus,omitempty"`
 	Operation     *OperationMetadataDTO `json:"operation,omitempty"`
 }
 
@@ -90,28 +86,33 @@ type mcpCompactWorkspace struct {
 }
 
 type mcpCompactApplication struct {
-	ID            string                     `json:"id"`
-	AppID         string                     `json:"appId,omitempty"`
-	ServiceID     string                     `json:"serviceId,omitempty"`
-	Repository    string                     `json:"repository,omitempty"`
-	Aliases       []string                   `json:"aliases,omitempty"`
-	Name          string                     `json:"name"`
-	Route         string                     `json:"route"`
-	RouteState    *RouteStateDTO             `json:"routeState,omitempty"`
-	Path          string                     `json:"path"`
-	Domain        string                     `json:"domain,omitempty"`
-	Port          int                        `json:"port"`
-	HealthStatus  string                     `json:"healthStatus"`
-	RemoteStatus  string                     `json:"remoteStatus,omitempty"`
-	URL           string                     `json:"url,omitempty"`
-	Environment   WorkspaceEnvironmentRefDTO `json:"environment"`
-	RouteOverride bool                       `json:"routeOverride,omitempty"`
+	ID                 string                     `json:"id"`
+	AppID              string                     `json:"appId,omitempty"`
+	ServiceID          string                     `json:"serviceId,omitempty"`
+	Repository         string                     `json:"repository,omitempty"`
+	Aliases            []string                   `json:"aliases,omitempty"`
+	Name               string                     `json:"name"`
+	Route              string                     `json:"route"`
+	RouteState         *RouteStateDTO             `json:"routeState,omitempty"`
+	Path               string                     `json:"path"`
+	PublicPath         string                     `json:"publicPath,omitempty"`
+	UpstreamContext    string                     `json:"upstreamContext,omitempty"`
+	FrontendRoot       string                     `json:"frontendRoot,omitempty"`
+	FrontendRootSource string                     `json:"frontendRootSource,omitempty"`
+	Domain             string                     `json:"domain,omitempty"`
+	Port               int                        `json:"port"`
+	HealthStatus       string                     `json:"healthStatus"`
+	RemoteStatus       string                     `json:"remoteStatus,omitempty"`
+	URL                string                     `json:"url,omitempty"`
+	Environment        WorkspaceEnvironmentRefDTO `json:"environment"`
+	RouteOverride      bool                       `json:"routeOverride,omitempty"`
 }
 
 type mcpApplicationUpsertResult struct {
 	Status      string                `json:"status"`
 	Application ApplicationDTO        `json:"application"`
 	Operation   *OperationMetadataDTO `json:"operation,omitempty"`
+	Warnings    []RouteWarningDTO     `json:"warnings,omitempty"`
 }
 
 type mcpAnnounceResult struct {
@@ -287,8 +288,6 @@ func (s *mcpServer) handleToolCall(raw json.RawMessage) (any, error) {
 		return s.toolAppGet(params.Arguments)
 	case "rementor.app_resolve":
 		return s.toolAppResolve(params.Arguments)
-	case "rementor_url", "rementor.url", "rementor.app_url", "rementor.url_resolve":
-		return s.toolBrowserURL(params.Arguments)
 	case "rementor.app_alias":
 		return s.toolAppAlias(params.Arguments)
 	case "rementor.app_register":
@@ -307,8 +306,6 @@ func (s *mcpServer) handleToolCall(raw json.RawMessage) (any, error) {
 		return s.toolSyncRouting(params.Arguments)
 	case "rementor_route_get":
 		return s.toolRouteGet(params.Arguments)
-	case "rementor_route_conflicts", "rementor.route_conflicts":
-		return s.toolRouteConflicts(params.Arguments)
 	case "rementor_route_resolve":
 		return s.toolRouteResolve(params.Arguments)
 	case "rementor_route_plan":
@@ -385,6 +382,7 @@ func (s *mcpServer) toolWorkspaceCreate(args map[string]any) (any, error) {
 		Color:                optionalString(args, "color"),
 		LocalDomain:          optionalString(args, "local_domain"),
 		DefaultRemoteBaseURL: optionalString(args, "default_remote_base_url"),
+		StrictMetadata:       optionalBool(args, "strict_metadata"),
 	}
 	if req.Type == "" {
 		req.Type = "routing"
@@ -411,15 +409,7 @@ func (s *mcpServer) toolApps(args map[string]any) (any, error) {
 				unhealthyLocal++
 			}
 		}
-		compact := compactApplication(workspace, app)
-		appRef := app.AppID
-		if appRef == "" {
-			appRef = app.ID
-		}
-		if resolved, resolveErr := s.client.ResolveBrowserURL(context.Background(), workspace.ID, appRef); resolveErr == nil {
-			compact.URL = resolved.URL
-		}
-		apps = append(apps, compact)
+		apps = append(apps, compactApplication(workspace, app))
 	}
 	return toolResult(fmt.Sprintf("Resolved %d app(s): %d local, %d remote", len(apps), local, len(apps)-local), map[string]any{
 		"summary": map[string]int{
@@ -448,16 +438,6 @@ func (s *mcpServer) toolAppResolve(args map[string]any) (any, error) {
 		return nil, err
 	}
 	return toolResult(fmt.Sprintf("Resolved %s to app %s", ref, app.ID), app), nil
-}
-
-func (s *mcpServer) toolBrowserURL(args map[string]any) (any, error) {
-	workspace := requiredString(args, "workspace")
-	ref := requiredString(args, "app")
-	result, err := s.client.ResolveBrowserURL(context.Background(), workspace, ref)
-	if err != nil {
-		return nil, err
-	}
-	return toolResult(fmt.Sprintf("Resolved %s to %s", ref, result.URL), result), nil
 }
 
 func (s *mcpServer) toolAppAlias(args map[string]any) (any, error) {
@@ -518,21 +498,12 @@ func (s *mcpServer) toolAppAnnounce(args map[string]any) (any, error) {
 			operation = set.Operation
 		}
 	}
-	appRef := application.AppID
-	if appRef == "" {
-		appRef = application.ID
-	}
-	resolved, resolveErr := s.client.ResolveBrowserURL(context.Background(), workspaceID, appRef)
-	if resolveErr != nil {
-		return nil, resolveErr
-	}
-	stableURL := resolved.URL
 	result := mcpAnnounceResult{
 		Workspace:   workspaceID,
 		App:         appID,
 		Status:      registered.Status,
 		Activated:   activated,
-		URL:         stableURL,
+		URL:         buildMCPAppURL(workspace, path, domain),
 		Application: application,
 		Operation:   operation,
 	}
@@ -552,7 +523,7 @@ func (s *mcpServer) toolAppUnregister(args map[string]any) (any, error) {
 }
 
 func (s *mcpServer) toolAppSetRoute(args map[string]any) (any, error) {
-	result, err := s.setRouteWithOptions(requiredString(args, "workspace"), requiredString(args, "app"), requiredRoute(args), optionalUint64(args, "expected_version"), optionalString(args, "idempotency_key"), optionalString(args, "correlation_id"))
+	result, err := s.setRoute(requiredString(args, "workspace"), requiredString(args, "app"), requiredRoute(args))
 	if err != nil {
 		return nil, err
 	}
@@ -602,14 +573,6 @@ func (s *mcpServer) toolRouteGet(args map[string]any) (any, error) {
 	return toolResult(fmt.Sprintf("Resolved %d route(s)", len(result.Routes)), result), nil
 }
 
-func (s *mcpServer) toolRouteConflicts(args map[string]any) (any, error) {
-	result, err := s.client.GetRouteConflicts(context.Background(), requiredString(args, "workspace"))
-	if err != nil {
-		return nil, err
-	}
-	return toolResult(fmt.Sprintf("Detected %d route conflict(s)", len(result.Conflicts)), result), nil
-}
-
 func (s *mcpServer) toolRouteResolve(args map[string]any) (any, error) {
 	result, err := s.client.ResolveRoute(context.Background(), requiredString(args, "workspace"), optionalString(args, "host"), optionalString(args, "path"))
 	if err != nil {
@@ -628,7 +591,7 @@ func (s *mcpServer) toolRoutePlan(args map[string]any) (any, error) {
 		value := ""
 		pattern = &value
 	}
-	result, err := s.client.PlanRoute(context.Background(), PlanRouteRequest{WorkspaceID: requiredString(args, "workspace"), ApplicationRef: requiredString(args, "app"), DesiredMode: mode, RoutePattern: pattern, ExpectedVersion: optionalUint64(args, "expected_version"), CorrelationID: optionalString(args, "correlation_id")})
+	result, err := s.client.PlanRoute(context.Background(), PlanRouteRequest{WorkspaceID: requiredString(args, "workspace"), ApplicationRef: requiredString(args, "app"), DesiredMode: mode, RoutePattern: pattern, ExpectedVersion: optionalUint64(args, "expected_version"), CorrelationID: optionalString(args, "correlation_id"), StrictMetadata: optionalBool(args, "strict_metadata")})
 	if err != nil {
 		return nil, err
 	}
@@ -636,7 +599,7 @@ func (s *mcpServer) toolRoutePlan(args map[string]any) (any, error) {
 }
 
 func (s *mcpServer) toolRouteApply(args map[string]any) (any, error) {
-	request := ApplyRouteRequest{WorkspaceID: requiredString(args, "workspace"), ApplicationRef: optionalString(args, "app"), DesiredMode: optionalString(args, "mode"), ExpectedVersion: optionalUint64(args, "expected_version"), IdempotencyKey: optionalString(args, "idempotency_key"), CorrelationID: optionalString(args, "correlation_id")}
+	request := ApplyRouteRequest{WorkspaceID: requiredString(args, "workspace"), ApplicationRef: optionalString(args, "app"), DesiredMode: optionalString(args, "mode"), ExpectedVersion: optionalUint64(args, "expected_version"), IdempotencyKey: optionalString(args, "idempotency_key"), CorrelationID: optionalString(args, "correlation_id"), StrictMetadata: optionalBool(args, "strict_metadata")}
 	if value, ok := args["pattern"].(string); ok {
 		request.RoutePattern = &value
 	}
@@ -742,7 +705,7 @@ func (s *mcpServer) registerApp(workspaceID string, input ApplicationConfigInput
 		if err != nil {
 			return mcpApplicationUpsertResult{}, err
 		}
-		return mcpApplicationUpsertResult{Status: status, Application: upserted.Application, Operation: upserted.Operation}, nil
+		return mcpApplicationUpsertResult{Status: status, Application: upserted.Application, Operation: upserted.Operation, Warnings: upserted.Warnings}, nil
 	}
 	app, err := s.getApp(workspaceID, input.ID)
 	if err != nil {
@@ -752,20 +715,19 @@ func (s *mcpServer) registerApp(workspaceID string, input ApplicationConfigInput
 }
 
 func (s *mcpServer) setRoute(workspaceID, appID, route string) (mcpAppRouteResult, error) {
-	return s.setRouteWithOptions(workspaceID, appID, route, 0, "", "")
-}
-
-func (s *mcpServer) setRouteWithOptions(workspaceID, appID, route string, expected uint64, idempotencyKey, correlationID string) (mcpAppRouteResult, error) {
 	app, err := s.getApp(workspaceID, appID)
 	if err != nil {
 		return mcpAppRouteResult{}, err
 	}
 	current := routeOf(app)
-	// app_set_route is a compatibility wrapper, but the mutation itself is a
-	// single server-side apply operation.  The server re-plans and synchronizes
-	// the candidate under its mutation lock, so a client-side plan/apply pair
-	// cannot race another caller.
-	applied, err := s.client.ApplyRoute(context.Background(), ApplyRouteRequest{WorkspaceID: workspaceID, ApplicationRef: appID, DesiredMode: route, ExpectedVersion: expected, IdempotencyKey: idempotencyKey, CorrelationID: correlationID})
+	if current == route {
+		return mcpAppRouteResult{Changed: false, PreviousRoute: current, CurrentRoute: current, Application: app}, nil
+	}
+	plan, err := s.client.PlanRoute(context.Background(), PlanRouteRequest{WorkspaceID: workspaceID, ApplicationRef: appID, DesiredMode: route})
+	if err != nil {
+		return mcpAppRouteResult{}, err
+	}
+	applied, err := s.client.ApplyRoute(context.Background(), ApplyRouteRequest{WorkspaceID: workspaceID, ApplicationRef: appID, DesiredMode: route, Plan: &plan})
 	if err != nil {
 		return mcpAppRouteResult{}, err
 	}
@@ -773,7 +735,7 @@ func (s *mcpServer) setRouteWithOptions(workspaceID, appID, route string, expect
 	if err != nil {
 		return mcpAppRouteResult{}, err
 	}
-	return mcpAppRouteResult{Changed: applied.Changed, PreviousRoute: current, CurrentRoute: routeOf(updated), Application: updated, Plan: &applied.Plan, Status: applied.Status, Verified: applied.Verified, Degraded: applied.Degraded, Rollback: applied.Rollback, Operation: applied.Operation}, nil
+	return mcpAppRouteResult{Changed: applied.Changed, PreviousRoute: current, CurrentRoute: routeOf(updated), Application: updated, Plan: &applied.Plan, Operation: applied.Operation}, nil
 }
 
 func (s *mcpServer) toggleApp(workspaceID, appID string) (mcpToggleResult, error) {
@@ -800,29 +762,25 @@ func mcpToolList() []map[string]any {
 			"color":                   map[string]any{"type": "string"},
 			"local_domain":            map[string]any{"type": "string"},
 			"default_remote_base_url": map[string]any{"type": "string"},
+			"strict_metadata":         map[string]any{"type": "boolean"},
 		}, []string{"workspace"})),
 		toolSchema("rementor.apps", "List applications in a workspace in compact form.", workspaceSchema()),
 		toolSchema("rementor.app_get", "Get full application details.", workspaceAppSchema()),
 		toolSchema("rementor.app_resolve", "Resolve a canonical application ID or alias in a workspace.", workspaceAppSchema()),
-		toolSchema("rementor_url", "Resolve the stable browser URL for a canonical application ID or alias.", workspaceAppSchema()),
-		toolSchema("rementor.url", "Resolve the stable browser URL for a canonical application ID or alias.", workspaceAppSchema()),
-		toolSchema("rementor.app_url", "Resolve the stable browser URL for a canonical application ID or alias.", workspaceAppSchema()),
-		toolSchema("rementor.url_resolve", "Resolve the stable browser URL for a canonical application ID or alias.", workspaceAppSchema()),
 		toolSchema("rementor.app_alias", "Register an unambiguous normalized alias for an application identity.", objectSchema(map[string]any{
 			"workspace": map[string]any{"type": "string"}, "app": map[string]any{"type": "string"}, "alias": map[string]any{"type": "string"},
 		}, []string{"workspace", "app", "alias"})),
 		toolSchema("rementor.app_register", "Upsert application metadata without changing its current local/remote route.", appMetadataSchema(false)),
 		toolSchema("rementor.app_announce", "Ensure workspace/app exists and activate local routing unless no_activate is true.", appMetadataSchema(true)),
 		toolSchema("rementor.app_unregister", "Remove an application from a workspace.", workspaceAppSchema()),
-		toolSchema("rementor.app_set_route", "Apply an app route atomically with version and idempotency checks.", routeSchema()),
+		toolSchema("rementor.app_set_route", "Ensure an app routes to local or remote. This checks current state and toggles only if needed.", routeSchema()),
 		toolSchema("rementor.app_toggle", "Flip an app route between local and remote. Prefer app_set_route when the intended target is known.", workspaceAppSchema()),
 		toolSchema("rementor.workspace_set_all", "Route all applications in a workspace to local or remote.", workspaceRouteSchema()),
 		toolSchema("rementor.sync_routing", "Force Rementor to regenerate and reload routing for a workspace.", workspaceSchema()),
 		toolSchema("rementor_route_get", "Inspect the normalized routes for a workspace.", workspaceSchema()),
-		toolSchema("rementor_route_conflicts", "Detect same-pattern ownership conflicts and nginx-style route shadowing.", workspaceSchema()),
 		toolSchema("rementor_route_resolve", "Resolve a public host and request path to its winning route.", objectSchema(map[string]any{"workspace": map[string]any{"type": "string"}, "host": map[string]any{"type": "string"}, "path": map[string]any{"type": "string", "default": "/"}}, []string{"workspace"})),
-		toolSchema("rementor_route_plan", "Create a deterministic, non-mutating route plan.", objectSchema(map[string]any{"workspace": map[string]any{"type": "string"}, "app": map[string]any{"type": "string"}, "mode": map[string]any{"type": "string", "enum": []string{"local", "remote"}}, "pattern": map[string]any{"type": "string"}, "clear_pattern": map[string]any{"type": "boolean"}, "expected_version": map[string]any{"type": "integer"}}, []string{"workspace", "app", "mode"})),
-		toolSchema("rementor_route_apply", "Apply a route plan with version and idempotency checks.", objectSchema(map[string]any{"workspace": map[string]any{"type": "string"}, "app": map[string]any{"type": "string"}, "mode": map[string]any{"type": "string", "enum": []string{"local", "remote"}}, "plan": map[string]any{"type": "object"}, "pattern": map[string]any{"type": "string"}, "clear_pattern": map[string]any{"type": "boolean"}, "expected_version": map[string]any{"type": "integer"}, "idempotency_key": map[string]any{"type": "string"}, "correlation_id": map[string]any{"type": "string"}}, []string{"workspace"})),
+		toolSchema("rementor_route_plan", "Create a deterministic, non-mutating route plan.", objectSchema(map[string]any{"workspace": map[string]any{"type": "string"}, "app": map[string]any{"type": "string"}, "mode": map[string]any{"type": "string", "enum": []string{"local", "remote"}}, "pattern": map[string]any{"type": "string"}, "clear_pattern": map[string]any{"type": "boolean"}, "expected_version": map[string]any{"type": "integer"}, "strict_metadata": map[string]any{"type": "boolean"}}, []string{"workspace", "app", "mode"})),
+		toolSchema("rementor_route_apply", "Apply a route plan with version and idempotency checks.", objectSchema(map[string]any{"workspace": map[string]any{"type": "string"}, "app": map[string]any{"type": "string"}, "mode": map[string]any{"type": "string", "enum": []string{"local", "remote"}}, "plan": map[string]any{"type": "object"}, "pattern": map[string]any{"type": "string"}, "clear_pattern": map[string]any{"type": "boolean"}, "expected_version": map[string]any{"type": "integer"}, "idempotency_key": map[string]any{"type": "string"}, "strict_metadata": map[string]any{"type": "boolean"}}, []string{"workspace"})),
 		toolSchema("rementor_route_sync", "Reconcile a workspace's desired routes with the loaded proxy configuration.", workspaceSchema()),
 		toolSchema("rementor.route_pattern_get", "Get the route pattern for an application.", workspaceAppSchema()),
 		toolSchema("rementor.route_pattern_set", "Set or clear the route pattern for an application. Omit pattern or pass empty string to clear.", objectSchema(map[string]any{
@@ -848,7 +806,7 @@ func workspaceAppSchema() map[string]any {
 }
 
 func routeSchema() map[string]any {
-	return objectSchema(map[string]any{"workspace": map[string]any{"type": "string"}, "app": map[string]any{"type": "string"}, "route": map[string]any{"type": "string", "enum": []string{"local", "remote"}}, "expected_version": map[string]any{"type": "integer"}, "idempotency_key": map[string]any{"type": "string"}, "correlation_id": map[string]any{"type": "string"}}, []string{"workspace", "app", "route"})
+	return objectSchema(map[string]any{"workspace": map[string]any{"type": "string"}, "app": map[string]any{"type": "string"}, "route": map[string]any{"type": "string", "enum": []string{"local", "remote"}}}, []string{"workspace", "app", "route"})
 }
 
 func workspaceRouteSchema() map[string]any {
@@ -857,20 +815,25 @@ func workspaceRouteSchema() map[string]any {
 
 func appMetadataSchema(announce bool) map[string]any {
 	props := map[string]any{
-		"workspace":       map[string]any{"type": "string"},
-		"app":             map[string]any{"type": "string"},
-		"port":            map[string]any{"type": "number"},
-		"path":            map[string]any{"type": "string"},
-		"domain":          map[string]any{"type": "string"},
-		"remote_base_url": map[string]any{"type": "string"},
-		"context":         map[string]any{"type": "string"},
-		"name":            map[string]any{"type": "string"},
-		"health":          map[string]any{"type": "string"},
-		"app_id":          map[string]any{"type": "string"},
-		"service_id":      map[string]any{"type": "string"},
-		"repository":      map[string]any{"type": "string"},
-		"aliases":         map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
-		"route_override":  map[string]any{"type": "boolean", "description": "mark overlapping route ownership as intentional"},
+		"workspace":            map[string]any{"type": "string"},
+		"app":                  map[string]any{"type": "string"},
+		"port":                 map[string]any{"type": "number"},
+		"path":                 map[string]any{"type": "string"},
+		"domain":               map[string]any{"type": "string"},
+		"remote_base_url":      map[string]any{"type": "string"},
+		"context":              map[string]any{"type": "string"},
+		"public_path":          map[string]any{"type": "string"},
+		"upstream_context":     map[string]any{"type": "string"},
+		"frontend_root":        map[string]any{"type": "string"},
+		"frontend_root_source": map[string]any{"type": "string"},
+		"strict_metadata":      map[string]any{"type": "boolean"},
+		"name":                 map[string]any{"type": "string"},
+		"health":               map[string]any{"type": "string"},
+		"app_id":               map[string]any{"type": "string"},
+		"service_id":           map[string]any{"type": "string"},
+		"repository":           map[string]any{"type": "string"},
+		"aliases":              map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
+		"route_override":       map[string]any{"type": "boolean", "description": "mark overlapping route ownership as intentional"},
 	}
 	if announce {
 		props["type"] = map[string]any{"type": "string", "enum": []string{"routing", "local-apps"}, "default": "routing"}
@@ -929,7 +892,7 @@ func optionalBoolPtr(args map[string]any, name string) *bool {
 	if !ok {
 		return nil
 	}
-	return boolPtr(value)
+	return &value
 }
 
 func optionalUint64(args map[string]any, name string) uint64 {
@@ -972,19 +935,24 @@ func requiredRoute(args map[string]any) string {
 
 func appInputFromArgs(appID string, args map[string]any) ApplicationConfigInput {
 	return ApplicationConfigInput{
-		ID:            appID,
-		AppID:         optionalString(args, "app_id"),
-		ServiceID:     optionalString(args, "service_id"),
-		Repository:    optionalString(args, "repository"),
-		Aliases:       optionalStrings(args, "aliases"),
-		Name:          optionalString(args, "name"),
-		Path:          optionalString(args, "path"),
-		Domain:        optionalString(args, "domain"),
-		RemoteBaseUrl: optionalString(args, "remote_base_url"),
-		Port:          requiredInt(args, "port"),
-		Health:        optionalString(args, "health"),
-		Context:       optionalString(args, "context"),
-		RouteOverride: optionalBoolPtr(args, "route_override"),
+		ID:                 appID,
+		AppID:              optionalString(args, "app_id"),
+		ServiceID:          optionalString(args, "service_id"),
+		Repository:         optionalString(args, "repository"),
+		Aliases:            optionalStrings(args, "aliases"),
+		Name:               optionalString(args, "name"),
+		Path:               optionalString(args, "path"),
+		Domain:             optionalString(args, "domain"),
+		RemoteBaseUrl:      optionalString(args, "remote_base_url"),
+		Port:               requiredInt(args, "port"),
+		Health:             optionalString(args, "health"),
+		Context:            optionalString(args, "context"),
+		PublicPath:         optionalString(args, "public_path"),
+		UpstreamContext:    optionalString(args, "upstream_context"),
+		FrontendRoot:       optionalString(args, "frontend_root"),
+		FrontendRootSource: optionalString(args, "frontend_root_source"),
+		StrictMetadata:     optionalBool(args, "strict_metadata"),
+		RouteOverride:      optionalBoolPtr(args, "route_override"),
 	}
 }
 
@@ -1022,7 +990,11 @@ func compactWorkspace(ws WorkspaceDTO) mcpCompactWorkspace {
 }
 
 func compactApplication(ws WorkspaceDTO, app ApplicationDTO) mcpCompactApplication {
-	return mcpCompactApplication{ID: app.ID, AppID: app.AppID, ServiceID: app.ServiceID, Repository: app.Repository, Aliases: append([]string(nil), app.Aliases...), Name: app.Name, Route: routeOf(app), RouteState: app.Route, Path: app.Path, Domain: app.Domain, Port: app.Port, HealthStatus: app.HealthStatus, RemoteStatus: app.RemoteStatus, URL: buildMCPAppURL(ws, app.Path, app.Domain), Environment: ws.Environment, RouteOverride: app.RouteOverride}
+	publicPath := app.PublicPath
+	if publicPath == "" {
+		publicPath = app.Path
+	}
+	return mcpCompactApplication{ID: app.ID, AppID: app.AppID, ServiceID: app.ServiceID, Repository: app.Repository, Aliases: append([]string(nil), app.Aliases...), Name: app.Name, Route: routeOf(app), RouteState: app.Route, Path: app.Path, PublicPath: publicPath, UpstreamContext: app.UpstreamContext, FrontendRoot: app.FrontendRoot, FrontendRootSource: app.FrontendRootSource, Domain: app.Domain, Port: app.Port, HealthStatus: app.HealthStatus, RemoteStatus: app.RemoteStatus, URL: buildMCPAppURL(ws, publicPath, app.Domain), Environment: ws.Environment, RouteOverride: app.RouteOverride}
 }
 
 func routeOf(app ApplicationDTO) string {

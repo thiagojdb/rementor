@@ -64,14 +64,14 @@ export function getWorkspace(wsId: string): Promise<WorkspaceDTO> {
 export function createWorkspace(req: CreateWorkspaceRequest): Promise<WorkspaceDTO> {
   return call(async () => {
     const response = await client.createWorkspace(req)
-    return { ...response.workspace, operation: response.operation } as WorkspaceDTO
+    return { ...response.workspace, operation: response.operation, warnings: response.warnings } as WorkspaceDTO
   })
 }
 
 export function updateWorkspace(wsId: string, req: UpdateWorkspaceRequest): Promise<WorkspaceDTO> {
   return call(async () => {
     const response = await client.updateWorkspace({ ...req, workspaceId: wsId })
-    return { ...response.workspace, operation: response.operation } as WorkspaceDTO
+    return { ...response.workspace, operation: response.operation, warnings: response.warnings } as WorkspaceDTO
   })
 }
 

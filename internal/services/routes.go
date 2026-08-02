@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/thiagojdb/rementor/internal/models"
+	"github.com/thiagojdb/rementor/internal/validation"
 )
 
 // Route is the normalized route representation used by route inspection,
@@ -49,8 +50,11 @@ type Route struct {
 
 // RouteWarning is a non-fatal issue surfaced by a plan or sync operation.
 type RouteWarning struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
+	Code        string `json:"code"`
+	Field       string `json:"field,omitempty"`
+	Severity    string `json:"severity"`
+	Message     string `json:"message"`
+	Remediation string `json:"remediation,omitempty"`
 }
 
 // RouteConflict describes two routes competing for the same public request.
@@ -111,6 +115,7 @@ type RoutePlan struct {
 	Warnings         []RouteWarning  `json:"warnings"`
 	Conflicts        []RouteConflict `json:"conflicts"`
 	Fingerprint      string          `json:"fingerprint"`
+	StrictMetadata   bool            `json:"strictMetadata,omitempty"`
 }
 
 // RouteResolution is the result of applying nginx-like exact/prefix
@@ -181,10 +186,11 @@ type routePatternEntry struct {
 }
 
 type routePlanInput struct {
-	WorkspaceID  string
-	Application  string
-	DesiredMode  string
-	RoutePattern *string
+	WorkspaceID    string
+	Application    string
+	DesiredMode    string
+	RoutePattern   *string
+	StrictMetadata bool
 }
 
 func normalizeMode(mode string) (string, error) {
@@ -221,11 +227,14 @@ func normalizeHost(host string) string {
 }
 
 func routePatternEntries(app *models.Application) []routePatternEntry {
+	publicPath := app.PublicRoutePath()
+	ingressPath := app.IngressPath()
+	contextPath := app.BackendContextPath()
 	// The nginx renderer treats a root application with an upstream context as
 	// a special three-location route (exact root, exact context, context
 	// prefix), even when a legacy route_pattern value is present.
-	if app.Path == "/" && strings.TrimSpace(app.Context) != "" && normalizeRequestPath(app.Context) != "/" {
-		context := normalizeRequestPath(app.Context)
+	if publicPath == "/" && strings.TrimSpace(contextPath) != "" && normalizeRequestPath(contextPath) != "/" {
+		context := normalizeRequestPath(contextPath)
 		return []routePatternEntry{{Pattern: "/", Exact: true}, {Pattern: context, Exact: true}, {Pattern: context + "/*"}}
 	}
 	if app.RoutePattern != nil && strings.TrimSpace(*app.RoutePattern) != "" {
@@ -236,13 +245,10 @@ func routePatternEntries(app *models.Application) []routePatternEntry {
 		_, exact, _ := routePatternInfo(pattern)
 		return []routePatternEntry{{Pattern: pattern, Exact: exact}}
 	}
-	if app.Path == "/" || strings.TrimSpace(app.Path) == "" {
+	if publicPath == "/" || strings.TrimSpace(publicPath) == "" {
 		return []routePatternEntry{{Pattern: "/*"}}
 	}
-	path := app.Context
-	if path == "" {
-		path = app.Path
-	}
+	path := ingressPath
 	path = normalizeRequestPath(path)
 	return []routePatternEntry{{Pattern: path, Exact: true}, {Pattern: path + "/*"}}
 }
@@ -405,7 +411,7 @@ func buildRouteWithExact(ws *models.Workspace, app *models.Application, host, pa
 			if app == nil {
 				return ""
 			}
-			return app.Context
+			return app.BackendContextPath()
 		}(),
 		Precedence: precedence, PrecedenceReason: reason, Exact: exact,
 		IntentionalOverride: app != nil && app.RouteOverride,
@@ -442,7 +448,7 @@ func rootAppSortKey(app *models.Application) string {
 func defaultRootApp(ws *models.Workspace) *models.Application {
 	var root *models.Application
 	for _, app := range ws.Applications {
-		if app == nil || app.Domain != "" || normalizeRequestPath(app.Path) != "/" {
+		if app == nil || app.Domain != "" || normalizeRequestPath(app.PublicRoutePath()) != "/" {
 			continue
 		}
 		if root == nil || rootAppSortKey(app) < rootAppSortKey(root) {
@@ -828,14 +834,36 @@ func countAccidentalConflicts(conflicts []RouteConflict) int {
 
 func warningsForRoutes(ws *models.Workspace, app *models.Application, mode string, routes []Route) []RouteWarning {
 	warnings := make([]RouteWarning, 0)
+	if app != nil {
+		metadata := models.ApplicationConfig{ID: app.ID, AppID: app.CanonicalAppID(), Path: app.Path, PublicPath: app.PublicPath, Context: app.Context, UpstreamContext: app.UpstreamContext, FrontendRoot: app.FrontendRoot, FrontendRootSource: app.FrontendRootSource, LegacyPublicPath: app.LegacyPublicPath, LegacyUpstreamContext: app.LegacyUpstreamContext}
+		metadataWarnings, _ := validation.ValidateApplicationMetadata(ws.GetType(), metadata, validation.MetadataValidationOptions{})
+		for _, warning := range metadataWarnings {
+			warnings = append(warnings, RouteWarning{Code: warning.Code, Field: warning.Field, Severity: warning.Severity, Message: warning.Message, Remediation: warning.Remediation})
+		}
+	}
 	if app != nil && mode == models.RouteModeLocal && app.Port == 0 {
-		warnings = append(warnings, RouteWarning{Code: "LOCAL_TARGET_UNAVAILABLE", Message: fmt.Sprintf("application %q has no local port; no route is generated for it", app.CanonicalAppID())})
+		warnings = append(warnings, RouteWarning{Code: "LOCAL_TARGET_UNAVAILABLE", Field: "port", Severity: "warning", Message: fmt.Sprintf("application %q has no local port; no route is generated for it", app.CanonicalAppID()), Remediation: "Register a local port or select remote mode."})
 	}
 	if app != nil && mode == models.RouteModeRemote && app.GetRemoteBaseUrl(ws) == "" {
-		warnings = append(warnings, RouteWarning{Code: "REMOTE_TARGET_UNAVAILABLE", Message: fmt.Sprintf("application %q has no remote target", app.CanonicalAppID())})
+		warnings = append(warnings, RouteWarning{Code: "REMOTE_TARGET_UNAVAILABLE", Field: "remoteBaseUrl", Severity: "warning", Message: fmt.Sprintf("application %q has no remote target", app.CanonicalAppID()), Remediation: "Register a remote base URL or select local mode with a port."})
 	}
 	if hasAccidentalConflicts(conflictsForRoutes(routes)) {
-		warnings = append(warnings, RouteWarning{Code: "ROUTE_CONFLICT", Message: "one or more routes compete for the same host and pattern"})
+		warnings = append(warnings, RouteWarning{Code: "ROUTE_CONFLICT", Field: "pattern", Severity: "error", Message: "one or more routes compete for the same host and pattern", Remediation: "Choose distinct public paths or domains before applying the plan."})
+	}
+	return warnings
+}
+
+func metadataWarningsForWorkspace(ws *models.Workspace) []RouteWarning {
+	if ws == nil {
+		return nil
+	}
+	warnings := make([]RouteWarning, 0)
+	for _, app := range ws.Applications {
+		metadata := models.ApplicationConfig{ID: app.ID, AppID: app.CanonicalAppID(), Path: app.Path, PublicPath: app.PublicPath, Context: app.Context, UpstreamContext: app.UpstreamContext, FrontendRoot: app.FrontendRoot, FrontendRootSource: app.FrontendRootSource, LegacyPublicPath: app.LegacyPublicPath, LegacyUpstreamContext: app.LegacyUpstreamContext}
+		metadataWarnings, _ := validation.ValidateApplicationMetadata(ws.GetType(), metadata, validation.MetadataValidationOptions{})
+		for _, warning := range metadataWarnings {
+			warnings = append(warnings, RouteWarning{Code: warning.Code, Field: warning.Field, Severity: warning.Severity, Message: warning.Message, Remediation: warning.Remediation})
+		}
 	}
 	return warnings
 }
@@ -867,16 +895,37 @@ func planForWorkspace(ws *models.Workspace, input routePlanInput) (RoutePlan, er
 		if strings.TrimSpace(*input.RoutePattern) == "" {
 			candidateApp.RoutePattern = nil
 		} else {
+			if err := validation.RoutePattern(*input.RoutePattern); err != nil {
+				return RoutePlan{}, err
+			}
 			pattern := normalizeRequestPath(*input.RoutePattern)
 			candidateApp.RoutePattern = &pattern
 		}
 	}
 	candidate.SetDefaults()
 	after := buildNormalizedRoutes(candidate)
-	plan := RoutePlan{WorkspaceID: ws.WorkspaceID, Environment: ws.WorkspaceID, BaseRouteVersion: ws.Route.RouteVersion, ApplicationID: app.CanonicalAppID(), DesiredMode: mode, RoutePattern: cloneString(input.RoutePattern), Before: before, After: after}
+	plan := RoutePlan{WorkspaceID: ws.WorkspaceID, Environment: ws.WorkspaceID, BaseRouteVersion: ws.Route.RouteVersion, ApplicationID: app.CanonicalAppID(), DesiredMode: mode, RoutePattern: cloneString(input.RoutePattern), Before: before, After: after, StrictMetadata: input.StrictMetadata}
 	plan.Changes = diffRoutes(before, after)
 	plan.Conflicts = conflictsForRoutes(after)
 	plan.Warnings = warningsForRoutes(ws, app, mode, after)
+	metadata := models.ApplicationConfig{ID: app.ID, AppID: app.CanonicalAppID(), Path: app.Path, PublicPath: app.PublicPath, Context: app.Context, UpstreamContext: app.UpstreamContext, FrontendRoot: app.FrontendRoot, FrontendRootSource: app.FrontendRootSource, LegacyPublicPath: app.LegacyPublicPath, LegacyUpstreamContext: app.LegacyUpstreamContext}
+	metadataWarnings, metadataErr := validation.ValidateApplicationMetadata(ws.GetType(), metadata, validation.MetadataValidationOptions{Strict: input.StrictMetadata})
+	if metadataErr != nil {
+		return RoutePlan{}, metadataErr
+	}
+	if input.StrictMetadata {
+		filtered := make([]RouteWarning, 0, len(plan.Warnings))
+		for _, warning := range plan.Warnings {
+			if warning.Code == validation.WarningFrontendRootUnknown || warning.Code == validation.WarningFrontendRootMismatch || warning.Code == validation.WarningLegacyRouteMetadata {
+				continue
+			}
+			filtered = append(filtered, warning)
+		}
+		for _, warning := range metadataWarnings {
+			filtered = append(filtered, RouteWarning{Code: warning.Code, Field: warning.Field, Severity: warning.Severity, Message: warning.Message, Remediation: warning.Remediation})
+		}
+		plan.Warnings = filtered
+	}
 	plan.Fingerprint = fingerprintPlan(plan)
 	return plan, nil
 }
@@ -894,18 +943,19 @@ func fingerprintPlan(plan RoutePlan) string {
 	// serialized plan tamper-evident. Idempotency uses the separate intent
 	// fingerprint below so a server-side re-plan can still replay a request.
 	copyPlan := struct {
-		WorkspaceID   string
-		Environment   string
-		BaseVersion   uint64
-		ApplicationID string
-		DesiredMode   string
-		RoutePattern  *string
-		Before        []Route
-		After         []Route
-		Changes       []RouteChange
-		Warnings      []RouteWarning
-		Conflicts     []RouteConflict
-	}{plan.WorkspaceID, plan.Environment, plan.BaseRouteVersion, plan.ApplicationID, plan.DesiredMode, plan.RoutePattern, plan.Before, plan.After, plan.Changes, plan.Warnings, plan.Conflicts}
+		WorkspaceID    string
+		Environment    string
+		BaseVersion    uint64
+		ApplicationID  string
+		DesiredMode    string
+		RoutePattern   *string
+		Before         []Route
+		After          []Route
+		Changes        []RouteChange
+		Warnings       []RouteWarning
+		Conflicts      []RouteConflict
+		StrictMetadata bool
+	}{plan.WorkspaceID, plan.Environment, plan.BaseRouteVersion, plan.ApplicationID, plan.DesiredMode, plan.RoutePattern, plan.Before, plan.After, plan.Changes, plan.Warnings, plan.Conflicts, plan.StrictMetadata}
 	raw, _ := json.Marshal(copyPlan)
 	hash := sha256.Sum256(raw)
 	return hex.EncodeToString(hash[:])

@@ -84,8 +84,8 @@ const AppDetailModal: Component<AppDetailModalProps> = (props) => {
             <span class="font-mono px-2 py-0.5 rounded text-xs" style={valueStyle}>{props.app.id}</span>
           </div>
           <div class="flex items-center justify-between py-2" style={{ 'border-bottom': '1px solid var(--border-subtle)' }}>
-            <span class="text-sm" style={labelStyle}>Path</span>
-            <span class="font-mono px-2 py-0.5 rounded text-xs" style={valueStyle}>{props.app.path}</span>
+            <span class="text-sm" style={labelStyle}>Public path</span>
+            <span class="font-mono px-2 py-0.5 rounded text-xs" style={valueStyle}>{props.app.publicPath || props.app.path}</span>
           </div>
           {props.app.port > 0 && (
             <div class="flex items-center justify-between py-2" style={{ 'border-bottom': '1px solid var(--border-subtle)' }}>
@@ -93,10 +93,16 @@ const AppDetailModal: Component<AppDetailModalProps> = (props) => {
               <span class="font-mono px-2 py-0.5 rounded text-xs" style={valueStyle}>:{props.app.port}</span>
             </div>
           )}
-          {props.app.context && (
+          {(props.app.upstreamContext || props.app.context) && (
             <div class="flex items-center justify-between py-2" style={{ 'border-bottom': '1px solid var(--border-subtle)' }}>
-              <span class="text-sm" style={labelStyle}>Context</span>
-              <span class="font-mono px-2 py-0.5 rounded text-xs" style={valueStyle}>{props.app.context}</span>
+              <span class="text-sm" style={labelStyle}>Upstream context</span>
+              <span class="font-mono px-2 py-0.5 rounded text-xs" style={valueStyle}>{props.app.upstreamContext || props.app.context}</span>
+            </div>
+          )}
+          {props.app.frontendRoot && (
+            <div class="flex items-center justify-between py-2" style={{ 'border-bottom': '1px solid var(--border-subtle)' }}>
+              <span class="text-sm" style={labelStyle}>Frontend root</span>
+              <span class="font-mono px-2 py-0.5 rounded text-xs" style={valueStyle}>{props.app.frontendRoot}</span>
             </div>
           )}
           {props.app.routePattern && (

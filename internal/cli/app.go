@@ -114,9 +114,14 @@ func appRegister(client *Client, jsonOutput bool, args []string) {
 	fs := flag.NewFlagSet("app register", flag.ExitOnError)
 	port := fs.Int("port", 0, "local port (required)")
 	path := fs.String("path", "", "URL path (e.g. /myapp)")
+	publicPath := fs.String("public-path", "", "public/browser route (defaults to --path)")
 	domain := fs.String("domain", "", "hostname for local-apps workspaces")
 	remoteBaseURL := fs.String("remote-base-url", "", "per-app remote base URL")
 	context := fs.String("context", "", "application context path")
+	upstreamContext := fs.String("upstream-context", "", "upstream/backend context path (defaults to --context)")
+	frontendRoot := fs.String("frontend-root", "", "frontend root/base path when known")
+	frontendRootSource := fs.String("frontend-root-source", "", "frontend root source (registration or manifest)")
+	strictMetadata := fs.Bool("strict-metadata", false, "reject unknown frontend-root metadata")
 	name := fs.String("name", "", "display name")
 	health := fs.String("health", "", "health endpoint (default: actuator/health)")
 	appIdentityID := fs.String("app-id", "", "canonical application identity (defaults to <app>)")
@@ -146,19 +151,24 @@ func appRegister(client *Client, jsonOutput bool, args []string) {
 	}
 
 	input := ApplicationConfigInput{
-		ID:            appID,
-		AppID:         *appIdentityID,
-		ServiceID:     *serviceID,
-		Repository:    *repository,
-		Aliases:       splitAliases(*aliases),
-		Name:          *name,
-		Path:          *path,
-		Domain:        *domain,
-		RemoteBaseUrl: *remoteBaseURL,
-		Port:          *port,
-		Health:        *health,
-		Context:       *context,
-		RouteOverride: routeOverrideValue,
+		ID:                 appID,
+		AppID:              *appIdentityID,
+		ServiceID:          *serviceID,
+		Repository:         *repository,
+		Aliases:            splitAliases(*aliases),
+		Name:               *name,
+		Path:               *path,
+		PublicPath:         *publicPath,
+		Domain:             *domain,
+		RemoteBaseUrl:      *remoteBaseURL,
+		Port:               *port,
+		Health:             *health,
+		Context:            *context,
+		UpstreamContext:    *upstreamContext,
+		FrontendRoot:       *frontendRoot,
+		FrontendRootSource: *frontendRootSource,
+		StrictMetadata:     *strictMetadata,
+		RouteOverride:      routeOverrideValue,
 	}
 
 	result, err := client.UpsertApplication(stdctx.Background(), wsID, input)
@@ -171,10 +181,11 @@ func appRegister(client *Client, jsonOutput bool, args []string) {
 	}
 
 	if jsonOutput {
-		PrintJSON(map[string]any{"status": status, "workspace": wsID, "application": result.Application, "operation": result.Operation})
+		PrintJSON(map[string]any{"status": status, "workspace": wsID, "application": result.Application, "operation": result.Operation, "warnings": result.Warnings})
 		return
 	}
 	fmt.Printf("app %q %s in workspace %q\n", appID, status, wsID)
+	printMetadataWarnings(result.Warnings)
 }
 
 func splitAliases(value string) []string {
@@ -254,10 +265,14 @@ func upsertApp(existing []ApplicationDTO, input ApplicationConfigInput) ([]Appli
 		if app.ID == input.ID {
 			// Check if anything changed.
 			same := app.Port == input.Port &&
+				(app.PublicPath == input.PublicPath || input.PublicPath == "") &&
 				app.Path == input.Path &&
 				app.Domain == input.Domain &&
 				(input.RemoteBaseUrl == "" || app.RemoteBaseUrl == input.RemoteBaseUrl) &&
 				(input.Context == "" || app.Context == input.Context) &&
+				(input.UpstreamContext == "" || app.UpstreamContext == input.UpstreamContext) &&
+				(input.FrontendRoot == "" || app.FrontendRoot == input.FrontendRoot) &&
+				(input.FrontendRootSource == "" || app.FrontendRootSource == input.FrontendRootSource) &&
 				app.Health == input.Health &&
 				(input.Name == "" || app.Name == input.Name) &&
 				(input.AppID == "" || app.AppID == input.AppID) &&
@@ -280,6 +295,18 @@ func upsertApp(existing []ApplicationDTO, input ApplicationConfigInput) ([]Appli
 			if input.Context == "" {
 				input.Context = app.Context
 			}
+			if input.PublicPath == "" {
+				input.PublicPath = app.PublicPath
+			}
+			if input.UpstreamContext == "" {
+				input.UpstreamContext = app.UpstreamContext
+			}
+			if input.FrontendRoot == "" {
+				input.FrontendRoot = app.FrontendRoot
+			}
+			if input.FrontendRootSource == "" {
+				input.FrontendRootSource = app.FrontendRootSource
+			}
 			if input.AppID == "" {
 				input.AppID = app.AppID
 			}
@@ -300,19 +327,23 @@ func upsertApp(existing []ApplicationDTO, input ApplicationConfigInput) ([]Appli
 			continue
 		}
 		result = append(result, ApplicationConfigInput{
-			ID:            app.ID,
-			AppID:         app.AppID,
-			ServiceID:     app.ServiceID,
-			Repository:    app.Repository,
-			Aliases:       append([]string(nil), app.Aliases...),
-			Name:          app.Name,
-			Path:          app.Path,
-			Domain:        app.Domain,
-			RemoteBaseUrl: app.RemoteBaseUrl,
-			Port:          app.Port,
-			Health:        app.Health,
-			Context:       app.Context,
-			RouteOverride: boolPtr(app.RouteOverride),
+			ID:                 app.ID,
+			AppID:              app.AppID,
+			ServiceID:          app.ServiceID,
+			Repository:         app.Repository,
+			Aliases:            append([]string(nil), app.Aliases...),
+			Name:               app.Name,
+			Path:               app.Path,
+			PublicPath:         app.PublicPath,
+			Domain:             app.Domain,
+			RemoteBaseUrl:      app.RemoteBaseUrl,
+			Port:               app.Port,
+			Health:             app.Health,
+			Context:            app.Context,
+			UpstreamContext:    app.UpstreamContext,
+			FrontendRoot:       app.FrontendRoot,
+			FrontendRootSource: app.FrontendRootSource,
+			RouteOverride:      boolPtr(app.RouteOverride),
 		})
 	}
 

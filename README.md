@@ -287,6 +287,29 @@ the old boolean/string fields are retained while clients migrate to the typed
 messages. RPC failures keep their Connect status and human-readable message,
 and carry a `StructuredError` detail with a stable machine-readable code.
 
+### Route metadata and frontend roots
+
+Route registration now separates the browser-facing `publicPath` from the
+upstream service `upstreamContext`. `frontendRoot` can be supplied by
+registration metadata or a repository manifest when the frontend build base is
+known. Paths are canonicalized (including trailing slashes) before routing;
+malformed paths and contradictory legacy/new values are rejected before nginx
+or SQLite are touched.
+
+For explicit metadata, nginx rewrites the public prefix to the upstream
+context while preserving the request suffix. Legacy path/context-only records
+retain their historical context-as-ingress behavior until they are explicitly
+migrated.
+
+The legacy `path` and `context` fields are read as aliases during migration and
+are written alongside the explicit fields so older clients continue to work.
+When only legacy metadata is supplied, Rementor preserves its historical
+context-as-ingress behavior while exposing a migration warning. A nested public
+path without a proven frontend root produces a structured warning with a
+stable code, field, severity, and remediation. Pass `--strict-metadata` to
+`app register`, `route plan`, or `route apply` (or set the corresponding RPC
+flag) to promote selected warnings to validation errors.
+
 
 Prerequisites:
 

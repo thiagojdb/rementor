@@ -9,17 +9,6 @@ import (
 	"unicode"
 )
 
-// ClampInt32 bounds an integer before it crosses a protobuf int32 boundary.
-func ClampInt32(value int) int32 {
-	if value > math.MaxInt32 {
-		return math.MaxInt32
-	}
-	if value < math.MinInt32 {
-		return math.MinInt32
-	}
-	return int32(value)
-}
-
 // Constants for the application
 const (
 	DefaultHealthEndpoint          = "actuator/health"
@@ -62,6 +51,17 @@ const (
 	WorkspaceTypeLocalApps = "local-apps"
 )
 
+// ClampInt32 bounds an integer before it crosses a protobuf int32 boundary.
+func ClampInt32(value int) int32 {
+	if value > math.MaxInt32 {
+		return math.MaxInt32
+	}
+	if value < math.MinInt32 {
+		return math.MinInt32
+	}
+	return int32(value)
+}
+
 // RoutingConfig holds the path-based routing configuration
 type RoutingConfig struct {
 	Mode                 string `json:"mode"`                 // "path-based"
@@ -91,11 +91,13 @@ type WorkspaceEnvironmentRef struct {
 // application identity. WorkspaceID acts as the environment boundary while
 // path/domain/context remain binding metadata rather than identity fields.
 type ApplicationBinding struct {
-	WorkspaceID     string `json:"workspaceId"`
-	AppID           string `json:"appId"`
-	PublicHost      string `json:"publicHost,omitempty"`
-	PublicPath      string `json:"publicPath,omitempty"`
-	UpstreamContext string `json:"upstreamContext,omitempty"`
+	WorkspaceID        string `json:"workspaceId"`
+	AppID              string `json:"appId"`
+	PublicHost         string `json:"publicHost,omitempty"`
+	PublicPath         string `json:"publicPath,omitempty"`
+	UpstreamContext    string `json:"upstreamContext,omitempty"`
+	FrontendRoot       string `json:"frontendRoot,omitempty"`
+	FrontendRootSource string `json:"frontendRootSource,omitempty"`
 }
 
 // OperationMetadata identifies a successful control-plane mutation. The
@@ -111,11 +113,9 @@ type OperationMetadata struct {
 }
 
 // RouteOperationJournal is the durable write-ahead record for a route
-// operation.  A route change crosses two stores (the proxy and SQLite), so a
-// small journal lets the daemon distinguish an operation that never reached
-// the proxy from one that reached the proxy but did not commit its desired
-// state.  Workspaces are serialized by the config store; keeping the model
-// here avoids a package cycle between config and services.
+// operation. A route change crosses the proxy and SQLite stores, so the
+// journal lets recovery distinguish an operation that never reached the
+// proxy from one that reached it but did not commit desired state.
 type RouteOperationJournal struct {
 	OperationID     string       `json:"operationId"`
 	WorkspaceID     string       `json:"workspaceId"`
@@ -264,30 +264,112 @@ type Application struct {
 	// ID is retained as the wire-compatible canonical application identifier.
 	// AppID is the explicit identity field used by new callers; both values are
 	// kept in sync when configurations are loaded or registered.
-	ID            string   `json:"id"`
-	AppID         string   `json:"appId,omitempty"`
-	ServiceID     string   `json:"serviceId,omitempty"`
-	Repository    string   `json:"repository,omitempty"`
-	Aliases       []string `json:"aliases,omitempty"`
-	Name          string   `json:"name,omitempty"`          // Display name
-	Path          string   `json:"path"`                    // URL path for routing (e.g., "/users")
-	Domain        string   `json:"domain,omitempty"`        // Per-app hostname for local-apps type
-	RemoteBaseUrl string   `json:"remoteBaseUrl,omitempty"` // Per-app remote base URL override
-	Context       string   `json:"context,omitempty"`       // Optional context path
-	Health        string   `json:"health"`
-	Port          int      `json:"port"`
-	Active        bool     `json:"active"`
-	RoutePattern  *string  `json:"routePattern,omitempty"`
-	// RouteOverride explicitly marks this application's route ownership as an
-	// intentional override when it overlaps another application's route. The
-	// flag is metadata only: the normalized route detector still reports the
-	// overlap, but plans and applies may proceed when the overlap is marked.
+	ID         string   `json:"id"`
+	AppID      string   `json:"appId,omitempty"`
+	ServiceID  string   `json:"serviceId,omitempty"`
+	Repository string   `json:"repository,omitempty"`
+	Aliases    []string `json:"aliases,omitempty"`
+	Name       string   `json:"name,omitempty"` // Display name
+	// Path and Context are retained as legacy wire/config names. New callers
+	// should use PublicPath and UpstreamContext to keep browser routing
+	// separate from the path expected by the upstream service.
+	Path               string `json:"path"`                         // legacy public path (e.g., "/users")
+	PublicPath         string `json:"publicPath,omitempty"`         // public/browser route
+	Domain             string `json:"domain,omitempty"`             // Per-app hostname for local-apps type
+	RemoteBaseUrl      string `json:"remoteBaseUrl,omitempty"`      // Per-app remote base URL override
+	Context            string `json:"context,omitempty"`            // legacy upstream context path
+	UpstreamContext    string `json:"upstreamContext,omitempty"`    // upstream/backend context path
+	FrontendRoot       string `json:"frontendRoot,omitempty"`       // explicit frontend base/root, when known
+	FrontendRootSource string `json:"frontendRootSource,omitempty"` // manifest, registration, or other source
+	// Legacy* records whether the explicit aliases were synthesized from the
+	// old path/context fields. They are intentionally not part of the JSON/API
+	// contract; the renderer uses them to preserve legacy ingress semantics.
+	LegacyPublicPath      bool    `json:"-"`
+	LegacyUpstreamContext bool    `json:"-"`
+	Health                string  `json:"health"`
+	Port                  int     `json:"port"`
+	Active                bool    `json:"active"`
+	RoutePattern          *string `json:"routePattern,omitempty"`
+	// RouteOverride explicitly marks intentional overlapping route ownership.
 	RouteOverride bool               `json:"routeOverride,omitempty"`
 	StripOrigin   bool               `json:"stripOrigin,omitempty"` // Strip Origin header for local proxy (Quarkus Dev UI fix)
 	Route         RouteState         `json:"route"`
 	LastOperation *OperationMetadata `json:"lastOperation,omitempty"`
 	Runtime       AppRuntime         `json:"-"`
 	wsID          string             `json:"-"`
+}
+
+// PublicRoutePath returns the canonical public path while accepting legacy
+// persisted configurations. PublicPath wins when both fields are present.
+func (a *Application) PublicRoutePath() string {
+	if a == nil {
+		return ""
+	}
+	if strings.TrimSpace(a.PublicPath) != "" {
+		return strings.TrimSpace(a.PublicPath)
+	}
+	return strings.TrimSpace(a.Path)
+}
+
+// IngressPath is the path used for incoming requests. Legacy registrations
+// historically treated context as the public route; preserve that behavior
+// only when no explicit public/upstream pair is present. New metadata always
+// uses PublicPath.
+func (a *Application) IngressPath() string {
+	if a == nil {
+		return ""
+	}
+	if a.LegacyPublicPath && a.LegacyUpstreamContext && strings.TrimSpace(a.Context) != "" {
+		return strings.TrimSpace(a.Context)
+	}
+	if strings.TrimSpace(a.PublicPath) != "" {
+		return strings.TrimSpace(a.PublicPath)
+	}
+	if strings.TrimSpace(a.PublicPath) == "" && strings.TrimSpace(a.UpstreamContext) == "" && strings.TrimSpace(a.Context) != "" {
+		return strings.TrimSpace(a.Context)
+	}
+	return strings.TrimSpace(a.Path)
+}
+
+// BackendContextPath returns the canonical upstream context while accepting
+// legacy persisted configurations.
+func (a *Application) BackendContextPath() string {
+	if a == nil {
+		return ""
+	}
+	if strings.TrimSpace(a.UpstreamContext) != "" {
+		return strings.TrimSpace(a.UpstreamContext)
+	}
+	return strings.TrimSpace(a.Context)
+}
+
+// NormalizeRouteMetadata resolves legacy path/context values into the
+// explicit fields and mirrors them back to legacy names for old clients.
+// Syntax normalization belongs to validation; this method only resolves
+// field precedence and migration.
+func (a *Application) NormalizeRouteMetadata() {
+	if a == nil {
+		return
+	}
+	if strings.TrimSpace(a.PublicPath) == "" && strings.TrimSpace(a.Path) != "" {
+		a.LegacyPublicPath = true
+		a.PublicPath = strings.TrimSpace(a.Path)
+	}
+	if strings.TrimSpace(a.Path) == "" {
+		a.Path = strings.TrimSpace(a.PublicPath)
+	}
+	if strings.TrimSpace(a.UpstreamContext) == "" && strings.TrimSpace(a.Context) != "" {
+		a.LegacyUpstreamContext = true
+		a.UpstreamContext = strings.TrimSpace(a.Context)
+	}
+	if strings.TrimSpace(a.Context) == "" {
+		a.Context = strings.TrimSpace(a.UpstreamContext)
+	}
+	a.Path = normalizeMetadataPath(a.Path)
+	a.PublicPath = normalizeMetadataPath(a.PublicPath)
+	a.Context = normalizeMetadataPath(a.Context)
+	a.UpstreamContext = normalizeMetadataPath(a.UpstreamContext)
+	a.FrontendRoot = normalizeMetadataPath(a.FrontendRoot)
 }
 
 // CanonicalAppID returns the stable identity key while preserving the legacy
@@ -315,6 +397,7 @@ func (a *Application) RouteStateFor(workspace *Workspace) RouteState {
 		mode = RouteModeLocal
 	}
 	state.DesiredMode = mode
+	state.EffectiveMode = RouteModeUnknown
 	state.LocalTarget = ""
 	state.RemoteTarget = ""
 	if a.Port > 0 {
@@ -421,19 +504,19 @@ func (a *Application) HasLocal() bool {
 
 // HealthURL returns the local health check URL
 func (a *Application) HealthURL() string {
-	return fmt.Sprintf("%s://%s:%d%s/%s", ProtocolHTTP, Localhost, a.Port, a.Context, a.Health)
+	return fmt.Sprintf("%s://%s:%d%s/%s", ProtocolHTTP, Localhost, a.Port, a.BackendContextPath(), a.Health)
 }
 
 // LocalHealthURL returns the local health check URL (path-based)
 func (a *Application) LocalHealthURL() string {
-	return fmt.Sprintf("%s://%s:%d%s/%s", ProtocolHTTP, Localhost, a.Port, a.Context, a.Health)
+	return fmt.Sprintf("%s://%s:%d%s/%s", ProtocolHTTP, Localhost, a.Port, a.BackendContextPath(), a.Health)
 }
 
 // RemoteHealthURL returns the remote health check URL (path-based)
 func (a *Application) RemoteHealthURL(defaultRemoteBaseUrl string) string {
-	context := a.Context
+	context := a.BackendContextPath()
 	if context == "" {
-		context = a.Path
+		context = a.PublicRoutePath()
 	}
 	context = strings.Trim(context, "/")
 	if context == "" {
@@ -516,6 +599,7 @@ func (w *Workspace) SetDefaults() {
 	}
 	// Set workspace reference on all applications
 	for _, app := range w.Applications {
+		app.NormalizeRouteMetadata()
 		app.SetWsID(w.WorkspaceID)
 		app.RefreshRouteState(w)
 	}
@@ -551,7 +635,8 @@ type ApplicationConfig struct {
 	Repository    string   `json:"repository,omitempty"`
 	Aliases       []string `json:"aliases,omitempty"`
 	Name          string   `json:"name,omitempty"`
-	Path          string   `json:"path"`
+	Path          string   `json:"path"` // legacy public path
+	PublicPath    string   `json:"publicPath,omitempty"`
 	Domain        string   `json:"domain,omitempty"`
 	RemoteBaseUrl string   `json:"remoteBaseUrl,omitempty"` // Per-app remote base URL override
 	Port          int      `json:"port"`
@@ -560,12 +645,85 @@ type ApplicationConfig struct {
 	RoutePattern  *string  `json:"routePattern,omitempty"`
 	RouteOverride bool     `json:"routeOverride,omitempty"`
 	// RouteOverrideSet distinguishes an omitted update from an explicit false.
-	// It is transport metadata and is intentionally excluded from persisted JSON.
-	RouteOverrideSet bool               `json:"-"`
-	Context          string             `json:"context,omitempty"`
-	StripOrigin      bool               `json:"stripOrigin,omitempty"` // Strip Origin header for local proxy (Quarkus Dev UI fix)
-	Route            RouteState         `json:"route,omitempty"`
-	LastOperation    *OperationMetadata `json:"lastOperation,omitempty"`
+	RouteOverrideSet      bool               `json:"-"`
+	Context               string             `json:"context,omitempty"` // legacy upstream context
+	UpstreamContext       string             `json:"upstreamContext,omitempty"`
+	FrontendRoot          string             `json:"frontendRoot,omitempty"`
+	FrontendRootSource    string             `json:"frontendRootSource,omitempty"`
+	LegacyPublicPath      bool               `json:"-"`
+	LegacyUpstreamContext bool               `json:"-"`
+	StripOrigin           bool               `json:"stripOrigin,omitempty"` // Strip Origin header for local proxy (Quarkus Dev UI fix)
+	Route                 RouteState         `json:"route,omitempty"`
+	LastOperation         *OperationMetadata `json:"lastOperation,omitempty"`
+}
+
+// PublicRoutePath returns the canonical public path while preserving the
+// legacy path field for existing config files and clients.
+func (a ApplicationConfig) PublicRoutePath() string {
+	if strings.TrimSpace(a.PublicPath) != "" {
+		return strings.TrimSpace(a.PublicPath)
+	}
+	return strings.TrimSpace(a.Path)
+}
+
+// IngressPath returns the browser-facing path used by the legacy renderer.
+// Config values loaded from old path/context-only records keep their former
+// context-as-ingress behavior until an explicit publicPath is registered.
+func (a ApplicationConfig) IngressPath() string {
+	if a.LegacyPublicPath && a.LegacyUpstreamContext && strings.TrimSpace(a.Context) != "" {
+		return strings.TrimSpace(a.Context)
+	}
+	if strings.TrimSpace(a.PublicPath) != "" {
+		return strings.TrimSpace(a.PublicPath)
+	}
+	if strings.TrimSpace(a.PublicPath) == "" && strings.TrimSpace(a.UpstreamContext) == "" && strings.TrimSpace(a.Context) != "" {
+		return strings.TrimSpace(a.Context)
+	}
+	return strings.TrimSpace(a.Path)
+}
+
+// BackendContextPath returns the canonical upstream context while preserving
+// the legacy context field for existing config files and clients.
+func (a ApplicationConfig) BackendContextPath() string {
+	if strings.TrimSpace(a.UpstreamContext) != "" {
+		return strings.TrimSpace(a.UpstreamContext)
+	}
+	return strings.TrimSpace(a.Context)
+}
+
+// NormalizeRouteMetadata resolves legacy path/context values into the
+// explicit fields and mirrors them back to legacy names for compatibility.
+func (a *ApplicationConfig) NormalizeRouteMetadata() {
+	if a == nil {
+		return
+	}
+	if strings.TrimSpace(a.PublicPath) == "" && strings.TrimSpace(a.Path) != "" {
+		a.LegacyPublicPath = true
+		a.PublicPath = strings.TrimSpace(a.Path)
+	}
+	if strings.TrimSpace(a.Path) == "" {
+		a.Path = strings.TrimSpace(a.PublicPath)
+	}
+	if strings.TrimSpace(a.UpstreamContext) == "" && strings.TrimSpace(a.Context) != "" {
+		a.LegacyUpstreamContext = true
+		a.UpstreamContext = strings.TrimSpace(a.Context)
+	}
+	if strings.TrimSpace(a.Context) == "" {
+		a.Context = strings.TrimSpace(a.UpstreamContext)
+	}
+	a.Path = normalizeMetadataPath(a.Path)
+	a.PublicPath = normalizeMetadataPath(a.PublicPath)
+	a.Context = normalizeMetadataPath(a.Context)
+	a.UpstreamContext = normalizeMetadataPath(a.UpstreamContext)
+	a.FrontendRoot = normalizeMetadataPath(a.FrontendRoot)
+}
+
+func normalizeMetadataPath(value string) string {
+	value = strings.TrimSpace(value)
+	if len(value) > 1 {
+		value = strings.TrimRight(value, "/")
+	}
+	return value
 }
 
 // CanonicalAppID returns the stable application identity, falling back to the

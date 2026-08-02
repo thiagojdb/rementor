@@ -9,6 +9,24 @@ import (
 	"os"
 )
 
+func printMetadataWarnings(warnings []RouteWarningDTO) {
+	for _, warning := range warnings {
+		severity := warning.Severity
+		if severity == "" {
+			severity = "warning"
+		}
+		field := ""
+		if warning.Field != "" {
+			field = " field=" + warning.Field
+		}
+		fmt.Fprintf(os.Stderr, "%s %s%s: %s", severity, warning.Code, field, warning.Message)
+		if warning.Remediation != "" {
+			fmt.Fprintf(os.Stderr, " (%s)", warning.Remediation)
+		}
+		fmt.Fprintln(os.Stderr)
+	}
+}
+
 // RouteCmd exposes the normalized route lifecycle. The positional form is
 // convenient for humans while --workspace remains available to scripts.
 func RouteCmd(client *Client, jsonOutput bool, args []string) {
@@ -113,6 +131,7 @@ func routeGet(client *Client, jsonOutput bool, args []string) {
 	w.Flush()
 	if len(result.Warnings) > 0 || len(result.Conflicts) > 0 {
 		fmt.Fprintf(os.Stderr, "warnings: %d, conflicts: %d\n", len(result.Warnings), len(result.Conflicts))
+		printMetadataWarnings(result.Warnings)
 	}
 }
 
@@ -156,6 +175,7 @@ func routePlan(client *Client, jsonOutput bool, args []string) {
 	pattern := fs.String("pattern", "", "optional route pattern; an empty value clears it")
 	clearPattern := fs.Bool("clear-pattern", false, "clear the configured route pattern")
 	expected := fs.Uint64("expected-version", 0, "expected route version")
+	strictMetadata := fs.Bool("strict-metadata", false, "reject unknown frontend-root metadata")
 	if err := parseFlags(fs, args); err != nil {
 		Die("%v", err)
 	}
@@ -171,7 +191,7 @@ func routePlan(client *Client, jsonOutput bool, args []string) {
 		value := *pattern
 		routePattern = &value
 	}
-	result, err := client.PlanRoute(stdctx.Background(), PlanRouteRequest{WorkspaceID: wsID, ApplicationRef: appID, DesiredMode: *mode, RoutePattern: routePattern, ExpectedVersion: *expected})
+	result, err := client.PlanRoute(stdctx.Background(), PlanRouteRequest{WorkspaceID: wsID, ApplicationRef: appID, DesiredMode: *mode, RoutePattern: routePattern, ExpectedVersion: *expected, StrictMetadata: *strictMetadata})
 	if err != nil {
 		Die("%v", err)
 	}
@@ -180,6 +200,7 @@ func routePlan(client *Client, jsonOutput bool, args []string) {
 		return
 	}
 	fmt.Printf("route plan %s: version %d, %d change(s), %d warning(s), %d conflict(s)\n", result.Fingerprint, result.BaseRouteVersion, len(result.Changes), len(result.Warnings), len(result.Conflicts))
+	printMetadataWarnings(result.Warnings)
 }
 
 func routeApply(client *Client, jsonOutput bool, args []string) {
@@ -192,11 +213,12 @@ func routeApply(client *Client, jsonOutput bool, args []string) {
 	correlation := fs.String("correlation-id", "", "correlation ID")
 	planPath := fs.String("plan", "", "JSON route plan file (or - for stdin)")
 	expected := fs.Uint64("expected-version", 0, "expected route version")
+	strictMetadata := fs.Bool("strict-metadata", false, "reject unknown frontend-root metadata")
 	if err := parseFlags(fs, args); err != nil {
 		Die("%v", err)
 	}
 	wsID, appID := routeWorkspaceApp(fs, *workspace)
-	request := ApplyRouteRequest{WorkspaceID: wsID, ApplicationRef: appID, DesiredMode: *mode, ExpectedVersion: *expected, IdempotencyKey: *idempotency, CorrelationID: *correlation}
+	request := ApplyRouteRequest{WorkspaceID: wsID, ApplicationRef: appID, DesiredMode: *mode, ExpectedVersion: *expected, IdempotencyKey: *idempotency, CorrelationID: *correlation, StrictMetadata: *strictMetadata}
 	if *clearPattern || *pattern != "" {
 		value := *pattern
 		request.RoutePattern = &value

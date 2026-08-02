@@ -86,9 +86,10 @@ func (s *ControlPlaneService) CreateWorkspace(ctx context.Context, req *connect.
 		},
 		Applications: toApplicationConfigs(msg.GetApplications()),
 	}
-	if err := validation.Workspace(wsConfig.Type, wsConfig.Routing.LocalDomain, wsConfig.Routing.DefaultRemoteBaseURL, wsConfig.Applications); err != nil {
+	if _, err := validation.WorkspaceWithOptions(wsConfig.Type, wsConfig.Routing.LocalDomain, wsConfig.Routing.DefaultRemoteBaseURL, wsConfig.Applications, validation.MetadataValidationOptions{Strict: msg.GetStrictMetadata()}); err != nil {
 		return nil, newRPCError(connect.CodeInvalidArgument, err)
 	}
+	metadataWarnings, _ := validation.WorkspaceWithOptions(wsConfig.Type, wsConfig.Routing.LocalDomain, wsConfig.Routing.DefaultRemoteBaseURL, wsConfig.Applications, validation.MetadataValidationOptions{})
 
 	ws, operation, err := s.registry.CreateWorkspaceWithMetadata(wsConfig, correlationID(msg.GetCorrelationId(), req.Header()))
 	if err != nil {
@@ -96,7 +97,7 @@ func (s *ControlPlaneService) CreateWorkspace(ctx context.Context, req *connect.
 		return nil, newRPCError(connect.CodeInternal, fmt.Errorf("failed to create workspace: %w", err))
 	}
 
-	return connect.NewResponse(&rementorv1.CreateWorkspaceResponse{Workspace: toProtoWorkspace(ws), Operation: toProtoOperation(operation)}), nil
+	return connect.NewResponse(&rementorv1.CreateWorkspaceResponse{Workspace: toProtoWorkspace(ws), Operation: toProtoOperation(operation), Warnings: metadataWarningsToProto(metadataWarnings)}), nil
 }
 
 func (s *ControlPlaneService) UpdateWorkspace(ctx context.Context, req *connect.Request[rementorv1.UpdateWorkspaceRequest]) (*connect.Response[rementorv1.UpdateWorkspaceResponse], error) {
@@ -108,15 +109,16 @@ func (s *ControlPlaneService) UpdateWorkspace(ctx context.Context, req *connect.
 	apps := toApplicationConfigs(req.Msg.GetApplications())
 	localDomain := strings.TrimSpace(req.Msg.GetLocalDomain())
 	remoteBaseURL := strings.TrimSpace(req.Msg.GetDefaultRemoteBaseUrl())
-	if err := validation.Workspace(ws.GetType(), localDomain, remoteBaseURL, apps); err != nil {
+	if _, err := validation.WorkspaceWithOptions(ws.GetType(), localDomain, remoteBaseURL, apps, validation.MetadataValidationOptions{Strict: req.Msg.GetStrictMetadata()}); err != nil {
 		return nil, newRPCError(connect.CodeInvalidArgument, err)
 	}
+	metadataWarnings, _ := validation.WorkspaceWithOptions(ws.GetType(), localDomain, remoteBaseURL, apps, validation.MetadataValidationOptions{})
 	operation, err := s.registry.UpdateWorkspaceApplicationsWithMetadata(wsID, apps, localDomain, remoteBaseURL, correlationID(req.Msg.GetCorrelationId(), req.Header()))
 	if err != nil {
 		log.Printf("Error updating workspace %s applications: %v", wsID, err)
 		return nil, newRPCError(connect.CodeInternal, fmt.Errorf("failed to update workspace: %w", err))
 	}
-	return connect.NewResponse(&rementorv1.UpdateWorkspaceResponse{Workspace: toProtoWorkspace(s.registry.GetWorkspaceView(wsID)), Operation: toProtoOperation(operation)}), nil
+	return connect.NewResponse(&rementorv1.UpdateWorkspaceResponse{Workspace: toProtoWorkspace(s.registry.GetWorkspaceView(wsID)), Operation: toProtoOperation(operation), Warnings: metadataWarningsToProto(metadataWarnings)}), nil
 }
 
 func (s *ControlPlaneService) DeleteWorkspace(ctx context.Context, req *connect.Request[rementorv1.DeleteWorkspaceRequest]) (*connect.Response[rementorv1.DeleteWorkspaceResponse], error) {
@@ -200,9 +202,10 @@ func (s *ControlPlaneService) UpsertApplication(ctx context.Context, req *connec
 		appConfig.AppID = appConfig.ID
 	}
 	appConfig.ID = appConfig.AppID
-	if err := validation.Application(ws.GetType(), appConfig); err != nil {
+	if _, err := validation.ApplicationWithOptions(ws.GetType(), appConfig, validation.MetadataValidationOptions{Strict: req.Msg.GetStrictMetadata()}); err != nil {
 		return nil, newRPCError(connect.CodeInvalidArgument, err)
 	}
+	metadataWarnings, _ := validation.ApplicationWithOptions(ws.GetType(), appConfig, validation.MetadataValidationOptions{})
 
 	apps := applicationConfigsFromWorkspace(ws)
 	created := true
@@ -235,6 +238,7 @@ func (s *ControlPlaneService) UpsertApplication(ctx context.Context, req *connec
 		Application: toProtoApplicationInWorkspace(ws, app),
 		Created:     created,
 		Operation:   toProtoOperation(operation),
+		Warnings:    metadataWarningsToProto(metadataWarnings),
 	}), nil
 }
 
@@ -370,7 +374,8 @@ func toApplicationConfig(input *rementorv1.ApplicationConfigInput) models.Applic
 		ID: strings.TrimSpace(input.GetId()), AppID: strings.TrimSpace(input.GetAppId()), ServiceID: strings.TrimSpace(input.GetServiceId()), Repository: strings.TrimSpace(input.GetRepository()), Aliases: input.GetAliases(), Name: strings.TrimSpace(input.GetName()),
 		Path: strings.TrimSpace(input.GetPath()), Domain: strings.TrimSpace(input.GetDomain()),
 		RemoteBaseUrl: strings.TrimSpace(input.GetRemoteBaseUrl()), Port: int(input.GetPort()),
-		Health: health, Context: strings.TrimSpace(input.GetContext()),
+		Health: health, Context: strings.TrimSpace(input.GetContext()), UpstreamContext: strings.TrimSpace(input.GetUpstreamContext()),
+		PublicPath: strings.TrimSpace(input.GetPublicPath()), FrontendRoot: strings.TrimSpace(input.GetFrontendRoot()), FrontendRootSource: strings.TrimSpace(input.GetFrontendRootSource()),
 		RouteOverride: input.GetRouteOverride(), RouteOverrideSet: input.RouteOverride != nil,
 	}
 }
@@ -379,9 +384,10 @@ func applicationConfigsFromWorkspace(ws *models.Workspace) []models.ApplicationC
 	apps := make([]models.ApplicationConfig, 0, len(ws.Applications))
 	for _, app := range ws.Applications {
 		apps = append(apps, models.ApplicationConfig{
-			ID: app.ID, AppID: app.CanonicalAppID(), ServiceID: app.ServiceID, Repository: app.Repository, Aliases: app.NormalizedAliases(), Name: app.Name, Path: app.Path, Domain: app.Domain,
+			ID: app.ID, AppID: app.CanonicalAppID(), ServiceID: app.ServiceID, Repository: app.Repository, Aliases: app.NormalizedAliases(), Name: app.Name, Path: app.Path, PublicPath: app.PublicRoutePath(), Domain: app.Domain,
 			RemoteBaseUrl: app.RemoteBaseUrl, Port: app.Port, Health: app.Health,
-			Active: app.Active, RoutePattern: app.RoutePattern, Context: app.Context,
+			Active: app.Active, RoutePattern: app.RoutePattern, Context: app.Context, UpstreamContext: app.BackendContextPath(), FrontendRoot: app.FrontendRoot, FrontendRootSource: app.FrontendRootSource,
+			LegacyPublicPath: app.LegacyPublicPath, LegacyUpstreamContext: app.LegacyUpstreamContext,
 			StripOrigin: app.StripOrigin, RouteOverride: app.RouteOverride, RouteOverrideSet: true,
 		})
 	}
@@ -476,26 +482,30 @@ func toProtoApplicationInWorkspace(ws *models.Workspace, app *models.Application
 		state = app.RouteStateFor(ws)
 	}
 	return &rementorv1.Application{
-		Id:            app.ID,
-		AppId:         app.CanonicalAppID(),
-		ServiceId:     app.ServiceID,
-		Repository:    app.Repository,
-		Aliases:       app.NormalizedAliases(),
-		Name:          name,
-		Path:          app.Path,
-		Domain:        app.Domain,
-		RemoteBaseUrl: app.RemoteBaseUrl,
-		Context:       app.Context,
-		Port:          int32(app.Port),
-		Health:        app.Health,
-		Active:        app.Active,
-		HealthStatus:  healthStatus,
-		RemoteStatus:  remoteStatus,
-		RoutePattern:  app.RoutePattern,
-		RouteOverride: app.RouteOverride,
-		Identity:      identity,
-		Environment:   environment,
-		Route:         routeStateToProto(state),
+		Id:                 app.ID,
+		AppId:              app.CanonicalAppID(),
+		ServiceId:          app.ServiceID,
+		Repository:         app.Repository,
+		Aliases:            app.NormalizedAliases(),
+		Name:               name,
+		Path:               app.Path,
+		PublicPath:         app.PublicRoutePath(),
+		Domain:             app.Domain,
+		RemoteBaseUrl:      app.RemoteBaseUrl,
+		Context:            app.Context,
+		UpstreamContext:    app.BackendContextPath(),
+		FrontendRoot:       app.FrontendRoot,
+		FrontendRootSource: app.FrontendRootSource,
+		Port:               int32(app.Port),
+		Health:             app.Health,
+		Active:             app.Active,
+		HealthStatus:       healthStatus,
+		RemoteStatus:       remoteStatus,
+		RoutePattern:       app.RoutePattern,
+		RouteOverride:      app.RouteOverride,
+		Identity:           identity,
+		Environment:        environment,
+		Route:              routeStateToProto(state),
 	}
 }
 
@@ -516,6 +526,14 @@ func routeStateToProto(state models.RouteState) *rementorv1.RouteState {
 		VerifiedAt:         timestampOrNil(state.VerifiedAt),
 		VerificationStatus: state.VerificationStatus,
 	}
+}
+
+func metadataWarningsToProto(warnings []validation.MetadataWarning) []*rementorv1.RouteWarning {
+	result := make([]*rementorv1.RouteWarning, 0, len(warnings))
+	for _, warning := range warnings {
+		result = append(result, &rementorv1.RouteWarning{Code: warning.Code, Field: warning.Field, Severity: warning.Severity, Message: warning.Message, Remediation: warning.Remediation})
+	}
+	return result
 }
 
 func routeMode(mode string) rementorv1.RouteMode {
@@ -657,6 +675,10 @@ func classifyRegistryError(err error) connect.Code {
 	}
 	if errors.Is(err, services.ErrBrowserURLBinding) {
 		return connect.CodeFailedPrecondition
+	}
+	var metadataErr *validation.MetadataValidationError
+	if errors.As(err, &metadataErr) {
+		return connect.CodeInvalidArgument
 	}
 	message := strings.ToLower(err.Error())
 	if strings.Contains(message, "workspace not found") || strings.Contains(message, "application not found") {
