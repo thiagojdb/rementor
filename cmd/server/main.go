@@ -142,6 +142,7 @@ func main() {
 				e.HideBanner = true
 
 				// Middleware
+				e.Use(rpc.CorrelationMiddleware)
 				e.Use(middleware.Logger())
 				e.Use(middleware.Recover())
 
@@ -160,6 +161,10 @@ func main() {
 				e.GET("/healthz", func(c echo.Context) error {
 					return c.NoContent(http.StatusOK)
 				})
+				e.GET(rpc.TracePath, rpc.TraceHandler)
+				// Keep the shorter spelling available for manually managed nginx
+				// instances while generated routes use /__rementor/trace.
+				e.GET("/_rementor/trace", rpc.TraceHandler)
 
 				// Serve the generated SPA assets from the build output directory.
 				// The frontend bundle is intentionally not committed to source control.
