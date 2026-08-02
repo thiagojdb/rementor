@@ -301,7 +301,7 @@ func (s *ControlPlaneService) SyncWorkspaceRouting(ctx context.Context, req *con
 	if err != nil {
 		return nil, newRPCError(classifyRegistryError(err), err)
 	}
-	return connect.NewResponse(&rementorv1.SyncWorkspaceRoutingResponse{Status: "ok", Operation: toProtoOperation(result.Operation)}), nil
+	return connect.NewResponse(&rementorv1.SyncWorkspaceRoutingResponse{Status: result.Status, Operation: toProtoOperation(result.Operation)}), nil
 }
 
 func (s *ControlPlaneService) GetRoutePattern(ctx context.Context, req *connect.Request[rementorv1.GetRoutePatternRequest]) (*connect.Response[rementorv1.GetRoutePatternResponse], error) {
@@ -646,6 +646,9 @@ func classifyRegistryError(err error) connect.Code {
 		return connect.CodeAlreadyExists
 	}
 	if errors.Is(err, models.ErrAmbiguousApplication) {
+		return connect.CodeFailedPrecondition
+	}
+	if errors.Is(err, services.ErrBrowserURLBinding) {
 		return connect.CodeFailedPrecondition
 	}
 	message := strings.ToLower(err.Error())

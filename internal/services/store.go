@@ -16,6 +16,16 @@ type WorkspaceStore interface {
 	WorkspaceFromConfig(models.WorkspaceConfig) *models.Workspace
 }
 
+// RouteJournalStore is implemented by stores that can durably record the
+// write-ahead state of a route operation.  It is intentionally optional so
+// embedders and older test stores that only implement WorkspaceStore remain
+// source compatible; the built-in SQLite store implements it.
+type RouteJournalStore interface {
+	BeginRouteOperation(models.RouteOperationJournal) error
+	UpdateRouteOperation(models.RouteOperationJournal) error
+	LoadRouteOperations() ([]models.RouteOperationJournal, error)
+}
+
 type configWorkspaceStore struct{}
 
 func NewConfigWorkspaceStore() WorkspaceStore {
@@ -40,4 +50,16 @@ func (configWorkspaceStore) ReplaceWorkspaces(workspaces []*models.Workspace) er
 
 func (configWorkspaceStore) WorkspaceFromConfig(ws models.WorkspaceConfig) *models.Workspace {
 	return config.WorkspaceFromConfig(ws)
+}
+
+func (configWorkspaceStore) BeginRouteOperation(operation models.RouteOperationJournal) error {
+	return config.BeginRouteOperation(operation)
+}
+
+func (configWorkspaceStore) UpdateRouteOperation(operation models.RouteOperationJournal) error {
+	return config.UpdateRouteOperation(operation)
+}
+
+func (configWorkspaceStore) LoadRouteOperations() ([]models.RouteOperationJournal, error) {
+	return config.LoadRouteOperations()
 }

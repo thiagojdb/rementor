@@ -62,6 +62,10 @@ type mcpAppRouteResult struct {
 	CurrentRoute  string                `json:"currentRoute"`
 	Application   ApplicationDTO        `json:"application"`
 	Plan          *RoutePlanDTO         `json:"plan,omitempty"`
+	Status        string                `json:"status,omitempty"`
+	Verified      bool                  `json:"verified"`
+	Degraded      bool                  `json:"degraded,omitempty"`
+	Rollback      string                `json:"rollbackStatus,omitempty"`
 	Operation     *OperationMetadataDTO `json:"operation,omitempty"`
 }
 
@@ -282,6 +286,8 @@ func (s *mcpServer) handleToolCall(raw json.RawMessage) (any, error) {
 		return s.toolAppGet(params.Arguments)
 	case "rementor.app_resolve":
 		return s.toolAppResolve(params.Arguments)
+	case "rementor_url", "rementor.url", "rementor.app_url", "rementor.url_resolve":
+		return s.toolBrowserURL(params.Arguments)
 	case "rementor.app_alias":
 		return s.toolAppAlias(params.Arguments)
 	case "rementor.app_register":
@@ -402,7 +408,15 @@ func (s *mcpServer) toolApps(args map[string]any) (any, error) {
 				unhealthyLocal++
 			}
 		}
-		apps = append(apps, compactApplication(workspace, app))
+		compact := compactApplication(workspace, app)
+		appRef := app.AppID
+		if appRef == "" {
+			appRef = app.ID
+		}
+		if resolved, resolveErr := s.client.ResolveBrowserURL(context.Background(), workspace.ID, appRef); resolveErr == nil {
+			compact.URL = resolved.URL
+		}
+		apps = append(apps, compact)
 	}
 	return toolResult(fmt.Sprintf("Resolved %d app(s): %d local, %d remote", len(apps), local, len(apps)-local), map[string]any{
 		"summary": map[string]int{
@@ -431,6 +445,16 @@ func (s *mcpServer) toolAppResolve(args map[string]any) (any, error) {
 		return nil, err
 	}
 	return toolResult(fmt.Sprintf("Resolved %s to app %s", ref, app.ID), app), nil
+}
+
+func (s *mcpServer) toolBrowserURL(args map[string]any) (any, error) {
+	workspace := requiredString(args, "workspace")
+	ref := requiredString(args, "app")
+	result, err := s.client.ResolveBrowserURL(context.Background(), workspace, ref)
+	if err != nil {
+		return nil, err
+	}
+	return toolResult(fmt.Sprintf("Resolved %s to %s", ref, result.URL), result), nil
 }
 
 func (s *mcpServer) toolAppAlias(args map[string]any) (any, error) {
@@ -491,12 +515,21 @@ func (s *mcpServer) toolAppAnnounce(args map[string]any) (any, error) {
 			operation = set.Operation
 		}
 	}
+	appRef := application.AppID
+	if appRef == "" {
+		appRef = application.ID
+	}
+	resolved, resolveErr := s.client.ResolveBrowserURL(context.Background(), workspaceID, appRef)
+	if resolveErr != nil {
+		return nil, resolveErr
+	}
+	stableURL := resolved.URL
 	result := mcpAnnounceResult{
 		Workspace:   workspaceID,
 		App:         appID,
 		Status:      registered.Status,
 		Activated:   activated,
-		URL:         buildMCPAppURL(workspace, path, domain),
+		URL:         stableURL,
 		Application: application,
 		Operation:   operation,
 	}
@@ -516,7 +549,7 @@ func (s *mcpServer) toolAppUnregister(args map[string]any) (any, error) {
 }
 
 func (s *mcpServer) toolAppSetRoute(args map[string]any) (any, error) {
-	result, err := s.setRoute(requiredString(args, "workspace"), requiredString(args, "app"), requiredRoute(args))
+	result, err := s.setRouteWithOptions(requiredString(args, "workspace"), requiredString(args, "app"), requiredRoute(args), optionalUint64(args, "expected_version"), optionalString(args, "idempotency_key"), optionalString(args, "correlation_id"))
 	if err != nil {
 		return nil, err
 	}
@@ -708,19 +741,20 @@ func (s *mcpServer) registerApp(workspaceID string, input ApplicationConfigInput
 }
 
 func (s *mcpServer) setRoute(workspaceID, appID, route string) (mcpAppRouteResult, error) {
+	return s.setRouteWithOptions(workspaceID, appID, route, 0, "", "")
+}
+
+func (s *mcpServer) setRouteWithOptions(workspaceID, appID, route string, expected uint64, idempotencyKey, correlationID string) (mcpAppRouteResult, error) {
 	app, err := s.getApp(workspaceID, appID)
 	if err != nil {
 		return mcpAppRouteResult{}, err
 	}
 	current := routeOf(app)
-	if current == route {
-		return mcpAppRouteResult{Changed: false, PreviousRoute: current, CurrentRoute: current, Application: app}, nil
-	}
-	plan, err := s.client.PlanRoute(context.Background(), PlanRouteRequest{WorkspaceID: workspaceID, ApplicationRef: appID, DesiredMode: route})
-	if err != nil {
-		return mcpAppRouteResult{}, err
-	}
-	applied, err := s.client.ApplyRoute(context.Background(), ApplyRouteRequest{WorkspaceID: workspaceID, ApplicationRef: appID, DesiredMode: route, Plan: &plan})
+	// app_set_route is a compatibility wrapper, but the mutation itself is a
+	// single server-side apply operation.  The server re-plans and synchronizes
+	// the candidate under its mutation lock, so a client-side plan/apply pair
+	// cannot race another caller.
+	applied, err := s.client.ApplyRoute(context.Background(), ApplyRouteRequest{WorkspaceID: workspaceID, ApplicationRef: appID, DesiredMode: route, ExpectedVersion: expected, IdempotencyKey: idempotencyKey, CorrelationID: correlationID})
 	if err != nil {
 		return mcpAppRouteResult{}, err
 	}
@@ -728,7 +762,7 @@ func (s *mcpServer) setRoute(workspaceID, appID, route string) (mcpAppRouteResul
 	if err != nil {
 		return mcpAppRouteResult{}, err
 	}
-	return mcpAppRouteResult{Changed: applied.Changed, PreviousRoute: current, CurrentRoute: routeOf(updated), Application: updated, Plan: &applied.Plan, Operation: applied.Operation}, nil
+	return mcpAppRouteResult{Changed: applied.Changed, PreviousRoute: current, CurrentRoute: routeOf(updated), Application: updated, Plan: &applied.Plan, Status: applied.Status, Verified: applied.Verified, Degraded: applied.Degraded, Rollback: applied.Rollback, Operation: applied.Operation}, nil
 }
 
 func (s *mcpServer) toggleApp(workspaceID, appID string) (mcpToggleResult, error) {
@@ -759,20 +793,24 @@ func mcpToolList() []map[string]any {
 		toolSchema("rementor.apps", "List applications in a workspace in compact form.", workspaceSchema()),
 		toolSchema("rementor.app_get", "Get full application details.", workspaceAppSchema()),
 		toolSchema("rementor.app_resolve", "Resolve a canonical application ID or alias in a workspace.", workspaceAppSchema()),
+		toolSchema("rementor_url", "Resolve the stable browser URL for a canonical application ID or alias.", workspaceAppSchema()),
+		toolSchema("rementor.url", "Resolve the stable browser URL for a canonical application ID or alias.", workspaceAppSchema()),
+		toolSchema("rementor.app_url", "Resolve the stable browser URL for a canonical application ID or alias.", workspaceAppSchema()),
+		toolSchema("rementor.url_resolve", "Resolve the stable browser URL for a canonical application ID or alias.", workspaceAppSchema()),
 		toolSchema("rementor.app_alias", "Register an unambiguous normalized alias for an application identity.", objectSchema(map[string]any{
 			"workspace": map[string]any{"type": "string"}, "app": map[string]any{"type": "string"}, "alias": map[string]any{"type": "string"},
 		}, []string{"workspace", "app", "alias"})),
 		toolSchema("rementor.app_register", "Upsert application metadata without changing its current local/remote route.", appMetadataSchema(false)),
 		toolSchema("rementor.app_announce", "Ensure workspace/app exists and activate local routing unless no_activate is true.", appMetadataSchema(true)),
 		toolSchema("rementor.app_unregister", "Remove an application from a workspace.", workspaceAppSchema()),
-		toolSchema("rementor.app_set_route", "Ensure an app routes to local or remote. This checks current state and toggles only if needed.", routeSchema()),
+		toolSchema("rementor.app_set_route", "Apply an app route atomically with version and idempotency checks.", routeSchema()),
 		toolSchema("rementor.app_toggle", "Flip an app route between local and remote. Prefer app_set_route when the intended target is known.", workspaceAppSchema()),
 		toolSchema("rementor.workspace_set_all", "Route all applications in a workspace to local or remote.", workspaceRouteSchema()),
 		toolSchema("rementor.sync_routing", "Force Rementor to regenerate and reload routing for a workspace.", workspaceSchema()),
 		toolSchema("rementor_route_get", "Inspect the normalized routes for a workspace.", workspaceSchema()),
 		toolSchema("rementor_route_resolve", "Resolve a public host and request path to its winning route.", objectSchema(map[string]any{"workspace": map[string]any{"type": "string"}, "host": map[string]any{"type": "string"}, "path": map[string]any{"type": "string", "default": "/"}}, []string{"workspace"})),
 		toolSchema("rementor_route_plan", "Create a deterministic, non-mutating route plan.", objectSchema(map[string]any{"workspace": map[string]any{"type": "string"}, "app": map[string]any{"type": "string"}, "mode": map[string]any{"type": "string", "enum": []string{"local", "remote"}}, "pattern": map[string]any{"type": "string"}, "clear_pattern": map[string]any{"type": "boolean"}, "expected_version": map[string]any{"type": "integer"}}, []string{"workspace", "app", "mode"})),
-		toolSchema("rementor_route_apply", "Apply a route plan with version and idempotency checks.", objectSchema(map[string]any{"workspace": map[string]any{"type": "string"}, "app": map[string]any{"type": "string"}, "mode": map[string]any{"type": "string", "enum": []string{"local", "remote"}}, "plan": map[string]any{"type": "object"}, "pattern": map[string]any{"type": "string"}, "clear_pattern": map[string]any{"type": "boolean"}, "expected_version": map[string]any{"type": "integer"}, "idempotency_key": map[string]any{"type": "string"}}, []string{"workspace"})),
+		toolSchema("rementor_route_apply", "Apply a route plan with version and idempotency checks.", objectSchema(map[string]any{"workspace": map[string]any{"type": "string"}, "app": map[string]any{"type": "string"}, "mode": map[string]any{"type": "string", "enum": []string{"local", "remote"}}, "plan": map[string]any{"type": "object"}, "pattern": map[string]any{"type": "string"}, "clear_pattern": map[string]any{"type": "boolean"}, "expected_version": map[string]any{"type": "integer"}, "idempotency_key": map[string]any{"type": "string"}, "correlation_id": map[string]any{"type": "string"}}, []string{"workspace"})),
 		toolSchema("rementor_route_sync", "Reconcile a workspace's desired routes with the loaded proxy configuration.", workspaceSchema()),
 		toolSchema("rementor.route_pattern_get", "Get the route pattern for an application.", workspaceAppSchema()),
 		toolSchema("rementor.route_pattern_set", "Set or clear the route pattern for an application. Omit pattern or pass empty string to clear.", objectSchema(map[string]any{
@@ -798,7 +836,7 @@ func workspaceAppSchema() map[string]any {
 }
 
 func routeSchema() map[string]any {
-	return objectSchema(map[string]any{"workspace": map[string]any{"type": "string"}, "app": map[string]any{"type": "string"}, "route": map[string]any{"type": "string", "enum": []string{"local", "remote"}}}, []string{"workspace", "app", "route"})
+	return objectSchema(map[string]any{"workspace": map[string]any{"type": "string"}, "app": map[string]any{"type": "string"}, "route": map[string]any{"type": "string", "enum": []string{"local", "remote"}}, "expected_version": map[string]any{"type": "integer"}, "idempotency_key": map[string]any{"type": "string"}, "correlation_id": map[string]any{"type": "string"}}, []string{"workspace", "app", "route"})
 }
 
 func workspaceRouteSchema() map[string]any {

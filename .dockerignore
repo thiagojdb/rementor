@@ -3,6 +3,9 @@
 .claude
 .codex
 dist
+**/dist
+build
+**/build
 node_modules
 web/frontend/node_modules
 playwright-report

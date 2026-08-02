@@ -76,6 +76,54 @@ func (rp *RoutingProvider) LoadInitialConfig(workspaces []*models.Workspace) err
 	return nil
 }
 
+// VerifyRouting closes the provider boundary used by atomic route
+// operations.  LoadInitialConfig already validates and reloads nginx; this
+// hook additionally confirms that the generated file still matches the
+// candidate and that nginx reports the file as part of its loaded config.
+func (rp *RoutingProvider) VerifyRouting(workspaces []*models.Workspace) error {
+	target := filepath.Join(rp.confDir, workspacesConfigFile)
+	rendered, err := RenderConfig(workspaces, config.Config.RementorDomain)
+	if err != nil {
+		return fmt.Errorf("render route verification config: %w", err)
+	}
+	loaded, err := os.ReadFile(target)
+	if err != nil {
+		return fmt.Errorf("read generated nginx config: %w", err)
+	}
+	if string(loaded) != rendered {
+		return fmt.Errorf("generated nginx config differs from the candidate")
+	}
+	if err := rp.verifyLoaded(target); err != nil {
+		return fmt.Errorf("verify loaded nginx config: %w", err)
+	}
+	return nil
+}
+
+// InspectRouting is the read-only counterpart used by route sync.  It does
+// not reload nginx; it only compares the generated candidate with the file
+// nginx currently includes and confirms that include is visible in -T.
+func (rp *RoutingProvider) InspectRouting(workspaces []*models.Workspace) (bool, error) {
+	target := filepath.Join(rp.confDir, workspacesConfigFile)
+	rendered, err := RenderConfig(workspaces, config.Config.RementorDomain)
+	if err != nil {
+		return false, err
+	}
+	loaded, err := os.ReadFile(target)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	if string(loaded) != rendered {
+		return false, nil
+	}
+	if err := rp.verifyLoaded(target); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 func (rp *RoutingProvider) restore(target string, previous []byte, hadPrevious bool) {
 	if hadPrevious {
 		_ = os.WriteFile(target, previous, 0o644)

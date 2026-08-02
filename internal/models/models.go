@@ -46,6 +46,15 @@ type ApplicationIdentity struct {
 	ServiceID  string   `json:"serviceId"`
 	Repository string   `json:"repository,omitempty"`
 	Aliases    []string `json:"aliases,omitempty"`
+	LegacyID   string   `json:"legacyId,omitempty"`
+}
+
+// WorkspaceEnvironmentRef makes the environment boundary explicit in domain
+// responses while retaining the legacy workspace identifier.
+type WorkspaceEnvironmentRef struct {
+	WorkspaceID string `json:"workspaceId"`
+	Environment string `json:"environment,omitempty"`
+	LegacyID    string `json:"legacyId,omitempty"`
 }
 
 // ApplicationBinding is the environment-specific route configuration for an
@@ -69,6 +78,32 @@ type OperationMetadata struct {
 	Kind          string    `json:"kind"`
 	CreatedAt     time.Time `json:"createdAt"`
 	CompletedAt   time.Time `json:"completedAt"`
+}
+
+// RouteOperationJournal is the durable write-ahead record for a route
+// operation.  A route change crosses two stores (the proxy and SQLite), so a
+// small journal lets the daemon distinguish an operation that never reached
+// the proxy from one that reached the proxy but did not commit its desired
+// state.  Workspaces are serialized by the config store; keeping the model
+// here avoids a package cycle between config and services.
+type RouteOperationJournal struct {
+	OperationID     string       `json:"operationId"`
+	WorkspaceID     string       `json:"workspaceId"`
+	IdempotencyKey  string       `json:"idempotencyKey,omitempty"`
+	Fingerprint     string       `json:"fingerprint"`
+	CorrelationID   string       `json:"correlationId"`
+	ExpectedVersion uint64       `json:"expectedVersion"`
+	RouteVersion    uint64       `json:"routeVersion"`
+	Phase           string       `json:"phase"`
+	Status          string       `json:"status"`
+	Error           string       `json:"error,omitempty"`
+	Degraded        bool         `json:"degraded,omitempty"`
+	RollbackStatus  string       `json:"rollbackStatus,omitempty"`
+	CreatedAt       time.Time    `json:"createdAt"`
+	UpdatedAt       time.Time    `json:"updatedAt"`
+	PriorState      []*Workspace `json:"priorState,omitempty"`
+	CandidateState  []*Workspace `json:"candidateState,omitempty"`
+	Result          []byte       `json:"result,omitempty"`
 }
 
 // RouteState is the normalized route projection exposed by every control

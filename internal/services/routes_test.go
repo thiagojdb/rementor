@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"sync"
 	"testing"
 
 	"github.com/thiagojdb/rementor/internal/models"
@@ -100,5 +101,97 @@ func TestRouteApplyIsNoOpAndRejectsDifferentStalePlan(t *testing.T) {
 	}
 	if _, err := r.ApplyRoutePlan("demo", plan, plan.BaseRouteVersion, "different-key", "corr-3"); !errors.Is(err, ErrRouteVersionConflict) {
 		t.Fatalf("stale plan error = %v, want route version conflict", err)
+	}
+}
+
+func TestRouteApplyGeneratedPlanReplayUsesStableIdempotencyFingerprint(t *testing.T) {
+	provider := &mockRoutingProvider{}
+	r := routeTestRegistry(provider)
+	first, err := r.PlanRoute("demo", "orders", "local", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.ApplyRoutePlan("demo", first, first.BaseRouteVersion, "stable-key", "corr-1"); err != nil {
+		t.Fatal(err)
+	}
+
+	// A server-side request without an explicit plan is re-planned on every
+	// retry. Its base version and route snapshots have changed, but the
+	// idempotency key still identifies the same intended local route.
+	second, err := r.PlanRoute("demo", "orders", "local", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	replay, err := r.ApplyRoutePlan("demo", second, second.BaseRouteVersion, "stable-key", "corr-2")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if replay.Changed || replay.Status != "idempotent-replay" {
+		t.Fatalf("replay = %#v, want unchanged idempotent replay", replay)
+	}
+	if len(provider.snapshots) != 1 {
+		t.Fatalf("idempotent replay reloaded proxy %d times", len(provider.snapshots))
+	}
+}
+
+func TestRouteApplyRejectsStaleExpectedVersionEvenWhenDesiredStateMatches(t *testing.T) {
+	provider := &mockRoutingProvider{}
+	r := routeTestRegistry(provider)
+	plan, err := r.PlanRoute("demo", "orders", "local", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.ApplyRoutePlan("demo", plan, plan.BaseRouteVersion, "first-key", "corr-1"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.ApplyRoutePlan("demo", plan, plan.BaseRouteVersion, "different-key", "corr-2"); !errors.Is(err, ErrRouteVersionConflict) {
+		t.Fatalf("stale same-state error = %v, want route version conflict", err)
+	}
+	if len(provider.snapshots) != 1 {
+		t.Fatalf("stale request touched proxy %d times", len(provider.snapshots))
+	}
+}
+
+func TestRouteApplySerializesConcurrentIdempotentCallers(t *testing.T) {
+	provider := &mockRoutingProvider{}
+	r := routeTestRegistry(provider)
+	plan, err := r.PlanRoute("demo", "orders", "local", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	const callers = 16
+	results := make(chan RouteApplyResult, callers)
+	errs := make(chan error, callers)
+	var wg sync.WaitGroup
+	for i := 0; i < callers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			result, applyErr := r.ApplyRoutePlan("demo", plan, plan.BaseRouteVersion, "concurrent-key", "corr-concurrent")
+			results <- result
+			errs <- applyErr
+		}()
+	}
+	wg.Wait()
+	close(results)
+	close(errs)
+
+	changed := 0
+	for err := range errs {
+		if err != nil {
+			t.Fatalf("concurrent apply failed: %v", err)
+		}
+	}
+	for result := range results {
+		if result.Changed {
+			changed++
+		}
+	}
+	if changed != 1 {
+		t.Fatalf("changed results = %d, want exactly one", changed)
+	}
+	if len(provider.snapshots) != 1 {
+		t.Fatalf("concurrent callers reloaded proxy %d times", len(provider.snapshots))
 	}
 }
