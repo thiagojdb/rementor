@@ -371,7 +371,7 @@ func toApplicationConfig(input *rementorv1.ApplicationConfigInput) models.Applic
 		Path: strings.TrimSpace(input.GetPath()), Domain: strings.TrimSpace(input.GetDomain()),
 		RemoteBaseUrl: strings.TrimSpace(input.GetRemoteBaseUrl()), Port: int(input.GetPort()),
 		Health: health, Context: strings.TrimSpace(input.GetContext()),
-		RouteOverride: input.GetRouteOverride(),
+		RouteOverride: input.GetRouteOverride(), RouteOverrideSet: input.RouteOverride != nil,
 	}
 }
 
@@ -382,7 +382,7 @@ func applicationConfigsFromWorkspace(ws *models.Workspace) []models.ApplicationC
 			ID: app.ID, AppID: app.CanonicalAppID(), ServiceID: app.ServiceID, Repository: app.Repository, Aliases: app.NormalizedAliases(), Name: app.Name, Path: app.Path, Domain: app.Domain,
 			RemoteBaseUrl: app.RemoteBaseUrl, Port: app.Port, Health: app.Health,
 			Active: app.Active, RoutePattern: app.RoutePattern, Context: app.Context,
-			StripOrigin: app.StripOrigin, RouteOverride: app.RouteOverride,
+			StripOrigin: app.StripOrigin, RouteOverride: app.RouteOverride, RouteOverrideSet: true,
 		})
 	}
 	return apps

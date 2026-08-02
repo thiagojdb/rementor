@@ -220,7 +220,7 @@ func routeToProto(route services.Route) *rementorv1.NormalizedRoute {
 		RemoteTarget:        route.RemoteTarget,
 		RemoteFallback:      route.RemoteFallback,
 		UpstreamContext:     route.UpstreamContext,
-		Precedence:          int32(route.Precedence),
+		Precedence:          models.ClampInt32(route.Precedence),
 		PrecedenceReason:    route.PrecedenceReason,
 		Exact:               route.Exact,
 		IntentionalOverride: route.IntentionalOverride,
@@ -255,8 +255,8 @@ func routeConflictToProto(conflict services.RouteConflict) *rementorv1.RouteConf
 		AppServiceId: conflict.AppServiceID, ConflictingServiceId: conflict.ConflictingServiceID,
 		WinningServiceId: conflict.WinningServiceID, ShadowedAppId: conflict.ShadowedAppID,
 		ShadowedServiceId: conflict.ShadowedServiceID, WinningPattern: conflict.WinningPattern,
-		ShadowedPattern: conflict.ShadowedPattern, WinningPrecedence: int32(conflict.WinningPrecedence),
-		ShadowedPrecedence: int32(conflict.ShadowedPrecedence), WinningPrecedenceReason: conflict.WinningPrecedenceReason,
+		ShadowedPattern: conflict.ShadowedPattern, WinningPrecedence: models.ClampInt32(conflict.WinningPrecedence),
+		ShadowedPrecedence: models.ClampInt32(conflict.ShadowedPrecedence), WinningPrecedenceReason: conflict.WinningPrecedenceReason,
 		ShadowedPrecedenceReason: conflict.ShadowedPrecedenceReason, PrecedenceReason: conflict.PrecedenceReason, Intentional: conflict.Intentional,
 	}
 	if conflict.WinningRoute != nil {

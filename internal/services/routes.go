@@ -496,11 +496,7 @@ func buildNormalizedRoutes(ws *models.Workspace) []Route {
 			fallback.IntentionalOverride = true
 			routes = append(routes, fallback)
 		} else {
-			fallbackMode := "remote"
-			if rootApp != nil && rootApp.GetRemoteBaseUrl(ws) == "" {
-				fallbackMode = "remote"
-			}
-			fallback := buildRoute(ws, rootApp, host, "/*", fallbackMode)
+			fallback := buildRoute(ws, rootApp, host, "/*", "remote")
 			// The server-level fallback is a deliberate catch-all in nginx. It
 			// may be shadowed by application-specific routes by design, so mark
 			// the generated entry for intentional shadow classification while
@@ -689,7 +685,6 @@ func routeConflictWinner(left, right Route) (winning, shadowed Route, samePatter
 	leftMatch, leftExact, leftLength := routeInfo(left)
 	rightMatch, rightExact, rightLength := routeInfo(right)
 	if leftMatch == rightMatch && leftExact == rightExact {
-		samePattern = true
 		if routeOwnerKey(right) < routeOwnerKey(left) || (routeOwnerKey(right) == routeOwnerKey(left) && routeConflictSortKey(right) < routeConflictSortKey(left)) {
 			return right, left, true
 		}

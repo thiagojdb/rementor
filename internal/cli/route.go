@@ -54,34 +54,36 @@ func routeConflicts(client *Client, jsonOutput bool, args []string) {
 		return
 	}
 	fmt.Printf("workspace %q route version %d (%d conflict(s))\n", wsID, result.RouteVersion, len(result.Conflicts))
-	if len(result.Conflicts) == 0 {
-		return
+	if len(result.Conflicts) > 0 {
+		w := NewTabWriter()
+		fmt.Fprintln(w, "WORKSPACE\tENVIRONMENT\tHOST\tWINNING_APP\tWINNING_SERVICE\tSHADOWED_APP\tSHADOWED_SERVICE\tWINNING_PATTERN\tSHADOWED_PATTERN\tPRECEDENCE_REASON\tINTENTIONAL")
+		for _, conflict := range result.Conflicts {
+			shadowed := conflict.ShadowedAppID
+			if shadowed == "" {
+				shadowed = conflict.ConflictingAppID
+			}
+			winningPattern := conflict.WinningPattern
+			if winningPattern == "" {
+				winningPattern = conflict.Pattern
+			}
+			shadowedPattern := conflict.ShadowedPattern
+			if shadowedPattern == "" {
+				shadowedPattern = conflict.Pattern
+			}
+			precedenceReason := conflict.PrecedenceReason
+			if precedenceReason == "" {
+				precedenceReason = conflict.Reason
+			}
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%v\n",
+				conflict.WorkspaceID, conflict.Environment, conflict.PublicHost,
+				conflict.WinningAppID, conflict.WinningServiceID, shadowed, conflict.ShadowedServiceID,
+				winningPattern, shadowedPattern, precedenceReason, conflict.Intentional)
+		}
+		w.Flush()
 	}
-	w := NewTabWriter()
-	fmt.Fprintln(w, "WORKSPACE\tENVIRONMENT\tHOST\tWINNING_APP\tWINNING_SERVICE\tSHADOWED_APP\tSHADOWED_SERVICE\tWINNING_PATTERN\tSHADOWED_PATTERN\tPRECEDENCE_REASON\tINTENTIONAL")
-	for _, conflict := range result.Conflicts {
-		shadowed := conflict.ShadowedAppID
-		if shadowed == "" {
-			shadowed = conflict.ConflictingAppID
-		}
-		winningPattern := conflict.WinningPattern
-		if winningPattern == "" {
-			winningPattern = conflict.Pattern
-		}
-		shadowedPattern := conflict.ShadowedPattern
-		if shadowedPattern == "" {
-			shadowedPattern = conflict.Pattern
-		}
-		precedenceReason := conflict.PrecedenceReason
-		if precedenceReason == "" {
-			precedenceReason = conflict.Reason
-		}
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%v\n",
-			conflict.WorkspaceID, conflict.Environment, conflict.PublicHost,
-			conflict.WinningAppID, conflict.WinningServiceID, shadowed, conflict.ShadowedServiceID,
-			winningPattern, shadowedPattern, precedenceReason, conflict.Intentional)
+	for _, warning := range result.Warnings {
+		fmt.Fprintf(os.Stderr, "%s: %s\n", warning.Code, warning.Message)
 	}
-	w.Flush()
 }
 
 func routeGet(client *Client, jsonOutput bool, args []string) {

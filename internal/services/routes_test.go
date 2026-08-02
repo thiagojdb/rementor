@@ -179,6 +179,17 @@ func TestIntentionalRouteOverrideIsReportedButDoesNotWarn(t *testing.T) {
 	}
 }
 
+func TestDuplicatePatternNeedsBothOwnersToAcceptOverlap(t *testing.T) {
+	routes := []Route{
+		{WorkspaceID: "demo", Environment: "demo", PublicHost: "api.localhost", Pattern: "/api/*", CanonicalAppID: "alpha", ServiceID: "svc-a", Precedence: 4, IntentionalOverride: true},
+		{WorkspaceID: "demo", Environment: "demo", PublicHost: "api.localhost", Pattern: "/api/*", CanonicalAppID: "zeta", ServiceID: "svc-z", Precedence: 4},
+	}
+	conflicts := conflictsForRoutes(routes)
+	if len(conflicts) != 1 || conflicts[0].Intentional {
+		t.Fatalf("one-sided duplicate override = %#v", conflicts)
+	}
+}
+
 func TestGeneratedRootFallbackDoesNotAuthorizeDuplicateOwnership(t *testing.T) {
 	pattern := "/*"
 	ws := &models.Workspace{

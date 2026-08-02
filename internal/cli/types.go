@@ -122,8 +122,10 @@ type ApplicationConfigInput struct {
 	Port          int      `json:"port"`
 	Health        string   `json:"health"`
 	Context       string   `json:"context"`
-	RouteOverride bool     `json:"routeOverride,omitempty"`
+	RouteOverride *bool    `json:"routeOverride,omitempty"`
 }
+
+func boolPtr(value bool) *bool { return &value }
 
 type UpsertApplicationResponse struct {
 	Application ApplicationDTO        `json:"application"`

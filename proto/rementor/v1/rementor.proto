@@ -191,7 +191,7 @@ message ApplicationConfigInput {
   string service_id = 10;
   string repository = 11;
   repeated string aliases = 12;
-  bool route_override = 13;
+  optional bool route_override = 13;
 }
 
 message ListWorkspacesRequest {}

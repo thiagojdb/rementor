@@ -12,6 +12,7 @@ import (
 	"connectrpc.com/connect"
 	rementorv1 "github.com/thiagojdb/rementor/internal/gen/rementor/v1"
 	"github.com/thiagojdb/rementor/internal/gen/rementor/v1/rementorv1connect"
+	"github.com/thiagojdb/rementor/internal/models"
 )
 
 // APIError represents a non-OK response from the RPC API.
@@ -654,11 +655,11 @@ func routeConflictsFromProto(conflicts []*rementorv1.RouteConflict) []RouteConfl
 }
 
 func normalizedRouteToProto(route NormalizedRouteDTO) *rementorv1.NormalizedRoute {
-	return &rementorv1.NormalizedRoute{WorkspaceId: route.WorkspaceID, Environment: route.Environment, PublicHost: route.PublicHost, Pattern: route.Pattern, CanonicalAppId: route.CanonicalAppID, ServiceId: route.ServiceID, Repository: route.Repository, DesiredMode: routeModeToProto(route.DesiredMode), EffectiveMode: routeModeToProto(route.EffectiveMode), Target: route.Target, LocalTarget: route.LocalTarget, RemoteTarget: route.RemoteTarget, RemoteFallback: route.RemoteFallback, UpstreamContext: route.UpstreamContext, Precedence: int32(route.Precedence), PrecedenceReason: route.PrecedenceReason, Exact: route.Exact, IntentionalOverride: route.IntentionalOverride}
+	return &rementorv1.NormalizedRoute{WorkspaceId: route.WorkspaceID, Environment: route.Environment, PublicHost: route.PublicHost, Pattern: route.Pattern, CanonicalAppId: route.CanonicalAppID, ServiceId: route.ServiceID, Repository: route.Repository, DesiredMode: routeModeToProto(route.DesiredMode), EffectiveMode: routeModeToProto(route.EffectiveMode), Target: route.Target, LocalTarget: route.LocalTarget, RemoteTarget: route.RemoteTarget, RemoteFallback: route.RemoteFallback, UpstreamContext: route.UpstreamContext, Precedence: models.ClampInt32(route.Precedence), PrecedenceReason: route.PrecedenceReason, Exact: route.Exact, IntentionalOverride: route.IntentionalOverride}
 }
 
 func routeConflictToProto(conflict RouteConflictDTO) *rementorv1.RouteConflict {
-	result := &rementorv1.RouteConflict{WorkspaceId: conflict.WorkspaceID, Environment: conflict.Environment, PublicHost: conflict.PublicHost, Pattern: conflict.Pattern, AppId: conflict.AppID, ConflictingAppId: conflict.ConflictingAppID, WinningAppId: conflict.WinningAppID, Reason: conflict.Reason, AppServiceId: conflict.AppServiceID, ConflictingServiceId: conflict.ConflictingServiceID, WinningServiceId: conflict.WinningServiceID, ShadowedAppId: conflict.ShadowedAppID, ShadowedServiceId: conflict.ShadowedServiceID, WinningPattern: conflict.WinningPattern, ShadowedPattern: conflict.ShadowedPattern, WinningPrecedence: int32(conflict.WinningPrecedence), ShadowedPrecedence: int32(conflict.ShadowedPrecedence), WinningPrecedenceReason: conflict.WinningPrecedenceReason, ShadowedPrecedenceReason: conflict.ShadowedPrecedenceReason, PrecedenceReason: conflict.PrecedenceReason, Intentional: conflict.Intentional}
+	result := &rementorv1.RouteConflict{WorkspaceId: conflict.WorkspaceID, Environment: conflict.Environment, PublicHost: conflict.PublicHost, Pattern: conflict.Pattern, AppId: conflict.AppID, ConflictingAppId: conflict.ConflictingAppID, WinningAppId: conflict.WinningAppID, Reason: conflict.Reason, AppServiceId: conflict.AppServiceID, ConflictingServiceId: conflict.ConflictingServiceID, WinningServiceId: conflict.WinningServiceID, ShadowedAppId: conflict.ShadowedAppID, ShadowedServiceId: conflict.ShadowedServiceID, WinningPattern: conflict.WinningPattern, ShadowedPattern: conflict.ShadowedPattern, WinningPrecedence: models.ClampInt32(conflict.WinningPrecedence), ShadowedPrecedence: models.ClampInt32(conflict.ShadowedPrecedence), WinningPrecedenceReason: conflict.WinningPrecedenceReason, ShadowedPrecedenceReason: conflict.ShadowedPrecedenceReason, PrecedenceReason: conflict.PrecedenceReason, Intentional: conflict.Intentional}
 	if conflict.WinningRoute != nil {
 		result.WinningRoute = normalizedRouteToProto(*conflict.WinningRoute)
 	}

@@ -2,11 +2,23 @@ package models
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"sync"
 	"time"
 	"unicode"
 )
+
+// ClampInt32 bounds an integer before it crosses a protobuf int32 boundary.
+func ClampInt32(value int) int32 {
+	if value > math.MaxInt32 {
+		return math.MaxInt32
+	}
+	if value < math.MinInt32 {
+		return math.MinInt32
+	}
+	return int32(value)
+}
 
 // Constants for the application
 const (
@@ -529,24 +541,27 @@ type HealthUpdate struct {
 
 // ApplicationConfig represents a persisted application definition.
 type ApplicationConfig struct {
-	ID            string             `json:"id"`
-	AppID         string             `json:"appId,omitempty"`
-	ServiceID     string             `json:"serviceId,omitempty"`
-	Repository    string             `json:"repository,omitempty"`
-	Aliases       []string           `json:"aliases,omitempty"`
-	Name          string             `json:"name,omitempty"`
-	Path          string             `json:"path"`
-	Domain        string             `json:"domain,omitempty"`
-	RemoteBaseUrl string             `json:"remoteBaseUrl,omitempty"` // Per-app remote base URL override
-	Port          int                `json:"port"`
-	Health        string             `json:"health,omitempty"`
-	Active        bool               `json:"active"`
-	RoutePattern  *string            `json:"routePattern,omitempty"`
-	RouteOverride bool               `json:"routeOverride,omitempty"`
-	Context       string             `json:"context,omitempty"`
-	StripOrigin   bool               `json:"stripOrigin,omitempty"` // Strip Origin header for local proxy (Quarkus Dev UI fix)
-	Route         RouteState         `json:"route,omitempty"`
-	LastOperation *OperationMetadata `json:"lastOperation,omitempty"`
+	ID            string   `json:"id"`
+	AppID         string   `json:"appId,omitempty"`
+	ServiceID     string   `json:"serviceId,omitempty"`
+	Repository    string   `json:"repository,omitempty"`
+	Aliases       []string `json:"aliases,omitempty"`
+	Name          string   `json:"name,omitempty"`
+	Path          string   `json:"path"`
+	Domain        string   `json:"domain,omitempty"`
+	RemoteBaseUrl string   `json:"remoteBaseUrl,omitempty"` // Per-app remote base URL override
+	Port          int      `json:"port"`
+	Health        string   `json:"health,omitempty"`
+	Active        bool     `json:"active"`
+	RoutePattern  *string  `json:"routePattern,omitempty"`
+	RouteOverride bool     `json:"routeOverride,omitempty"`
+	// RouteOverrideSet distinguishes an omitted update from an explicit false.
+	// It is transport metadata and is intentionally excluded from persisted JSON.
+	RouteOverrideSet bool               `json:"-"`
+	Context          string             `json:"context,omitempty"`
+	StripOrigin      bool               `json:"stripOrigin,omitempty"` // Strip Origin header for local proxy (Quarkus Dev UI fix)
+	Route            RouteState         `json:"route,omitempty"`
+	LastOperation    *OperationMetadata `json:"lastOperation,omitempty"`
 }
 
 // CanonicalAppID returns the stable application identity, falling back to the

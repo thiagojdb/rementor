@@ -896,9 +896,9 @@ export class ApplicationConfigInput extends Message<ApplicationConfigInput> {
   aliases: string[] = [];
 
   /**
-   * @generated from field: bool route_override = 13;
+   * @generated from field: optional bool route_override = 13;
    */
-  routeOverride = false;
+  routeOverride?: boolean;
 
   constructor(data?: PartialMessage<ApplicationConfigInput>) {
     super();
@@ -920,7 +920,7 @@ export class ApplicationConfigInput extends Message<ApplicationConfigInput> {
     { no: 10, name: "service_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 11, name: "repository", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 12, name: "aliases", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
-    { no: 13, name: "route_override", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 13, name: "route_override", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ApplicationConfigInput {

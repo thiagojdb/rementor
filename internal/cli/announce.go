@@ -30,6 +30,12 @@ func AnnounceCmd(client *Client, jsonOutput bool, args []string) {
 	if err := parseFlags(fs, args); err != nil {
 		Die("%v", err)
 	}
+	var routeOverrideValue *bool
+	fs.Visit(func(flag *flag.Flag) {
+		if flag.Name == "route-override" {
+			routeOverrideValue = routeOverride
+		}
+	})
 
 	if *wsID == "" {
 		Die("--workspace is required")
@@ -73,7 +79,7 @@ func AnnounceCmd(client *Client, jsonOutput bool, args []string) {
 		Port:          *port,
 		Health:        *health,
 		Context:       *context,
-		RouteOverride: *routeOverride,
+		RouteOverride: routeOverrideValue,
 	}
 
 	upserted, err := client.UpsertApplication(stdctx.Background(), *wsID, input)

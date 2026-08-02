@@ -1607,6 +1607,9 @@ func applicationsFromConfigs(workspace *models.Workspace, configs []models.Appli
 			app.Health = models.DefaultHealthEndpoint
 		}
 		if old := previous[app.ID]; old != nil {
+			if !config.RouteOverrideSet {
+				app.RouteOverride = old.RouteOverride
+			}
 			app.Active = old.Active
 			app.StripOrigin = old.StripOrigin
 			if app.RoutePattern == nil {
@@ -1694,7 +1697,7 @@ func applicationConfigs(apps []*models.Application) []models.ApplicationConfig {
 			ID: app.ID, AppID: app.CanonicalAppID(), ServiceID: app.ServiceID, Repository: app.Repository, Aliases: app.NormalizedAliases(), Name: app.Name, Path: app.Path, Domain: app.Domain,
 			RemoteBaseUrl: app.RemoteBaseUrl, Port: app.Port, Health: app.Health,
 			Active: app.Active, RoutePattern: app.RoutePattern, Context: app.Context,
-			RouteOverride: app.RouteOverride, StripOrigin: app.StripOrigin,
+			RouteOverride: app.RouteOverride, RouteOverrideSet: true, StripOrigin: app.StripOrigin,
 		})
 	}
 	return result

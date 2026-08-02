@@ -118,6 +118,22 @@ func TestRenderConfigRejectsAccidentalRouteOwnershipConflict(t *testing.T) {
 	}
 }
 
+func TestRenderConfigAllowsIntentionalRouteOwnershipConflict(t *testing.T) {
+	conf := renderTestConfig(t, &models.Workspace{
+		WorkspaceID: "dev",
+		Type:        models.WorkspaceTypeRouting,
+		RoutingConfig: &models.RoutingConfig{
+			LocalDomain:          "api.localhost",
+			DefaultRemoteBaseURL: "https://remote.example.test",
+		},
+		Applications: []*models.Application{
+			{ID: "orders", Path: "/orders", RemoteBaseUrl: "https://orders.example.test", RouteOverride: true},
+			{ID: "billing", Path: "/orders", RemoteBaseUrl: "https://billing.example.test", RouteOverride: true},
+		},
+	})
+	assertContains(t, conf, "location /orders/ {")
+}
+
 func TestRenderConfigRoutingAppDomainIncludesWorkspaceBackendRoutes(t *testing.T) {
 	frontend := &models.Application{
 		ID:            "web-frontend",

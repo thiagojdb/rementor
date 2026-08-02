@@ -1043,7 +1043,7 @@ type ApplicationConfigInput struct {
 	ServiceId     string                 `protobuf:"bytes,10,opt,name=service_id,json=serviceId,proto3" json:"service_id,omitempty"`
 	Repository    string                 `protobuf:"bytes,11,opt,name=repository,proto3" json:"repository,omitempty"`
 	Aliases       []string               `protobuf:"bytes,12,rep,name=aliases,proto3" json:"aliases,omitempty"`
-	RouteOverride bool                   `protobuf:"varint,13,opt,name=route_override,json=routeOverride,proto3" json:"route_override,omitempty"`
+	RouteOverride *bool                  `protobuf:"varint,13,opt,name=route_override,json=routeOverride,proto3,oneof" json:"route_override,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1163,8 +1163,8 @@ func (x *ApplicationConfigInput) GetAliases() []string {
 }
 
 func (x *ApplicationConfigInput) GetRouteOverride() bool {
-	if x != nil {
-		return x.RouteOverride
+	if x != nil && x.RouteOverride != nil {
+		return *x.RouteOverride
 	}
 	return false
 }
@@ -5253,7 +5253,7 @@ const file_rementor_v1_rementor_proto_rawDesc = "" +
 	"\aRouting\x12\x12\n" +
 	"\x04mode\x18\x01 \x01(\tR\x04mode\x12!\n" +
 	"\flocal_domain\x18\x02 \x01(\tR\vlocalDomain\x125\n" +
-	"\x17default_remote_base_url\x18\x03 \x01(\tR\x14defaultRemoteBaseUrl\"\xed\x02\n" +
+	"\x17default_remote_base_url\x18\x03 \x01(\tR\x14defaultRemoteBaseUrl\"\x85\x03\n" +
 	"\x16ApplicationConfigInput\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
@@ -5270,8 +5270,9 @@ const file_rementor_v1_rementor_proto_rawDesc = "" +
 	"\n" +
 	"repository\x18\v \x01(\tR\n" +
 	"repository\x12\x18\n" +
-	"\aaliases\x18\f \x03(\tR\aaliases\x12%\n" +
-	"\x0eroute_override\x18\r \x01(\bR\rrouteOverride\"\x17\n" +
+	"\aaliases\x18\f \x03(\tR\aaliases\x12*\n" +
+	"\x0eroute_override\x18\r \x01(\bH\x00R\rrouteOverride\x88\x01\x01B\x11\n" +
+	"\x0f_route_override\"\x17\n" +
 	"\x15ListWorkspacesRequest\"P\n" +
 	"\x16ListWorkspacesResponse\x126\n" +
 	"\n" +
@@ -5905,6 +5906,7 @@ func file_rementor_v1_rementor_proto_init() {
 	}
 	file_rementor_v1_rementor_proto_msgTypes[6].OneofWrappers = []any{}
 	file_rementor_v1_rementor_proto_msgTypes[7].OneofWrappers = []any{}
+	file_rementor_v1_rementor_proto_msgTypes[9].OneofWrappers = []any{}
 	file_rementor_v1_rementor_proto_msgTypes[44].OneofWrappers = []any{}
 	file_rementor_v1_rementor_proto_msgTypes[51].OneofWrappers = []any{}
 	file_rementor_v1_rementor_proto_msgTypes[59].OneofWrappers = []any{}

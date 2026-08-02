@@ -924,6 +924,14 @@ func optionalBool(args map[string]any, name string) bool {
 	return value
 }
 
+func optionalBoolPtr(args map[string]any, name string) *bool {
+	value, ok := args[name].(bool)
+	if !ok {
+		return nil
+	}
+	return boolPtr(value)
+}
+
 func optionalUint64(args map[string]any, name string) uint64 {
 	switch value := args[name].(type) {
 	case float64:
@@ -976,7 +984,7 @@ func appInputFromArgs(appID string, args map[string]any) ApplicationConfigInput 
 		Port:          requiredInt(args, "port"),
 		Health:        optionalString(args, "health"),
 		Context:       optionalString(args, "context"),
-		RouteOverride: optionalBool(args, "route_override"),
+		RouteOverride: optionalBoolPtr(args, "route_override"),
 	}
 }
 

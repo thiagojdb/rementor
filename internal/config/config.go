@@ -434,15 +434,16 @@ func UpdateWorkspaceApplications(wsID string, apps []models.ApplicationConfig, l
 	}
 
 	type oldState struct {
-		active       bool
-		routePattern *string
-		stripOrigin  bool
-		route        models.RouteState
-		operation    *models.OperationMetadata
+		active        bool
+		routePattern  *string
+		stripOrigin   bool
+		routeOverride bool
+		route         models.RouteState
+		operation     *models.OperationMetadata
 	}
 	oldStates := make(map[string]oldState)
 	rows, err := db.Query(`
-		SELECT id, active, route_pattern, strip_origin, route_version, operation_id, correlation_id, operation_kind, operation_created_at, operation_completed_at
+		SELECT id, active, route_pattern, strip_origin, route_override, route_version, operation_id, correlation_id, operation_kind, operation_created_at, operation_completed_at
 		FROM applications
 		WHERE workspace_id = ?
 	`, wsID)
@@ -453,17 +454,18 @@ func UpdateWorkspaceApplications(wsID string, apps []models.ApplicationConfig, l
 		var id string
 		var active int
 		var stripOrigin int
+		var routeOverride int
 		var routePattern sql.NullString
 		var routeVersion int64
 		var operationID, correlationID, operationKind string
 		var operationCreatedAt, operationCompletedAt sql.NullString
-		if err := rows.Scan(&id, &active, &routePattern, &stripOrigin, &routeVersion, &operationID, &correlationID, &operationKind, &operationCreatedAt, &operationCompletedAt); err != nil {
+		if err := rows.Scan(&id, &active, &routePattern, &stripOrigin, &routeOverride, &routeVersion, &operationID, &correlationID, &operationKind, &operationCreatedAt, &operationCompletedAt); err != nil {
 			rows.Close()
 			return fmt.Errorf("failed to scan existing application state: %w", err)
 		}
 		previousState := oldState{
 			active: active != 0, routePattern: nullStringPtr(routePattern),
-			stripOrigin: stripOrigin != 0,
+			stripOrigin: stripOrigin != 0, routeOverride: routeOverride != 0,
 		}
 		previousState.route.RouteVersion = uint64(routeVersion)
 		previousState.route.OperationID = operationID
@@ -500,6 +502,9 @@ func UpdateWorkspaceApplications(wsID string, apps []models.ApplicationConfig, l
 		if old, ok := oldStates[app.ID]; ok {
 			app.Active = old.active
 			app.StripOrigin = old.stripOrigin
+			if !app.RouteOverrideSet {
+				app.RouteOverride = old.routeOverride
+			}
 			if app.RoutePattern == nil {
 				app.RoutePattern = old.routePattern
 			}
@@ -1007,7 +1012,7 @@ func workspaceConfigFromWorkspace(workspace *models.Workspace) models.WorkspaceC
 			ID: app.ID, AppID: app.CanonicalAppID(), ServiceID: app.ServiceID, Repository: app.Repository, Aliases: app.NormalizedAliases(), Name: app.Name, Path: app.Path, Domain: app.Domain,
 			RemoteBaseUrl: app.RemoteBaseUrl, Port: app.Port, Health: app.Health,
 			Active: app.Active, RoutePattern: app.RoutePattern, Context: app.Context,
-			StripOrigin: app.StripOrigin, RouteOverride: app.RouteOverride,
+			StripOrigin: app.StripOrigin, RouteOverride: app.RouteOverride, RouteOverrideSet: true,
 			Route: app.Route, LastOperation: app.LastOperation,
 		})
 	}

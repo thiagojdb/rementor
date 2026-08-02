@@ -393,6 +393,45 @@ func TestUpdateWorkspaceApplicationsPreservesRoutingMetadata(t *testing.T) {
 	}
 }
 
+func TestUpdateWorkspaceApplicationsPreservesOmittedRouteOverrideAndAcceptsExplicitFalse(t *testing.T) {
+	t.Setenv("XDG_DATA_HOME", filepath.Join(t.TempDir(), "data"))
+	t.Setenv("XDG_CACHE_HOME", filepath.Join(t.TempDir(), "cache"))
+
+	if err := AppendWorkspace(models.WorkspaceConfig{
+		ID: "demo", Type: models.WorkspaceTypeRouting,
+		Routing:      models.RoutingConfig{LocalDomain: "api.localhost"},
+		Applications: []models.ApplicationConfig{{ID: "orders-api", Path: "/orders", RouteOverride: true}},
+	}); err != nil {
+		t.Fatalf("AppendWorkspace failed: %v", err)
+	}
+
+	if err := UpdateWorkspaceApplications("demo", []models.ApplicationConfig{{
+		ID: "orders-api", Path: "/orders", RouteOverride: false,
+	}}, "api.localhost", ""); err != nil {
+		t.Fatalf("omitted route override update failed: %v", err)
+	}
+	workspaces, err := LoadWorkspaces()
+	if err != nil {
+		t.Fatalf("LoadWorkspaces after omitted update failed: %v", err)
+	}
+	if !workspaces[0].Applications[0].RouteOverride {
+		t.Fatal("omitted route override should preserve the stored true value")
+	}
+
+	if err := UpdateWorkspaceApplications("demo", []models.ApplicationConfig{{
+		ID: "orders-api", Path: "/orders", RouteOverride: false, RouteOverrideSet: true,
+	}}, "api.localhost", ""); err != nil {
+		t.Fatalf("explicit false route override update failed: %v", err)
+	}
+	workspaces, err = LoadWorkspaces()
+	if err != nil {
+		t.Fatalf("LoadWorkspaces after explicit false update failed: %v", err)
+	}
+	if workspaces[0].Applications[0].RouteOverride {
+		t.Fatal("explicit false route override should replace the stored true value")
+	}
+}
+
 func TestReplaceWorkspacesAtomicallyReplacesWorkspaceProjection(t *testing.T) {
 	t.Setenv("XDG_DATA_HOME", filepath.Join(t.TempDir(), "data"))
 	t.Setenv("XDG_CACHE_HOME", filepath.Join(t.TempDir(), "cache"))

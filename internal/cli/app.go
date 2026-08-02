@@ -123,6 +123,12 @@ func appRegister(client *Client, jsonOutput bool, args []string) {
 	if err := parseFlags(fs, args); err != nil {
 		Die("%v", err)
 	}
+	var routeOverrideValue *bool
+	fs.Visit(func(flag *flag.Flag) {
+		if flag.Name == "route-override" {
+			routeOverrideValue = routeOverride
+		}
+	})
 
 	if fs.NArg() < 2 {
 		fmt.Fprintln(os.Stderr, "usage: rementorctl app register <workspace> <app> [options]")
@@ -148,7 +154,7 @@ func appRegister(client *Client, jsonOutput bool, args []string) {
 		Port:          *port,
 		Health:        *health,
 		Context:       *context,
-		RouteOverride: *routeOverride,
+		RouteOverride: routeOverrideValue,
 	}
 
 	result, err := client.UpsertApplication(stdctx.Background(), wsID, input)
@@ -253,7 +259,7 @@ func upsertApp(existing []ApplicationDTO, input ApplicationConfigInput) ([]Appli
 				(input.AppID == "" || app.AppID == input.AppID) &&
 				(input.ServiceID == "" || app.ServiceID == input.ServiceID) &&
 				(input.Repository == "" || app.Repository == input.Repository) &&
-				app.RouteOverride == input.RouteOverride &&
+				(input.RouteOverride == nil || *input.RouteOverride == app.RouteOverride) &&
 				(input.Aliases == nil || sameAliases(app.Aliases, input.Aliases))
 
 			if same {
@@ -279,6 +285,9 @@ func upsertApp(existing []ApplicationDTO, input ApplicationConfigInput) ([]Appli
 			if input.Repository == "" {
 				input.Repository = app.Repository
 			}
+			if input.RouteOverride == nil {
+				input.RouteOverride = boolPtr(app.RouteOverride)
+			}
 			if input.Aliases == nil {
 				input.Aliases = append([]string(nil), app.Aliases...)
 			}
@@ -299,7 +308,7 @@ func upsertApp(existing []ApplicationDTO, input ApplicationConfigInput) ([]Appli
 			Port:          app.Port,
 			Health:        app.Health,
 			Context:       app.Context,
-			RouteOverride: app.RouteOverride,
+			RouteOverride: boolPtr(app.RouteOverride),
 		})
 	}
 

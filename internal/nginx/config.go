@@ -71,10 +71,15 @@ func RenderConfig(workspaces []*models.Workspace, rementorDomain string) (string
 		if err := validation.Workspace(ws.GetType(), localDomain, ws.GetDefaultRemoteBaseURL(), apps); err != nil {
 			return "", fmt.Errorf("workspace %q: %w", ws.WorkspaceID, err)
 		}
+		details := make([]string, 0)
 		for _, conflict := range services.RouteConflicts(ws) {
-			if !conflict.Intentional {
-				return "", fmt.Errorf("workspace %q: route conflict between %q and %q on %s %s (%s)", ws.WorkspaceID, conflict.AppID, conflict.ConflictingAppID, conflict.PublicHost, conflict.Pattern, conflict.Reason)
+			if conflict.Intentional {
+				continue
 			}
+			details = append(details, fmt.Sprintf("%q and %q on %s %s (%s)", conflict.AppID, conflict.ConflictingAppID, conflict.PublicHost, conflict.Pattern, conflict.Reason))
+		}
+		if len(details) > 0 {
+			return "", fmt.Errorf("workspace %q: %d route conflict(s): %s; set routeOverride on both owners or change their paths", ws.WorkspaceID, len(details), strings.Join(details, "; "))
 		}
 	}
 	cfg := buildConfig(workspaces, rementorDomain)
