@@ -472,7 +472,7 @@ func toProtoApplicationInWorkspace(ws *models.Workspace, app *models.Application
 	}
 	state := app.Route
 	if state.DesiredMode == "" && state.EffectiveMode == "" {
-		state = app.RouteStateFor(ws, nil)
+		state = app.RouteStateFor(ws)
 	}
 	return &rementorv1.Application{
 		Id:            app.ID,
@@ -653,6 +653,9 @@ func classifyRegistryError(err error) connect.Code {
 	if errors.Is(err, models.ErrAmbiguousApplication) {
 		return connect.CodeFailedPrecondition
 	}
+	if errors.Is(err, services.ErrBrowserURLBinding) {
+		return connect.CodeFailedPrecondition
+	}
 	message := strings.ToLower(err.Error())
 	if strings.Contains(message, "workspace not found") || strings.Contains(message, "application not found") {
 		return connect.CodeNotFound
@@ -661,13 +664,21 @@ func classifyRegistryError(err error) connect.Code {
 }
 
 func correlationID(requested string, header http.Header) string {
-	if value := strings.TrimSpace(requested); value != "" {
+	if value := candidateCorrelationID(requested, false); value != "" {
 		return value
 	}
-	for _, key := range []string{"X-Correlation-ID", "X-Request-ID", "Traceparent"} {
-		if value := strings.TrimSpace(header.Get(key)); value != "" {
+	for _, candidate := range []struct {
+		value       string
+		traceparent bool
+	}{
+		{header.Get(CorrelationHeader), false},
+		{header.Get("X-Correlation-ID"), false},
+		{header.Get("X-Request-ID"), false},
+		{header.Get("Traceparent"), true},
+	} {
+		if value := candidateCorrelationID(candidate.value, candidate.traceparent); value != "" {
 			return value
 		}
 	}
-	return ""
+	return generatedCorrelationID()
 }

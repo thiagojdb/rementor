@@ -1,5 +1,6 @@
-import { Component, createSignal, Show } from 'solid-js'
+import { Component, createResource, createSignal, Show } from 'solid-js'
 import { routeModeLabel, routeTimestampLabel, type ApplicationDTO, type WorkspaceDTO } from '../../api/types'
+import { resolveBrowserURL } from '../../api/client'
 import Modal from '../ui/Modal'
 import StatusDot from '../ui/StatusDot'
 import RoutePatternForm from './RoutePatternForm'
@@ -12,6 +13,10 @@ interface AppDetailModalProps {
 
 const AppDetailModal: Component<AppDetailModalProps> = (props) => {
   const [showRoutePattern, setShowRoutePattern] = createSignal(false)
+  const [browserURL] = createResource(
+    () => [props.workspace.id, props.app.appId || props.app.id] as const,
+    ([workspaceID, appRef]) => resolveBrowserURL(workspaceID, appRef),
+  )
 
   const sectionStyle = {
     'background-color': 'var(--bg-primary)',
@@ -61,10 +66,6 @@ const AppDetailModal: Component<AppDetailModalProps> = (props) => {
           <div class="flex items-center justify-between py-2" style={{ 'border-bottom': '1px solid var(--border-subtle)' }}>
             <span class="text-sm" style={labelStyle}>Proxy</span>
             <span class="font-mono px-2 py-0.5 rounded text-xs" style={valueStyle}>{props.app.route?.proxyHealth || 'unknown'}</span>
-          </div>
-          <div class="flex items-center justify-between py-2" style={{ 'border-bottom': '1px solid var(--border-subtle)' }}>
-            <span class="text-sm" style={labelStyle}>Remote fallback</span>
-            <span class="font-mono px-2 py-0.5 rounded text-xs" style={valueStyle}>{props.app.route?.remoteFallback ? 'confirmed' : 'no'}</span>
           </div>
           <div class="flex items-center justify-between py-2">
             <span class="text-sm" style={labelStyle}>Verification</span>
@@ -116,7 +117,7 @@ const AppDetailModal: Component<AppDetailModalProps> = (props) => {
             <span class="text-sm" style={labelStyle}>Remote target</span>
             <span class="font-mono px-2 py-0.5 rounded text-xs max-w-[65%] truncate" style={valueStyle}>{props.app.route?.remoteTarget || '—'}</span>
           </div>
-          <div class="flex items-center justify-between py-2">
+          <div class="flex items-center justify-between py-2" style={{ 'border-bottom': '1px solid var(--border-subtle)' }}>
             <span class="text-sm" style={labelStyle}>Route version</span>
             <span class="font-mono px-2 py-0.5 rounded text-xs" style={valueStyle}>{props.app.route?.version?.value?.toString() || '0'}</span>
           </div>
@@ -128,6 +129,16 @@ const AppDetailModal: Component<AppDetailModalProps> = (props) => {
             <span class="text-sm" style={labelStyle}>Verified at</span>
             <span class="font-mono px-2 py-0.5 rounded text-xs max-w-[65%] truncate" style={valueStyle}>{routeTimestampLabel(props.app.route?.verifiedAt)}</span>
           </div>
+          <Show when={browserURL()?.url}>
+            {(url) => (
+              <div class="flex items-center justify-between py-2">
+                <span class="text-sm" style={labelStyle}>Browser URL</span>
+                <a class="font-mono px-2 py-0.5 rounded text-xs" style={valueStyle} href={url()} target="_blank" rel="noreferrer">
+                  {url()}
+                </a>
+              </div>
+            )}
+          </Show>
         </div>
 
         {/* Actions section */}

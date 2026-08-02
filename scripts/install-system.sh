@@ -9,9 +9,15 @@ fi
 SERVER_BIN="$1"
 CTL_BIN="$2"
 TARGET_HOME="${HOME:-}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+FRONTEND_DIST="${REMENTOR_FRONTEND_DIST:-$SCRIPT_DIR/../cmd/server/dist}"
 
 if [[ -z "$TARGET_HOME" ]]; then
   echo "unable to determine home directory" >&2
+  exit 1
+fi
+if [[ ! -f "$FRONTEND_DIST/index.html" ]]; then
+  echo "missing frontend build at $FRONTEND_DIST; run 'make frontend' first" >&2
   exit 1
 fi
 
@@ -26,6 +32,7 @@ fi
 
 INSTALL_BIN_DIR="$TARGET_HOME/.local/bin"
 DATA_DIR="$TARGET_HOME/.local/share/rementor"
+FRONTEND_DATA_DIR="$DATA_DIR/frontend"
 CACHE_DIR="$TARGET_HOME/.cache/rementor"
 CONFIG_DIR="$TARGET_HOME/.config/rementor"
 NGINX_CONF_DIR="$CONFIG_DIR/nginx"
@@ -39,6 +46,7 @@ NGINX_BIN="$(command -v nginx || true)"
 
 install -d -m 0755 "$INSTALL_BIN_DIR"
 install -d -m 0700 "$DATA_DIR"
+install -d -m 0755 "$FRONTEND_DATA_DIR"
 install -d -m 0700 "$CACHE_DIR"
 install -d -m 0700 "$CONFIG_DIR"
 install -d -m 0700 "$NGINX_CONF_DIR"
@@ -52,6 +60,7 @@ install -d -m 0755 "$SERVICE_DIR"
 
 install -m 0755 "$SERVER_BIN" "$INSTALL_BIN_DIR/rementor"
 install -m 0755 "$CTL_BIN" "$INSTALL_BIN_DIR/rementorctl"
+cp -a "$FRONTEND_DIST/." "$FRONTEND_DATA_DIR/"
 
 if [[ -n "$NGINX_BIN" ]]; then
   cat > "$NGINX_MAIN_CONFIG" <<EOF
@@ -123,6 +132,7 @@ Environment=REMENTOR_NGINX_CONF_DIR=$NGINX_CONF_DIR
 Environment=REMENTOR_NGINX_BINARY=$NGINX_WRAPPER
 Environment=REMENTOR_NGINX_LISTEN_HOST=127.0.0.1
 Environment=REMENTOR_NGINX_LISTEN_PORTS=18080
+Environment=REMENTOR_FRONTEND_DIST=$FRONTEND_DATA_DIR
 WorkingDirectory=$TARGET_HOME/.local/share/rementor
 ExecStart=$TARGET_HOME/.local/bin/rementor -host 127.0.0.1
 Restart=always

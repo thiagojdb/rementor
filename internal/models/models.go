@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"sync"
 	"time"
@@ -34,9 +35,10 @@ const (
 	RouteModeUnknown  = "unknown"
 	RouteModeStale    = "stale"
 
-	RouteVerificationVerified = "verified"
-	RouteVerificationStale    = "stale"
-	RouteVerificationUnknown  = "unknown"
+	RouteVerificationVerified            = "verified"
+	RouteVerificationStale               = "stale"
+	RouteVerificationUnknown             = "unknown"
+	RouteVerificationProviderUnavailable = "provider-unavailable"
 
 	ProxyHealthUp          = "up"
 	ProxyHealthUnknown     = "unknown"
@@ -63,6 +65,15 @@ type ApplicationIdentity struct {
 	ServiceID  string   `json:"serviceId"`
 	Repository string   `json:"repository,omitempty"`
 	Aliases    []string `json:"aliases,omitempty"`
+	LegacyID   string   `json:"legacyId,omitempty"`
+}
+
+// WorkspaceEnvironmentRef makes the environment boundary explicit in domain
+// responses while retaining the legacy workspace identifier.
+type WorkspaceEnvironmentRef struct {
+	WorkspaceID string `json:"workspaceId"`
+	Environment string `json:"environment,omitempty"`
+	LegacyID    string `json:"legacyId,omitempty"`
 }
 
 // ApplicationBinding is the environment-specific route configuration for an
@@ -278,7 +289,7 @@ func (a *Application) CanonicalAppID() string {
 // RouteStateFor derives the typed route projection from legacy fields without
 // mutating the application. This is useful to adapters that need to project a
 // route while the application contains runtime state protected by a mutex.
-func (a *Application) RouteStateFor(workspace *Workspace, _ *time.Time) RouteState {
+func (a *Application) RouteStateFor(workspace *Workspace) RouteState {
 	if a == nil {
 		return RouteState{}
 	}
@@ -297,14 +308,13 @@ func (a *Application) RouteStateFor(workspace *Workspace, _ *time.Time) RouteSta
 		state.RemoteTarget = a.GetRemoteBaseUrl(workspace)
 	}
 	// A model-only projection has no knowledge of the proxy's loaded config.
-	// Never turn desired mode into effective mode here: doing so makes a
-	// provider outage or a failed reload look like a successful route change.
-	if state.VerificationStatus == "" {
-		state.EffectiveMode = RouteModeUnknown
-		state.Target = ""
-		state.ProxyHealth = ProxyHealthUnknown
-		state.VerificationStatus = RouteVerificationUnknown
-	}
+	// Always clear effective fields here: retaining values from a previous
+	// projection would make a provider outage or failed reload look verified.
+	state.EffectiveMode = RouteModeUnknown
+	state.Target = ""
+	state.ProxyHealth = ProxyHealthUnknown
+	state.VerificationStatus = RouteVerificationUnknown
+	state.VerifiedAt = nil
 	state.RemoteFallback = false
 	return state
 }
@@ -312,11 +322,11 @@ func (a *Application) RouteStateFor(workspace *Workspace, _ *time.Time) RouteSta
 // RefreshRouteState derives the intent/static portion of the typed route
 // projection from legacy fields. Effective mode and verification metadata are
 // supplied by the registry after a proxy snapshot is loaded.
-func (a *Application) RefreshRouteState(workspace *Workspace, verifiedAt *time.Time) {
+func (a *Application) RefreshRouteState(workspace *Workspace) {
 	if a == nil {
 		return
 	}
-	a.Route = a.RouteStateFor(workspace, verifiedAt)
+	a.Route = a.RouteStateFor(workspace)
 }
 
 func cloneTime(value *time.Time) *time.Time {
@@ -491,20 +501,31 @@ func (w *Workspace) SetDefaults() {
 	// Set workspace reference on all applications
 	for _, app := range w.Applications {
 		app.SetWsID(w.WorkspaceID)
-		app.RefreshRouteState(w, nil)
+		app.RefreshRouteState(w)
 	}
 }
 
 // RefreshRouteStates recalculates persisted intent and static targets for all
 // applications in a workspace. Effective proxy state is supplied by the
 // registry after a successful proxy load.
-func (w *Workspace) RefreshRouteStates(verifiedAt *time.Time) {
+func (w *Workspace) RefreshRouteStates() {
 	if w == nil {
 		return
 	}
 	for _, app := range w.Applications {
-		app.RefreshRouteState(w, verifiedAt)
+		app.RefreshRouteState(w)
 	}
+}
+
+// ClampInt32 converts an int to the protobuf-safe int32 range.
+func ClampInt32(value int) int32 {
+	if value > math.MaxInt32 {
+		return math.MaxInt32
+	}
+	if value < math.MinInt32 {
+		return math.MinInt32
+	}
+	return int32(value)
 }
 
 // HealthUpdate represents a health status update

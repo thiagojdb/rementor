@@ -191,10 +191,6 @@ func (r *Registry) Load() error {
 		log.Printf("Warning: failed to load route operation journal: %v", err)
 	}
 
-	// Warm health checks (non-blocking)
-	log.Println("Warming health checks...")
-	go r.warmHealth()
-
 	// Load initial config if routing provider is available
 	if r.routingProvider != nil {
 		log.Printf("Loading initial routing config for %d workspaces", len(r.workspaces))
@@ -205,8 +201,15 @@ func (r *Registry) Load() error {
 		}
 	} else {
 		log.Println("Routing provider not available, running without routing")
-		r.markRoutingState(workspaces, "provider-unavailable")
+		r.workspacesMu.Lock()
+		r.markRoutingState(workspaces, models.RouteVerificationProviderUnavailable)
+		r.workspacesMu.Unlock()
 	}
+
+	// Warm health checks (non-blocking). Start this after the initial route
+	// projection so health goroutines cannot race the provider-unavailable view.
+	log.Println("Warming health checks...")
+	go r.warmHealth()
 
 	log.Println("Registry loaded successfully")
 
@@ -1147,12 +1150,7 @@ func (r *Registry) applyOperation(workspace *models.Workspace, app *models.Appli
 	workspace.Route.RouteVersion = operation.RouteVersion
 	workspace.Route.OperationID = operation.OperationID
 	if app != nil {
-		// Keep the persisted intent and static targets current, but leave
-		// effective mode untouched until the proxy reload is verified.
-		app.Route = app.RouteStateFor(workspace, nil)
-		app.LastOperation = cloneOperation(operation)
-		app.Route.RouteVersion = operation.RouteVersion
-		app.Route.OperationID = operation.OperationID
+		setAppOperation(workspace, app, operation)
 	}
 }
 
@@ -1160,7 +1158,7 @@ func setAppOperation(workspace *models.Workspace, app *models.Application, opera
 	if workspace == nil || app == nil || operation == nil {
 		return
 	}
-	app.Route = app.RouteStateFor(workspace, nil)
+	app.Route = app.RouteStateFor(workspace)
 	app.LastOperation = cloneOperation(operation)
 	app.Route.RouteVersion = operation.RouteVersion
 	app.Route.OperationID = operation.OperationID
@@ -1538,6 +1536,13 @@ func findAppInWorkspace(workspace *models.Workspace, reference string) (*models.
 	var matches []*models.Application
 	for _, app := range workspace.Applications {
 		if models.NormalizeIdentityToken(app.CanonicalAppID()) == normalized {
+			matches = append(matches, app)
+			continue
+		}
+		// A legacy binding may retain an ID that differs from its canonical
+		// app_id. Treat that wire-compatible identifier as a lookup alias while
+		// keeping the canonical identity as the returned key.
+		if models.NormalizeIdentityToken(app.ID) == normalized {
 			matches = append(matches, app)
 			continue
 		}
@@ -2031,7 +2036,7 @@ func routeKeyForProjection(route Route) string {
 }
 
 func proxyHealthForSnapshot(snapshot effectiveRouteSnapshot, current bool) string {
-	if snapshot.status == "provider-unavailable" {
+	if snapshot.status == models.RouteVerificationProviderUnavailable {
 		return models.ProxyHealthUnavailable
 	}
 	if current && snapshot.present {
@@ -2094,7 +2099,7 @@ func (r *Registry) projectApplicationRoute(ws *models.Workspace, app *models.App
 	if app == nil {
 		return models.RouteState{}
 	}
-	state := app.RouteStateFor(ws, nil)
+	state := app.RouteStateFor(ws)
 	desiredMode := models.RouteModeRemote
 	if ws != nil && (ws.IsLocalApps() || app.Active) {
 		desiredMode = models.RouteModeLocal
@@ -2109,8 +2114,8 @@ func (r *Registry) projectApplicationRoute(ws *models.Workspace, app *models.App
 	status := verificationStatusForSnapshot(snapshot, current)
 	state.VerificationStatus = status
 	state.ProxyHealth = proxyHealthForSnapshot(snapshot, current)
-	state.RouteVersion = app.Route.RouteVersion
-	state.OperationID = app.Route.OperationID
+	state.RouteVersion = ws.Route.RouteVersion
+	state.OperationID = ws.Route.OperationID
 	state.VerifiedAt = cloneTimeValue(snapshot.verifiedAt)
 	state.EffectiveMode = models.RouteModeUnknown
 	state.Target = ""
@@ -2150,8 +2155,8 @@ func cloneTimeValue(value time.Time) *time.Time {
 	if value.IsZero() {
 		return nil
 	}
-	copy := value.UTC()
-	return &copy
+	cloned := value.UTC()
+	return &cloned
 }
 
 func (r *Registry) markRoutingState(workspaces []*models.Workspace, status string) {
@@ -2170,14 +2175,14 @@ func (r *Registry) markRoutingState(workspaces []*models.Workspace, status strin
 func (r *Registry) applyRouting(workspaces []*models.Workspace, required bool) error {
 	provider := r.GetRoutingProvider()
 	if provider == nil {
-		r.markRoutingState(workspaces, "provider-unavailable")
+		r.markRoutingState(workspaces, models.RouteVerificationProviderUnavailable)
 		if required {
 			return fmt.Errorf("routing provider not set")
 		}
 		return nil
 	}
 	if !provider.IsAvailable() {
-		r.markRoutingState(workspaces, "provider-unavailable")
+		r.markRoutingState(workspaces, models.RouteVerificationProviderUnavailable)
 		if required {
 			return fmt.Errorf("routing provider is unavailable")
 		}

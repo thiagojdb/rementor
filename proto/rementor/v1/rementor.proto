@@ -16,6 +16,7 @@ service ControlPlaneService {
   rpc ListApplications(ListApplicationsRequest) returns (ListApplicationsResponse);
   rpc GetApplication(GetApplicationRequest) returns (GetApplicationResponse);
   rpc ResolveApplication(ResolveApplicationRequest) returns (ResolveApplicationResponse);
+  rpc ResolveBrowserURL(ResolveBrowserURLRequest) returns (ResolveBrowserURLResponse);
   rpc RegisterApplicationAlias(RegisterApplicationAliasRequest) returns (RegisterApplicationAliasResponse);
   rpc UpsertApplication(UpsertApplicationRequest) returns (UpsertApplicationResponse);
   rpc DeleteApplication(DeleteApplicationRequest) returns (DeleteApplicationResponse);
@@ -46,8 +47,8 @@ enum RouteMode {
   ROUTE_MODE_FALLBACK = 3;
   // UNKNOWN means no loaded proxy route could be verified for this entry.
   ROUTE_MODE_UNKNOWN = 4;
-  // STALE is retained as a distinct wire value for clients that want to
-  // render an unverified projection without losing the last known mode.
+  // STALE is reserved for future use; current staleness is represented by
+  // verification_status while preserving this append-only wire value.
   ROUTE_MODE_STALE = 5;
 }
 
@@ -273,6 +274,47 @@ message ResolveApplicationRequest {
 
 message ResolveApplicationResponse {
   Application application = 1;
+}
+
+message ResolveBrowserURLRequest {
+  string workspace_id = 1;
+  string application_ref = 2;
+  string correlation_id = 3;
+}
+
+// BrowserURLResolution is the stable public entry point for an application.
+// The URL is deliberately independent from target/local_target/remote_target:
+// toggling a route changes where the proxy sends traffic, not where a browser
+// should open the application.
+message BrowserURLResolution {
+  string workspace_id = 1;
+  string environment = 2;
+  string application_ref = 3;
+  string canonical_app_id = 4;
+  string service_id = 5;
+  string repository = 6;
+  string public_host = 7;
+  string public_path = 8;
+  string url = 9;
+  string browser_url = 10;
+  string target = 11;
+  string local_target = 12;
+  string remote_target = 13;
+  RouteMode desired_mode = 14;
+  RouteMode effective_mode = 15;
+  RouteVersion route_version = 16;
+  string operation_id = 17;
+  string correlation_id = 18;
+  RouteState route = 19;
+  CanonicalApplicationRef identity = 20;
+  WorkspaceEnvironmentRef environment_ref = 21;
+  OperationMetadata operation = 22;
+  int32 precedence = 23;
+  string matching_pattern = 24;
+}
+
+message ResolveBrowserURLResponse {
+  BrowserURLResolution resolution = 1;
 }
 
 message RegisterApplicationAliasRequest {

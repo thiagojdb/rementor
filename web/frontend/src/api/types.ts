@@ -2,6 +2,7 @@ import type { PlainMessage } from '@bufbuild/protobuf'
 import { RouteMode } from '../gen/rementor/v1/rementor_pb'
 import type {
   Application,
+  BrowserURLResolution,
   CanonicalApplicationRef,
   GetRoutePatternResponse,
   OperationMetadata,
@@ -24,6 +25,7 @@ export type CanonicalApplicationRefDTO = PlainMessage<CanonicalApplicationRef>
 export type WorkspaceEnvironmentRefDTO = PlainMessage<WorkspaceEnvironmentRef>
 export type RouteStateDTO = PlainMessage<RouteState>
 export type OperationMetadataDTO = PlainMessage<OperationMetadata>
+export type BrowserURLResolutionDTO = PlainMessage<BrowserURLResolution>
 
 export function routeTimestampLabel(timestamp: RouteStateDTO['verifiedAt']): string {
   if (!timestamp) return '—'

@@ -86,7 +86,7 @@ func TestRouteStateDistinguishesUnavailableProxyAndStaleLoadedRoute(t *testing.T
 	ws.Applications[0].Active = true
 	ws.Route.RouteVersion++
 	ws.Applications[0].Route.RouteVersion = ws.Route.RouteVersion
-	r.markRoutingState([]*models.Workspace{ws}, "provider-unavailable")
+	r.markRoutingState([]*models.Workspace{ws}, models.RouteVerificationProviderUnavailable)
 	_, app, err := r.GetApplicationView("demo", "orders")
 	if err != nil {
 		t.Fatal(err)
@@ -113,9 +113,42 @@ func TestRouteStateDistinguishesUnavailableProxyAndStaleLoadedRoute(t *testing.T
 	}
 }
 
+func TestRouteApplyWhileProviderUnavailableDoesNotPersistCandidate(t *testing.T) {
+	provider := &routeStateProvider{available: true}
+	r := newRouteStateRegistry(provider, true)
+	remotePlan, err := r.PlanRoute("demo", "orders", "remote", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := r.ApplyRoutePlan("demo", remotePlan, remotePlan.BaseRouteVersion, "", "test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Operation == nil {
+		t.Fatal("route apply did not return operation metadata")
+	}
+	persisted := r.workspaces[0].Applications[0].Route
+	if persisted.RouteVersion != result.Operation.RouteVersion || persisted.VerificationStatus != models.RouteVerificationVerified {
+		t.Fatalf("persisted route metadata = %#v, want committed version and verification", persisted)
+	}
+
+	provider.available = false
+	localPlan, err := r.PlanRoute("demo", "orders", "local", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.ApplyRoutePlan("demo", localPlan, localPlan.BaseRouteVersion, "", "test"); err == nil {
+		t.Fatal("expected provider-unavailable route apply to fail")
+	}
+	unchanged := r.workspaces[0].Applications[0].Route
+	if unchanged.RouteVersion != persisted.RouteVersion || unchanged.VerificationStatus != persisted.VerificationStatus {
+		t.Fatalf("failed apply changed persisted route metadata: before=%#v after=%#v", persisted, unchanged)
+	}
+}
+
 func TestRouteStateProviderUnavailableWithoutSnapshotIsUnknown(t *testing.T) {
 	r := newRouteStateRegistry(&routeStateProvider{available: false}, true)
-	r.markRoutingState(r.workspaces, "provider-unavailable")
+	r.markRoutingState(r.workspaces, models.RouteVerificationProviderUnavailable)
 	_, app, err := r.GetApplicationView("demo", "orders")
 	if err != nil {
 		t.Fatal(err)

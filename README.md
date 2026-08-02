@@ -149,6 +149,9 @@ make build-ctl
 ./dist/rementorctl route plan demo orders-api --mode local
 ./dist/rementorctl route apply demo orders-api --mode local --idempotency-key orders-local
 ./dist/rementorctl route sync demo
+
+# Resolve the stable browser entry point (aliases are accepted).
+./dist/rementorctl url --workspace demo --app orders-api
 ```
 
 Flags may appear before or after positional arguments.
@@ -203,6 +206,16 @@ Rementor writes generated routes to that XDG directory and verifies with
 `nginx -T` that the generated file is part of the effective configuration
 before reloading. It does not edit `/etc/nginx/nginx.conf`, install sudoers
 rules, modify `/etc/hosts`, or configure DNS.
+
+Every generated proxy location adds `X-Rementor-*` response proof headers for
+the canonical app/service, workspace and environment, effective mode (`local`,
+`remote`, or `fallback`), route version, operation ID, and a validated
+correlation/request ID. Upstream copies of those headers are hidden before the
+Rementor values are added, and the proof headers are exposed to local browser
+origins through CORS. Send `X-Correlation-ID` or `X-Request-ID` to preserve a
+safe correlation value; otherwise nginx generates one. The
+`/__rementor/trace` path returns a small request-inspection payload through the
+control plane for debugging stale proxy projections.
 
 The container demo and the user-owned host nginx follow the same privilege
 boundary. Do not make a privileged nginx master load files from a directory
@@ -260,6 +273,13 @@ the browser. Responses include an explicit `identity` reference, an
 `correlationId`; callers may supply a correlation ID in the request or let
 Rementor generate one.
 
+Browser URLs are resolved from the canonical application identity and the
+selected workspace/environment public binding. `rementorctl url` and the MCP
+`rementor_url` tool return the stable URL separately from the current local or
+remote proxy target, together with route version, effective mode, and the last
+operation/correlation metadata. Switching an application between local and
+remote therefore never changes the URL a browser should open.
+
 Existing workspace files and RPC clients remain compatible: `id` is treated as
 the legacy alias for `appId`, `workspaceId` remains the environment key, and
 the old boolean/string fields are retained while clients migrate to the typed
@@ -285,17 +305,21 @@ Run the same quality gates used in CI:
 
 ```bash
 buf lint
-go vet ./...
-go test -race ./...
+make generate
+git diff --exit-code
 cd web/frontend
 npm ci
 npm audit
 npm run typecheck
 npm run build
+cd ../..
+go vet ./...
+go test -race ./...
 ```
 
-Generated RPC clients and embedded frontend assets are committed so a clean Go
-checkout can build without running the JavaScript toolchain.
+Generated RPC clients are committed. The frontend bundle is generated into
+`cmd/server/dist/` and ignored by Git; run `make frontend` before starting the
+server or running Go checks.
 
 ## Scope
 

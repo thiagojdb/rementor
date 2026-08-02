@@ -12,6 +12,7 @@ import (
 	"connectrpc.com/connect"
 	rementorv1 "github.com/thiagojdb/rementor/internal/gen/rementor/v1"
 	"github.com/thiagojdb/rementor/internal/gen/rementor/v1/rementorv1connect"
+	"github.com/thiagojdb/rementor/internal/models"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -135,6 +136,30 @@ func (c *Client) ResolveApplication(ctx context.Context, workspaceID, applicatio
 		return ApplicationDTO{}, apiError(err)
 	}
 	return applicationFromProto(res.Msg.GetApplication()), nil
+}
+
+// ResolveBrowserURL returns the stable public browser entry point for a
+// canonical application ID or alias. It is deliberately separate from the
+// route target so local/remote toggles do not change the browser URL.
+func (c *Client) ResolveBrowserURL(ctx context.Context, workspaceID, applicationRef string) (BrowserURLResolutionDTO, error) {
+	res, err := c.rpc.ResolveBrowserURL(ctx, connect.NewRequest(&rementorv1.ResolveBrowserURLRequest{
+		WorkspaceId: workspaceID, ApplicationRef: applicationRef,
+	}))
+	if err != nil {
+		return BrowserURLResolutionDTO{}, apiError(err)
+	}
+	return browserURLResolutionFromProto(res.Msg.GetResolution()), nil
+}
+
+// ResolveURL is a concise compatibility alias for ResolveBrowserURL.
+func (c *Client) ResolveURL(ctx context.Context, workspaceID, applicationRef string) (BrowserURLResolutionDTO, error) {
+	return c.ResolveBrowserURL(ctx, workspaceID, applicationRef)
+}
+
+// ResolveApplicationURL names the same stable browser URL operation after the
+// application identity for integrations that use that vocabulary.
+func (c *Client) ResolveApplicationURL(ctx context.Context, workspaceID, applicationRef string) (BrowserURLResolutionDTO, error) {
+	return c.ResolveBrowserURL(ctx, workspaceID, applicationRef)
 }
 
 func (c *Client) RegisterApplicationAlias(ctx context.Context, workspaceID, applicationRef, alias string) (ApplicationDTO, error) {
@@ -631,7 +656,7 @@ func routeConflictsFromProto(conflicts []*rementorv1.RouteConflict) []RouteConfl
 }
 
 func normalizedRouteToProto(route NormalizedRouteDTO) *rementorv1.NormalizedRoute {
-	result := &rementorv1.NormalizedRoute{WorkspaceId: route.WorkspaceID, Environment: route.Environment, PublicHost: route.PublicHost, Pattern: route.Pattern, CanonicalAppId: route.CanonicalAppID, ServiceId: route.ServiceID, Repository: route.Repository, DesiredMode: routeModeToProto(route.DesiredMode), EffectiveMode: routeModeToProto(route.EffectiveMode), Target: route.Target, LocalTarget: route.LocalTarget, RemoteTarget: route.RemoteTarget, RemoteFallback: route.RemoteFallback, UpstreamContext: route.UpstreamContext, Precedence: int32(route.Precedence), PrecedenceReason: route.PrecedenceReason, Exact: route.Exact, ProxyHealth: route.ProxyHealth, VerificationStatus: route.VerificationStatus, Version: &rementorv1.RouteVersion{Value: route.RouteVersion}, OperationId: route.OperationID}
+	result := &rementorv1.NormalizedRoute{WorkspaceId: route.WorkspaceID, Environment: route.Environment, PublicHost: route.PublicHost, Pattern: route.Pattern, CanonicalAppId: route.CanonicalAppID, ServiceId: route.ServiceID, Repository: route.Repository, DesiredMode: routeModeToProto(route.DesiredMode), EffectiveMode: routeModeToProto(route.EffectiveMode), Target: route.Target, LocalTarget: route.LocalTarget, RemoteTarget: route.RemoteTarget, RemoteFallback: route.RemoteFallback, UpstreamContext: route.UpstreamContext, Precedence: models.ClampInt32(route.Precedence), PrecedenceReason: route.PrecedenceReason, Exact: route.Exact, ProxyHealth: route.ProxyHealth, VerificationStatus: route.VerificationStatus, Version: &rementorv1.RouteVersion{Value: route.RouteVersion}, OperationId: route.OperationID}
 	if route.VerifiedAt != nil && !route.VerifiedAt.IsZero() {
 		result.VerifiedAt = timestamppb.New(route.VerifiedAt.UTC())
 	}
@@ -707,6 +732,41 @@ func routeResolutionFromProto(resolution *rementorv1.RouteResolution) RouteResol
 	if resolution.GetRoute() != nil {
 		value := normalizedRouteFromProto(resolution.GetRoute())
 		result.Route = &value
+	}
+	return result
+}
+
+func browserURLResolutionFromProto(resolution *rementorv1.BrowserURLResolution) BrowserURLResolutionDTO {
+	if resolution == nil {
+		return BrowserURLResolutionDTO{}
+	}
+	var routeVersion uint64
+	if resolution.GetRouteVersion() != nil {
+		routeVersion = resolution.GetRouteVersion().GetValue()
+	}
+	result := BrowserURLResolutionDTO{
+		WorkspaceID: resolution.GetWorkspaceId(), Environment: resolution.GetEnvironment(), ApplicationRef: resolution.GetApplicationRef(),
+		CanonicalAppID: resolution.GetCanonicalAppId(), ServiceID: resolution.GetServiceId(), Repository: resolution.GetRepository(),
+		PublicHost: resolution.GetPublicHost(), PublicPath: resolution.GetPublicPath(), URL: resolution.GetUrl(), BrowserURL: resolution.GetBrowserUrl(),
+		Target: resolution.GetTarget(), LocalTarget: resolution.GetLocalTarget(), RemoteTarget: resolution.GetRemoteTarget(),
+		DesiredMode: routeModeFromProto(resolution.GetDesiredMode()), EffectiveMode: routeModeFromProto(resolution.GetEffectiveMode()),
+		RouteVersion: routeVersion, OperationID: resolution.GetOperationId(), CorrelationID: resolution.GetCorrelationId(),
+		Identity: identityFromProto(resolution.GetIdentity()), EnvironmentRef: environmentFromProto(resolution.GetEnvironmentRef()),
+		Operation: operationFromProto(resolution.GetOperation()), Precedence: int(resolution.GetPrecedence()), MatchingPattern: resolution.GetMatchingPattern(),
+		RouteState: routeFromProto(resolution.GetRoute()),
+	}
+	if resolution.GetRoute() != nil {
+		// NormalizedRouteDTO is the richer route projection used by the CLI. The
+		// browser URL contract carries RouteState for wire compatibility, so
+		// retain the target/mode fields in a compact normalized entry here.
+		route := resolution.GetRoute()
+		result.Route = &NormalizedRouteDTO{
+			WorkspaceID: result.WorkspaceID, Environment: result.Environment, PublicHost: result.PublicHost,
+			Pattern: resolution.GetMatchingPattern(), CanonicalAppID: result.CanonicalAppID, ServiceID: result.ServiceID,
+			Repository: result.Repository, DesiredMode: result.DesiredMode, EffectiveMode: result.EffectiveMode,
+			Target: route.GetTarget(), LocalTarget: route.GetLocalTarget(), RemoteTarget: route.GetRemoteTarget(),
+			RemoteFallback: route.GetRemoteFallback(), Precedence: result.Precedence, PrecedenceReason: "browser URL entry",
+		}
 	}
 	return result
 }

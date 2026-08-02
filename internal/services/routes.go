@@ -346,14 +346,13 @@ func buildRouteWithExact(ws *models.Workspace, app *models.Application, host, pa
 		target, local, remote = routeTarget(ws, app, mode)
 	}
 	effectiveMode := mode
-	if mode == models.RouteModeLocal && target != local {
-		if target != "" {
-			effectiveMode = models.RouteModeRemote
-		} else {
-			effectiveMode = models.RouteModeUnknown
-		}
-	} else if mode == models.RouteModeRemote && target == "" {
+	switch {
+	case target == "" && mode == models.RouteModeRemote:
 		effectiveMode = models.RouteModeFallback
+	case target == "":
+		effectiveMode = models.RouteModeUnknown
+	case mode == models.RouteModeLocal && target != local:
+		effectiveMode = models.RouteModeRemote
 	}
 	precedence := length
 	if exact {
@@ -423,7 +422,7 @@ func buildNormalizedRoutes(ws *models.Workspace) []Route {
 				continue
 			}
 			mode := appMode(ws, app)
-			if mode == models.RouteModeLocal && app.Port == 0 {
+			if mode == models.RouteModeLocal && app.Port == 0 && app.GetRemoteBaseUrl(ws) == "" {
 				continue
 			}
 			if mode == models.RouteModeRemote && app.GetRemoteBaseUrl(ws) == "" {
@@ -594,7 +593,7 @@ func conflictsForRoutes(routes []Route) []RouteConflict {
 func warningsForRoutes(ws *models.Workspace, app *models.Application, mode string, routes []Route) []RouteWarning {
 	warnings := make([]RouteWarning, 0)
 	if app != nil && mode == models.RouteModeLocal && app.Port == 0 {
-		warnings = append(warnings, RouteWarning{Code: "LOCAL_TARGET_UNAVAILABLE", Message: fmt.Sprintf("application %q has no local port; the route will use its remote target", app.CanonicalAppID())})
+		warnings = append(warnings, RouteWarning{Code: "LOCAL_TARGET_UNAVAILABLE", Message: fmt.Sprintf("application %q has no local port; no route is generated for it", app.CanonicalAppID())})
 	}
 	if app != nil && mode == models.RouteModeRemote && app.GetRemoteBaseUrl(ws) == "" {
 		warnings = append(warnings, RouteWarning{Code: "REMOTE_TARGET_UNAVAILABLE", Message: fmt.Sprintf("application %q has no remote target", app.CanonicalAppID())})

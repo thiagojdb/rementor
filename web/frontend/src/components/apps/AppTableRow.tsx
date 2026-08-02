@@ -101,8 +101,8 @@ const AppTableRow: Component<AppTableRowProps> = (props) => {
             {desiredRoute()} → {effectiveRoute()}
           </span>
         )}
-        <span class="ml-1 font-mono text-[10px]" style={{ color: 'var(--text-tertiary)' }} title="Proxy verification">
-          {props.app.route?.proxyHealth ?? 'unknown'}
+        <span class="ml-1 font-mono text-[10px]" style={{ color: 'var(--text-tertiary)' }} title="Proxy health">
+          {props.app.route?.proxyHealth || 'unknown'}
         </span>
       </td>
       <Show when={!isLocalApps()}>
