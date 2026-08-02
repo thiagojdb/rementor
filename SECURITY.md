@@ -22,6 +22,10 @@ Generated proxy routes include CORS headers for local development origins only:
 allow arbitrary public origins to read responses from services reachable through
 Rementor.
 
+Route proof headers use the `X-Rementor-*` namespace. Generated locations hide
+upstream copies before adding their own values, and incoming correlation IDs are
+validated or replaced with a generated request ID before being forwarded.
+
 ## Local Data
 
 Rementor stores workspace definitions, application metadata, routing state, and

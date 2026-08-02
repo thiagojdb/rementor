@@ -249,6 +249,66 @@ func TestRenderConfigRestrictsCORSOriginsToLocalDevelopment(t *testing.T) {
 	assertNotContains(t, conf, `add_header Access-Control-Allow-Origin "*" always;`)
 }
 
+func TestRenderConfigAddsOwnedRouteProofAndExposesItToBrowsers(t *testing.T) {
+	operationID := "op-route-7"
+	conf := renderTestConfig(t, &models.Workspace{
+		WorkspaceID: "dev",
+		Type:        "routing",
+		Route:       models.RouteState{RouteVersion: 7, OperationID: operationID},
+		RoutingConfig: &models.RoutingConfig{
+			LocalDomain:          "api.localhost",
+			DefaultRemoteBaseURL: "https://remote.example.test",
+		},
+		Applications: []*models.Application{{
+			ID:        "orders-api",
+			AppID:     "orders-api",
+			ServiceID: "orders",
+			Path:      "/orders",
+			Context:   "/orders",
+			Port:      9311,
+			Active:    true,
+			Route:     models.RouteState{RouteVersion: 7, OperationID: operationID},
+		}},
+	})
+
+	block := serverBlock(t, conf, "api.localhost")
+	assertContains(t, block, `add_header X-Rementor-App-ID "orders-api" always;`)
+	assertContains(t, block, `add_header X-Rementor-Service-ID "orders" always;`)
+	assertContains(t, block, `add_header X-Rementor-Workspace "dev" always;`)
+	assertContains(t, block, `add_header X-Rementor-Environment "dev" always;`)
+	assertContains(t, block, `add_header X-Rementor-Effective-Mode "local" always;`)
+	assertContains(t, block, `add_header X-Rementor-Route-Version "7" always;`)
+	assertContains(t, block, `add_header X-Rementor-Operation-ID "op-route-7" always;`)
+	assertContains(t, block, `add_header X-Rementor-Correlation-ID $rementor_correlation_id always;`)
+	assertContains(t, block, `proxy_hide_header X-Rementor-App-ID;`)
+	assertContains(t, block, `proxy_hide_header X-Rementor-Operation-ID;`)
+	assertContains(t, block, `Access-Control-Expose-Headers "X-Rementor-App-ID`)
+	assertContains(t, block, `location = /__rementor/trace {`)
+	assertContains(t, block, `proxy_pass http://localhost:9300;`)
+}
+
+func TestRenderConfigMarksMissingLocalTargetAsFallback(t *testing.T) {
+	conf := renderTestConfig(t, &models.Workspace{
+		WorkspaceID: "dev",
+		Type:        "routing",
+		RoutingConfig: &models.RoutingConfig{
+			LocalDomain:          "api.localhost",
+			DefaultRemoteBaseURL: "https://remote.example.test",
+		},
+		Applications: []*models.Application{{
+			ID:            "orders-api",
+			Path:          "/orders",
+			Context:       "/orders",
+			RemoteBaseUrl: "https://orders.remote.example.test",
+			Active:        true,
+		}},
+	})
+
+	block := serverBlock(t, conf, "api.localhost")
+	assertContains(t, block, `add_header X-Rementor-Effective-Mode "fallback" always;`)
+	assertContains(t, block, `proxy_pass https://orders.remote.example.test:443;`)
+}
+
 func TestGeneratedConfigParsesWithNginxWhenAvailable(t *testing.T) {
 	nginxPath, err := exec.LookPath("nginx")
 	if err != nil {
