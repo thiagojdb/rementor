@@ -1,0 +1,7 @@
+{
+  "name": "rementor",
+  "private": true,
+  "scripts": {
+    "verify": "bash ./scripts/verify.sh"
+  }
+}

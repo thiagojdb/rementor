@@ -57,7 +57,7 @@ func main() {
 	case "announce":
 		cli.AnnounceCmd(client, jsonOutput, rest)
 	case "mcp":
-		cli.MCPCmd(client, url)
+		cli.MCPCmd(client, url, rest)
 	case "nginx":
 		cli.NginxCmd(rest)
 	case "route":
@@ -97,7 +97,7 @@ Commands:
   announce --workspace <id> --app <id> --port <N> [--type routing|local-apps] [--public-path /path] [--upstream-context /ctx] [--frontend-root /root] [--strict-metadata]
            [--local-domain <d>] [--path /path] [--domain <d>] [--remote-base-url <url>] [--context /ctx] [--name <n>]
            [--health <endpoint>] [--route-override] [--no-activate]`)
-	fmt.Fprintln(os.Stderr, "  mcp")
+	fmt.Fprintln(os.Stderr, "  mcp [--protocol auto|modern|legacy]")
 	fmt.Fprintln(os.Stderr, "  nginx load-routes")
 	fmt.Fprintln(os.Stderr, "  route get|conflicts|resolve|plan|apply|sync")
 	fmt.Fprintln(os.Stderr, "  url --workspace <id> --app <app-or-alias>")
