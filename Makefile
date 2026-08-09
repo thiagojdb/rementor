@@ -75,10 +75,7 @@ audit:
 	cd $(FRONTEND_DIR) && npm audit
 
 check:
-	buf lint
-	go vet ./...
-	go test -race ./...
-	cd $(FRONTEND_DIR) && npm run typecheck && npm run build && npm audit
+	npm run verify
 
 fmt:
 	go fmt ./...

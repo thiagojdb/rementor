@@ -28,38 +28,5 @@ jobs:
 
       - uses: bufbuild/buf-setup-action@v1
 
-      - name: Install frontend dependencies
-        working-directory: web/frontend
-        run: npm ci
-
-      - name: Audit frontend dependencies
-        working-directory: web/frontend
-        run: npm audit
-
-      - name: Lint protobuf
-        run: buf lint
-
-      - name: Verify generated RPC code
-        run: |
-          buf generate
-          git diff --exit-code
-
-      - name: Typecheck frontend
-        working-directory: web/frontend
-        run: npm run typecheck
-
-      - name: Build frontend
-        working-directory: web/frontend
-        run: npm run build
-
-      - name: Vet Go
-        run: go vet ./...
-
-      - name: Test Go
-        run: go test ./...
-
-      - name: Race test Go
-        run: go test -race ./...
-
-      - name: Test Docker demo routing workflow
-        run: ./scripts/test-demo.sh
+      - name: Verify
+        run: npm run verify
