@@ -190,6 +190,23 @@ examples/mock-stack/     Sanitized local/remote service simulation
 examples/docker/         Rootless nginx demo runtime
 ```
 
+## MCP compatibility
+
+`rementorctl mcp` supports both the handshake-based MCP `2024-11-05` protocol
+and the stateless MCP `2026-07-28` protocol. The default `auto` mode selects the
+protocol from the harness's first protocol-bearing request:
+
+```bash
+rementorctl mcp
+rementorctl mcp --protocol modern
+rementorctl mcp --protocol legacy
+```
+
+Use an explicit mode only when a harness cannot negotiate correctly. Modern
+requests carry their protocol version and client capabilities in `_meta` on
+every request; legacy clients continue to use `initialize` and
+`notifications/initialized`. Both modes expose the same Rementor tools.
+
 ## nginx Integration
 
 Rementor runs without nginx for the UI, CLI, MCP, configuration, and health

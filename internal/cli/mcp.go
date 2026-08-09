@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,11 +15,25 @@ import (
 	"strings"
 )
 
-const mcpProtocolVersion = "2024-11-05"
+const (
+	mcpLegacyProtocolVersion = "2024-11-05"
+	mcpModernProtocolVersion = "2026-07-28"
+	mcpServerName            = "mcp-rementor"
+	mcpServerVersion         = "1.0.0"
+)
+
+type mcpProtocolMode string
+
+const (
+	mcpProtocolAuto   mcpProtocolMode = "auto"
+	mcpProtocolModern mcpProtocolMode = "modern"
+	mcpProtocolLegacy mcpProtocolMode = "legacy"
+)
 
 type mcpServer struct {
 	client    *Client
 	serverURL string
+	mode      mcpProtocolMode
 }
 
 type mcpRequest struct {
@@ -49,6 +64,7 @@ type mcpToolCallParams struct {
 type mcpToolResult struct {
 	Content           []mcpTextContent `json:"content"`
 	StructuredContent any              `json:"structuredContent,omitempty"`
+	IsError           bool             `json:"isError,omitempty"`
 }
 
 type mcpTextContent struct {
@@ -125,12 +141,37 @@ type mcpAnnounceResult struct {
 	Operation   *OperationMetadataDTO `json:"operation,omitempty"`
 }
 
-// MCPCmd runs rementorctl as a stdio MCP server.
-func MCPCmd(client *Client, serverURL string) {
-	server := &mcpServer{client: client, serverURL: serverURL}
+// MCPCmd runs rementorctl as a dual-era stdio MCP server.
+func MCPCmd(client *Client, serverURL string, args []string) {
+	fs := flag.NewFlagSet("mcp", flag.ContinueOnError)
+	protocol := fs.String("protocol", string(mcpProtocolAuto), "MCP protocol mode: auto, modern, or legacy")
+	if err := fs.Parse(args); err != nil {
+		os.Exit(2)
+	}
+	if fs.NArg() != 0 {
+		fmt.Fprintf(os.Stderr, "unexpected mcp arguments: %s\n", strings.Join(fs.Args(), " "))
+		os.Exit(2)
+	}
+	mode, err := parseMCPProtocolMode(*protocol)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+
+	server := &mcpServer{client: client, serverURL: serverURL, mode: mode}
 	if err := server.serve(os.Stdin, os.Stdout); err != nil && !errors.Is(err, io.EOF) {
 		fmt.Fprintf(os.Stderr, "mcp error: %v\n", err)
 		os.Exit(1)
+	}
+}
+
+func parseMCPProtocolMode(value string) (mcpProtocolMode, error) {
+	mode := mcpProtocolMode(strings.ToLower(strings.TrimSpace(value)))
+	switch mode {
+	case mcpProtocolAuto, mcpProtocolModern, mcpProtocolLegacy:
+		return mode, nil
+	default:
+		return "", fmt.Errorf("invalid MCP protocol mode %q: expected auto, modern, or legacy", value)
 	}
 }
 
@@ -226,8 +267,24 @@ func (s *mcpServer) handle(req mcpRequest) (resp *mcpResponse) {
 	if req.JSONRPC != "2.0" {
 		return mcpErr(req.ID, -32600, "Invalid Request", nil)
 	}
-	if req.Method == "notifications/initialized" {
+	if req.Method == "notifications/initialized" || req.Method == "notifications/cancelled" {
 		return nil
+	}
+
+	requestVersion, hasVersion := mcpRequestProtocolVersion(req.Params)
+	mode := s.selectProtocolMode(req, hasVersion)
+	if mode == mcpProtocolModern {
+		if req.Method == "initialize" {
+			return mcpErr(req.ID, -32601, "Method not found", map[string]any{"message": "initialize is not used by MCP 2026-07-28; use server/discover or call methods directly"})
+		}
+		if err := validateModernMCPRequest(req.Params); err != nil {
+			return mcpErr(req.ID, -32602, "Invalid params", map[string]any{"message": err.Error()})
+		}
+		if requestVersion != mcpModernProtocolVersion {
+			return unsupportedMCPVersion(req.ID, requestVersion, []string{mcpModernProtocolVersion})
+		}
+	} else if hasVersion {
+		return unsupportedMCPVersion(req.ID, requestVersion, []string{mcpLegacyProtocolVersion})
 	}
 
 	var result any
@@ -235,18 +292,36 @@ func (s *mcpServer) handle(req mcpRequest) (resp *mcpResponse) {
 	switch req.Method {
 	case "initialize":
 		result = map[string]any{
-			"protocolVersion": mcpProtocolVersion,
+			"protocolVersion": mcpLegacyProtocolVersion,
 			"capabilities":    map[string]any{"tools": map[string]any{}},
-			"serverInfo":      map[string]string{"name": "mcp-rementor", "version": "1.0.0"},
+			"serverInfo":      mcpServerInfo(),
+		}
+	case "server/discover":
+		if mode != mcpProtocolModern {
+			return mcpErr(req.ID, -32601, "Method not found", nil)
+		}
+		result = map[string]any{
+			"supportedVersions": []string{mcpModernProtocolVersion},
+			"capabilities":      map[string]any{"tools": map[string]any{}},
+			"instructions":      "Use the Rementor tools to inspect and control local or remote application routing.",
+			"ttlMs":             300000,
+			"cacheScope":        "public",
 		}
 	case "ping":
+		if mode == mcpProtocolModern {
+			return mcpErr(req.ID, -32601, "Method not found", nil)
+		}
 		result = map[string]any{}
 	case "tools/list":
 		result = map[string]any{"tools": mcpToolList()}
+		if mode == mcpProtocolModern {
+			result.(map[string]any)["ttlMs"] = 300000
+			result.(map[string]any)["cacheScope"] = "public"
+		}
 	case "tools/call":
 		result, err = s.handleToolCall(req.Params)
 	default:
-		err = fmt.Errorf("unsupported method: %s", req.Method)
+		return mcpErr(req.ID, -32601, "Method not found", map[string]any{"method": req.Method})
 	}
 	if err != nil {
 		data := map[string]any{"type": classifyMCPError(err), "message": err.Error()}
@@ -258,7 +333,100 @@ func (s *mcpServer) handle(req mcpRequest) (resp *mcpResponse) {
 		}
 		return mcpErr(req.ID, -32000, err.Error(), data)
 	}
+	if mode == mcpProtocolModern {
+		result = modernMCPResult(result)
+	}
 	return &mcpResponse{JSONRPC: "2.0", ID: req.ID, Result: result}
+}
+
+func (s *mcpServer) selectProtocolMode(req mcpRequest, hasVersion bool) mcpProtocolMode {
+	if s.mode != mcpProtocolAuto {
+		return s.mode
+	}
+	if req.Method == "initialize" {
+		s.mode = mcpProtocolLegacy
+	} else if req.Method == "server/discover" || hasVersion {
+		s.mode = mcpProtocolModern
+	} else {
+		// Preserve the historical behavior for legacy harnesses that call a
+		// method before initialize. A conforming modern client always supplies
+		// its protocol version in per-request metadata.
+		return mcpProtocolLegacy
+	}
+	return s.mode
+}
+
+func mcpRequestProtocolVersion(raw json.RawMessage) (string, bool) {
+	var params struct {
+		Meta map[string]json.RawMessage `json:"_meta"`
+	}
+	if len(raw) == 0 || json.Unmarshal(raw, &params) != nil || params.Meta == nil {
+		return "", false
+	}
+	value, ok := params.Meta["io.modelcontextprotocol/protocolVersion"]
+	if !ok || json.Unmarshal(value, new(string)) != nil {
+		return "", ok
+	}
+	var version string
+	_ = json.Unmarshal(value, &version)
+	return version, true
+}
+
+func validateModernMCPRequest(raw json.RawMessage) error {
+	var params struct {
+		Meta map[string]json.RawMessage `json:"_meta"`
+	}
+	if len(raw) == 0 {
+		return errors.New("params._meta is required")
+	}
+	if err := json.Unmarshal(raw, &params); err != nil {
+		return fmt.Errorf("params must be an object: %w", err)
+	}
+	if params.Meta == nil {
+		return errors.New("params._meta is required")
+	}
+	version, ok := params.Meta["io.modelcontextprotocol/protocolVersion"]
+	if !ok {
+		return errors.New("params._meta.io.modelcontextprotocol/protocolVersion is required")
+	}
+	var versionString string
+	if err := json.Unmarshal(version, &versionString); err != nil || versionString == "" {
+		return errors.New("params._meta.io.modelcontextprotocol/protocolVersion must be a non-empty string")
+	}
+	capabilities, ok := params.Meta["io.modelcontextprotocol/clientCapabilities"]
+	if !ok {
+		return errors.New("params._meta.io.modelcontextprotocol/clientCapabilities is required")
+	}
+	var capabilitiesObject map[string]any
+	if err := json.Unmarshal(capabilities, &capabilitiesObject); err != nil || capabilitiesObject == nil {
+		return errors.New("params._meta.io.modelcontextprotocol/clientCapabilities must be an object")
+	}
+	return nil
+}
+
+func unsupportedMCPVersion(id any, requested string, supported []string) *mcpResponse {
+	return mcpErr(id, -32022, "Unsupported protocol version", map[string]any{
+		"supported": supported,
+		"requested": requested,
+	})
+}
+
+func modernMCPResult(result any) map[string]any {
+	var modern map[string]any
+	payload, err := json.Marshal(result)
+	if err == nil {
+		_ = json.Unmarshal(payload, &modern)
+	}
+	if modern == nil {
+		modern = map[string]any{"value": result}
+	}
+	modern["resultType"] = "complete"
+	modern["_meta"] = map[string]any{"io.modelcontextprotocol/serverInfo": mcpServerInfo()}
+	return modern
+}
+
+func mcpServerInfo() map[string]string {
+	return map[string]string{"name": mcpServerName, "version": mcpServerVersion}
 }
 
 func (s *mcpServer) handleToolCall(raw json.RawMessage) (any, error) {
