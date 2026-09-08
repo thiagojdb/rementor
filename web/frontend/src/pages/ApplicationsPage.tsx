@@ -8,7 +8,7 @@ import AppCard from '../components/apps/AppCard'
 import AppTable from '../components/apps/AppTable'
 import AppDetailModal from '../components/modals/AppDetailModal'
 import WorkspaceSwitcher from '../components/layout/WorkspaceSwitcher'
-import SelectDropdown from '../components/ui/SelectDropdown'
+import Combobox from '../components/ui/Combobox'
 
 type ViewMode = 'card' | 'table'
 
@@ -116,7 +116,7 @@ const ApplicationsPage: Component = () => {
 
           {/* Status filter — only for routing workspaces */}
           <Show when={!isLocalApps()}>
-            <SelectDropdown
+            <Combobox
               value={statusFilter()}
               options={[
                 { value: '',         label: 'All status'      },
@@ -124,6 +124,9 @@ const ApplicationsPage: Component = () => {
                 { value: 'inactive', label: 'Remote (inactive)'},
               ]}
               onChange={(v) => setStatusFilter(v as '' | 'active' | 'inactive')}
+              ariaLabel="Filter by status"
+              searchPlaceholder="Search status..."
+              emptyText="No matching status."
             />
           </Show>
 
