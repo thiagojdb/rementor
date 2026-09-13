@@ -15,6 +15,9 @@ import (
 )
 
 func (s *ControlPlaneService) GetRoute(ctx context.Context, req *connect.Request[rementorv1.GetRouteRequest]) (*connect.Response[rementorv1.GetRouteResponse], error) {
+	if err := s.selectSession(req.Msg); err != nil {
+		return nil, err
+	}
 	wsID := req.Msg.GetWorkspaceId()
 	routes, version, warnings, conflicts, err := s.registry.GetRoutes(wsID)
 	if err != nil {
@@ -30,12 +33,15 @@ func (s *ControlPlaneService) GetRoute(ctx context.Context, req *connect.Request
 		Conflicts:    routeConflictsToProto(conflicts),
 	}
 	if ws != nil {
-		response.Environment = ws.WorkspaceID
+		response.Environment = ws.EnvironmentID()
 	}
 	return connect.NewResponse(response), nil
 }
 
 func (s *ControlPlaneService) GetRouteConflicts(ctx context.Context, req *connect.Request[rementorv1.GetRouteConflictsRequest]) (*connect.Response[rementorv1.GetRouteConflictsResponse], error) {
+	if err := s.selectSession(req.Msg); err != nil {
+		return nil, err
+	}
 	wsID := req.Msg.GetWorkspaceId()
 	conflicts, version, warnings, err := s.registry.GetRouteConflicts(wsID)
 	if err != nil {
@@ -56,6 +62,9 @@ func (s *ControlPlaneService) GetRouteConflicts(ctx context.Context, req *connec
 }
 
 func (s *ControlPlaneService) ResolveRoute(ctx context.Context, req *connect.Request[rementorv1.ResolveRouteRequest]) (*connect.Response[rementorv1.ResolveRouteResponse], error) {
+	if err := s.selectSession(req.Msg); err != nil {
+		return nil, err
+	}
 	resolution, err := s.registry.ResolveRoute(req.Msg.GetWorkspaceId(), req.Msg.GetHost(), req.Msg.GetPath())
 	if err != nil {
 		return nil, newRPCError(classifyRegistryError(err), err)
@@ -64,6 +73,9 @@ func (s *ControlPlaneService) ResolveRoute(ctx context.Context, req *connect.Req
 }
 
 func (s *ControlPlaneService) PlanRoute(ctx context.Context, req *connect.Request[rementorv1.PlanRouteRequest]) (*connect.Response[rementorv1.PlanRouteResponse], error) {
+	if err := s.selectSession(req.Msg); err != nil {
+		return nil, err
+	}
 	mode, err := routeModeString(req.Msg.GetDesiredMode())
 	if err != nil {
 		return nil, newRPCError(connect.CodeInvalidArgument, err)
@@ -91,6 +103,9 @@ func (s *ControlPlaneService) PlanRoute(ctx context.Context, req *connect.Reques
 }
 
 func (s *ControlPlaneService) ApplyRoute(ctx context.Context, req *connect.Request[rementorv1.ApplyRouteRequest]) (*connect.Response[rementorv1.ApplyRouteResponse], error) {
+	if err := s.selectSession(req.Msg); err != nil {
+		return nil, err
+	}
 	wsID := req.Msg.GetWorkspaceId()
 	var plan services.RoutePlan
 	var err error
@@ -154,6 +169,9 @@ func (s *ControlPlaneService) ApplyRoute(ctx context.Context, req *connect.Reque
 }
 
 func (s *ControlPlaneService) SyncRoute(ctx context.Context, req *connect.Request[rementorv1.SyncRouteRequest]) (*connect.Response[rementorv1.SyncRouteResponse], error) {
+	if err := s.selectSession(req.Msg); err != nil {
+		return nil, err
+	}
 	// Sync is a repair operation by default. An explicit repair=false performs
 	// a read-only drift check.
 	repair := true

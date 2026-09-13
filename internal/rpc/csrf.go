@@ -16,18 +16,20 @@ import (
 const CSRFHeader = "X-Rementor-CSRF"
 
 var mutatingProcedures = map[string]struct{}{
-	rementorv1connect.ControlPlaneServiceCreateWorkspaceProcedure:      {},
-	rementorv1connect.ControlPlaneServiceUpdateWorkspaceProcedure:      {},
-	rementorv1connect.ControlPlaneServiceDeleteWorkspaceProcedure:      {},
-	rementorv1connect.ControlPlaneServiceUpsertApplicationProcedure:    {},
-	rementorv1connect.ControlPlaneServiceDeleteApplicationProcedure:    {},
-	rementorv1connect.ControlPlaneServiceToggleApplicationProcedure:    {},
-	rementorv1connect.ControlPlaneServiceToggleAllToRemoteProcedure:    {},
-	rementorv1connect.ControlPlaneServiceToggleAllToLocalProcedure:     {},
-	rementorv1connect.ControlPlaneServiceSyncWorkspaceRoutingProcedure: {},
-	rementorv1connect.ControlPlaneServiceUpdateRoutePatternProcedure:   {},
-	rementorv1connect.ControlPlaneServiceApplyRouteProcedure:           {},
-	rementorv1connect.ControlPlaneServiceSyncRouteProcedure:            {},
+	rementorv1connect.ControlPlaneServiceCreateRoutingSessionProcedure:  {},
+	rementorv1connect.ControlPlaneServiceRefreshRoutingSessionProcedure: {},
+	rementorv1connect.ControlPlaneServiceCreateWorkspaceProcedure:       {},
+	rementorv1connect.ControlPlaneServiceUpdateWorkspaceProcedure:       {},
+	rementorv1connect.ControlPlaneServiceDeleteWorkspaceProcedure:       {},
+	rementorv1connect.ControlPlaneServiceUpsertApplicationProcedure:     {},
+	rementorv1connect.ControlPlaneServiceDeleteApplicationProcedure:     {},
+	rementorv1connect.ControlPlaneServiceToggleApplicationProcedure:     {},
+	rementorv1connect.ControlPlaneServiceToggleAllToRemoteProcedure:     {},
+	rementorv1connect.ControlPlaneServiceToggleAllToLocalProcedure:      {},
+	rementorv1connect.ControlPlaneServiceSyncWorkspaceRoutingProcedure:  {},
+	rementorv1connect.ControlPlaneServiceUpdateRoutePatternProcedure:    {},
+	rementorv1connect.ControlPlaneServiceApplyRouteProcedure:            {},
+	rementorv1connect.ControlPlaneServiceSyncRouteProcedure:             {},
 }
 
 type CSRFGuard struct {

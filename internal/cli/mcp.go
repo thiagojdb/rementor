@@ -273,6 +273,20 @@ func (s *mcpServer) handleToolCall(raw json.RawMessage) (any, error) {
 		params.Arguments = map[string]any{}
 	}
 
+	// Each tool call gets its own selector; no request changes another agent's context.
+	scoped := NewClient(s.client.BaseURL())
+	scoped.SessionID = s.client.SessionID
+	if value, ok := params.Arguments["session"].(string); ok {
+		scoped.SessionID = value
+	}
+	s = &mcpServer{client: scoped, serverURL: s.serverURL}
+	if strings.HasPrefix(params.Name, "rementor.session_") {
+		return s.toolSession(params.Name, params.Arguments)
+	}
+	if scoped.SessionID != "" && (params.Name == "rementor.app_announce" || params.Name == "rementor.workspace_create") {
+		return nil, fmt.Errorf("use session registration; announce/workspace creation is not session-scoped")
+	}
+
 	switch params.Name {
 	case "rementor.status":
 		return s.toolStatus()
@@ -752,6 +766,11 @@ func (s *mcpServer) toggleApp(workspaceID, appID string) (mcpToggleResult, error
 
 func mcpToolList() []map[string]any {
 	return []map[string]any{
+		toolSchema("rementor.session_create", "Create a persistent isolated routing session with remote baseline routes.", objectSchema(map[string]any{"workspace": map[string]any{"type": "string"}, "name": map[string]any{"type": "string"}}, []string{"workspace", "name"})),
+		toolSchema("rementor.session_list", "List routing sessions, optionally filtered by environment.", objectSchema(map[string]any{"workspace": map[string]any{"type": "string"}}, nil)),
+		toolSchema("rementor.session_inspect", "Inspect a routing session and its registrations.", objectSchema(map[string]any{"id": map[string]any{"type": "string"}}, []string{"id"})),
+		toolSchema("rementor.session_close", "Remove a session and its routes without stopping processes.", objectSchema(map[string]any{"id": map[string]any{"type": "string"}}, []string{"id"})),
+		toolSchema("rementor.session_refresh", "Preview baseline refresh; apply requires the returned preview_token.", objectSchema(map[string]any{"id": map[string]any{"type": "string"}, "apply": map[string]any{"type": "boolean"}, "preview_token": map[string]any{"type": "string"}}, []string{"id"})),
 		toolSchema("rementor.status", "Check whether the local Rementor server is reachable.", emptySchema()),
 		toolSchema("rementor.workspaces", "List Rementor workspaces in compact form with route counts.", emptySchema()),
 		toolSchema("rementor.workspace_get", "Get a full workspace, including all applications.", workspaceSchema()),
@@ -844,6 +863,9 @@ func appMetadataSchema(announce bool) map[string]any {
 }
 
 func objectSchema(properties map[string]any, required []string) map[string]any {
+	if _, ok := properties["workspace"]; ok {
+		properties["session"] = map[string]any{"type": "string", "description": "Optional routing session ID; workspace must be its environment."}
+	}
 	schema := map[string]any{"type": "object", "properties": properties, "additionalProperties": false}
 	if len(required) > 0 {
 		schema["required"] = required
@@ -1018,4 +1040,44 @@ func buildMCPAppURL(ws WorkspaceDTO, appPathValue, domain string) string {
 		return ""
 	}
 	return "http://" + ws.Routing.LocalDomain + appPathValue
+}
+
+func (s *mcpServer) toolSession(name string, args map[string]any) (any, error) {
+	c := NewClient(s.client.BaseURL())
+	ctx := context.Background()
+	switch name {
+	case "rementor.session_create":
+		return c.CreateRoutingSession(ctx, requiredString(args, "workspace"), requiredString(args, "name"))
+	case "rementor.session_list":
+		all, err := c.ListWorkspaces(ctx)
+		if err != nil {
+			return nil, err
+		}
+		result := []WorkspaceDTO{}
+		for _, w := range all {
+			if w.Session != nil && (optionalString(args, "workspace") == "" || w.Session.EnvironmentId == optionalString(args, "workspace")) {
+				result = append(result, w)
+			}
+		}
+		return result, nil
+	default:
+		id := requiredString(args, "id")
+		ws, err := c.GetWorkspace(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		if ws.Session == nil {
+			return nil, fmt.Errorf("%q is not a routing session", id)
+		}
+		switch name {
+		case "rementor.session_inspect":
+			return ws, nil
+		case "rementor.session_close":
+			op, err := c.DeleteWorkspaceWithMetadata(ctx, id)
+			return map[string]any{"closed": id, "operation": op}, err
+		case "rementor.session_refresh":
+			return c.RefreshRoutingSession(ctx, id, optionalString(args, "preview_token"), optionalBool(args, "apply"))
+		}
+	}
+	return nil, fmt.Errorf("unknown session tool")
 }
