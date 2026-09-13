@@ -157,13 +157,76 @@ make build-ctl
 
 Flags may appear before or after positional arguments.
 
+## Parallel feature sessions
+
+Create an isolated routing session under an existing routing environment. Its
+hostname prepends the session name to the environment hostname: for example,
+`feature-x.desenvolvimento.giss.localhost`. An application that has its own
+hostname follows the same rule, such as `feature-x.dev.giss.localhost`. Sessions
+start with a pinned copy of the environment's remote routes; general-development
+local ports and toggles are not inherited.
+
+In the dashboard, open an environment and choose **New session**. In that
+session, select a service's local-port value to register a port, then use its
+**Use local** switch. The session action menu lets you review and apply a remote
+baseline refresh while preserving session customizations. The sidebar lists
+**General routing** and the environment's sessions as branches; selecting the
+environment returns to general routing. Sessions persist until **Close session**
+removes their routes.
+
+The CLI supports the same workflow:
+
+```bash
+rementorctl session create feature-x --workspace demo --json
+# Use the returned id for subsequent commands.
+rementorctl app register demo orders-api --session <session-id> --port 24001
+rementorctl app toggle demo orders-api --session <session-id>
+rementorctl url --workspace demo --app orders-api --session <session-id>
+rementorctl session list --workspace demo
+rementorctl session inspect <session-id>
+rementorctl session refresh <session-id> --json
+# Apply the reviewed preview with its returned previewToken:
+rementorctl session refresh <session-id> --apply --preview-token <token>
+rementorctl session close <session-id>
+```
+
+`REMENTOR_SESSION` provides a per-process CLI/MCP default; `--session` or the MCP
+`session` argument overrides it. The workspace must identify the session's parent
+environment (or the session itself). A mismatched or closed selector fails rather
+than changing general routing. There is no machine-global current session.
+
+MCP exposes `rementor.session_create`, `rementor.session_list`,
+`rementor.session_inspect`, `rementor.session_refresh`, and
+`rementor.session_close`. Existing application, route, and URL tools accept a
+`session` argument. The protobuf requests use the additive `session_id` field;
+session projections retain an explicit parent environment and session identity.
+The session ID is also a routing scope ID usable by existing workspace operations.
+
+Port values are explicit configuration for the local process. Rementor does not
+allocate ports, create Git worktrees, or start processes. Registration preserves
+the current mode; new registrations start remote. Health does not gate toggling:
+a selected but unavailable local endpoint returns the applicable nginx/upstream
+error. Two sessions may register the same local process; application details
+report other registrations sharing its port.
+
+Browser API and websocket requests must use the session origin. Relative URLs
+work when frontend and APIs share an origin. A hardcoded general-development API
+URL escapes the session. Remote databases and other remote side effects remain
+shared. Per-application frontend domains keep their parent hostname with the
+session prefix; use the URL resolver instead of constructing those addresses.
+
+When exposing a proxy on a nonstandard public port, set `REMENTOR_PUBLIC_PORT`
+on the daemon so returned browser URLs include it. The server's `-port` controls
+the control plane, including generated dashboard/trace upstreams; it is distinct
+from both the public proxy port and application ports.
+
 ## Architecture
 
 | Area | Implementation |
 |---|---|
 | Control plane | Go, Echo, Connect RPC |
 | API contract | Protocol Buffers, Buf, generated Go and TypeScript clients |
-| Frontend | SolidJS, TypeScript, Vite, Tailwind CSS |
+| Frontend | React, TypeScript, Vite, Tailwind CSS |
 | Persistence | SQLite under XDG data directories |
 | Routing | Validated nginx configuration with atomic replacement and rollback |
 | Automation | CLI plus MCP tools backed by the generated Connect client |
@@ -200,6 +263,8 @@ reverse proxy at that upstream to expose Rementor's local domains on port 80.
 For manually managed nginx instances, the `http` block must include:
 
 ```nginx
+server_names_hash_bucket_size 128;
+server_names_hash_max_size 4096;
 include /home/you/.config/rementor/nginx/*.conf;
 ```
 
