@@ -3,7 +3,7 @@ module github.com/thiagojdb/rementor
 go 1.25.0
 
 require (
-	connectrpc.com/connect v1.20.0
+	connectrpc.com/connect v1.21.0
 	github.com/labstack/echo/v4 v4.15.4
 	google.golang.org/protobuf v1.36.11
 	modernc.org/sqlite v1.55.0
