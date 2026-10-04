@@ -1,9 +1,10 @@
-import { ConnectError, createClient, type CallOptions, type Interceptor } from '@connectrpc/connect'
+import { Code, ConnectError, createClient, type CallOptions, type Interceptor } from '@connectrpc/connect'
 import { createConnectTransport } from '@connectrpc/connect-web'
 import { ControlPlaneService } from '../gen/rementor/v1/rementor_connect'
 import { StructuredError } from '../gen/rementor/v1/rementor_pb'
 import type {
   ApplicationDTO,
+  ApplicationConfigInput,
   BrowserURLResolutionDTO,
   CreateWorkspaceRequest,
   OperationMetadataDTO,
@@ -22,6 +23,26 @@ function normalizeError(error: unknown): Error {
     Object.assign(normalized, { code: detail.code, metadata: detail.metadata })
   }
   return normalized
+}
+
+function isInvalidCSRFToken(error: unknown): boolean {
+  const connectError = ConnectError.from(error)
+  const detail = connectError.findDetails(StructuredError)[0]
+  const message = detail?.message || connectError.rawMessage || connectError.message
+  return connectError.code === Code.PermissionDenied && message.trim().toLowerCase() === 'invalid csrf token'
+}
+
+function reloadAfterStaleCSRFToken() {
+  const key = 'rementor-csrf-reload-at'
+  try {
+    const now = Date.now()
+    const previous = Number(sessionStorage.getItem(key))
+    if (Number.isFinite(previous) && now - previous < 5_000) return
+    sessionStorage.setItem(key, String(now))
+  } catch {
+    // A blocked session store should not prevent recovery from a service restart.
+  }
+  window.location.reload()
 }
 
 function csrfToken(): string {
@@ -49,6 +70,7 @@ async function call<T>(fn: () => Promise<T>): Promise<T> {
   try {
     return await fn()
   } catch (error) {
+    if (isInvalidCSRFToken(error)) reloadAfterStaleCSRFToken()
     throw normalizeError(error)
   }
 }
@@ -113,6 +135,13 @@ export function deleteApplication(wsId: string, appId: string): Promise<Operatio
   })
 }
 
+export function upsertApplication(wsId: string, application: ApplicationConfigInput): Promise<ApplicationDTO> {
+  return call(async () => {
+    const response = await client.upsertApplication({ workspaceId: wsId, application })
+    return { ...response.application, operation: response.operation } as ApplicationDTO
+  })
+}
+
 export function toggleApplication(wsId: string, appId: string): Promise<ApplicationDTO> {
   return call(async () => {
     const response = await client.toggleApplication({ workspaceId: wsId, applicationId: appId })
@@ -152,4 +181,16 @@ export function updateRoutePattern(
 
 export function watchHealth(wsId: string, options?: CallOptions) {
   return client.watchHealth({ workspaceId: wsId }, options)
+}
+
+export function createRoutingSession(environmentId: string, name: string): Promise<WorkspaceDTO> {
+  return call(async () => (await client.createRoutingSession({ environmentId, name })).workspace as WorkspaceDTO)
+}
+
+export function refreshRoutingSession(id: string, previewToken = '', apply = false) {
+  return call(() => client.refreshRoutingSession({ id, previewToken, apply }))
+}
+
+export function registerSessionApplication(workspaceId: string, application: { id: string; port: number }) {
+  return call(() => client.upsertApplication({ workspaceId, application }))
 }

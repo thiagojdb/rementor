@@ -2,6 +2,7 @@ import type { PlainMessage } from '@bufbuild/protobuf'
 import { RouteMode } from '../gen/rementor/v1/rementor_pb'
 import type {
   Application,
+  RoutingSession,
   BrowserURLResolution,
   CanonicalApplicationRef,
   GetRoutePatternResponse,
@@ -65,6 +66,8 @@ export interface RoutingDTO {
 }
 
 export interface WorkspaceDTO {
+  browserUrl?: string
+  session?: PlainMessage<RoutingSession>
   id: string
   type: WorkspaceType
   name: string
@@ -98,6 +101,7 @@ export interface CreateWorkspaceRequest {
 }
 
 export interface UpdateWorkspaceRequest {
+  expectedVersion?: bigint
   applications: ApplicationConfigInput[]
   localDomain: string
   defaultRemoteBaseUrl: string

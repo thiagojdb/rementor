@@ -402,7 +402,7 @@ func buildRouteWithExact(ws *models.Workspace, app *models.Application, host, pa
 		reason = "longest prefix"
 	}
 	return Route{
-		WorkspaceID: ws.WorkspaceID, Environment: ws.WorkspaceID,
+		WorkspaceID: ws.WorkspaceID, Environment: ws.EnvironmentID(),
 		PublicHost: normalizeHost(host), Pattern: pattern,
 		CanonicalAppID: canonical, ServiceID: serviceID, Repository: repository,
 		DesiredMode: mode, EffectiveMode: effectiveMode, Target: target,
@@ -756,14 +756,39 @@ func conflictIsIntentional(left, right Route, samePattern bool) bool {
 
 func conflictsForRoutes(routes []Route) []RouteConflict {
 	conflicts := make([]RouteConflict, 0)
+	// Normalize once, not on every pair in the quadratic ownership comparison.
+	type matcher struct {
+		host, owner, path string
+		exact, wildcard   bool
+	}
+	matchers := make([]matcher, len(routes))
+	for i, route := range routes {
+		path, exact, _ := routeInfo(route)
+		matchers[i] = matcher{normalizeHost(route.PublicHost), routeOwnerKey(route), path, exact, strings.HasSuffix(route.Pattern, "/*")}
+	}
+	contains := func(prefix, path string) bool {
+		return prefix == "/" || path == prefix || strings.HasPrefix(path, prefix+"/")
+	}
+	overlaps := func(a, b matcher) bool {
+		if a.exact && b.exact {
+			return a.path == b.path
+		}
+		if a.exact {
+			a, b = b, a
+		}
+		if b.exact {
+			return a.path == "/" || (a.path == b.path && !a.wildcard) || strings.HasPrefix(b.path, a.path+"/")
+		}
+		return contains(a.path, b.path) || contains(b.path, a.path)
+	}
 	for i := 0; i < len(routes); i++ {
 		for j := i + 1; j < len(routes); j++ {
 			left, right := routes[i], routes[j]
-			if normalizeHost(left.PublicHost) != normalizeHost(right.PublicHost) {
+			if matchers[i].host != matchers[j].host {
 				continue
 			}
-			leftOwner, rightOwner := routeOwnerKey(left), routeOwnerKey(right)
-			if leftOwner == "" || rightOwner == "" || leftOwner == rightOwner || !routeMatchersOverlap(left, right) {
+			leftOwner, rightOwner := matchers[i].owner, matchers[j].owner
+			if leftOwner == "" || rightOwner == "" || leftOwner == rightOwner || !overlaps(matchers[i], matchers[j]) {
 				continue
 			}
 
@@ -904,7 +929,7 @@ func planForWorkspace(ws *models.Workspace, input routePlanInput) (RoutePlan, er
 	}
 	candidate.SetDefaults()
 	after := buildNormalizedRoutes(candidate)
-	plan := RoutePlan{WorkspaceID: ws.WorkspaceID, Environment: ws.WorkspaceID, BaseRouteVersion: ws.Route.RouteVersion, ApplicationID: app.CanonicalAppID(), DesiredMode: mode, RoutePattern: cloneString(input.RoutePattern), Before: before, After: after, StrictMetadata: input.StrictMetadata}
+	plan := RoutePlan{WorkspaceID: ws.WorkspaceID, Environment: ws.EnvironmentID(), BaseRouteVersion: ws.Route.RouteVersion, ApplicationID: app.CanonicalAppID(), DesiredMode: mode, RoutePattern: cloneString(input.RoutePattern), Before: before, After: after, StrictMetadata: input.StrictMetadata}
 	plan.Changes = diffRoutes(before, after)
 	plan.Conflicts = conflictsForRoutes(after)
 	plan.Warnings = warningsForRoutes(ws, app, mode, after)

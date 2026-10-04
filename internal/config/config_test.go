@@ -509,3 +509,35 @@ func TestReplaceWorkspacesAtomicallyReplacesWorkspaceProjection(t *testing.T) {
 		t.Fatalf("expected replacement route state to persist, got %#v", app)
 	}
 }
+
+func TestSchemaCacheInvalidatesAfterDDLAndDatabaseReplacement(t *testing.T) {
+	t.Setenv("XDG_DATA_HOME", t.TempDir())
+	db, err := readyDB()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = db.Exec("DROP TABLE app_config"); err != nil {
+		t.Fatal(err)
+	}
+	db.Close()
+	db, err = readyDB()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var count int
+	if err = db.QueryRow("SELECT COUNT(*) FROM app_config").Scan(&count); err != nil || count != 1 {
+		t.Fatal("schema change was not repaired", err)
+	}
+	db.Close()
+	if err = os.Rename(GetDBFile(), GetDBFile()+".previous"); err != nil {
+		t.Fatal(err)
+	}
+	db, err = readyDB()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	if err = db.QueryRow("SELECT COUNT(*) FROM app_config").Scan(&count); err != nil || count != 1 {
+		t.Fatal("replacement database was not initialized", err)
+	}
+}

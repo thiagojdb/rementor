@@ -82,6 +82,7 @@ type ApplicationIdentity struct {
 // WorkspaceEnvironmentRef makes the environment boundary explicit in domain
 // responses while retaining the legacy workspace identifier.
 type WorkspaceEnvironmentRef struct {
+	SessionID   string `json:"sessionId,omitempty"`
 	WorkspaceID string `json:"workspaceId"`
 	Environment string `json:"environment,omitempty"`
 	LegacyID    string `json:"legacyId,omitempty"`
@@ -261,6 +262,7 @@ func (ar *AppRuntime) UpdateBothStatuses(healthOk bool, healthLast *time.Time, r
 
 // Application represents an application in a workspace
 type Application struct {
+	SharedWith []string `json:"sharedWith,omitempty"`
 	// ID is retained as the wire-compatible canonical application identifier.
 	// AppID is the explicit identity field used by new callers; both values are
 	// kept in sync when configurations are loaded or registered.
@@ -526,7 +528,35 @@ func (a *Application) RemoteHealthURL(defaultRemoteBaseUrl string) string {
 }
 
 // Workspace represents a workspace with its applications
+// RoutingSession pins an environment baseline while the workspace holds its
+// independently editable routing projection. Baseline metadata is durable.
+type RoutingSession struct {
+	EnvironmentID string `json:"environmentId"`
+	// HostPrefix is the stable, readable prefix added to every hostname inherited
+	// from the parent environment. It is separate from WorkspaceID because the
+	// latter includes an opaque uniqueness suffix.
+	HostPrefix        string              `json:"hostPrefix"`
+	BaselineVersion   uint64              `json:"baselineVersion"`
+	CreatedAt         time.Time           `json:"createdAt"`
+	BaselineRemoteURL string              `json:"baselineRemoteUrl"`
+	Baseline          []ApplicationConfig `json:"baseline"`
+}
+
+func (w *Workspace) EnvironmentID() string {
+	if w.Session != nil {
+		return w.Session.EnvironmentID
+	}
+	return w.WorkspaceID
+}
+func (w *Workspace) SessionID() string {
+	if w.Session != nil {
+		return w.WorkspaceID
+	}
+	return ""
+}
+
 type Workspace struct {
+	Session       *RoutingSession    `json:"session,omitempty"`
 	WorkspaceID   string             `json:"workspaceId"`
 	Type          string             `json:"type,omitempty"`
 	Name          *string            `json:"name,omitempty"`
@@ -743,6 +773,7 @@ func (a ApplicationConfig) NormalizedAliases() []string {
 
 // WorkspaceConfig represents a persisted workspace definition.
 type WorkspaceConfig struct {
+	Session       *RoutingSession     `json:"session,omitempty"`
 	ID            string              `json:"id"`
 	Type          string              `json:"type,omitempty"`
 	Name          string              `json:"name,omitempty"`

@@ -192,9 +192,11 @@ func TestRenderConfigRoutingAppDomainIncludesWorkspaceBackendRoutes(t *testing.T
 	assertContains(t, domainBlock, "rewrite ^ /portal$uri break;")
 }
 
-func TestBaseConfigEnablesUnderscoreHeaders(t *testing.T) {
+func TestBaseConfigIncludesRoutingNginxSettings(t *testing.T) {
 	conf := BaseConfig("/home/test/.config/rementor/nginx")
 	assertContains(t, conf, "underscores_in_headers on;")
+	assertContains(t, conf, "server_names_hash_bucket_size 128;")
+	assertContains(t, conf, "server_names_hash_max_size 4096;")
 	assertContains(t, conf, "include /home/test/.config/rementor/nginx/*.conf;")
 }
 
@@ -296,13 +298,13 @@ func TestRenderConfigAddsOwnedRouteProofAndExposesItToBrowsers(t *testing.T) {
 	})
 
 	block := serverBlock(t, conf, "api.localhost")
-	assertContains(t, block, `add_header X-Rementor-App-ID "orders-api" always;`)
-	assertContains(t, block, `add_header X-Rementor-Service-ID "orders" always;`)
-	assertContains(t, block, `add_header X-Rementor-Workspace "dev" always;`)
-	assertContains(t, block, `add_header X-Rementor-Environment "dev" always;`)
-	assertContains(t, block, `add_header X-Rementor-Effective-Mode "local" always;`)
-	assertContains(t, block, `add_header X-Rementor-Route-Version "7" always;`)
-	assertContains(t, block, `add_header X-Rementor-Operation-ID "op-route-7" always;`)
+	assertContains(t, block, `add_header X-Rementor-App-ID $rementor_proof_app always;`)
+	assertContains(t, block, `add_header X-Rementor-Service-ID $rementor_proof_service always;`)
+	assertContains(t, block, `add_header X-Rementor-Workspace $rementor_proof_workspace always;`)
+	assertContains(t, block, `add_header X-Rementor-Environment $rementor_proof_environment always;`)
+	assertContains(t, block, `add_header X-Rementor-Effective-Mode $rementor_proof_mode always;`)
+	assertContains(t, block, `add_header X-Rementor-Route-Version $rementor_proof_version always;`)
+	assertContains(t, block, `add_header X-Rementor-Operation-ID $rementor_proof_operation always;`)
 	assertContains(t, block, `add_header X-Rementor-Correlation-ID $rementor_correlation_id always;`)
 	assertContains(t, block, `proxy_hide_header X-Rementor-App-ID;`)
 	assertContains(t, block, `proxy_hide_header X-Rementor-Operation-ID;`)
@@ -329,7 +331,7 @@ func TestRenderConfigMarksMissingLocalTargetAsFallback(t *testing.T) {
 	})
 
 	block := serverBlock(t, conf, "api.localhost")
-	assertContains(t, block, `add_header X-Rementor-Effective-Mode "fallback" always;`)
+	assertContains(t, block, `add_header X-Rementor-Effective-Mode $rementor_proof_mode always;`)
 	assertContains(t, block, `proxy_pass https://orders.remote.example.test:443;`)
 }
 
@@ -441,7 +443,7 @@ func TestLoadInitialConfigReloadsNginxWhenGeneratedConfigIsLoaded(t *testing.T) 
 		t.Fatalf("LoadInitialConfig failed: %v", err)
 	}
 
-	assertCommandRun(t, logPath, "-t")
+	assertCommandNotRun(t, logPath, "-t")
 	assertCommandRun(t, logPath, "-T")
 	assertCommandRun(t, logPath, "-s reload")
 }

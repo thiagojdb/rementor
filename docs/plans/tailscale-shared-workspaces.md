@@ -4,6 +4,11 @@ Status: the routing model and an executable inspection slice are implemented.
 Live configuration synchronization, node forwarding, and shared ingress are
 planned. This document supersedes the earlier single-host/same-origin proposal.
 
+Baseline: local `main` at `1395f9f`, including the isolated routing sessions,
+React/shadcn dashboard, and nginx reload improvements, combined with the GitHub
+`origin/main` MCP protocol support at `a256291`. The local baseline had not been
+pushed upstream when this work began; neither side should replace the other.
+
 ## Product contract
 
 Rementor serves one person across their fleet of computers and client devices.
@@ -78,6 +83,18 @@ silently disagree. A permanent fleet-wide coordinator is not needed for the
 first inheritance slice.
 
 ## State and offline behavior
+
+Existing routing sessions already persist a pinned remote baseline, local
+registrations, revision metadata, and explicit preview/apply refresh. Preserve
+that behavior. Fleet inheritance is a separate live relationship between
+instances; it must not make feature sessions silently follow parent changes.
+Extend the existing session/selector and transaction machinery where applicable
+rather than adding a second incompatible workspace-cloning system. The chosen
+inheritance scope must identify its environment/session explicitly.
+
+See the [implemented session design](worktree-routing-sessions.md) and
+[toggle latency work](toggle-latency.md). Fleet updates must preserve session
+isolation, concurrency/version checks, routing proofs, and reload optimizations.
 
 Use explicit, versioned records for nodes, origins, routes, targets, instance
 overrides, inheritance pointers, and the shared ingress selector. Existing

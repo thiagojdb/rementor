@@ -1,12 +1,12 @@
-import { render } from 'solid-js/web'
-import './styles.css'
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
 import App from './App'
-import { initTheme } from './stores/theme'
+import { initializeTheme } from './hooks/use-theme-transition'
+import './styles.css'
 
-// Initialize theme from localStorage/prefers-color-scheme
-initTheme()
+initializeTheme()
 
 const root = document.getElementById('root')
 if (!root) throw new Error('Root element not found')
 
-render(() => <App />, root)
+createRoot(root).render(<StrictMode><App /></StrictMode>)

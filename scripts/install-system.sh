@@ -82,6 +82,8 @@ http {
     scgi_temp_path $NGINX_RUNTIME_DIR/scgi;
     uwsgi_temp_path $NGINX_RUNTIME_DIR/uwsgi;
     underscores_in_headers on;
+    server_names_hash_bucket_size 128;
+    server_names_hash_max_size 4096;
     include $NGINX_CONF_DIR/*.conf;
 }
 EOF

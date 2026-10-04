@@ -33,6 +33,12 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// ControlPlaneServiceCreateRoutingSessionProcedure is the fully-qualified name of the
+	// ControlPlaneService's CreateRoutingSession RPC.
+	ControlPlaneServiceCreateRoutingSessionProcedure = "/rementor.v1.ControlPlaneService/CreateRoutingSession"
+	// ControlPlaneServiceRefreshRoutingSessionProcedure is the fully-qualified name of the
+	// ControlPlaneService's RefreshRoutingSession RPC.
+	ControlPlaneServiceRefreshRoutingSessionProcedure = "/rementor.v1.ControlPlaneService/RefreshRoutingSession"
 	// ControlPlaneServiceListWorkspacesProcedure is the fully-qualified name of the
 	// ControlPlaneService's ListWorkspaces RPC.
 	ControlPlaneServiceListWorkspacesProcedure = "/rementor.v1.ControlPlaneService/ListWorkspaces"
@@ -112,6 +118,8 @@ const (
 
 // ControlPlaneServiceClient is a client for the rementor.v1.ControlPlaneService service.
 type ControlPlaneServiceClient interface {
+	CreateRoutingSession(context.Context, *connect.Request[v1.CreateRoutingSessionRequest]) (*connect.Response[v1.CreateRoutingSessionResponse], error)
+	RefreshRoutingSession(context.Context, *connect.Request[v1.RefreshRoutingSessionRequest]) (*connect.Response[v1.RefreshRoutingSessionResponse], error)
 	ListWorkspaces(context.Context, *connect.Request[v1.ListWorkspacesRequest]) (*connect.Response[v1.ListWorkspacesResponse], error)
 	GetWorkspace(context.Context, *connect.Request[v1.GetWorkspaceRequest]) (*connect.Response[v1.GetWorkspaceResponse], error)
 	CreateWorkspace(context.Context, *connect.Request[v1.CreateWorkspaceRequest]) (*connect.Response[v1.CreateWorkspaceResponse], error)
@@ -150,6 +158,18 @@ func NewControlPlaneServiceClient(httpClient connect.HTTPClient, baseURL string,
 	baseURL = strings.TrimRight(baseURL, "/")
 	controlPlaneServiceMethods := v1.File_rementor_v1_rementor_proto.Services().ByName("ControlPlaneService").Methods()
 	return &controlPlaneServiceClient{
+		createRoutingSession: connect.NewClient[v1.CreateRoutingSessionRequest, v1.CreateRoutingSessionResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceCreateRoutingSessionProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("CreateRoutingSession")),
+			connect.WithClientOptions(opts...),
+		),
+		refreshRoutingSession: connect.NewClient[v1.RefreshRoutingSessionRequest, v1.RefreshRoutingSessionResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceRefreshRoutingSessionProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("RefreshRoutingSession")),
+			connect.WithClientOptions(opts...),
+		),
 		listWorkspaces: connect.NewClient[v1.ListWorkspacesRequest, v1.ListWorkspacesResponse](
 			httpClient,
 			baseURL+ControlPlaneServiceListWorkspacesProcedure,
@@ -305,6 +325,8 @@ func NewControlPlaneServiceClient(httpClient connect.HTTPClient, baseURL string,
 
 // controlPlaneServiceClient implements ControlPlaneServiceClient.
 type controlPlaneServiceClient struct {
+	createRoutingSession     *connect.Client[v1.CreateRoutingSessionRequest, v1.CreateRoutingSessionResponse]
+	refreshRoutingSession    *connect.Client[v1.RefreshRoutingSessionRequest, v1.RefreshRoutingSessionResponse]
 	listWorkspaces           *connect.Client[v1.ListWorkspacesRequest, v1.ListWorkspacesResponse]
 	getWorkspace             *connect.Client[v1.GetWorkspaceRequest, v1.GetWorkspaceResponse]
 	createWorkspace          *connect.Client[v1.CreateWorkspaceRequest, v1.CreateWorkspaceResponse]
@@ -330,6 +352,16 @@ type controlPlaneServiceClient struct {
 	applyRoute               *connect.Client[v1.ApplyRouteRequest, v1.ApplyRouteResponse]
 	syncRoute                *connect.Client[v1.SyncRouteRequest, v1.SyncRouteResponse]
 	watchHealth              *connect.Client[v1.WatchHealthRequest, v1.WatchHealthResponse]
+}
+
+// CreateRoutingSession calls rementor.v1.ControlPlaneService.CreateRoutingSession.
+func (c *controlPlaneServiceClient) CreateRoutingSession(ctx context.Context, req *connect.Request[v1.CreateRoutingSessionRequest]) (*connect.Response[v1.CreateRoutingSessionResponse], error) {
+	return c.createRoutingSession.CallUnary(ctx, req)
+}
+
+// RefreshRoutingSession calls rementor.v1.ControlPlaneService.RefreshRoutingSession.
+func (c *controlPlaneServiceClient) RefreshRoutingSession(ctx context.Context, req *connect.Request[v1.RefreshRoutingSessionRequest]) (*connect.Response[v1.RefreshRoutingSessionResponse], error) {
+	return c.refreshRoutingSession.CallUnary(ctx, req)
 }
 
 // ListWorkspaces calls rementor.v1.ControlPlaneService.ListWorkspaces.
@@ -459,6 +491,8 @@ func (c *controlPlaneServiceClient) WatchHealth(ctx context.Context, req *connec
 
 // ControlPlaneServiceHandler is an implementation of the rementor.v1.ControlPlaneService service.
 type ControlPlaneServiceHandler interface {
+	CreateRoutingSession(context.Context, *connect.Request[v1.CreateRoutingSessionRequest]) (*connect.Response[v1.CreateRoutingSessionResponse], error)
+	RefreshRoutingSession(context.Context, *connect.Request[v1.RefreshRoutingSessionRequest]) (*connect.Response[v1.RefreshRoutingSessionResponse], error)
 	ListWorkspaces(context.Context, *connect.Request[v1.ListWorkspacesRequest]) (*connect.Response[v1.ListWorkspacesResponse], error)
 	GetWorkspace(context.Context, *connect.Request[v1.GetWorkspaceRequest]) (*connect.Response[v1.GetWorkspaceResponse], error)
 	CreateWorkspace(context.Context, *connect.Request[v1.CreateWorkspaceRequest]) (*connect.Response[v1.CreateWorkspaceResponse], error)
@@ -493,6 +527,18 @@ type ControlPlaneServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewControlPlaneServiceHandler(svc ControlPlaneServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	controlPlaneServiceMethods := v1.File_rementor_v1_rementor_proto.Services().ByName("ControlPlaneService").Methods()
+	controlPlaneServiceCreateRoutingSessionHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceCreateRoutingSessionProcedure,
+		svc.CreateRoutingSession,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("CreateRoutingSession")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceRefreshRoutingSessionHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceRefreshRoutingSessionProcedure,
+		svc.RefreshRoutingSession,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("RefreshRoutingSession")),
+		connect.WithHandlerOptions(opts...),
+	)
 	controlPlaneServiceListWorkspacesHandler := connect.NewUnaryHandler(
 		ControlPlaneServiceListWorkspacesProcedure,
 		svc.ListWorkspaces,
@@ -645,6 +691,10 @@ func NewControlPlaneServiceHandler(svc ControlPlaneServiceHandler, opts ...conne
 	)
 	return "/rementor.v1.ControlPlaneService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case ControlPlaneServiceCreateRoutingSessionProcedure:
+			controlPlaneServiceCreateRoutingSessionHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceRefreshRoutingSessionProcedure:
+			controlPlaneServiceRefreshRoutingSessionHandler.ServeHTTP(w, r)
 		case ControlPlaneServiceListWorkspacesProcedure:
 			controlPlaneServiceListWorkspacesHandler.ServeHTTP(w, r)
 		case ControlPlaneServiceGetWorkspaceProcedure:
@@ -703,6 +753,14 @@ func NewControlPlaneServiceHandler(svc ControlPlaneServiceHandler, opts ...conne
 
 // UnimplementedControlPlaneServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedControlPlaneServiceHandler struct{}
+
+func (UnimplementedControlPlaneServiceHandler) CreateRoutingSession(context.Context, *connect.Request[v1.CreateRoutingSessionRequest]) (*connect.Response[v1.CreateRoutingSessionResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.CreateRoutingSession is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) RefreshRoutingSession(context.Context, *connect.Request[v1.RefreshRoutingSessionRequest]) (*connect.Response[v1.RefreshRoutingSessionResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.RefreshRoutingSession is not implemented"))
+}
 
 func (UnimplementedControlPlaneServiceHandler) ListWorkspaces(context.Context, *connect.Request[v1.ListWorkspacesRequest]) (*connect.Response[v1.ListWorkspacesResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.ListWorkspaces is not implemented"))

@@ -18,6 +18,12 @@ type RoutingProvider interface {
 	Close() error
 }
 
+// AtomicRoutingApplier owns validation, installation and live verification in
+// one operation. The registry must not repeat provider preflight/verification.
+type AtomicRoutingApplier interface {
+	ApplyRouting(workspaces []*models.Workspace) error
+}
+
 // RoutingVerifier is an optional extension implemented by providers that can
 // inspect the configuration currently loaded by the proxy.  LoadInitialConfig
 // remains the compatibility boundary for existing providers; when this hook

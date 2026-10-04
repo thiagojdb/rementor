@@ -13,6 +13,11 @@ _Avoid_: Machine, team
 The stable identity of an application or service across its workspace bindings.
 _Avoid_: Hostname, route
 
+**Routing session**:
+An isolated feature environment under a workspace, with a pinned remote baseline
+and its own endpoint registrations and route choices.
+_Avoid_: Rementor instance, live inherited environment
+
 **Public origin**:
 The scheme, hostname, and port visible to a client, independent of the device
 serving it. One workspace may have several unrelated public origins.

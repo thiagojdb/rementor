@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -61,6 +62,7 @@ func main() {
 	flag.StringVar(&host, "host", "127.0.0.1", "host/interface to bind")
 	flag.IntVar(&port, "port", 9300, "")
 	flag.Parse()
+	_ = os.Setenv("REMENTOR_CONTROL_PORT", strconv.Itoa(port))
 	if !isLoopbackHost(host) {
 		log.Fatalf("refusing to bind unauthenticated control plane to non-loopback host %q", host)
 	}

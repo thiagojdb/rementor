@@ -154,6 +154,14 @@ func (r *Registry) Load() error {
 	if err != nil {
 		return fmt.Errorf("failed to load workspaces: %w", err)
 	}
+	if migrateSessionHostnames(workspaces) {
+		if err := validateWorkspaces(workspaces); err != nil {
+			return fmt.Errorf("migrate session hostnames: %w", err)
+		}
+		if err := r.workspaceStore().ReplaceWorkspaces(workspaces); err != nil {
+			return fmt.Errorf("persist migrated session hostnames: %w", err)
+		}
+	}
 
 	r.workspacesMu.Lock()
 	r.workspaces = workspaces
@@ -423,6 +431,7 @@ func (r *Registry) GetWorkspaces() []*models.Workspace {
 	// and effective mode always reflects the last proxy snapshot we verified.
 	result := cloneWorkspaces(r.workspaces)
 	r.projectRouteStates(result)
+	annotateSharedEndpoints(result, r.workspaces)
 	return result
 }
 
@@ -437,6 +446,9 @@ func (r *Registry) GetWorkspaceView(wsID string) *models.Workspace {
 			found = cloneWorkspace(ws)
 			break
 		}
+	}
+	if found != nil {
+		annotateSharedEndpoints([]*models.Workspace{found}, r.workspaces)
 	}
 	r.workspacesMu.RUnlock()
 	if found == nil {
@@ -1230,7 +1242,12 @@ func (r *Registry) ToggleAppWithMetadata(wsID, appName, correlationID string) (*
 		result = app
 		workspace = ws
 		return nil
-	}, r.workspaceStore().SaveState)
+	}, func(candidate []*models.Workspace) error {
+		if store, ok := r.workspaceStore().(WorkspaceStateStore); ok {
+			return store.SaveWorkspaceState(findWorkspace(candidate, wsID))
+		}
+		return r.workspaceStore().SaveState(candidate)
+	})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -1348,11 +1365,18 @@ func (r *Registry) UpdateWorkspaceApplications(wsID string, apps []models.Applic
 // UpdateWorkspaceApplicationsWithMetadata applies a complete candidate
 // workspace and records the operation that changed its route projection.
 func (r *Registry) UpdateWorkspaceApplicationsWithMetadata(wsID string, apps []models.ApplicationConfig, localDomain, defaultRemoteBaseURL, correlationID string) (*models.OperationMetadata, error) {
+	return r.UpdateWorkspaceApplicationsAtVersion(wsID, apps, localDomain, defaultRemoteBaseURL, correlationID, nil)
+}
+
+func (r *Registry) UpdateWorkspaceApplicationsAtVersion(wsID string, apps []models.ApplicationConfig, localDomain, defaultRemoteBaseURL, correlationID string, expected *uint64) (*models.OperationMetadata, error) {
 	var operation *models.OperationMetadata
 	_, err := r.mutate(true, func(candidate *[]*models.Workspace) error {
 		workspace := findWorkspace(*candidate, wsID)
 		if workspace == nil {
 			return fmt.Errorf("workspace not found: %s", wsID)
+		}
+		if expected != nil && workspace.Route.RouteVersion != *expected {
+			return fmt.Errorf("workspace changed while editing; reload and try again")
 		}
 		workspace.Applications = applicationsFromConfigs(workspace, apps)
 		if !workspace.IsLocalApps() {
@@ -1432,6 +1456,11 @@ func (r *Registry) DeleteWorkspace(wsID string) error {
 func (r *Registry) DeleteWorkspaceWithMetadata(wsID, correlationID string) (*models.OperationMetadata, error) {
 	var operation *models.OperationMetadata
 	_, err := r.mutate(true, func(candidate *[]*models.Workspace) error {
+		for _, child := range *candidate {
+			if child.Session != nil && child.Session.EnvironmentID == wsID {
+				return fmt.Errorf("close routing sessions before deleting environment %q", wsID)
+			}
+		}
 		for i, workspace := range *candidate {
 			if workspace.WorkspaceID == wsID {
 				operation = r.beginOperation("delete", correlationID)
@@ -1544,6 +1573,9 @@ func findWorkspace(workspaces []*models.Workspace, wsID string) *models.Workspac
 }
 
 func validateWorkspaces(workspaces []*models.Workspace) error {
+	if err := ValidateSessionHosts(workspaces, config.Config.RementorDomain); err != nil {
+		return err
+	}
 	seen := make(map[string]struct{}, len(workspaces))
 	for _, workspace := range workspaces {
 		if _, exists := seen[workspace.WorkspaceID]; exists {
@@ -1671,6 +1703,7 @@ func cloneWorkspaces(workspaces []*models.Workspace) []*models.Workspace {
 func cloneWorkspace(source *models.Workspace) *models.Workspace {
 	clone := &models.Workspace{
 		WorkspaceID:   source.WorkspaceID,
+		Session:       cloneSession(source.Session),
 		Type:          source.Type,
 		Name:          cloneStringPtr(source.Name),
 		Color:         cloneStringPtr(source.Color),
@@ -2143,6 +2176,14 @@ func (r *Registry) projectedRoutes(ws *models.Workspace) []Route {
 }
 
 func (r *Registry) projectApplicationRoute(ws *models.Workspace, app *models.Application) models.RouteState {
+	var snapshot effectiveRouteSnapshot
+	if ws != nil {
+		snapshot = r.effectiveSnapshot(ws.WorkspaceID)
+	}
+	return projectApplicationRouteWithSnapshot(ws, app, snapshot)
+}
+
+func projectApplicationRouteWithSnapshot(ws *models.Workspace, app *models.Application, snapshot effectiveRouteSnapshot) models.RouteState {
 	if app == nil {
 		return models.RouteState{}
 	}
@@ -2156,7 +2197,6 @@ func (r *Registry) projectApplicationRoute(ws *models.Workspace, app *models.App
 	if ws == nil {
 		return state
 	}
-	snapshot := r.effectiveSnapshot(ws.WorkspaceID)
 	current := snapshot.present && snapshot.status == models.RouteVerificationVerified && snapshot.version == ws.Route.RouteVersion
 	status := verificationStatusForSnapshot(snapshot, current)
 	state.VerificationStatus = status
@@ -2193,7 +2233,7 @@ func (r *Registry) projectRouteStates(workspaces []*models.Workspace) {
 		ws.Route.ProxyHealth = proxyHealthForSnapshot(snapshot, current)
 		ws.Route.VerifiedAt = cloneTimeValue(snapshot.verifiedAt)
 		for _, app := range ws.Applications {
-			app.Route = r.projectApplicationRoute(ws, app)
+			app.Route = projectApplicationRouteWithSnapshot(ws, app, snapshot)
 		}
 	}
 }
@@ -2232,6 +2272,18 @@ func (r *Registry) applyRouting(workspaces []*models.Workspace, required bool) e
 		if required {
 			return fmt.Errorf("routing provider not set")
 		}
+		return nil
+	}
+	if applier, ok := provider.(AtomicRoutingApplier); ok {
+		if !required && !provider.IsAvailable() {
+			r.markRoutingState(workspaces, models.RouteVerificationProviderUnavailable)
+			return nil
+		}
+		if err := applier.ApplyRouting(workspaces); err != nil {
+			return err
+		}
+		r.recordEffectiveRoutes(workspaces)
+		r.projectRouteStates(workspaces)
 		return nil
 	}
 	if !provider.IsAvailable() {
