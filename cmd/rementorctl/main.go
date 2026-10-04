@@ -62,6 +62,8 @@ func main() {
 		cli.NginxCmd(rest)
 	case "route":
 		cli.RouteCmd(client, jsonOutput, rest)
+	case "topology":
+		cli.TopologyCmd(jsonOutput, rest)
 	case "url", "rementor_url":
 		cli.URLCmd(client, jsonOutput, rest)
 	default:
@@ -100,5 +102,6 @@ Commands:
 	fmt.Fprintln(os.Stderr, "  mcp [--protocol auto|modern|legacy]")
 	fmt.Fprintln(os.Stderr, "  nginx load-routes")
 	fmt.Fprintln(os.Stderr, "  route get|conflicts|resolve|plan|apply|sync")
+	fmt.Fprintln(os.Stderr, "  topology resolve --file <topology.json> --url <public-url> [--instance <id>] [--unavailable-targets <ids>] [--unavailable-nodes <ids>]")
 	fmt.Fprintln(os.Stderr, "  url --workspace <id> --app <app-or-alias>")
 }

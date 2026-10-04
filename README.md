@@ -190,6 +190,12 @@ examples/mock-stack/     Sanitized local/remote service simulation
 examples/docker/         Rootless nginx demo runtime
 ```
 
+The personal fleet routing redesign now has an experimental, file-based
+inspector for inheriting another instance's environment with local overrides.
+Try the [fleet example](examples/fleet/README.md) and see the
+[delivery plan](docs/plans/tailscale-shared-workspaces.md). Live synchronization
+and multi-device forwarding are planned; existing workspace routing is unchanged.
+
 ## MCP compatibility
 
 `rementorctl mcp` supports both the handshake-based MCP `2024-11-05` protocol

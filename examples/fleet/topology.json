@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "nodes": [{ "id": "marcus" }, { "id": "brutus" }],
+  "sharedInstance": "brutus-dev",
+  "origins": [
+    { "id": "web", "url": "https://web.rementor.example.test" },
+    { "id": "services", "url": "https://services.rementor.example.test" },
+    { "id": "login", "url": "https://login.other.example.test" },
+    { "id": "events", "url": "https://events.rementor.example.test" }
+  ],
+  "targets": [
+    { "id": "web-brutus", "kind": "node", "nodeId": "brutus", "url": "http://127.0.0.1:3000" },
+    { "id": "orders-remote", "kind": "remote", "url": "https://api.remote.example.test" },
+    { "id": "orders-brutus", "kind": "node", "nodeId": "brutus", "url": "http://127.0.0.1:8080" },
+    { "id": "billing-marcus", "kind": "node", "nodeId": "marcus", "url": "http://127.0.0.1:8081" },
+    { "id": "billing-remote", "kind": "remote", "url": "https://billing.remote.example.test" },
+    { "id": "login-remote", "kind": "remote", "url": "https://login.remote.example.test" },
+    { "id": "events-brutus", "kind": "node", "nodeId": "brutus", "url": "http://127.0.0.1:8082" }
+  ],
+  "routes": [
+    { "id": "web", "originId": "web", "path": "/", "match": "prefix", "appId": "web", "serviceId": "web", "targetId": "web-brutus" },
+    { "id": "orders", "originId": "services", "path": "/orders", "match": "prefix", "appId": "orders", "serviceId": "orders-api", "targetId": "orders-remote" },
+    { "id": "billing", "originId": "services", "path": "/billing", "match": "prefix", "appId": "billing", "serviceId": "billing-api", "targetId": "billing-remote" },
+    { "id": "login", "originId": "login", "path": "/oauth", "match": "prefix", "appId": "login", "serviceId": "login", "targetId": "login-remote" },
+    { "id": "events", "originId": "events", "path": "/socket", "match": "prefix", "appId": "events", "serviceId": "events", "targetId": "events-brutus" }
+  ],
+  "instances": [
+    { "id": "brutus-dev", "nodeId": "brutus", "overrides": { "orders": "orders-brutus" } },
+    { "id": "marcus-dev", "nodeId": "marcus", "inherit": "brutus-dev", "overrides": { "billing": "billing-marcus" } }
+  ]
+}
