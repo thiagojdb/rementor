@@ -68,6 +68,7 @@ func TraceHandler(c echo.Context) error {
 		"X-Rementor-Service-ID",
 		"X-Rementor-Workspace",
 		"X-Rementor-Environment",
+		"X-Rementor-Session-ID",
 		"X-Rementor-Effective-Mode",
 		"X-Rementor-Route-Version",
 		"X-Rementor-Operation-ID",

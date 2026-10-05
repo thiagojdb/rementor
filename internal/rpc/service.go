@@ -38,6 +38,9 @@ func (s *ControlPlaneService) ListWorkspaces(ctx context.Context, req *connect.R
 }
 
 func (s *ControlPlaneService) GetWorkspace(ctx context.Context, req *connect.Request[rementorv1.GetWorkspaceRequest]) (*connect.Response[rementorv1.GetWorkspaceResponse], error) {
+	if err := s.selectSession(req.Msg); err != nil {
+		return nil, err
+	}
 	ws := s.registry.GetWorkspaceView(req.Msg.GetWorkspaceId())
 	if ws == nil {
 		return nil, newRPCError(connect.CodeNotFound, fmt.Errorf("workspace not found"))
@@ -101,6 +104,9 @@ func (s *ControlPlaneService) CreateWorkspace(ctx context.Context, req *connect.
 }
 
 func (s *ControlPlaneService) UpdateWorkspace(ctx context.Context, req *connect.Request[rementorv1.UpdateWorkspaceRequest]) (*connect.Response[rementorv1.UpdateWorkspaceResponse], error) {
+	if err := s.selectSession(req.Msg); err != nil {
+		return nil, err
+	}
 	wsID := req.Msg.GetWorkspaceId()
 	if s.registry.FindWorkspace(wsID) == nil {
 		return nil, newRPCError(connect.CodeNotFound, fmt.Errorf("workspace not found"))
@@ -113,7 +119,7 @@ func (s *ControlPlaneService) UpdateWorkspace(ctx context.Context, req *connect.
 		return nil, newRPCError(connect.CodeInvalidArgument, err)
 	}
 	metadataWarnings, _ := validation.WorkspaceWithOptions(ws.GetType(), localDomain, remoteBaseURL, apps, validation.MetadataValidationOptions{})
-	operation, err := s.registry.UpdateWorkspaceApplicationsWithMetadata(wsID, apps, localDomain, remoteBaseURL, correlationID(req.Msg.GetCorrelationId(), req.Header()))
+	operation, err := s.registry.UpdateWorkspaceApplicationsAtVersion(wsID, apps, localDomain, remoteBaseURL, correlationID(req.Msg.GetCorrelationId(), req.Header()), req.Msg.ExpectedVersion)
 	if err != nil {
 		log.Printf("Error updating workspace %s applications: %v", wsID, err)
 		return nil, newRPCError(connect.CodeInternal, fmt.Errorf("failed to update workspace: %w", err))
@@ -122,6 +128,9 @@ func (s *ControlPlaneService) UpdateWorkspace(ctx context.Context, req *connect.
 }
 
 func (s *ControlPlaneService) DeleteWorkspace(ctx context.Context, req *connect.Request[rementorv1.DeleteWorkspaceRequest]) (*connect.Response[rementorv1.DeleteWorkspaceResponse], error) {
+	if err := s.selectSession(req.Msg); err != nil {
+		return nil, err
+	}
 	wsID := req.Msg.GetWorkspaceId()
 	if s.registry.FindWorkspace(wsID) == nil {
 		return nil, newRPCError(connect.CodeNotFound, fmt.Errorf("workspace not found"))
@@ -135,6 +144,9 @@ func (s *ControlPlaneService) DeleteWorkspace(ctx context.Context, req *connect.
 }
 
 func (s *ControlPlaneService) ListApplications(ctx context.Context, req *connect.Request[rementorv1.ListApplicationsRequest]) (*connect.Response[rementorv1.ListApplicationsResponse], error) {
+	if err := s.selectSession(req.Msg); err != nil {
+		return nil, err
+	}
 	ws := s.registry.GetWorkspaceView(req.Msg.GetWorkspaceId())
 	if ws == nil {
 		return nil, newRPCError(connect.CodeNotFound, fmt.Errorf("workspace not found"))
@@ -147,6 +159,9 @@ func (s *ControlPlaneService) ListApplications(ctx context.Context, req *connect
 }
 
 func (s *ControlPlaneService) GetApplication(ctx context.Context, req *connect.Request[rementorv1.GetApplicationRequest]) (*connect.Response[rementorv1.GetApplicationResponse], error) {
+	if err := s.selectSession(req.Msg); err != nil {
+		return nil, err
+	}
 	ws, app, err := s.registry.GetApplicationView(req.Msg.GetWorkspaceId(), req.Msg.GetApplicationId())
 	if err != nil {
 		return nil, newRPCError(connect.CodeNotFound, err)
@@ -155,6 +170,9 @@ func (s *ControlPlaneService) GetApplication(ctx context.Context, req *connect.R
 }
 
 func (s *ControlPlaneService) ResolveApplication(ctx context.Context, req *connect.Request[rementorv1.ResolveApplicationRequest]) (*connect.Response[rementorv1.ResolveApplicationResponse], error) {
+	if err := s.selectSession(req.Msg); err != nil {
+		return nil, err
+	}
 	ws, app, err := s.registry.GetApplicationView(req.Msg.GetWorkspaceId(), req.Msg.GetApplicationRef())
 	if err != nil {
 		if errors.Is(err, models.ErrAmbiguousApplication) {
@@ -166,6 +184,9 @@ func (s *ControlPlaneService) ResolveApplication(ctx context.Context, req *conne
 }
 
 func (s *ControlPlaneService) RegisterApplicationAlias(ctx context.Context, req *connect.Request[rementorv1.RegisterApplicationAliasRequest]) (*connect.Response[rementorv1.RegisterApplicationAliasResponse], error) {
+	if err := s.selectSession(req.Msg); err != nil {
+		return nil, err
+	}
 	app, operation, err := s.registry.RegisterApplicationAliasWithMetadata(req.Msg.GetWorkspaceId(), req.Msg.GetApplicationRef(), req.Msg.GetAlias(), correlationID(req.Msg.GetCorrelationId(), req.Header()))
 	if err != nil {
 		if errors.Is(err, models.ErrAliasConflict) {
@@ -180,9 +201,15 @@ func (s *ControlPlaneService) RegisterApplicationAlias(ctx context.Context, req 
 }
 
 func (s *ControlPlaneService) UpsertApplication(ctx context.Context, req *connect.Request[rementorv1.UpsertApplicationRequest]) (*connect.Response[rementorv1.UpsertApplicationResponse], error) {
+	if err := s.selectSession(req.Msg); err != nil {
+		return nil, err
+	}
 	ws := s.registry.FindWorkspace(req.Msg.GetWorkspaceId())
 	if ws == nil {
 		return nil, newRPCError(connect.CodeNotFound, fmt.Errorf("workspace not found"))
+	}
+	if ws.Session != nil {
+		return s.upsertSession(req)
 	}
 	input := req.Msg.GetApplication()
 	if input == nil {
@@ -243,6 +270,16 @@ func (s *ControlPlaneService) UpsertApplication(ctx context.Context, req *connec
 }
 
 func (s *ControlPlaneService) DeleteApplication(ctx context.Context, req *connect.Request[rementorv1.DeleteApplicationRequest]) (*connect.Response[rementorv1.DeleteApplicationResponse], error) {
+	if err := s.selectSession(req.Msg); err != nil {
+		return nil, err
+	}
+	if w := s.registry.GetWorkspaceView(req.Msg.WorkspaceId); w != nil && w.Session != nil {
+		ws, err := s.registry.EditSessionApplication(w.WorkspaceID, req.Msg.ApplicationId, correlationID(req.Msg.CorrelationId, req.Header()), nil, true)
+		if err != nil {
+			return nil, newRPCError(connect.CodeInvalidArgument, err)
+		}
+		return connect.NewResponse(&rementorv1.DeleteApplicationResponse{Operation: toProtoOperation(ws.LastOperation)}), nil
+	}
 	ws := s.registry.FindWorkspace(req.Msg.GetWorkspaceId())
 	if ws == nil {
 		return nil, newRPCError(connect.CodeNotFound, fmt.Errorf("workspace not found"))
@@ -274,6 +311,9 @@ func (s *ControlPlaneService) DeleteApplication(ctx context.Context, req *connec
 }
 
 func (s *ControlPlaneService) ToggleApplication(ctx context.Context, req *connect.Request[rementorv1.ToggleApplicationRequest]) (*connect.Response[rementorv1.ToggleApplicationResponse], error) {
+	if err := s.selectSession(req.Msg); err != nil {
+		return nil, err
+	}
 	app, operation, err := s.registry.ToggleAppWithMetadata(req.Msg.GetWorkspaceId(), req.Msg.GetApplicationId(), correlationID(req.Msg.GetCorrelationId(), req.Header()))
 	if err != nil {
 		return nil, newRPCError(classifyRegistryError(err), err)
@@ -282,6 +322,9 @@ func (s *ControlPlaneService) ToggleApplication(ctx context.Context, req *connec
 }
 
 func (s *ControlPlaneService) ToggleAllToRemote(ctx context.Context, req *connect.Request[rementorv1.ToggleAllToRemoteRequest]) (*connect.Response[rementorv1.ToggleAllToRemoteResponse], error) {
+	if err := s.selectSession(req.Msg); err != nil {
+		return nil, err
+	}
 	result, operation, err := s.registry.ToggleAllToRemoteWithMetadata(req.Msg.GetWorkspaceId(), correlationID(req.Msg.GetCorrelationId(), req.Header()))
 	if err != nil {
 		return nil, newRPCError(classifyRegistryError(err), err)
@@ -290,6 +333,9 @@ func (s *ControlPlaneService) ToggleAllToRemote(ctx context.Context, req *connec
 }
 
 func (s *ControlPlaneService) ToggleAllToLocal(ctx context.Context, req *connect.Request[rementorv1.ToggleAllToLocalRequest]) (*connect.Response[rementorv1.ToggleAllToLocalResponse], error) {
+	if err := s.selectSession(req.Msg); err != nil {
+		return nil, err
+	}
 	result, operation, err := s.registry.ToggleAllToLocalWithMetadata(req.Msg.GetWorkspaceId(), correlationID(req.Msg.GetCorrelationId(), req.Header()))
 	if err != nil {
 		return nil, newRPCError(classifyRegistryError(err), err)
@@ -298,6 +344,9 @@ func (s *ControlPlaneService) ToggleAllToLocal(ctx context.Context, req *connect
 }
 
 func (s *ControlPlaneService) SyncWorkspaceRouting(ctx context.Context, req *connect.Request[rementorv1.SyncWorkspaceRoutingRequest]) (*connect.Response[rementorv1.SyncWorkspaceRoutingResponse], error) {
+	if err := s.selectSession(req.Msg); err != nil {
+		return nil, err
+	}
 	if s.registry.FindWorkspace(req.Msg.GetWorkspaceId()) == nil {
 		return nil, newRPCError(connect.CodeNotFound, fmt.Errorf("workspace not found"))
 	}
@@ -309,6 +358,9 @@ func (s *ControlPlaneService) SyncWorkspaceRouting(ctx context.Context, req *con
 }
 
 func (s *ControlPlaneService) GetRoutePattern(ctx context.Context, req *connect.Request[rementorv1.GetRoutePatternRequest]) (*connect.Response[rementorv1.GetRoutePatternResponse], error) {
+	if err := s.selectSession(req.Msg); err != nil {
+		return nil, err
+	}
 	_, app, err := s.registry.FindApp(req.Msg.GetWorkspaceId(), req.Msg.GetApplicationId())
 	if err != nil {
 		return nil, newRPCError(connect.CodeNotFound, err)
@@ -317,6 +369,9 @@ func (s *ControlPlaneService) GetRoutePattern(ctx context.Context, req *connect.
 }
 
 func (s *ControlPlaneService) UpdateRoutePattern(ctx context.Context, req *connect.Request[rementorv1.UpdateRoutePatternRequest]) (*connect.Response[rementorv1.UpdateRoutePatternResponse], error) {
+	if err := s.selectSession(req.Msg); err != nil {
+		return nil, err
+	}
 	var patternPtr *string
 	if req.Msg.GetPattern() != "" {
 		pattern := req.Msg.GetPattern()
@@ -333,6 +388,9 @@ func (s *ControlPlaneService) UpdateRoutePattern(ctx context.Context, req *conne
 }
 
 func (s *ControlPlaneService) WatchHealth(ctx context.Context, req *connect.Request[rementorv1.WatchHealthRequest], stream *connect.ServerStream[rementorv1.WatchHealthResponse]) error {
+	if err := s.selectSession(req.Msg); err != nil {
+		return err
+	}
 	wsID := req.Msg.GetWorkspaceId()
 	if wsID != "" {
 		s.registry.SubscribeWorkspace(wsID)
@@ -420,6 +478,8 @@ func toProtoWorkspace(ws *models.Workspace) *rementorv1.Workspace {
 	}
 	return &rementorv1.Workspace{
 		Id:           ws.WorkspaceID,
+		Session:      sessionToProto(ws.Session),
+		BrowserUrl:   services.PublicOrigin(ws.GetLocalDomain()) + "/",
 		Type:         ws.GetType(),
 		Name:         name,
 		Color:        color,
@@ -427,7 +487,8 @@ func toProtoWorkspace(ws *models.Workspace) *rementorv1.Workspace {
 		Applications: apps,
 		Environment: &rementorv1.WorkspaceEnvironmentRef{
 			WorkspaceId: ws.WorkspaceID,
-			Environment: ws.WorkspaceID,
+			SessionId:   ws.SessionID(),
+			Environment: ws.EnvironmentID(),
 			LegacyId:    ws.WorkspaceID,
 		},
 		Route: routeStateToProto(ws.Route),
@@ -474,7 +535,8 @@ func toProtoApplicationInWorkspace(ws *models.Workspace, app *models.Application
 	environment := &rementorv1.WorkspaceEnvironmentRef{}
 	if ws != nil {
 		environment.WorkspaceId = ws.WorkspaceID
-		environment.Environment = ws.WorkspaceID
+		environment.Environment = ws.EnvironmentID()
+		environment.SessionId = ws.SessionID()
 		environment.LegacyId = ws.WorkspaceID
 	}
 	state := app.Route
@@ -483,6 +545,7 @@ func toProtoApplicationInWorkspace(ws *models.Workspace, app *models.Application
 	}
 	return &rementorv1.Application{
 		Id:                 app.ID,
+		SharedWith:         app.SharedWith,
 		AppId:              app.CanonicalAppID(),
 		ServiceId:          app.ServiceID,
 		Repository:         app.Repository,
@@ -616,7 +679,7 @@ func toProtoHealthUpdate(update models.HealthUpdate, workspace *models.Workspace
 		RemoteCheckedAt: timestamppb.New(update.RemoteChecked),
 	}
 	if workspace != nil {
-		response.Environment = &rementorv1.WorkspaceEnvironmentRef{WorkspaceId: workspace.WorkspaceID, Environment: workspace.WorkspaceID, LegacyId: workspace.WorkspaceID}
+		response.Environment = &rementorv1.WorkspaceEnvironmentRef{WorkspaceId: workspace.WorkspaceID, Environment: workspace.EnvironmentID(), SessionId: workspace.SessionID(), LegacyId: workspace.WorkspaceID}
 		for _, app := range workspace.Applications {
 			if app.ID == update.AppName || app.CanonicalAppID() == update.AppName {
 				response.Identity = &rementorv1.CanonicalApplicationRef{AppId: app.CanonicalAppID(), ServiceId: app.ServiceID, Repository: app.Repository, Aliases: app.NormalizedAliases()}

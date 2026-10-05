@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/thiagojdb/rementor/internal/cli"
 )
@@ -15,19 +16,30 @@ func main() {
 	// Extract --json and --server from anywhere in args (before or after subcommand)
 	jsonOutput := false
 	serverURL := ""
+	sessionID := os.Getenv("REMENTOR_SESSION")
 	filtered := make([]string, 0, len(args))
 
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
 		case "--json":
 			jsonOutput = true
+		case "--session":
+			if i+1 >= len(args) {
+				cli.Die("--session requires an ID")
+			}
+			sessionID = args[i+1]
+			i++
 		case "--server":
 			if i+1 < len(args) {
 				serverURL = args[i+1]
 				i++
 			}
 		default:
-			filtered = append(filtered, args[i])
+			if strings.HasPrefix(args[i], "--session=") {
+				sessionID = strings.TrimPrefix(args[i], "--session=")
+			} else {
+				filtered = append(filtered, args[i])
+			}
 		}
 	}
 
@@ -46,10 +58,16 @@ func main() {
 	}
 
 	client := cli.NewClient(url)
+	client.SessionID = sessionID
 	cmd := filtered[0]
 	rest := filtered[1:]
+	if sessionID != "" && (cmd == "announce" || (cmd == "workspace" && len(rest) > 0 && rest[0] == "create")) {
+		cli.Die("use session registration; announce/workspace creation is not session-scoped")
+	}
 
 	switch cmd {
+	case "session":
+		cli.SessionCmd(client, jsonOutput, rest)
 	case "workspace":
 		cli.WorkspaceCmd(client, jsonOutput, rest)
 	case "app":
@@ -81,8 +99,13 @@ Usage:
 Global options (can be placed before or after the command):
   --server <url>   rementor server URL (default: $RMENTOR_URL or http://localhost:9300)
   --json           output JSON
+  --session <id>   isolated routing session (default: $REMENTOR_SESSION)
 
 Commands:
+  session create <name> --workspace <environment>
+  session list [--workspace <environment>]
+  session inspect|close <session-id>
+  session refresh <session-id> [--apply --preview-token <token>]
   workspace list
   workspace create <id> --local-domain <d> [--type routing|local-apps] [--name <n>] [--color <c>] [--default-remote-base-url <url>]
   workspace delete <id>

@@ -16,6 +16,12 @@ type WorkspaceStore interface {
 	WorkspaceFromConfig(models.WorkspaceConfig) *models.Workspace
 }
 
+// WorkspaceStateStore can persist one workspace's route state without
+// rewriting unrelated workspaces. Older stores retain full-snapshot saves.
+type WorkspaceStateStore interface {
+	SaveWorkspaceState(*models.Workspace) error
+}
+
 // RouteJournalStore is implemented by stores that can durably record the
 // write-ahead state of a route operation.  It is intentionally optional so
 // embedders and older test stores that only implement WorkspaceStore remain
@@ -42,6 +48,10 @@ func (configWorkspaceStore) LoadState(workspaces []*models.Workspace) error {
 
 func (configWorkspaceStore) SaveState(workspaces []*models.Workspace) error {
 	return config.SaveState(workspaces)
+}
+
+func (configWorkspaceStore) SaveWorkspaceState(workspace *models.Workspace) error {
+	return config.SaveState([]*models.Workspace{workspace})
 }
 
 func (configWorkspaceStore) ReplaceWorkspaces(workspaces []*models.Workspace) error {

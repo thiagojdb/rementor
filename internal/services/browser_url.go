@@ -3,6 +3,8 @@ package services
 import (
 	"errors"
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 
 	"github.com/thiagojdb/rementor/internal/models"
@@ -184,15 +186,15 @@ func (r *Registry) ResolveBrowserURL(workspaceID, applicationRef string) (Browse
 	}
 
 	return BrowserURLResolution{
-		WorkspaceID: ws.WorkspaceID, Environment: ws.WorkspaceID, ApplicationRef: applicationRef,
+		WorkspaceID: ws.WorkspaceID, Environment: ws.EnvironmentID(), ApplicationRef: applicationRef,
 		CanonicalAppID: app.CanonicalAppID(), ServiceID: app.ServiceID, Repository: app.Repository,
-		PublicHost: host, PublicPath: path, URL: "http://" + host + path, BrowserURL: "http://" + host + path,
+		PublicHost: host, PublicPath: path, URL: PublicOrigin(host) + path, BrowserURL: PublicOrigin(host) + path,
 		Target: resolvedRoute.Target, LocalTarget: resolvedRoute.LocalTarget, RemoteTarget: resolvedRoute.RemoteTarget,
 		DesiredMode: resolvedRoute.DesiredMode, EffectiveMode: resolvedRoute.EffectiveMode,
 		RouteVersion: version, OperationID: state.OperationID,
 		CorrelationID: operationCorrelation(operation), Route: cloneRoute(resolvedRoute), RouteState: state,
 		Identity:       identity,
-		EnvironmentRef: models.WorkspaceEnvironmentRef{WorkspaceID: ws.WorkspaceID, Environment: ws.WorkspaceID, LegacyID: ws.WorkspaceID},
+		EnvironmentRef: models.WorkspaceEnvironmentRef{WorkspaceID: ws.WorkspaceID, Environment: ws.EnvironmentID(), SessionID: ws.SessionID(), LegacyID: ws.WorkspaceID},
 		Operation:      operation, Precedence: resolvedRoute.Precedence, MatchingPattern: resolvedRoute.Pattern,
 	}, nil
 }
@@ -256,4 +258,14 @@ func routePrecedes(left, right Route) bool {
 		return left.Exact
 	}
 	return routeSortKey(left) < routeSortKey(right)
+}
+
+// PublicOrigin includes an explicitly configured browser-facing proxy port.
+// Private nginx listener ports must not leak into normal port-80 public URLs.
+func PublicOrigin(host string) string {
+	port, err := strconv.Atoi(os.Getenv("REMENTOR_PUBLIC_PORT"))
+	if err == nil && port > 0 && port <= 65535 && port != 80 {
+		return "http://" + host + ":" + strconv.Itoa(port)
+	}
+	return "http://" + host
 }

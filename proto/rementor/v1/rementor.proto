@@ -7,6 +7,8 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/thiagojdb/rementor/internal/gen/rementor/v1;rementorv1";
 
 service ControlPlaneService {
+  rpc CreateRoutingSession(CreateRoutingSessionRequest) returns (CreateRoutingSessionResponse);
+  rpc RefreshRoutingSession(RefreshRoutingSessionRequest) returns (RefreshRoutingSessionResponse);
   rpc ListWorkspaces(ListWorkspacesRequest) returns (ListWorkspacesResponse);
   rpc GetWorkspace(GetWorkspaceRequest) returns (GetWorkspaceResponse);
   rpc CreateWorkspace(CreateWorkspaceRequest) returns (CreateWorkspaceResponse);
@@ -98,6 +100,7 @@ message CanonicalApplicationRef {
 // WorkspaceEnvironmentRef makes the environment boundary explicit while
 // retaining workspace_id for compatibility with the original API.
 message WorkspaceEnvironmentRef {
+  string session_id = 4;
   string workspace_id = 1;
   string environment = 2;
   string legacy_id = 3;
@@ -146,6 +149,7 @@ message StructuredError {
 }
 
 message Application {
+  repeated string shared_with = 40;
   string id = 1;
   string name = 2;
   string path = 3;
@@ -173,6 +177,8 @@ message Application {
 }
 
 message Workspace {
+  string browser_url = 10;
+  RoutingSession session = 9;
   string id = 1;
   string type = 2;
   string name = 3;
@@ -217,6 +223,7 @@ message ListWorkspacesResponse {
 
 message GetWorkspaceRequest {
   string workspace_id = 1;
+  string session_id = 100;
 }
 
 message GetWorkspaceResponse {
@@ -242,12 +249,14 @@ message CreateWorkspaceResponse {
 }
 
 message UpdateWorkspaceRequest {
+  optional uint64 expected_version = 101;
   string workspace_id = 1;
   repeated ApplicationConfigInput applications = 2;
   string local_domain = 3;
   string default_remote_base_url = 4;
   string correlation_id = 5;
   bool strict_metadata = 6;
+  string session_id = 100;
 }
 
 message UpdateWorkspaceResponse {
@@ -259,6 +268,7 @@ message UpdateWorkspaceResponse {
 message DeleteWorkspaceRequest {
   string workspace_id = 1;
   string correlation_id = 2;
+  string session_id = 100;
 }
 
 message DeleteWorkspaceResponse {
@@ -267,6 +277,7 @@ message DeleteWorkspaceResponse {
 
 message ListApplicationsRequest {
   string workspace_id = 1;
+  string session_id = 100;
 }
 
 message ListApplicationsResponse {
@@ -276,6 +287,7 @@ message ListApplicationsResponse {
 message GetApplicationRequest {
   string workspace_id = 1;
   string application_id = 2;
+  string session_id = 100;
 }
 
 message GetApplicationResponse {
@@ -285,6 +297,7 @@ message GetApplicationResponse {
 message ResolveApplicationRequest {
   string workspace_id = 1;
   string application_ref = 2;
+  string session_id = 100;
 }
 
 message ResolveApplicationResponse {
@@ -295,6 +308,7 @@ message ResolveBrowserURLRequest {
   string workspace_id = 1;
   string application_ref = 2;
   string correlation_id = 3;
+  string session_id = 100;
 }
 
 // BrowserURLResolution is the stable public entry point for an application.
@@ -337,6 +351,7 @@ message RegisterApplicationAliasRequest {
   string application_ref = 2;
   string alias = 3;
   string correlation_id = 4;
+  string session_id = 100;
 }
 
 message RegisterApplicationAliasResponse {
@@ -349,6 +364,7 @@ message UpsertApplicationRequest {
   ApplicationConfigInput application = 2;
   string correlation_id = 3;
   bool strict_metadata = 4;
+  string session_id = 100;
 }
 
 message UpsertApplicationResponse {
@@ -362,6 +378,7 @@ message DeleteApplicationRequest {
   string workspace_id = 1;
   string application_id = 2;
   string correlation_id = 3;
+  string session_id = 100;
 }
 
 message DeleteApplicationResponse {
@@ -372,6 +389,7 @@ message ToggleApplicationRequest {
   string workspace_id = 1;
   string application_id = 2;
   string correlation_id = 3;
+  string session_id = 100;
 }
 
 message ToggleApplicationResponse {
@@ -382,6 +400,7 @@ message ToggleApplicationResponse {
 message ToggleAllToRemoteRequest {
   string workspace_id = 1;
   string correlation_id = 2;
+  string session_id = 100;
 }
 
 message ToggleAllToRemoteResponse {
@@ -393,6 +412,7 @@ message ToggleAllToRemoteResponse {
 message ToggleAllToLocalRequest {
   string workspace_id = 1;
   string correlation_id = 2;
+  string session_id = 100;
 }
 
 message ToggleAllToLocalResponse {
@@ -404,6 +424,7 @@ message ToggleAllToLocalResponse {
 message SyncWorkspaceRoutingRequest {
   string workspace_id = 1;
   string correlation_id = 2;
+  string session_id = 100;
 }
 
 message SyncWorkspaceRoutingResponse {
@@ -414,6 +435,7 @@ message SyncWorkspaceRoutingResponse {
 message GetRoutePatternRequest {
   string workspace_id = 1;
   string application_id = 2;
+  string session_id = 100;
 }
 
 message GetRoutePatternResponse {
@@ -425,6 +447,7 @@ message UpdateRoutePatternRequest {
   string application_id = 2;
   string pattern = 3;
   string correlation_id = 4;
+  string session_id = 100;
 }
 
 message UpdateRoutePatternResponse {
@@ -534,6 +557,7 @@ message RouteResolution {
 
 message GetRouteRequest {
   string workspace_id = 1;
+  string session_id = 100;
 }
 
 message GetRouteResponse {
@@ -547,6 +571,7 @@ message GetRouteResponse {
 
 message GetRouteConflictsRequest {
   string workspace_id = 1;
+  string session_id = 100;
 }
 
 message GetRouteConflictsResponse {
@@ -561,6 +586,7 @@ message ResolveRouteRequest {
   string workspace_id = 1;
   string host = 2;
   string path = 3;
+  string session_id = 100;
 }
 
 message ResolveRouteResponse {
@@ -576,6 +602,7 @@ message PlanRouteRequest {
   string correlation_id = 6;
   uint64 expected_version = 7;
   bool strict_metadata = 8;
+  string session_id = 100;
 }
 
 message PlanRouteResponse {
@@ -593,6 +620,7 @@ message ApplyRouteRequest {
   optional string route_pattern = 8;
   uint64 expected_version = 9;
   bool strict_metadata = 10;
+  string session_id = 100;
 }
 
 message ApplyRouteResponse {
@@ -611,6 +639,7 @@ message SyncRouteRequest {
   string workspace_id = 1;
   string correlation_id = 2;
   optional bool repair = 3;
+  string session_id = 100;
 }
 
 message SyncRouteResponse {
@@ -629,6 +658,7 @@ message SyncRouteResponse {
 
 message WatchHealthRequest {
   string workspace_id = 1;
+  string session_id = 100;
 }
 
 message WatchHealthResponse {
@@ -643,4 +673,31 @@ message WatchHealthResponse {
   google.protobuf.Timestamp remote_checked_at = 9;
   CanonicalApplicationRef identity = 10;
   WorkspaceEnvironmentRef environment = 11;
+}
+
+// RoutingSession describes the environment snapshot used by an isolated scope.
+message RoutingSession {
+  string environment_id = 1;
+  uint64 baseline_version = 2;
+  google.protobuf.Timestamp created_at = 3;
+}
+message CreateRoutingSessionRequest {
+  string environment_id = 1;
+  string name = 2;
+  string correlation_id = 3;
+}
+message CreateRoutingSessionResponse {
+  Workspace workspace = 1;
+}
+message RefreshRoutingSessionRequest {
+  string id = 1;
+  bool apply = 2;
+  string preview_token = 3;
+  string correlation_id = 4;
+}
+message RefreshRoutingSessionResponse {
+  Workspace workspace = 1;
+  repeated string changes = 2;
+  repeated string conflicts = 3;
+  string preview_token = 4;
 }
