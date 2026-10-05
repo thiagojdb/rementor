@@ -1193,7 +1193,7 @@ func insertWorkspaceConfigTx(tx *sql.Tx, ws models.WorkspaceConfig, order int) e
 		return fmt.Errorf("failed to insert workspace %q: %w", ws.ID, err)
 	}
 	for i, app := range ws.Applications {
-		if ws.Session != nil {
+		if ws.Session != nil && sessionInheritsApplication(ws.Session, app) {
 			// Pinned route snapshots must not write old repository metadata back to
 			// an existing global identity when the environment changes later.
 			var exists int
@@ -1209,6 +1209,16 @@ func insertWorkspaceConfigTx(tx *sql.Tx, ws models.WorkspaceConfig, order int) e
 		}
 	}
 	return nil
+}
+
+func sessionInheritsApplication(session *models.RoutingSession, app models.ApplicationConfig) bool {
+	id := models.NormalizeIdentityToken(app.CanonicalAppID())
+	for _, baseline := range session.Baseline {
+		if models.NormalizeIdentityToken(baseline.CanonicalAppID()) == id {
+			return true
+		}
+	}
+	return false
 }
 
 func insertApplicationConfig(tx *sql.Tx, wsID string, app models.ApplicationConfig, order int) error {

@@ -90,7 +90,7 @@ function applicationAddress(workspace: WorkspaceDTO, application: ApplicationDTO
 function localHealthAddress(application: ApplicationDTO) {
   if (!application.port || !application.health) return ''
   const context = application.upstreamContext || application.context || ''
-  return `http://localhost:${application.port}${context}/${application.health}`
+  return routeAddress(routeAddress(`http://localhost:${application.port}`, context), application.health)
 }
 
 function healthVariant(status: ApplicationDTO['healthStatus']) {

@@ -242,10 +242,11 @@ func TestBaseConfigAcceptsManySessionHostnames(t *testing.T) {
 		t.Fatal(err)
 	}
 	var routes strings.Builder
+	port := proofFreeTCPPort(t)
 	for i := 1; i <= 60; i++ {
-		fmt.Fprintf(&routes, "server { listen 127.0.0.1:18082; server_name environment-%02d.giss.localhost; return 204; }\n", i)
+		fmt.Fprintf(&routes, "server { listen 127.0.0.1:%d; server_name environment-%02d.giss.localhost; return 204; }\n", port, i)
 	}
-	routes.WriteString("server { listen 127.0.0.1:18082; server_name app-1234567890.feature-xml-0123456789.localhost; return 204; }\n")
+	fmt.Fprintf(&routes, "server { listen 127.0.0.1:%d; server_name app-1234567890.feature-xml-0123456789.localhost; return 204; }\n", port)
 	if err := os.WriteFile(filepath.Join(includeDir, workspacesConfigFile), []byte(routes.String()), 0o644); err != nil {
 		t.Fatal(err)
 	}

@@ -539,3 +539,19 @@ func assertNotContains(t *testing.T, haystack, needle string) {
 		t.Fatalf("expected config not to contain %q, got:\n%s", needle, haystack)
 	}
 }
+
+func TestCachedRendererRejectsCrossWorkspaceSessionHostCollision(t *testing.T) {
+	previous := config.Config
+	t.Cleanup(func() { config.Config = previous })
+	config.Config.RementorDomain = "rementor.localhost"
+	rp := &RoutingProvider{}
+	base := &models.Workspace{WorkspaceID: "dev", Type: "routing", RoutingConfig: &models.RoutingConfig{LocalDomain: "dev.localhost"}}
+	session := &models.Workspace{WorkspaceID: "feature", Type: "routing", RoutingConfig: &models.RoutingConfig{LocalDomain: "feature.localhost"}, Session: &models.RoutingSession{EnvironmentID: "dev"}}
+	if _, err := rp.render([]*models.Workspace{base, session}); err != nil {
+		t.Fatal(err)
+	}
+	session.RoutingConfig.LocalDomain = base.RoutingConfig.LocalDomain
+	if _, err := rp.render([]*models.Workspace{base, session}); err == nil {
+		t.Fatal("accepted cross-workspace session hostname collision")
+	}
+}

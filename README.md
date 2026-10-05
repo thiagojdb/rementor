@@ -12,7 +12,7 @@ UI, CLI, and MCP server all use the same typed control-plane API.
 - Switch individual paths or hostnames between local ports and remote upstreams.
 - Compare local and remote health without starting the full service graph.
 - Generate and validate nginx routes from persisted workspace configuration.
-- Control routing from a SolidJS UI, `rementorctl`, or coding-agent MCP tools.
+- Control routing from a React UI, `rementorctl`, or coding-agent MCP tools.
 - Keep the workflow reproducible with SQLite state, Protocol Buffers, and a
   rootless mock demo.
 
@@ -88,7 +88,7 @@ flowchart LR
   Client[Browser or API client] --> Proxy[nginx on a stable local URL]
   Proxy -->|selected service| Local[Local process]
   Proxy -->|remaining services| Remote[Remote environment]
-  UI[SolidJS UI] --> RPC[Connect RPC control plane]
+  UI[React UI] --> RPC[Connect RPC control plane]
   CLI[rementorctl] --> RPC
   MCP[MCP tools] --> RPC
   RPC --> Registry[Workspace registry]
@@ -248,7 +248,7 @@ internal/services/       Registry, health checks, and routing transactions
 internal/nginx/          nginx renderer, validation, and atomic reload
 internal/config/         SQLite persistence and migrations
 internal/cli/            CLI and MCP control surfaces
-web/frontend/            SolidJS application and generated TypeScript client
+web/frontend/            React application and generated TypeScript client
 examples/mock-stack/     Sanitized local/remote service simulation
 examples/docker/         Rootless nginx demo runtime
 ```

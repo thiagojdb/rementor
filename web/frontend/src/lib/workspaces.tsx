@@ -189,19 +189,29 @@ export function useWorkspaceHealth(workspaceId: string | undefined) {
   useEffect(() => {
     if (!workspaceId) return
     const controller = new AbortController()
-    void (async () => {
+    let retryTimer: ReturnType<typeof setTimeout> | undefined
+    let retryDelay = 1000
+    const watch = async () => {
       try {
         for await (const update of api.watchHealth(workspaceId, { signal: controller.signal })) {
+          if (controller.signal.aborted) return
+          retryDelay = 1000
           if (update.workspaceId && update.applicationName) {
             updateHealth(update.workspaceId, update.applicationName, update.localOk ?? false, update.remoteOk ?? false)
           }
         }
       } catch (requestError) {
-        if (ConnectError.from(requestError).code !== Code.Canceled) {
-          // Health streaming is supplementary. The table still shows the last known state.
-        }
+        if (controller.signal.aborted || ConnectError.from(requestError).code === Code.Canceled) return
       }
-    })()
-    return () => controller.abort()
+      if (!controller.signal.aborted) {
+        retryTimer = setTimeout(() => { void watch() }, retryDelay)
+        retryDelay = Math.min(retryDelay * 2, 30000)
+      }
+    }
+    void watch()
+    return () => {
+      controller.abort()
+      clearTimeout(retryTimer)
+    }
   }, [workspaceId, updateHealth])
 }

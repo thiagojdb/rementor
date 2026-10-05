@@ -77,7 +77,11 @@ func SessionCmd(client *Client, jsonOutput bool, args []string) {
 		w := NewTabWriter()
 		fmt.Fprintln(w, "ID\tENVIRONMENT\tNAME\tDOMAIN")
 		for _, s := range sessions {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", s.ID, s.Session.EnvironmentId, s.Name, s.Routing.LocalDomain)
+			domain := ""
+			if s.Routing != nil {
+				domain = s.Routing.LocalDomain
+			}
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", s.ID, s.Session.EnvironmentId, s.Name, domain)
 		}
 		w.Flush()
 	case "inspect", "close", "refresh":

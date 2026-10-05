@@ -50,7 +50,7 @@ func (s *ControlPlaneService) GetRouteConflicts(ctx context.Context, req *connec
 	ws := s.registry.FindWorkspace(wsID)
 	environment := wsID
 	if ws != nil {
-		environment = ws.WorkspaceID
+		environment = ws.EnvironmentID()
 	}
 	return connect.NewResponse(&rementorv1.GetRouteConflictsResponse{
 		WorkspaceId:  wsID,

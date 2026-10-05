@@ -278,14 +278,14 @@ func refreshSession(workspaces []*models.Workspace, id string) (SessionRefresh, 
 		merged = append(merged, a)
 		out.Changes = append(out.Changes, a.ID+": added from environment")
 	}
+	if out.Workspace.RoutingConfig == nil {
+		out.Workspace.RoutingConfig = &models.RoutingConfig{Mode: "path-based"}
+	}
 	if ws.GetDefaultRemoteBaseURL() == ws.Session.BaselineRemoteURL {
 		out.Workspace.RoutingConfig.DefaultRemoteBaseURL = base.GetDefaultRemoteBaseURL()
 		if ws.GetDefaultRemoteBaseURL() != base.GetDefaultRemoteBaseURL() {
 			out.Changes = append(out.Changes, "default remote URL updated")
 		}
-	}
-	if out.Workspace.RoutingConfig == nil {
-		out.Workspace.RoutingConfig = &models.RoutingConfig{Mode: "path-based"}
 	}
 	localDomain := sessionHostname(routingSessionHostPrefix(ws), base.GetLocalDomain())
 	if out.Workspace.RoutingConfig.LocalDomain != localDomain {

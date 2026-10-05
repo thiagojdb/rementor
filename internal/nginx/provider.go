@@ -101,7 +101,9 @@ func (rp *RoutingProvider) install(rendered string, verify bool) error {
 	oldWorkers := rp.workers()
 	reload := func() error {
 		if fast {
-			return rp.signalReload()
+			if err := rp.signalReload(); err == nil {
+				return nil
+			}
 		}
 		return rp.run("-s", "reload")
 	}
@@ -120,7 +122,7 @@ func (rp *RoutingProvider) install(rendered string, verify bool) error {
 			}
 			rp.restore(target, previous, hadPrevious)
 			if reloadErr := reload(); reloadErr != nil {
-				return fmt.Errorf("%w; rollback reload: %v", err, reloadErr)
+				return fmt.Errorf("%w; rollback reload: %w", err, reloadErr)
 			}
 			return err
 		}
@@ -334,7 +336,8 @@ func (rp *RoutingProvider) rememberConfigFiles(dump, target string) {
 // candidate on HUP, and live worker proof gates success. Only use this path
 // while the previously inspected base configuration is unchanged.
 func (rp *RoutingProvider) canSignal() bool {
-	if rp.pidFile == "" || len(rp.configFiles) == 0 || rp.masterPID() <= 1 {
+	pid := rp.masterPID()
+	if rp.pidFile == "" || len(rp.configFiles) == 0 || pid <= 1 || syscall.Kill(pid, 0) != nil {
 		return false
 	}
 	for path, hash := range rp.configFiles {
@@ -366,6 +369,9 @@ type renderCacheEntry struct {
 }
 
 func (rp *RoutingProvider) render(workspaces []*models.Workspace) (string, error) {
+	if err := services.ValidateSessionHosts(workspaces, config.Config.RementorDomain); err != nil {
+		return "", err
+	}
 	if rp.renderCache == nil {
 		rp.renderCache = make(map[string]renderCacheEntry)
 	}
