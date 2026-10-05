@@ -13,6 +13,8 @@ import (
 	rementorv1 "github.com/thiagojdb/rementor/internal/gen/rementor/v1"
 	"github.com/thiagojdb/rementor/internal/gen/rementor/v1/rementorv1connect"
 	"github.com/thiagojdb/rementor/internal/models"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -29,17 +31,31 @@ func (e *APIError) Error() string {
 
 // Client is the typed RPC client used by rementorctl.
 type Client struct {
-	baseURL string
-	rpc     rementorv1connect.ControlPlaneServiceClient
+	SessionID string
+	baseURL   string
+	rpc       rementorv1connect.ControlPlaneServiceClient
 }
 
 // NewClient creates a new RPC client for the given server URL.
 func NewClient(baseURL string) *Client {
 	baseURL = strings.TrimRight(baseURL, "/")
-	return &Client{
-		baseURL: baseURL,
-		rpc:     rementorv1connect.NewControlPlaneServiceClient(http.DefaultClient, rpcBaseURL(baseURL)),
-	}
+	c := &Client{baseURL: baseURL}
+	interceptor := connect.UnaryInterceptorFunc(func(next connect.UnaryFunc) connect.UnaryFunc {
+		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+			if c.SessionID != "" {
+				if msg, ok := req.Any().(proto.Message); ok {
+					m := msg.ProtoReflect()
+					field := m.Descriptor().Fields().ByName("session_id")
+					if field != nil {
+						m.Set(field, protoreflect.ValueOfString(c.SessionID))
+					}
+				}
+			}
+			return next(ctx, req)
+		}
+	})
+	c.rpc = rementorv1connect.NewControlPlaneServiceClient(http.DefaultClient, rpcBaseURL(baseURL), connect.WithInterceptors(interceptor))
+	return c
 }
 
 func (c *Client) BaseURL() string {
@@ -424,6 +440,8 @@ func workspaceFromProto(workspace *rementorv1.Workspace) WorkspaceDTO {
 	}
 	return WorkspaceDTO{
 		ID:           workspace.GetId(),
+		Session:      workspace.GetSession(),
+		BrowserURL:   workspace.GetBrowserUrl(),
 		Type:         workspace.GetType(),
 		Name:         workspace.GetName(),
 		Color:        workspace.GetColor(),
@@ -457,6 +475,7 @@ func applicationFromProto(app *rementorv1.Application) ApplicationDTO {
 	}
 	return ApplicationDTO{
 		ID:                 app.GetId(),
+		SharedWith:         app.GetSharedWith(),
 		AppID:              app.GetAppId(),
 		ServiceID:          app.GetServiceId(),
 		Repository:         app.GetRepository(),
@@ -494,7 +513,8 @@ func environmentFromProto(environment *rementorv1.WorkspaceEnvironmentRef) Works
 	if environment == nil {
 		return WorkspaceEnvironmentRefDTO{}
 	}
-	return WorkspaceEnvironmentRefDTO{WorkspaceID: environment.GetWorkspaceId(), Environment: environment.GetEnvironment(), LegacyID: environment.GetLegacyId()}
+	return WorkspaceEnvironmentRefDTO{WorkspaceID: environment.GetWorkspaceId(),
+		SessionID: environment.GetSessionId(), Environment: environment.GetEnvironment(), LegacyID: environment.GetLegacyId()}
 }
 
 func routeFromProto(route *rementorv1.RouteState) *RouteStateDTO {

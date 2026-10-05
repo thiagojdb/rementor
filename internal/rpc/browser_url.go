@@ -11,6 +11,9 @@ import (
 )
 
 func (s *ControlPlaneService) ResolveBrowserURL(ctx context.Context, req *connect.Request[rementorv1.ResolveBrowserURLRequest]) (*connect.Response[rementorv1.ResolveBrowserURLResponse], error) {
+	if err := s.selectSession(req.Msg); err != nil {
+		return nil, err
+	}
 	return s.resolveBrowserURL(req)
 }
 
@@ -50,7 +53,7 @@ func browserURLResolutionToProto(res services.BrowserURLResolution) *rementorv1.
 		OperationId:     res.OperationID,
 		CorrelationId:   res.CorrelationID,
 		Identity:        &rementorv1.CanonicalApplicationRef{AppId: res.Identity.AppID, ServiceId: res.Identity.ServiceID, Repository: res.Identity.Repository, Aliases: append([]string(nil), res.Identity.Aliases...), LegacyId: res.Identity.LegacyID},
-		EnvironmentRef:  &rementorv1.WorkspaceEnvironmentRef{WorkspaceId: res.EnvironmentRef.WorkspaceID, Environment: res.EnvironmentRef.Environment, LegacyId: res.EnvironmentRef.LegacyID},
+		EnvironmentRef:  &rementorv1.WorkspaceEnvironmentRef{WorkspaceId: res.EnvironmentRef.WorkspaceID, Environment: res.EnvironmentRef.Environment, SessionId: res.EnvironmentRef.SessionID, LegacyId: res.EnvironmentRef.LegacyID},
 		Precedence:      models.ClampInt32(res.Precedence),
 		MatchingPattern: res.MatchingPattern,
 		Route:           routeStateToProto(res.RouteState),

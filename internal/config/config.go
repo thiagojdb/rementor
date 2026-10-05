@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/thiagojdb/rementor/internal/models"
@@ -608,19 +609,46 @@ func openDB() (*sql.DB, error) {
 	return db, nil
 }
 
+// Connections remain short-lived; migration work is cached by file identity
+// and SQLite schema version, so replacement databases and DDL invalidate it.
+var schemaCache struct {
+	sync.Mutex
+	file    os.FileInfo
+	version int
+}
+
 func readyDB() (*sql.DB, error) {
 	db, err := openDB()
 	if err != nil {
 		return nil, err
 	}
-	if err := initDB(db); err != nil {
+	schemaCache.Lock()
+	defer schemaCache.Unlock()
+	info, err := os.Stat(GetDBFile())
+	if err != nil {
 		db.Close()
 		return nil, err
 	}
-	if err := ensureConfig(db); err != nil {
+	var version int
+	if err = db.QueryRow("PRAGMA schema_version").Scan(&version); err != nil {
 		db.Close()
 		return nil, err
 	}
+	if schemaCache.file != nil && os.SameFile(schemaCache.file, info) && schemaCache.version == version {
+		return db, nil
+	}
+	if err = initDB(db); err == nil {
+		err = ensureConfig(db)
+	}
+	if err == nil {
+		err = db.QueryRow("PRAGMA schema_version").Scan(&version)
+	}
+	if err != nil {
+		db.Close()
+		return nil, err
+	}
+	schemaCache.file = info
+	schemaCache.version = version
 	return db, nil
 }
 
@@ -729,6 +757,7 @@ func initDB(db *sql.DB) error {
 		column string
 		def    string
 	}{
+		{"workspaces", "session_json", "TEXT NOT NULL DEFAULT ''"},
 		{"workspaces", "route_version", "INTEGER NOT NULL DEFAULT 0"},
 		{"workspaces", "operation_id", "TEXT NOT NULL DEFAULT ''"},
 		{"workspaces", "correlation_id", "TEXT NOT NULL DEFAULT ''"},
@@ -886,7 +915,7 @@ func normalizeConfig(cfg AppConfig) (AppConfig, bool) {
 
 func loadWorkspacesFromDB(db *sql.DB) ([]*models.Workspace, error) {
 	rows, err := db.Query(`
-		SELECT id, type, name, color, routing_mode, local_domain, default_remote_base_url, route_version, operation_id, correlation_id, operation_kind, operation_created_at, operation_completed_at
+		SELECT id, type, name, color, routing_mode, local_domain, default_remote_base_url, route_version, operation_id, correlation_id, operation_kind, operation_created_at, operation_completed_at, session_json
 		FROM workspaces
 		ORDER BY sort_order, id
 	`)
@@ -898,11 +927,17 @@ func loadWorkspacesFromDB(db *sql.DB) ([]*models.Workspace, error) {
 	var configs []models.WorkspaceConfig
 	for rows.Next() {
 		var ws models.WorkspaceConfig
+		var sessionJSON string
 		var routeVersion int64
 		var operationID, correlationID, operationKind string
 		var operationCreatedAt, operationCompletedAt sql.NullString
-		if err := rows.Scan(&ws.ID, &ws.Type, &ws.Name, &ws.Color, &ws.Routing.Mode, &ws.Routing.LocalDomain, &ws.Routing.DefaultRemoteBaseURL, &routeVersion, &operationID, &correlationID, &operationKind, &operationCreatedAt, &operationCompletedAt); err != nil {
+		if err := rows.Scan(&ws.ID, &ws.Type, &ws.Name, &ws.Color, &ws.Routing.Mode, &ws.Routing.LocalDomain, &ws.Routing.DefaultRemoteBaseURL, &routeVersion, &operationID, &correlationID, &operationKind, &operationCreatedAt, &operationCompletedAt, &sessionJSON); err != nil {
 			return nil, fmt.Errorf("failed to scan sqlite workspace: %w", err)
+		}
+		if sessionJSON != "" {
+			if err := json.Unmarshal([]byte(sessionJSON), &ws.Session); err != nil {
+				return nil, fmt.Errorf("load session %s: %w", ws.ID, err)
+			}
 		}
 		ws.Route.RouteVersion = uint64(routeVersion)
 		ws.Route.OperationID = operationID
@@ -1023,6 +1058,7 @@ func workspacesFromConfigs(configs []models.WorkspaceConfig) []*models.Workspace
 
 		ws := &models.Workspace{
 			WorkspaceID:   wsConfig.ID,
+			Session:       wsConfig.Session,
 			Type:          wsConfig.Type,
 			Name:          stringPtr(name),
 			Color:         stringPtr(color),
@@ -1042,6 +1078,7 @@ func workspacesFromConfigs(configs []models.WorkspaceConfig) []*models.Workspace
 func workspaceConfigFromWorkspace(workspace *models.Workspace) models.WorkspaceConfig {
 	config := models.WorkspaceConfig{
 		ID:            workspace.WorkspaceID,
+		Session:       workspace.Session,
 		Type:          workspace.GetType(),
 		Name:          workspace.NameOrID(),
 		Applications:  make([]models.ApplicationConfig, 0, len(workspace.Applications)),
@@ -1137,22 +1174,51 @@ func insertWorkspaceConfigTx(tx *sql.Tx, ws models.WorkspaceConfig, order int) e
 	if ws.Type == "" {
 		ws.Type = models.WorkspaceTypeRouting
 	}
+	sessionJSON := ""
+	if ws.Session != nil {
+		data, err := json.Marshal(ws.Session)
+		if err != nil {
+			return err
+		}
+		sessionJSON = string(data)
+	}
 	_, err := tx.Exec(`
 		INSERT INTO workspaces (
 			id, type, name, color, routing_mode, local_domain, default_remote_base_url, sort_order,
-			route_version, operation_id, correlation_id, operation_kind, operation_created_at, operation_completed_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			route_version, operation_id, correlation_id, operation_kind, operation_created_at, operation_completed_at, session_json
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`, ws.ID, ws.Type, ws.Name, ws.Color, ws.Routing.Mode, ws.Routing.LocalDomain, ws.Routing.DefaultRemoteBaseURL, order,
-		ws.Route.RouteVersion, ws.Route.OperationID, operationCorrelation(ws.LastOperation), operationKind(ws.LastOperation), operationCreatedAt(ws.LastOperation), operationCompletedAt(ws.LastOperation))
+		ws.Route.RouteVersion, ws.Route.OperationID, operationCorrelation(ws.LastOperation), operationKind(ws.LastOperation), operationCreatedAt(ws.LastOperation), operationCompletedAt(ws.LastOperation), sessionJSON)
 	if err != nil {
 		return fmt.Errorf("failed to insert workspace %q: %w", ws.ID, err)
 	}
 	for i, app := range ws.Applications {
+		if ws.Session != nil && sessionInheritsApplication(ws.Session, app) {
+			// Pinned route snapshots must not write old repository metadata back to
+			// an existing global identity when the environment changes later.
+			var exists int
+			if err := tx.QueryRow(`SELECT COUNT(*) FROM application_identities WHERE app_id = ?`, models.NormalizeIdentityToken(app.CanonicalAppID())).Scan(&exists); err != nil {
+				return err
+			}
+			if exists > 0 {
+				app.Repository = ""
+			}
+		}
 		if err := insertApplicationConfig(tx, ws.ID, app, i); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func sessionInheritsApplication(session *models.RoutingSession, app models.ApplicationConfig) bool {
+	id := models.NormalizeIdentityToken(app.CanonicalAppID())
+	for _, baseline := range session.Baseline {
+		if models.NormalizeIdentityToken(baseline.CanonicalAppID()) == id {
+			return true
+		}
+	}
+	return false
 }
 
 func insertApplicationConfig(tx *sql.Tx, wsID string, app models.ApplicationConfig, order int) error {

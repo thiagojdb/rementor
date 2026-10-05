@@ -1,6 +1,9 @@
 package cli
 
-import "time"
+import (
+	rementorv1 "github.com/thiagojdb/rementor/internal/gen/rementor/v1"
+	"time"
+)
 
 type CanonicalApplicationRefDTO struct {
 	AppID      string   `json:"appId"`
@@ -11,6 +14,7 @@ type CanonicalApplicationRefDTO struct {
 }
 
 type WorkspaceEnvironmentRefDTO struct {
+	SessionID   string `json:"sessionId,omitempty"`
 	WorkspaceID string `json:"workspaceId"`
 	Environment string `json:"environment,omitempty"`
 	LegacyID    string `json:"legacyId,omitempty"`
@@ -41,6 +45,7 @@ type OperationMetadataDTO struct {
 
 // ApplicationDTO is the CLI-friendly view of the protobuf Application message.
 type ApplicationDTO struct {
+	SharedWith         []string                   `json:"sharedWith,omitempty"`
 	ID                 string                     `json:"id"`
 	AppID              string                     `json:"appId,omitempty"`
 	ServiceID          string                     `json:"serviceId,omitempty"`
@@ -77,6 +82,8 @@ type RoutingDTO struct {
 
 // WorkspaceDTO is the CLI-friendly view of the protobuf Workspace message.
 type WorkspaceDTO struct {
+	BrowserURL   string                     `json:"browserUrl,omitempty"`
+	Session      *rementorv1.RoutingSession `json:"session,omitempty"`
 	ID           string                     `json:"id"`
 	Type         string                     `json:"type"`
 	Name         string                     `json:"name"`
