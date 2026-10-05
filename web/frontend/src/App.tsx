@@ -22,6 +22,7 @@ import {
   Trash2,
   Unplug,
   Upload,
+  X,
 } from 'lucide-react'
 import { toast, Toaster } from 'sonner'
 import type { ApplicationDTO, WorkspaceDTO } from '@/api/types'
@@ -129,6 +130,11 @@ function ScopeNavigation({
 }) {
   const { workspaces } = useWorkspaces()
   const { isMobile, setOpenMobile } = useSidebar()
+  const [environmentFilter, setEnvironmentFilter] = useState('')
+  const normalizedFilter = environmentFilter.trim().toLocaleLowerCase()
+  const visibleEnvironments = environments.filter((workspace) =>
+    !normalizedFilter || [workspace.name, workspace.id].some((value) => value?.toLocaleLowerCase().includes(normalizedFilter)),
+  )
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const closeMobile = () => { if (isMobile) setOpenMobile(false) }
   const sessionsFor = (workspace: WorkspaceDTO) => workspaces.filter((item) => item.session?.environmentId === workspace.id)
@@ -154,16 +160,38 @@ function ScopeNavigation({
         </SidebarMenu>
       </SidebarGroup>
       <SidebarSeparator />
+      <SidebarGroup className="shrink-0 px-3 pt-4">
+        <SidebarGroupLabel>Environments</SidebarGroupLabel>
+        <Tooltip>
+          <TooltipTrigger asChild><SidebarGroupAction aria-label="Create environment" onClick={() => { closeMobile(); onCreateEnvironment() }}><Plus /></SidebarGroupAction></TooltipTrigger>
+          <TooltipContent side="right">Create environment</TooltipContent>
+        </Tooltip>
+        <div className="relative mt-2">
+          <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-2.5 size-4 text-muted-foreground" />
+          <Input
+            type="search"
+            aria-label="Search environments"
+            placeholder="Search environments…"
+            className="pl-9 pr-9 [&::-webkit-search-cancel-button]:appearance-none"
+            value={environmentFilter}
+            onChange={(event) => setEnvironmentFilter(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') setEnvironmentFilter('')
+              if (event.key === 'Enter' && visibleEnvironments.length === 1) {
+                closeMobile()
+                onSelectScope(visibleEnvironments[0])
+              }
+            }}
+          />
+          {environmentFilter && <Button variant="ghost" size="icon-xs" className="absolute right-1 top-1" aria-label="Clear environment search" onClick={() => setEnvironmentFilter('')}><X /></Button>}
+        </div>
+      </SidebarGroup>
       <SidebarContent>
-        <SidebarGroup className="px-3 pt-4">
-          <SidebarGroupLabel>Environments</SidebarGroupLabel>
-          <Tooltip>
-            <TooltipTrigger asChild><SidebarGroupAction aria-label="Create environment" onClick={() => { closeMobile(); onCreateEnvironment() }}><Plus /></SidebarGroupAction></TooltipTrigger>
-            <TooltipContent side="right">Create environment</TooltipContent>
-          </Tooltip>
+        <SidebarGroup className="px-3 pt-0">
           <SidebarGroupContent>
-            <SidebarMenu className="gap-4 pt-2">
-              {environments.map((workspace) => {
+            {visibleEnvironments.length === 0 && <p role="status" className="px-2 py-4 text-sm text-muted-foreground">{environments.length ? 'No environments match your search.' : 'No environments yet.'}</p>}
+            <SidebarMenu className="gap-1 pt-2">
+              {visibleEnvironments.map((workspace) => {
                 const sessions = sessionsFor(workspace)
                 const isEnvironmentActive = !configuration && environment?.id === workspace.id
                 const isGeneral = isEnvironmentActive && !active?.session
