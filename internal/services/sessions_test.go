@@ -331,3 +331,19 @@ func TestMigrateSessionHostnamesKeepsExplicitApplicationOverride(t *testing.T) {
 		t.Fatal("migration replaced an explicit application hostname")
 	}
 }
+
+func TestSessionRefreshWithoutRoutingConfig(t *testing.T) {
+	r := sessionRegistry(t)
+	session := newSession(t, r, "feature-x")
+	workspaces := r.workspaceSnapshot()
+	ws := findWorkspace(workspaces, session.WorkspaceID)
+	ws.RoutingConfig = nil
+	ws.Session.BaselineRemoteURL = ""
+	preview, err := refreshSession(workspaces, session.WorkspaceID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if preview.Workspace.RoutingConfig == nil {
+		t.Fatal("missing refreshed routing config")
+	}
+}

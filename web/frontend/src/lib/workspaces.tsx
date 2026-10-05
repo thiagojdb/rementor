@@ -222,28 +222,31 @@ export function useWorkspaceHealth(workspaceId: string | undefined) {
   useEffect(() => {
     if (!workspaceId) return
     const controller = new AbortController()
-    void (async () => {
-      // A daemon restart or transient proxy failure ends the stream. Rejoin it
-      // and read current statuses while reconnecting so the table recovers.
-      while (!controller.signal.aborted) {
-        try {
-          for await (const update of api.watchHealth(workspaceId, { signal: controller.signal })) {
-            if (update.workspaceId && update.applicationName) {
-              updateHealth(update.workspaceId, update.applicationName, update.localCheckedAt ? update.localOk : undefined, update.remoteCheckedAt ? update.remoteOk : undefined)
-            }
+    let retryTimer: ReturnType<typeof setTimeout> | undefined
+    let retryDelay = 1000
+    const watch = async () => {
+      try {
+        for await (const update of api.watchHealth(workspaceId, { signal: controller.signal })) {
+          if (controller.signal.aborted) return
+          retryDelay = 1000
+          if (update.workspaceId && update.applicationName) {
+            updateHealth(update.workspaceId, update.applicationName, update.localCheckedAt ? update.localOk : undefined, update.remoteCheckedAt ? update.remoteOk : undefined)
           }
-        } catch (requestError) {
-          if (controller.signal.aborted || ConnectError.from(requestError).code === Code.Canceled) return
         }
-        if (controller.signal.aborted) return
-        await refreshWorkspace(workspaceId).catch(() => {})
-        await new Promise<void>((resolve) => {
-          const finish = () => { clearTimeout(timer); controller.signal.removeEventListener('abort', finish); resolve() }
-          const timer = setTimeout(finish, 2000)
-          controller.signal.addEventListener('abort', finish, { once: true })
-        })
+      } catch (requestError) {
+        if (controller.signal.aborted || ConnectError.from(requestError).code === Code.Canceled) return
       }
-    })()
-    return () => controller.abort()
+      if (!controller.signal.aborted) {
+        await refreshWorkspace(workspaceId).catch(() => {})
+        if (controller.signal.aborted) return
+        retryTimer = setTimeout(() => { void watch() }, retryDelay)
+        retryDelay = Math.min(retryDelay * 2, 30000)
+      }
+    }
+    void watch()
+    return () => {
+      controller.abort()
+      clearTimeout(retryTimer)
+    }
   }, [workspaceId, updateHealth, refreshWorkspace])
 }
