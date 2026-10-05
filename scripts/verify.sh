@@ -17,6 +17,9 @@ generated_manifest() {
 
 cd "$root_dir"
 
+PYTHONPYCACHEPREFIX="$frontend_dist/pycache" python3 -m unittest discover \
+  -s scripts -p 'test_tailscale_services_test.py'
+
 npm --prefix web/frontend ci
 npm --prefix web/frontend audit
 

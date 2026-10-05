@@ -346,9 +346,7 @@ func cloneRoutes(routes []Route) []Route {
 }
 
 func routeTarget(ws *models.Workspace, app *models.Application, mode string) (target, local, remote string) {
-	if app.Port > 0 {
-		local = fmt.Sprintf("http://localhost:%d", app.Port)
-	}
+	local = app.LocalTarget()
 	if ws != nil {
 		remote = app.GetRemoteBaseUrl(ws)
 	}
@@ -468,7 +466,7 @@ func buildNormalizedRoutes(ws *models.Workspace) []Route {
 	routes := make([]Route, 0)
 	if ws.IsLocalApps() {
 		for _, app := range ws.Applications {
-			if app.Domain == "" || app.Port == 0 {
+			if app.Domain == "" || !app.HasLocal() {
 				continue
 			}
 			routes = append(routes, buildRoute(ws, app, app.Domain, "/", "local"))
@@ -484,7 +482,7 @@ func buildNormalizedRoutes(ws *models.Workspace) []Route {
 				continue
 			}
 			mode := appMode(ws, app)
-			if mode == models.RouteModeLocal && app.Port == 0 && app.GetRemoteBaseUrl(ws) == "" {
+			if mode == models.RouteModeLocal && !app.HasLocal() && app.GetRemoteBaseUrl(ws) == "" {
 				continue
 			}
 			if mode == models.RouteModeRemote && app.GetRemoteBaseUrl(ws) == "" {
@@ -497,7 +495,7 @@ func buildNormalizedRoutes(ws *models.Workspace) []Route {
 			// nginx only emits a remote location for a domain-bound app when
 			// that app declares its own remote base. The workspace default is
 			// reserved for the server fallback in this case.
-			if (mode == models.RouteModeLocal && domainApp.Port > 0) || (domainApp.RemoteBaseUrl != "" && domainApp.GetRemoteBaseUrl(ws) != "") {
+			if (mode == models.RouteModeLocal && domainApp.HasLocal()) || (domainApp.RemoteBaseUrl != "" && domainApp.GetRemoteBaseUrl(ws) != "") {
 				appendAppRoutes(&routes, ws, domainApp, host, mode)
 			}
 		}
@@ -505,7 +503,7 @@ func buildNormalizedRoutes(ws *models.Workspace) []Route {
 		if rootApp == nil {
 			rootApp = defaultRootApp(ws)
 		}
-		if rootApp != nil && rootApp.Active && rootApp.Port > 0 {
+		if rootApp != nil && rootApp.Active && rootApp.HasLocal() {
 			fallback := buildRoute(ws, rootApp, host, "/*", models.RouteModeLocal)
 			fallback.IntentionalOverride = true
 			routes = append(routes, fallback)
@@ -866,7 +864,7 @@ func warningsForRoutes(ws *models.Workspace, app *models.Application, mode strin
 			warnings = append(warnings, RouteWarning{Code: warning.Code, Field: warning.Field, Severity: warning.Severity, Message: warning.Message, Remediation: warning.Remediation})
 		}
 	}
-	if app != nil && mode == models.RouteModeLocal && app.Port == 0 {
+	if app != nil && mode == models.RouteModeLocal && !app.HasLocal() {
 		warnings = append(warnings, RouteWarning{Code: "LOCAL_TARGET_UNAVAILABLE", Field: "port", Severity: "warning", Message: fmt.Sprintf("application %q has no local port; no route is generated for it", app.CanonicalAppID()), Remediation: "Register a local port or select remote mode."})
 	}
 	if app != nil && mode == models.RouteModeRemote && app.GetRemoteBaseUrl(ws) == "" {

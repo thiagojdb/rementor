@@ -47,3 +47,152 @@ these pages could not be fetched in this session.
 ## Source snapshot and confidence
 
 Tailscale official pages were fetched on 2026-10-04. Cloudflare docs were inaccessible to direct fetch (403) during this review, so confirm those links and details against live official docs before deployment. Source behavior was checked in Tailscale's `main` branch files linked above. Public docs establish the stated configuration and header semantics; no live tailnet, client matrix, browser flow, or failover test was run. Tailscale's source `WhoIs` path and Serve proxy behavior are implementation evidence, not a guarantee that arbitrary additional proxies preserve peer addresses.
+
+## Live provider proof — 2026-10-04
+
+Tested on Marcus with Tailscale **1.102.4**, using temporary Serve HTTP proxies
+on two unused HTTPS ports and a backend bound exclusively to loopback. The
+existing Serve configuration was preserved. Both test proxies were removed
+when the proof finished.
+
+Observed behavior:
+
+- Serve overwrote forged and duplicate `X-Forwarded-For` values with the actual
+  Tailscale source address, and overwrote a forged `X-Forwarded-Proto` with
+  `https`. A forged `Tailscale-User-Login` did not survive.
+- `tailscale whois --json` on that source address returned Marcus's stable node
+  identity. The backend's socket peer was loopback, as expected. User-profile
+  headers alone still cannot identify a device.
+- A real Chromium browser accepted the Serve certificate without bypassing TLS
+  validation. An unchanged HTML/JavaScript fixture fetched a runtime origin map,
+  called a separate HTTPS API origin with credentials, returned a Secure/HttpOnly
+  cookie, followed a redirect, and echoed a message over WSS. Browser errors were
+  empty. This was a fixture, **not a GISS login test**.
+
+This proves a candidate **node Serve adapter** can recover the requesting node
+using Serve's source-address header and local WhoIs on this installed version.
+The eventual adapter must use a dedicated loopback data-plane backend, validate
+one source address, reject unknown WhoIs results, authorize the resolved identity,
+and explicitly bind identities to Rementor instances. A directly accessible
+backend or another HTTP proxy inserted before that boundary invalidates this
+proof. Do not infer trust in arbitrary forwarded headers, user names, or cookies.
+
+Only Marcus requested the proof page. Distinguishing Marcus from Brutus or a
+phone remains untested because those devices were unavailable. Tagged clients,
+Tailscale Services/TailVIP host approval, multiple ingress replicas, and gateway
+failover were not tested. Node Serve's computer-bound hostname also does not
+establish a hostname that survives replacement of its ingress computer; that
+still requires the Services or another DNS/TLS provider proof.
+
+Separately, `TestPrivateNetworkAcceptance` passed with
+`REMENTOR_ACCEPTANCE_PRIVATE_ADDRESS` set to Marcus's physical LAN address. Two
+isolated Rementor instances connected through that address with certificate-pinned
+TLS enrollment, authenticated snapshots, declared-owner forwarding, management
+RPC rejection and revocation. This used neither a Tailscale address nor a tunnel,
+but both instances ran on Marcus; it is **not cross-host LAN acceptance**.
+
+Run that opt-in test on a configured machine with:
+
+```sh
+REMENTOR_ACCEPTANCE_PRIVATE_ADDRESS=<this-machine-LAN-IP> \
+  go test ./internal/peers -run TestPrivateNetworkAcceptance -count=1 -v
+```
+
+These results add live evidence to the earlier source review. They do not make
+all items marked untested above complete.
+
+
+## Physical-host peer transport proof — 2026-10-05
+
+Marcus and Brutus ran isolated instances of the deployed build with independent
+identities and fixture applications. Tailscale pairing, actual nginx owner
+forwarding, automatic source-change propagation, receiver override preservation,
+source outage/cache behavior, unavailable-owner 502, restart identity recovery,
+WebSocket echo and revocation passed. Offline stop-following restored the receiver's
+original registrations.
+
+The same isolated identities were paired again through physical LAN interfaces.
+Routing used Marcus's Ethernet and Brutus's Wi-Fi, without a tunnel or Tailscale
+address. Certificate-pinned pairing, authenticated synchronization, HTTP and
+WebSocket forwarding, and revocation passed. Brutus required a temporary firewall
+rule scoped to Marcus and the test listener; the rule was removed. All fixture
+services and temporary Serve mappings were removed, and the original Serve
+configuration was checked unchanged.
+
+This closes the earlier single-host limitation for peer transport. It does not
+prove public-ingress selection from Brutus or a phone, real GISS authentication,
+stable HTTPS identity transfer, or equivalent gateway replicas.
+
+
+## Physical-host public ingress and GISS bootstrap — 2026-10-05
+
+The same Serve HTTPS manifest URL selected different configured environments for
+Marcus and Brutus. Both use Tailscale 1.102.4. Marcus's local WhoIs response
+contains `MachineAuthorized: true`; Brutus's live peer response omits that field.
+Interpreting omission as denial incorrectly rejected Brutus. The resolver now
+rejects an explicit false value, unknown nodes, mismatched source ownership, the
+`Expired` flag, and elapsed key expiry, while authorizing the current-netmap identity
+against the saved account/device policy. Tailscale's WhoIs implementation resolves
+addresses and node IDs from its current network map, rather than an HTTP user
+header: [WhoIs source](https://github.com/tailscale/tailscale/blob/v1.102.4/ipn/ipnlocal/local.go).
+The Node struct uses `omitempty` for `MachineAuthorized`: [Node source](https://github.com/tailscale/tailscale/blob/v1.102.4/tailcfg/tailcfg.go).
+
+A real GISS artifact generated by the configured devctl lifecycle loaded the
+runtime script before Angular on a valid Serve HTTPS frontend origin. Its
+`URL_BASE` resolved a separate configured API origin, and municipality lookup
+resolved the selected routing hostname's `dev` label. Real portal initialization
+requests returned 200 across those origins. The configured logical account then completed the real browser login and test
+client-profile selection, reached `/operacao`, and received successful permissions
+and subsequent authenticated API responses through the separate HTTPS API origin.
+Initial token failures were caused by the isolated nginx harness dropping headers
+with underscores; adding the production renderer's existing
+`underscores_in_headers on` setting resolved them. No application authentication
+behavior was bypassed or changed. Brutus browser authentication and phone access
+remain separate checks.
+
+
+## Shared ingress protocol acceptance — 2026-10-05
+
+The shared selector, durable transfer/recovery, and pinned replica data plane are
+implemented independently of a DNS/HTTPS adapter. Selector ownership moves while
+the routing computer and policy remain fixed. A receiving successor independently
+fetches the predecessor's committed record; replicas cannot promote themselves
+through synchronization. Gateways and routing hosts capture exact policy digests,
+check shared serving roles, independently resolve the original Tailscale source,
+and verify response proofs. Owner outages fail explicitly.
+
+Three independent paired identities and SQLite stores passed HTTP and WebSocket
+routing through real nginx, interrupted activation, restart, revocation and stale
+proof checks. A browser drove create/join/transfer on two isolated daemons and
+proved an open form retains its original concurrency version across polling.
+These instances were on Marcus, so this establishes protocol behavior rather
+than physical gateway or Services acceptance. Brutus was offline for this new
+round. Its earlier physical GISS login and LAN/Tailscale peer proofs remain valid.
+
+No Services adapter has been committed on the basis of these tests. Stable
+service-name/DNS/certificate movement still requires the dedicated tagged-provider
+proof, preserving the physical hosts' existing user identities. Real phone
+acceptance still awaits the requested check at the isolated GISS HTTPS origins.
+
+
+## Physical shared gateways and current remaining proof — 2026-10-05
+
+The latest build is installed on both Marcus and Brutus. Fresh isolated identities,
+real nginx instances and temporary HTTPS Serve entries on both computers passed
+shared HTTP response proofs, WebSocket forwarding, selector transfer with a fixed
+routing computer, persisted restart, unavailable-selector rejection, and live
+WebSocket cancellation on pairing revocation. A workspace-ID collision on Brutus
+did not change the selected Marcus application. Both original Serve configurations
+were verified unchanged after removing the temporary entries. This closes the
+physical shared-protocol gap recorded in the preceding checkpoint.
+
+It does not establish a single DNS/HTTPS service identity across gateway movement:
+the test used the two existing physical hostnames. The Services admin page still
+redirects to sign-in. Provisioning the dedicated tagged test gateways and verifying
+service-name/certificate movement must precede a committed Services adapter.
+
+The real GISS build remains available at port 18448 with its separate API origin
+at port 18449. Current native-browser inspection shows the authenticated operation
+page, a successful origin manifest, and Qualidade selection; the frontend also
+responds over HTTPS. Marcus/Brutus browser acceptance is complete. A real phone
+login/profile selection and successful authenticated API traffic remain unproved.

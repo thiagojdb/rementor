@@ -45,6 +45,7 @@ type OperationMetadataDTO struct {
 
 // ApplicationDTO is the CLI-friendly view of the protobuf Application message.
 type ApplicationDTO struct {
+	PeerEndpoint       *rementorv1.PeerEndpoint   `json:"peerEndpoint,omitempty"`
 	SharedWith         []string                   `json:"sharedWith,omitempty"`
 	ID                 string                     `json:"id"`
 	AppID              string                     `json:"appId,omitempty"`
@@ -82,18 +83,19 @@ type RoutingDTO struct {
 
 // WorkspaceDTO is the CLI-friendly view of the protobuf Workspace message.
 type WorkspaceDTO struct {
-	BrowserURL   string                     `json:"browserUrl,omitempty"`
-	Session      *rementorv1.RoutingSession `json:"session,omitempty"`
-	ID           string                     `json:"id"`
-	Type         string                     `json:"type"`
-	Name         string                     `json:"name"`
-	Color        string                     `json:"color,omitempty"`
-	Routing      *RoutingDTO                `json:"routing,omitempty"`
-	Applications []ApplicationDTO           `json:"applications"`
-	Environment  WorkspaceEnvironmentRefDTO `json:"environment"`
-	Route        *RouteStateDTO             `json:"route,omitempty"`
-	Operation    *OperationMetadataDTO      `json:"operation,omitempty"`
-	Warnings     []RouteWarningDTO          `json:"warnings,omitempty"`
+	Inheritance  *rementorv1.WorkspaceInheritance `json:"inheritance,omitempty"`
+	BrowserURL   string                           `json:"browserUrl,omitempty"`
+	Session      *rementorv1.RoutingSession       `json:"session,omitempty"`
+	ID           string                           `json:"id"`
+	Type         string                           `json:"type"`
+	Name         string                           `json:"name"`
+	Color        string                           `json:"color,omitempty"`
+	Routing      *RoutingDTO                      `json:"routing,omitempty"`
+	Applications []ApplicationDTO                 `json:"applications"`
+	Environment  WorkspaceEnvironmentRefDTO       `json:"environment"`
+	Route        *RouteStateDTO                   `json:"route,omitempty"`
+	Operation    *OperationMetadataDTO            `json:"operation,omitempty"`
+	Warnings     []RouteWarningDTO                `json:"warnings,omitempty"`
 }
 
 // ErrorResponse is retained for command output compatibility.

@@ -248,16 +248,60 @@ internal/services/       Registry, health checks, and routing transactions
 internal/nginx/          nginx renderer, validation, and atomic reload
 internal/config/         SQLite persistence and migrations
 internal/cli/            CLI and MCP control surfaces
-web/frontend/            SolidJS application and generated TypeScript client
+web/frontend/            React/shadcn application and generated TypeScript client
 examples/mock-stack/     Sanitized local/remote service simulation
 examples/docker/         Rootless nginx demo runtime
 ```
 
-The personal fleet routing redesign now has an experimental, file-based
-inspector for inheriting another instance's environment with local overrides.
-Try the [fleet example](examples/fleet/README.md) and see the
-[delivery plan](docs/plans/tailscale-shared-workspaces.md). Live synchronization
-and multi-device forwarding are planned; existing workspace routing is unchanged.
+The Configuration page (`/configuration`) pairs Rementor computers:
+
+1. On the computer you want to add, choose **Invite computer**.
+2. On this computer, choose **Connect to computer**, paste the code,
+   compare the fingerprint with the other computer, and confirm pairing.
+3. Use **Check connection** to verify access, or **Disconnect** to revoke local trust.
+
+Inviting or confirming a pairing enables the private connection automatically.
+Rementor prefers Tailscale, then a private network address. **Connection settings**
+lets you change the address or port; allow the selected port through your firewall
+if your private network requires it.
+
+You can also generate an invitation on the inviting computer from the terminal:
+
+```bash
+rementorctl peer invite
+# For a custom management port:
+rementorctl --server http://localhost:9400 peer invite
+```
+
+The command prints the invitation to stdout and its fingerprint and expiry to
+stderr. Paste it into **Connect to computer** on the other computer and compare
+fingerprints. `--json` returns all three fields together. This command also enables
+the private connection when needed, using the running instance's existing identity.
+
+Invitations expire after five minutes and work once. Peer connections use pinned
+certificates and TLS client authentication; the management API stays on localhost.
+See [the pairing security model](SECURITY.md#computer-pairing).
+
+The route-plan API and [fleet inspector](examples/fleet/README.md) remain
+experimental. The nginx gateway can forward declared peer endpoints through the
+authenticated owner, including WebSockets. The backend persists live inheritance,
+cached snapshots and whole-computer following. UI, CLI and MCP controls select
+a source computer and edit its route selections; pairing authorizes the connection.
+
+The saved fleet topology has separate review and save commands:
+
+```bash
+rementorctl fleet show
+rementorctl fleet review --file topology.json --expected-revision 0
+rementorctl fleet save --file topology.json --expected-revision 0 --review-token <reviewToken>
+```
+
+Edit the `configuration.topology` object returned by `fleet show`. Review returns
+before/after selections and a token bound to that exact topology and revision.
+Changing the file, another writer saving, or restarting the daemon requires a new
+review. MCP exposes `rementor.fleet_show`, `rementor.fleet_review`, and
+`rementor.fleet_save`; revisions are decimal strings. This topology stores intent;
+the workspace inheritance controls change active proxy routes.
 
 ## MCP compatibility
 
@@ -442,3 +486,225 @@ payload diffing is not implemented.
 ## License
 
 [MIT](LICENSE)
+
+### Following a paired computer
+
+In Configuration, select a paired computer under **Follow a computer**, then
+**Follow all environments**. Its environments appear automatically, including
+later additions and removals. Extra local environments remain local. Routing
+sessions stay separate and retain their pinned baseline.
+
+Toggles, **Local all**, **Remote all**, and **Edit source route** change the source
+configuration. Every computer following that source receives the change. The
+editor names the source, and no local route override is created. Environment
+settings, service add/edit/delete, port registration, and environment deletion
+are also available while following and change the source computer. Registration
+ports belong to that computer. Concurrent edits are
+checked against the source version; conflicts require a refresh and review.
+Source outages preserve the validated cached routes but prevent source edits.
+Target health is shown separately from configuration sync status.
+
+Turn off an environment’s following switch in Configuration or on its dashboard
+to keep its current setup and edit it locally. Other environments continue
+following. The choice persists across restarts and source removal or readdition.
+Peer endpoints keep their owning computer; opting out does not start those
+services locally. Unchanged owner registrations remain usable after source route
+selection changes; changed registrations require a new configuration.
+Turning the switch back on reads the source’s current authenticated configuration
+and replaces local settings after confirmation. Concurrent local edits reject
+the operation instead of being overwritten.
+
+**Stop following** restores the environments saved before following and retains
+extra local environments and environments you stopped following individually.
+Close sessions under source-only environments before
+removing those environments or stopping following.
+
+```sh
+rementorctl computer-following status
+rementorctl computer-following follow --peer <fingerprint> --expected-revision <revision>
+rementorctl computer-following sync
+rementorctl computer-following exclude --workspace dev --expected-revision <revision> --expected-workspace-version <version>
+rementorctl computer-following include --workspace dev --expected-revision <revision> --expected-workspace-version <version>
+rementorctl computer-following stop --expected-revision <revision>
+```
+
+MCP exposes `rementor.computer_status`, `_follow`, `_sync`, `_exclude`, `_include`, and `_stop`.
+`expected_revision` is an unsigned decimal string from status. Legacy
+`inheritance` operations remain available for existing per-workspace relationships;
+whole-computer environments reject local overrides and per-workspace detach.
+
+Transitive endpoint forwarding currently requires direct pairing with the
+endpoint's owning computer. Cycles are rejected when present in the received
+lineage; concurrent reciprocal changes on different computers are detected on
+subsequent synchronization, without a distributed coordinator. Portable public
+origins and shared-ingress replication remain under implementation.
+
+### Public URLs and device selection
+
+Configuration → **Public URLs** maps named HTTPS origins to workspace hosts.
+Publish the same origins for each selected environment/session, allow the intended
+Tailscale accounts, choose the shared environment, and optionally select a
+different environment for individual devices. A device selection still requires
+its allowed account. Tagged devices require an explicit selection and never use
+the shared default.
+
+The application data plane listens on loopback at the management port plus two
+(`9302` by default). `REMENTOR_PUBLIC_INGRESS_PORT` changes that port;
+`REMENTOR_PUBLIC_NGINX_ADDRESS` selects an explicit loopback nginx listener when
+nginx has multiple listening ports. Port collisions are visible in configuration
+and do not prevent existing localhost routing. This listener serves application
+traffic and runtime origins, with no management RPC or enrollment routes.
+
+For this computer's Tailscale HTTPS hostname, point Serve at that listener. The
+configuration page supplies the command for each configured HTTPS port:
+
+```bash
+sudo tailscale serve --bg --https=8444 http://127.0.0.1:9302
+```
+
+This uses the computer's existing Tailscale hostname. Moving that hostname to a
+different gateway is not yet supported. Saving a URL does not create its DNS or
+certificate, and removing the URL revokes application access without deleting
+other Tailscale Serve entries.
+
+```bash
+rementorctl access show
+rementorctl access save --file public-access.json --expected-revision 0
+rementorctl access clear --expected-revision 1
+```
+
+`public-access.json` is the `configuration.document` object from `access show`.
+Versions and account IDs in CLI/MCP JSON are lossless decimal strings. MCP exposes
+`rementor.access_show` and `rementor.access_save`. Changes require the current
+revision; a successful access-policy edit closes requests and WebSockets using
+the previous policy.
+
+Applications can fetch `GET /__rementor/origins` with credentials, or load the
+parser-blocking script before their application scripts:
+
+```html
+<script src="/__rementor/origins.js"></script>
+<script src="/application.js"></script>
+```
+
+```javascript
+const api = rementor.origin('api');
+const response = await fetch(rementor.url('api', '/orders'), {
+  credentials: 'include',
+});
+const events = new WebSocket(rementor.webSocketURL('events', '/socket'));
+```
+
+The immutable `rementor.manifest` records the selected environment/session,
+selection source, access revision, route version, and separate HTTP/WebSocket
+origin maps. Missing origin IDs and paths that change origin are rejected.
+`routingHosts` maps each origin ID to the selected routing hostname for
+applications that use hostname labels as domain metadata. Requests still use the
+public origins, and neither manifest exposes an upstream loopback endpoint.
+The [legacy GISS build adapter](integrations/giss/README.md) loads this contract
+before Angular starts, selects `URL_BASE`, and preserves municipality lookup and
+localhost builds.
+
+### Automatic Tailscale sharing
+
+Configuration → **Share over Tailscale** previews recognizable service names
+from the selected environment/session's local hosts, such as
+`https://feature-x-dev-giss.<tailnet>.ts.net`. Save the proposed origins and
+allowed accounts, then Rementor enables sharing. Subsequent off/on changes need
+no terminal command. Existing origin IDs, separate application hosts, and
+device selections are preserved when converting manually configured URLs.
+Local `.localhost` routes continue to work.
+
+The toggle persists desired publication state. The daemon retries every 15
+seconds and after toggle/access-policy changes, including after restart. It
+creates internal Services automatically when an API key is supplied, installs
+HTTPS on port 443, and advertises the gateway. Without an API key, create the
+suggested internal `svc:<name>` Services with endpoint `tcp:443` once in the
+[Tailscale admin console](https://console.tailscale.com/admin/services).
+Host approval or an appropriate auto-approval policy is still required.
+
+One-time gateway setup:
+
+- Use a **dedicated tagged Tailscale gateway** with MagicDNS and HTTPS enabled.
+  Rementor does not retag or reenroll your everyday computer.
+- Set `REMENTOR_TAILSCALE_GATEWAY_SOCKET` to that gateway's tailscaled socket.
+  If omitted, the publisher uses `REMENTOR_TAILSCALE_SOCKET`, then the system
+  socket. Give the Rementor user operator access to that gateway.
+- Optionally set `REMENTOR_TAILSCALE_API_TOKEN` in the daemon environment to a
+  Tailscale API key authorized to read/create Services. It is used only by the
+  daemon with HTTP Basic authentication, never saved in SQLite or sent to the UI,
+  CLI/MCP, logs, application origins, or subprocess arguments. An OAuth bearer
+  token is not interchangeable with this API key.
+- `REMENTOR_TAILSCALE_SOCKET` remains the user-device catalog socket when using
+  a separate gateway, so initial sharing allows the user's existing account.
+  The gateway socket resolves incoming device identities.
+
+Each distinct application origin receives a Service; aliases using the same
+origin share its registration. Route/backend toggles remain entirely inside
+Rementor. Serve writes use ETags, preserve unrelated configuration, and refuse
+to adopt existing local service entries. Disabling removes only this gateway's
+owned Serve entries and advertisements. Failed removals remain durable and
+visible for retry; service definitions remain reserved in the tailnet, allowing
+stable names to be reused by other enrolled gateways.
+Ownership also records the gateway's Tailscale node identity. Changing the
+socket/node while entries remain owned requires restoring the original gateway
+to reconcile them; Rementor does not clean up another node's configuration.
+
+An enrolled shared gateway publishes the shared owner's policy and follows URL
+changes automatically. The original publisher can promote its own service
+definition into the shared group, preserving allocated addresses and other
+metadata. Moving shared ownership retains the group's service identity and
+routing computer. Disabling one gateway does not disable other gateways.
+
+The UI distinguishes setup requirements, failed registration/removal, pending
+verification and ready URLs. Ready requires an authenticated HTTPS origin
+manifest matching the current policy and an application response carrying
+Rementor's route proof. It is not a claim that application login, browser cookies
+or a physical gateway handoff has been tested. Live named-Service movement still
+requires the dedicated tagged-gateway acceptance described in
+[the provider research](docs/research/tailscale-routing.md).
+
+```sh
+rementorctl tailscale-sharing show
+rementorctl tailscale-sharing prepare --workspace <environment-or-session>
+# Save the proposed document with access save (or shared-ingress save for a group).
+rementorctl tailscale-sharing on --expected-revision <sharing-revision>
+rementorctl tailscale-sharing off --expected-revision <sharing-revision>
+```
+
+MCP exposes `rementor.tailscale_sharing_show`, `_prepare`, and `_set`. Preparation
+is read-only. Mutations require the current sharing revision as a decimal string.
+
+### Shared ingress ownership
+
+Configuration → Shared URLs lets a computer share its published URLs, enroll
+paired gateways, or join an ingress whose owner has enrolled it. The owner edits
+the shared origin/device policy. Transferring ownership moves that control while
+preserving the routing computer and selected application endpoints. Resume or
+cancel a pending transfer from the same section; committed transfers cannot be
+rolled back by cancellation.
+
+The CLI and MCP use the same versioned local RPC:
+
+```sh
+rementorctl shared-ingress show
+rementorctl shared-ingress workspaces --routing-computer <fingerprint>
+rementorctl shared-ingress create --file shared.json --expected-revision 0
+rementorctl shared-ingress join --owner <fingerprint> --expected-revision 0
+rementorctl shared-ingress save --file shared.json --expected-version <version>
+rementorctl shared-ingress transfer --destination <fingerprint> --expected-version <version>
+rementorctl shared-ingress recover --expected-revision <revision>
+rementorctl shared-ingress cancel --expected-revision <revision>
+rementorctl shared-ingress sync
+```
+
+`shared.json` contains `policy` (the public-access document),
+`routingOwnerFingerprint`, and `gateways` (paired fingerprints including the
+selector owner). Its bindings refer to workspaces on the routing computer.
+Read the current revision/version from `show` before editing. MCP exposes
+`rementor.shared_ingress_show/workspaces/create/save/join/transfer/recover/cancel/sync`;
+revision/version/account IDs use decimal strings.
+
+Shared forwarding uses the pinned peer listener and fails when its current owner
+is unavailable. Stable DNS/HTTPS ingress movement remains subject to the provider
+proof; these controls do not provision a Tailscale Service or certificates.

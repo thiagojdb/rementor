@@ -39,6 +39,9 @@ import { Switch } from '@/components/ui/switch'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { BaselineDialog, ConfirmDialog, CreateEnvironmentDialog, CreateSessionDialog, EditEnvironmentDialog, RegisterPortDialog, RoutePatternDialog, ServiceDialog } from '@/components/routing-dialogs'
+import { FleetConfiguration } from '@/components/fleet-configuration'
+import { EnvironmentFollowingControl } from '@/components/computer-following'
+import { InheritedRouteDialog, WorkspaceInheritanceControls } from '@/components/workspace-inheritance'
 import { useThemeTransition } from '@/hooks/use-theme-transition'
 import { WorkspaceProvider, useWorkspaceHealth, useWorkspaces } from '@/lib/workspaces'
 
@@ -87,7 +90,7 @@ function applicationAddress(workspace: WorkspaceDTO, application: ApplicationDTO
 }
 
 function localHealthAddress(application: ApplicationDTO) {
-  if (!application.port || !application.health) return ''
+  if (application.peerEndpoint || !application.port || !application.health) return ''
   const context = application.upstreamContext || application.context || ''
   return `http://localhost:${application.port}${context}/${application.health}`
 }
@@ -224,6 +227,7 @@ function WorkspaceApp() {
   const [editEnvironment, setEditEnvironment] = useState<WorkspaceDTO | null>(null)
   const [createSessionFor, setCreateSessionFor] = useState<WorkspaceDTO | null>(null)
   const [serviceTarget, setServiceTarget] = useState<ApplicationDTO | null | 'new'>(null)
+  const [sourceRouteTarget, setSourceRouteTarget] = useState<ApplicationDTO | null>(null)
   const [portTarget, setPortTarget] = useState<ApplicationDTO | null>(null)
   const [patternTarget, setPatternTarget] = useState<ApplicationDTO | null>(null)
   const [baselineTarget, setBaselineTarget] = useState<WorkspaceDTO | null>(null)
@@ -276,7 +280,7 @@ function WorkspaceApp() {
   }
 
   const toggle = async (application: ApplicationDTO) => {
-    if (!active || !application.port || busyApplications.includes(application.id)) return
+    if (!active || (!application.port && !application.peerEndpoint) || busyApplications.includes(application.id)) return
     setBusyApplications((current) => [...current, application.id])
     try {
       await toggleApplication(active.id, application.id)
@@ -310,11 +314,11 @@ function WorkspaceApp() {
   const confirm = async () => {
     if (!confirmTarget) return
     if (confirmTarget.kind === 'service') {
-      await deleteApplication(confirmTarget.workspace.id, confirmTarget.application.id)
+      await deleteApplication(confirmTarget.workspace.id, confirmTarget.application.appId || confirmTarget.application.id, confirmTarget.workspace.route?.version?.value)
       toast.success(confirmTarget.workspace.session ? 'Service removed from the session' : 'Service removed')
       return
     }
-    await deleteWorkspace(confirmTarget.workspace.id)
+    await deleteWorkspace(confirmTarget.workspace.id, confirmTarget.workspace.route?.version?.value)
     toast.success(confirmTarget.kind === 'session' ? 'Session closed' : 'Environment deleted')
     if (confirmTarget.kind === 'session') {
       const parent = workspaces.find((workspace) => workspace.id === confirmTarget.workspace.session?.environmentId)
@@ -327,11 +331,11 @@ function WorkspaceApp() {
   }
 
   const confirmation = confirmTarget?.kind === 'environment'
-    ? { title: 'Delete environment?', label: 'Delete environment', description: <>This permanently removes <strong>{confirmTarget.workspace.name || confirmTarget.workspace.id}</strong>, including its registered services and sessions.</> }
+    ? { title: 'Delete environment?', label: 'Delete environment', description: <>This permanently removes <strong>{confirmTarget.workspace.name || confirmTarget.workspace.id}</strong>, including its registered services and sessions.{confirmTarget.workspace.computerFollowed && ' This deletes it on the source computer.'}</> }
     : confirmTarget?.kind === 'session'
       ? { title: 'Close session?', label: 'Close session', description: <>This removes <strong>{confirmTarget.workspace.name || confirmTarget.workspace.id}</strong> and its route settings. Registered processes keep running.</> }
       : confirmTarget?.kind === 'service'
-        ? { title: confirmTarget.workspace.session ? 'Remove service from this session?' : 'Delete service?', label: confirmTarget.workspace.session ? 'Remove service' : 'Delete service', description: <>This removes <strong>{confirmTarget.application.name}</strong> from {confirmTarget.workspace.session ? 'this session only.' : 'the environment.'}</> }
+        ? { title: confirmTarget.workspace.session ? 'Remove service from this session?' : 'Delete service?', label: confirmTarget.workspace.session ? 'Remove service' : 'Delete service', description: <>This removes <strong>{confirmTarget.application.name}</strong> from {confirmTarget.workspace.session ? 'this session only.' : 'the environment.'}{confirmTarget.workspace.computerFollowed && ' This deletes it on the source computer.'}</> }
         : null
 
   const title = active?.session ? active.name || active.id : active?.type === 'local-apps' ? active.name || active.id : active ? 'General routing' : 'Routing'
@@ -370,13 +374,13 @@ function WorkspaceApp() {
             <TooltipContent>Switch to {dark ? 'light' : 'dark'} theme</TooltipContent>
           </Tooltip>
         </header>
-        {configuration ? <main className="mx-auto w-full max-w-[1440px] flex-1 p-5 md:p-10"><h1 className="text-2xl font-semibold tracking-tight">Configuration</h1></main> : <main className="mx-auto w-full max-w-[1440px] flex-1 space-y-7 p-5 md:p-8 lg:p-10">
+        {configuration ? <FleetConfiguration /> : <main className="mx-auto w-full max-w-[1440px] flex-1 space-y-7 p-5 md:p-8 lg:p-10">
           {error && <Alert variant="destructive"><AlertTitle>Could not load environments</AlertTitle><AlertDescription><p>{error}</p><Button variant="outline" size="sm" className="mt-2" onClick={() => void reload()}>Retry</Button></AlertDescription></Alert>}
-          {loading && workspaces.length === 0 ? <div className="space-y-4"><Skeleton className="h-9 w-56" /><Skeleton className="h-5 w-80" /><Skeleton className="h-72 w-full" /></div> : !active ? <div className="flex min-h-72 flex-col items-start justify-center gap-4"><div><h1 className="text-2xl font-semibold tracking-tight">No environment selected</h1><p className="mt-2 text-sm text-muted-foreground">Create an environment to register services and branch routing sessions.</p></div><Button onClick={() => setCreateEnvironment(true)}><Plus />Create environment</Button></div> : <>
+          {loading && workspaces.length === 0 ? <div className="space-y-4"><Skeleton className="h-9 w-56" /><Skeleton className="h-5 w-80" /><Skeleton className="h-72 w-full" /></div> : !active ? <div className="flex min-h-72 flex-col items-start justify-center gap-4"><div><h1 className="text-2xl font-semibold tracking-tight">No environment selected</h1></div><Button onClick={() => setCreateEnvironment(true)}><Plus />Create environment</Button></div> : <>
             <div className="flex flex-wrap items-start justify-between gap-5">
               <div><h1 className="text-2xl font-semibold tracking-tight md:text-3xl">{title}</h1>{active.session && <p className="mt-1 text-sm text-muted-foreground">Branch of {environment?.name || environment?.id}</p>}</div>
               <div className="flex items-center gap-2">
-                {!active.session && <Button onClick={() => setServiceTarget('new')}><Plus />Add service</Button>}
+                {!active.session && (!active.inheritance || active.computerFollowed) && <Button onClick={() => setServiceTarget('new')}><Plus />Add service</Button>}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild><Button variant="outline" size="icon" aria-label="Scope actions"><MoreHorizontal /></Button></DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
@@ -388,6 +392,8 @@ function WorkspaceApp() {
                 </DropdownMenu>
               </div>
             </div>
+            <WorkspaceInheritanceControls key={active.id} workspace={active} />
+            <EnvironmentFollowingControl key={`following-${active.id}`} workspace={active} />
             {address && <div className="flex min-w-0 items-center gap-2 text-muted-foreground"><Globe className="size-4 shrink-0" /><code className="break-all text-xs">{address}</code><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-xs" className="shrink-0" aria-label="Copy address" onClick={() => void copy(address)}><Copy /></Button></TooltipTrigger><TooltipContent>Copy address</TooltipContent></Tooltip></div>}
             <section aria-label="Services" className="space-y-4">
               <div className="flex items-center justify-between gap-3">
@@ -399,7 +405,7 @@ function WorkspaceApp() {
               </div>
               <div className="overflow-x-auto rounded-lg border">
                 <Table>
-                  <TableHeader><TableRow className="bg-muted/30 hover:bg-muted/30"><TableHead className="pl-4">Service</TableHead><TableHead>Local port</TableHead>{active.type === 'routing' && <TableHead>Use local</TableHead>}<TableHead>Health</TableHead><TableHead className="w-12"><span className="sr-only">Actions</span></TableHead></TableRow></TableHeader>
+                  <TableHeader><TableRow className="bg-muted/30 hover:bg-muted/30"><TableHead className="pl-4">Service</TableHead><TableHead>{active.inheritance ? 'Registered app' : 'Local port'}</TableHead>{active.type === 'routing' && <TableHead>{active.inheritance ? 'Use registered app' : 'Use local'}</TableHead>}<TableHead>Health</TableHead><TableHead className="w-12"><span className="sr-only">Actions</span></TableHead></TableRow></TableHeader>
                   <TableBody>
                     {visibleApplications.map((application) => {
                       const useLocal = Boolean(application.active)
@@ -408,10 +414,10 @@ function WorkspaceApp() {
                       const healthAddress = localHealthAddress(application)
                       return <TableRow key={application.id}>
                         <TableCell className="py-5 pl-4"><div className="flex items-center gap-3"><Server className="size-4 shrink-0 text-muted-foreground" />{healthAddress ? <Tooltip><TooltipTrigger asChild><a className="inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline focus-visible:underline" href={healthAddress} target="_blank" rel="noreferrer" aria-label={`Open ${application.name || application.id} local health check in a new tab`}>{application.name || application.id}<ExternalLink className="size-3.5" aria-hidden="true" /><span className="sr-only"> (opens in a new tab)</span></a></TooltipTrigger><TooltipContent>Open local health check in a new tab</TooltipContent></Tooltip> : <span className="font-medium">{application.name || application.id}</span>}</div></TableCell>
-                        <TableCell><Button variant="link" className="h-auto px-0 py-1 text-xs font-normal" onClick={() => setPortTarget(application)}>{application.port ? <code>{application.port}</code> : 'Register port'}</Button></TableCell>
-                        {active.type === 'routing' && <TableCell><Tooltip><TooltipTrigger asChild><span className="inline-flex"><Switch checked={useLocal} disabled={!application.port || isBusy} aria-label={`Route ${application.name || application.id} locally`} onCheckedChange={() => void toggle(application)} /></span></TooltipTrigger><TooltipContent>{application.port ? `Changes ${active.session ? active.name || active.id : 'general routing'} only` : 'Register a local port to enable this route'}</TooltipContent></Tooltip></TableCell>}
+                        <TableCell>{application.peerEndpoint && <p className="text-xs text-muted-foreground" title={application.peerEndpoint.ownerFingerprint}>Computer {application.peerEndpoint.ownerFingerprint.slice(0, 8)} · {application.peerEndpoint.workspaceId}</p>}{active.inheritance?.overrides[application.id] && <Badge variant="outline" className="mr-2">Override</Badge>}<Button variant="link" className="h-auto px-0 py-1 text-xs font-normal" onClick={() => setPortTarget(application)}>{active.computerFollowed ? application.sourcePort ? <code>{application.sourcePort}</code> : 'Register source port' : application.peerEndpoint ? 'Source app' : application.port ? <code>{application.port}</code> : 'Register port'}</Button></TableCell>
+                        {active.type === 'routing' && <TableCell><Tooltip><TooltipTrigger asChild><span className="inline-flex"><Switch checked={useLocal} disabled={(!application.port && !application.peerEndpoint) || isBusy} aria-label={`Route ${application.name || application.id} locally`} onCheckedChange={() => void toggle(application)} /></span></TooltipTrigger><TooltipContent>{application.port || application.peerEndpoint ? active.computerFollowed ? 'Changes the source configuration and its followers' : `Changes ${active.session ? active.name || active.id : 'general routing'} only` : 'Register a local port to enable this route'}</TooltipContent></Tooltip></TableCell>}
                         <TableCell><HealthBadge status={currentHealth} /></TableCell>
-                        <TableCell><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label={`Actions for ${application.name || application.id}`}><MoreHorizontal /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuLabel>{application.name || application.id}</DropdownMenuLabel><DropdownMenuItem onSelect={() => setPortTarget(application)}><CircleDot />{application.port ? 'Edit local port' : 'Register local port'}</DropdownMenuItem>{!active.session && <DropdownMenuItem onSelect={() => setServiceTarget(application)}><Settings2 />Edit service</DropdownMenuItem>}<DropdownMenuItem onSelect={() => void copy(applicationAddress(active, application, address))}><Copy />Copy route address</DropdownMenuItem>{active.type === 'routing' && <DropdownMenuItem onSelect={() => setPatternTarget(application)}><Layers3 />Route pattern</DropdownMenuItem>}<DropdownMenuSeparator /><DropdownMenuItem variant="destructive" onSelect={() => setConfirmTarget({ kind: 'service', workspace: active, application })}><Trash2 />{active.session ? 'Remove from session' : 'Delete service'}</DropdownMenuItem></DropdownMenuContent></DropdownMenu></TableCell>
+                        <TableCell><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label={`Actions for ${application.name || application.id}`}><MoreHorizontal /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuLabel>{application.name || application.id}</DropdownMenuLabel><DropdownMenuItem onSelect={() => setPortTarget(application)}><CircleDot />{active.computerFollowed ? 'Register source port' : active.inheritance ? 'Override route' : application.port ? 'Edit local port' : 'Register local port'}</DropdownMenuItem>{active.computerFollowed && <DropdownMenuItem onSelect={() => setSourceRouteTarget(application)}><CircleDot />Edit source route</DropdownMenuItem>}{!active.session && (!active.inheritance || active.computerFollowed) && <DropdownMenuItem onSelect={() => setServiceTarget(application)}><Settings2 />Edit service</DropdownMenuItem>}<DropdownMenuItem onSelect={() => void copy(applicationAddress(active, application, address))}><Copy />Copy route address</DropdownMenuItem>{active.type === 'routing' && (!active.inheritance || active.computerFollowed) && <DropdownMenuItem onSelect={() => setPatternTarget(application)}><Layers3 />Route pattern</DropdownMenuItem>}{(!active.inheritance || active.computerFollowed) && <><DropdownMenuSeparator /><DropdownMenuItem variant="destructive" onSelect={() => setConfirmTarget({ kind: 'service', workspace: active, application })}><Trash2 />{active.session ? 'Remove from session' : 'Delete service'}</DropdownMenuItem></>}</DropdownMenuContent></DropdownMenu></TableCell>
                       </TableRow>
                     })}
                     {visibleApplications.length === 0 && <TableRow><TableCell colSpan={active.type === 'routing' ? 5 : 4} className="h-32 text-center text-muted-foreground">{activeApplications.length ? 'No services match this filter.' : active.session ? 'No services are inherited by this session.' : 'No services yet. Add a service to configure its route.'}</TableCell></TableRow>}
@@ -427,7 +433,8 @@ function WorkspaceApp() {
     <EditEnvironmentDialog workspace={editEnvironment} open={Boolean(editEnvironment)} onOpenChange={(open) => { if (!open) setEditEnvironment(null) }} />
     <CreateSessionDialog environment={createSessionFor} open={Boolean(createSessionFor)} onOpenChange={(open) => { if (!open) setCreateSessionFor(null) }} onCreated={selectScope} />
     <ServiceDialog workspace={serviceDialogWorkspace} application={serviceTarget === 'new' ? null : serviceTarget} open={serviceTarget !== null} onOpenChange={(open) => { if (!open) setServiceTarget(null) }} />
-    <RegisterPortDialog workspace={active || null} application={portTarget} open={Boolean(portTarget)} onOpenChange={(open) => { if (!open) setPortTarget(null) }} />
+    {active && sourceRouteTarget && <InheritedRouteDialog workspace={active} application={sourceRouteTarget} onClose={() => setSourceRouteTarget(null)} />}
+    {active?.inheritance && !active.computerFollowed && portTarget ? <InheritedRouteDialog workspace={active} application={portTarget} onClose={() => setPortTarget(null)} /> : <RegisterPortDialog workspace={active || null} application={portTarget} open={Boolean(portTarget)} onOpenChange={(open) => { if (!open) setPortTarget(null) }} />}
     <RoutePatternDialog workspace={active || null} application={patternTarget} open={Boolean(patternTarget)} onOpenChange={(open) => { if (!open) setPatternTarget(null) }} />
     <BaselineDialog workspace={baselineTarget} open={Boolean(baselineTarget)} onOpenChange={(open) => { if (!open) setBaselineTarget(null) }} />
     {confirmation && <ConfirmDialog open={Boolean(confirmTarget)} onOpenChange={(open) => { if (!open) setConfirmTarget(null) }} title={confirmation.title} description={confirmation.description} confirmLabel={confirmation.label} onConfirm={confirm} />}

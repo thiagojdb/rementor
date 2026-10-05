@@ -21,9 +21,9 @@ const (
 	TargetRoute  = "route"
 )
 
-// Topology is an experimental file contract, separate from the live workspace
-// and protobuf contracts. An instance selects its own environment; phones use
-// the environment of the gateway they reach.
+// Topology is a versioned routing-plan contract, separate from active workspace
+// routing. An instance selects its own environment; phones use the environment
+// of the gateway they reach.
 type Topology struct {
 	Version        int        `json:"version"`
 	Nodes          []Node     `json:"nodes"`
@@ -32,10 +32,14 @@ type Topology struct {
 	Routes         []Route    `json:"routes"`
 	Instances      []Instance `json:"instances"`
 	SharedInstance string     `json:"sharedInstance"`
+	LocalInstance  string     `json:"localInstance,omitempty"`
 }
 
 type Node struct {
 	ID string `json:"id"`
+	// GatewayURL is a declared private HTTPS gateway, not proof of pairing or
+	// reachability. Compiling topology never connects to it.
+	GatewayURL string `json:"gatewayUrl,omitempty"`
 }
 
 type Origin struct {
@@ -117,6 +121,11 @@ func Compile(topology Topology) (*Resolver, error) {
 		}
 		if nodes[node.ID] {
 			return nil, fmt.Errorf("duplicate node %q", node.ID)
+		}
+		if node.GatewayURL != "" {
+			if _, err := originKey(node.GatewayURL, false); err != nil || !strings.HasPrefix(node.GatewayURL, "https://") {
+				return nil, fmt.Errorf("node %q gateway must be an HTTPS origin without credentials, path, query or fragment", node.ID)
+			}
 		}
 		nodes[node.ID] = true
 	}
@@ -240,6 +249,11 @@ func Compile(topology Topology) (*Resolver, error) {
 	}
 	if _, ok := r.instances[r.sharedInstance]; !ok {
 		return nil, fmt.Errorf("unknown shared instance %q", r.sharedInstance)
+	}
+	if topology.LocalInstance != "" {
+		if _, ok := r.instances[topology.LocalInstance]; !ok {
+			return nil, fmt.Errorf("unknown local instance %q", topology.LocalInstance)
+		}
 	}
 	if err := r.checkInheritance(); err != nil {
 		return nil, err

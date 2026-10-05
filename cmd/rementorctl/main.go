@@ -80,6 +80,20 @@ func main() {
 		cli.NginxCmd(rest)
 	case "route":
 		cli.RouteCmd(client, jsonOutput, rest)
+	case "shared-ingress":
+		cli.SharedIngressCmd(client, rest)
+	case "access":
+		cli.AccessCmd(client, rest)
+	case "tailscale-sharing":
+		cli.TailscaleSharingCmd(client, rest)
+	case "fleet":
+		cli.FleetCmd(client, rest)
+	case "computer-following":
+		cli.ComputerFollowingCmd(client, rest)
+	case "inheritance":
+		cli.InheritanceCmd(client, rest)
+	case "peer":
+		cli.PeerCmd(client, jsonOutput, rest)
 	case "topology":
 		cli.TopologyCmd(jsonOutput, rest)
 	case "url", "rementor_url":
@@ -104,6 +118,20 @@ Global options (can be placed before or after the command):
   --session <id>   isolated routing session (default: $REMENTOR_SESSION)
 
 Commands:
+  tailscale-sharing show
+  tailscale-sharing prepare --workspace <environment-or-session>
+  tailscale-sharing on|off --expected-revision <revision>
+  shared-ingress show
+  shared-ingress workspaces [--routing-computer <fingerprint>]
+  shared-ingress create --file <config.json> --expected-revision <revision>
+  shared-ingress save --file <config.json> --expected-version <version>
+  shared-ingress join --owner <fingerprint> --expected-revision <revision>
+  shared-ingress transfer --destination <fingerprint> --expected-version <version>
+  shared-ingress recover|cancel --expected-revision <revision>
+  shared-ingress sync
+  access show
+  access save --file <document.json> --expected-revision <revision>
+  access clear --expected-revision <revision>
   session create <name> --workspace <environment>
   session list [--workspace <environment>]
   session inspect|close <session-id>
@@ -122,9 +150,22 @@ Commands:
   announce --workspace <id> --app <id> --port <N> [--type routing|local-apps] [--public-path /path] [--upstream-context /ctx] [--frontend-root /root] [--strict-metadata]
            [--local-domain <d>] [--path /path] [--domain <d>] [--remote-base-url <url>] [--context /ctx] [--name <n>]
            [--health <endpoint>] [--route-override] [--no-activate]`)
+	fmt.Fprintln(os.Stderr, "  peer invite")
+	fmt.Fprintln(os.Stderr, "  computer-following status|sync")
+	fmt.Fprintln(os.Stderr, "  computer-following follow --peer <fingerprint> --expected-revision <revision>")
+	fmt.Fprintln(os.Stderr, "  computer-following stop --expected-revision <revision>")
+	fmt.Fprintln(os.Stderr, "  inheritance list <peer-fingerprint>")
+	fmt.Fprintln(os.Stderr, "  inheritance status|sync <workspace>")
+	fmt.Fprintln(os.Stderr, "  inheritance follow <workspace> --peer <fingerprint> --source <environment-or-session> --expected-version <version>")
+	fmt.Fprintln(os.Stderr, "  inheritance override <workspace> <app> --mode local|remote|inherit [--port <own-port>] [--remote-url <url>] [--pattern <pattern>] --expected-version <version>")
+	fmt.Fprintln(os.Stderr, "  inheritance reset <workspace> <app> --expected-version <version>")
+	fmt.Fprintln(os.Stderr, "  inheritance stop <workspace> --expected-version <version>")
 	fmt.Fprintln(os.Stderr, "  mcp [--protocol auto|modern|legacy]")
 	fmt.Fprintln(os.Stderr, "  nginx load-routes")
 	fmt.Fprintln(os.Stderr, "  route get|conflicts|resolve|plan|apply|sync")
 	fmt.Fprintln(os.Stderr, "  topology resolve --file <topology.json> --url <public-url> [--instance <id>] [--unavailable-targets <ids>] [--unavailable-nodes <ids>]")
+	fmt.Fprintln(os.Stderr, "  fleet show")
+	fmt.Fprintln(os.Stderr, "  fleet review --file <topology.json> --expected-revision <revision>")
+	fmt.Fprintln(os.Stderr, "  fleet save --file <topology.json> --expected-revision <revision> --review-token <token>")
 	fmt.Fprintln(os.Stderr, "  url --workspace <id> --app <app-or-alias>")
 }

@@ -441,6 +441,7 @@ func workspaceFromProto(workspace *rementorv1.Workspace) WorkspaceDTO {
 	return WorkspaceDTO{
 		ID:           workspace.GetId(),
 		Session:      workspace.GetSession(),
+		Inheritance:  workspace.GetInheritance(),
 		BrowserURL:   workspace.GetBrowserUrl(),
 		Type:         workspace.GetType(),
 		Name:         workspace.GetName(),
@@ -476,6 +477,7 @@ func applicationFromProto(app *rementorv1.Application) ApplicationDTO {
 	return ApplicationDTO{
 		ID:                 app.GetId(),
 		SharedWith:         app.GetSharedWith(),
+		PeerEndpoint:       app.GetPeerEndpoint(),
 		AppID:              app.GetAppId(),
 		ServiceID:          app.GetServiceId(),
 		Repository:         app.GetRepository(),

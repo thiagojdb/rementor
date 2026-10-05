@@ -260,8 +260,14 @@ func ApplicationWithOptions(workspaceType string, app models.ApplicationConfig, 
 	if app.Port < 0 || app.Port > 65535 {
 		return nil, fmt.Errorf("port must be between 0 and 65535")
 	}
+	if err := PeerEndpoint(app.PeerEndpoint); err != nil {
+		return nil, err
+	}
+	if app.PeerEndpoint != nil && app.Port != 0 {
+		return nil, fmt.Errorf("a peer endpoint cannot also specify a local port")
+	}
 	if workspaceType == models.WorkspaceTypeLocalApps {
-		if app.Port == 0 {
+		if app.Port == 0 && app.PeerEndpoint == nil {
 			return nil, fmt.Errorf("port is required for local-apps applications")
 		}
 		if err := LocalHostname(app.Domain); err != nil {

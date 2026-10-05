@@ -33,6 +33,117 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// ControlPlaneServiceGetTailscaleSharingProcedure is the fully-qualified name of the
+	// ControlPlaneService's GetTailscaleSharing RPC.
+	ControlPlaneServiceGetTailscaleSharingProcedure = "/rementor.v1.ControlPlaneService/GetTailscaleSharing"
+	// ControlPlaneServiceSetTailscaleSharingProcedure is the fully-qualified name of the
+	// ControlPlaneService's SetTailscaleSharing RPC.
+	ControlPlaneServiceSetTailscaleSharingProcedure = "/rementor.v1.ControlPlaneService/SetTailscaleSharing"
+	// ControlPlaneServicePrepareTailscaleSharingProcedure is the fully-qualified name of the
+	// ControlPlaneService's PrepareTailscaleSharing RPC.
+	ControlPlaneServicePrepareTailscaleSharingProcedure = "/rementor.v1.ControlPlaneService/PrepareTailscaleSharing"
+	// ControlPlaneServiceGetComputerFollowingProcedure is the fully-qualified name of the
+	// ControlPlaneService's GetComputerFollowing RPC.
+	ControlPlaneServiceGetComputerFollowingProcedure = "/rementor.v1.ControlPlaneService/GetComputerFollowing"
+	// ControlPlaneServiceFollowComputerProcedure is the fully-qualified name of the
+	// ControlPlaneService's FollowComputer RPC.
+	ControlPlaneServiceFollowComputerProcedure = "/rementor.v1.ControlPlaneService/FollowComputer"
+	// ControlPlaneServiceSyncComputerConfigurationProcedure is the fully-qualified name of the
+	// ControlPlaneService's SyncComputerConfiguration RPC.
+	ControlPlaneServiceSyncComputerConfigurationProcedure = "/rementor.v1.ControlPlaneService/SyncComputerConfiguration"
+	// ControlPlaneServiceStopFollowingComputerProcedure is the fully-qualified name of the
+	// ControlPlaneService's StopFollowingComputer RPC.
+	ControlPlaneServiceStopFollowingComputerProcedure = "/rementor.v1.ControlPlaneService/StopFollowingComputer"
+	// ControlPlaneServiceSetEnvironmentFollowingProcedure is the fully-qualified name of the
+	// ControlPlaneService's SetEnvironmentFollowing RPC.
+	ControlPlaneServiceSetEnvironmentFollowingProcedure = "/rementor.v1.ControlPlaneService/SetEnvironmentFollowing"
+	// ControlPlaneServiceEditFollowedConfigurationProcedure is the fully-qualified name of the
+	// ControlPlaneService's EditFollowedConfiguration RPC.
+	ControlPlaneServiceEditFollowedConfigurationProcedure = "/rementor.v1.ControlPlaneService/EditFollowedConfiguration"
+	// ControlPlaneServiceGetRoutingWorkspacesProcedure is the fully-qualified name of the
+	// ControlPlaneService's GetRoutingWorkspaces RPC.
+	ControlPlaneServiceGetRoutingWorkspacesProcedure = "/rementor.v1.ControlPlaneService/GetRoutingWorkspaces"
+	// ControlPlaneServiceGetSharedIngressProcedure is the fully-qualified name of the
+	// ControlPlaneService's GetSharedIngress RPC.
+	ControlPlaneServiceGetSharedIngressProcedure = "/rementor.v1.ControlPlaneService/GetSharedIngress"
+	// ControlPlaneServiceCreateSharedIngressProcedure is the fully-qualified name of the
+	// ControlPlaneService's CreateSharedIngress RPC.
+	ControlPlaneServiceCreateSharedIngressProcedure = "/rementor.v1.ControlPlaneService/CreateSharedIngress"
+	// ControlPlaneServiceSaveSharedIngressProcedure is the fully-qualified name of the
+	// ControlPlaneService's SaveSharedIngress RPC.
+	ControlPlaneServiceSaveSharedIngressProcedure = "/rementor.v1.ControlPlaneService/SaveSharedIngress"
+	// ControlPlaneServiceJoinSharedIngressProcedure is the fully-qualified name of the
+	// ControlPlaneService's JoinSharedIngress RPC.
+	ControlPlaneServiceJoinSharedIngressProcedure = "/rementor.v1.ControlPlaneService/JoinSharedIngress"
+	// ControlPlaneServiceTransferSharedIngressProcedure is the fully-qualified name of the
+	// ControlPlaneService's TransferSharedIngress RPC.
+	ControlPlaneServiceTransferSharedIngressProcedure = "/rementor.v1.ControlPlaneService/TransferSharedIngress"
+	// ControlPlaneServiceRecoverSharedIngressProcedure is the fully-qualified name of the
+	// ControlPlaneService's RecoverSharedIngress RPC.
+	ControlPlaneServiceRecoverSharedIngressProcedure = "/rementor.v1.ControlPlaneService/RecoverSharedIngress"
+	// ControlPlaneServiceCancelSharedIngressProcedure is the fully-qualified name of the
+	// ControlPlaneService's CancelSharedIngress RPC.
+	ControlPlaneServiceCancelSharedIngressProcedure = "/rementor.v1.ControlPlaneService/CancelSharedIngress"
+	// ControlPlaneServiceSyncSharedIngressProcedure is the fully-qualified name of the
+	// ControlPlaneService's SyncSharedIngress RPC.
+	ControlPlaneServiceSyncSharedIngressProcedure = "/rementor.v1.ControlPlaneService/SyncSharedIngress"
+	// ControlPlaneServiceGetPublicAccessProcedure is the fully-qualified name of the
+	// ControlPlaneService's GetPublicAccess RPC.
+	ControlPlaneServiceGetPublicAccessProcedure = "/rementor.v1.ControlPlaneService/GetPublicAccess"
+	// ControlPlaneServiceSavePublicAccessProcedure is the fully-qualified name of the
+	// ControlPlaneService's SavePublicAccess RPC.
+	ControlPlaneServiceSavePublicAccessProcedure = "/rementor.v1.ControlPlaneService/SavePublicAccess"
+	// ControlPlaneServiceGetPeerStateProcedure is the fully-qualified name of the ControlPlaneService's
+	// GetPeerState RPC.
+	ControlPlaneServiceGetPeerStateProcedure = "/rementor.v1.ControlPlaneService/GetPeerState"
+	// ControlPlaneServiceConfigurePeerConnectionProcedure is the fully-qualified name of the
+	// ControlPlaneService's ConfigurePeerConnection RPC.
+	ControlPlaneServiceConfigurePeerConnectionProcedure = "/rementor.v1.ControlPlaneService/ConfigurePeerConnection"
+	// ControlPlaneServiceCreatePeerInvitationProcedure is the fully-qualified name of the
+	// ControlPlaneService's CreatePeerInvitation RPC.
+	ControlPlaneServiceCreatePeerInvitationProcedure = "/rementor.v1.ControlPlaneService/CreatePeerInvitation"
+	// ControlPlaneServiceCancelPeerInvitationProcedure is the fully-qualified name of the
+	// ControlPlaneService's CancelPeerInvitation RPC.
+	ControlPlaneServiceCancelPeerInvitationProcedure = "/rementor.v1.ControlPlaneService/CancelPeerInvitation"
+	// ControlPlaneServiceInspectPeerInvitationProcedure is the fully-qualified name of the
+	// ControlPlaneService's InspectPeerInvitation RPC.
+	ControlPlaneServiceInspectPeerInvitationProcedure = "/rementor.v1.ControlPlaneService/InspectPeerInvitation"
+	// ControlPlaneServicePairComputerProcedure is the fully-qualified name of the ControlPlaneService's
+	// PairComputer RPC.
+	ControlPlaneServicePairComputerProcedure = "/rementor.v1.ControlPlaneService/PairComputer"
+	// ControlPlaneServiceUnpairComputerProcedure is the fully-qualified name of the
+	// ControlPlaneService's UnpairComputer RPC.
+	ControlPlaneServiceUnpairComputerProcedure = "/rementor.v1.ControlPlaneService/UnpairComputer"
+	// ControlPlaneServiceCheckPeerConnectionProcedure is the fully-qualified name of the
+	// ControlPlaneService's CheckPeerConnection RPC.
+	ControlPlaneServiceCheckPeerConnectionProcedure = "/rementor.v1.ControlPlaneService/CheckPeerConnection"
+	// ControlPlaneServiceListPeerWorkspacesProcedure is the fully-qualified name of the
+	// ControlPlaneService's ListPeerWorkspaces RPC.
+	ControlPlaneServiceListPeerWorkspacesProcedure = "/rementor.v1.ControlPlaneService/ListPeerWorkspaces"
+	// ControlPlaneServiceGetWorkspaceInheritanceProcedure is the fully-qualified name of the
+	// ControlPlaneService's GetWorkspaceInheritance RPC.
+	ControlPlaneServiceGetWorkspaceInheritanceProcedure = "/rementor.v1.ControlPlaneService/GetWorkspaceInheritance"
+	// ControlPlaneServiceFollowPeerWorkspaceProcedure is the fully-qualified name of the
+	// ControlPlaneService's FollowPeerWorkspace RPC.
+	ControlPlaneServiceFollowPeerWorkspaceProcedure = "/rementor.v1.ControlPlaneService/FollowPeerWorkspace"
+	// ControlPlaneServiceSyncPeerWorkspaceProcedure is the fully-qualified name of the
+	// ControlPlaneService's SyncPeerWorkspace RPC.
+	ControlPlaneServiceSyncPeerWorkspaceProcedure = "/rementor.v1.ControlPlaneService/SyncPeerWorkspace"
+	// ControlPlaneServiceOverrideInheritedRouteProcedure is the fully-qualified name of the
+	// ControlPlaneService's OverrideInheritedRoute RPC.
+	ControlPlaneServiceOverrideInheritedRouteProcedure = "/rementor.v1.ControlPlaneService/OverrideInheritedRoute"
+	// ControlPlaneServiceStopFollowingWorkspaceProcedure is the fully-qualified name of the
+	// ControlPlaneService's StopFollowingWorkspace RPC.
+	ControlPlaneServiceStopFollowingWorkspaceProcedure = "/rementor.v1.ControlPlaneService/StopFollowingWorkspace"
+	// ControlPlaneServiceGetFleetConfigurationProcedure is the fully-qualified name of the
+	// ControlPlaneService's GetFleetConfiguration RPC.
+	ControlPlaneServiceGetFleetConfigurationProcedure = "/rementor.v1.ControlPlaneService/GetFleetConfiguration"
+	// ControlPlaneServiceReviewFleetConfigurationProcedure is the fully-qualified name of the
+	// ControlPlaneService's ReviewFleetConfiguration RPC.
+	ControlPlaneServiceReviewFleetConfigurationProcedure = "/rementor.v1.ControlPlaneService/ReviewFleetConfiguration"
+	// ControlPlaneServiceSaveFleetConfigurationProcedure is the fully-qualified name of the
+	// ControlPlaneService's SaveFleetConfiguration RPC.
+	ControlPlaneServiceSaveFleetConfigurationProcedure = "/rementor.v1.ControlPlaneService/SaveFleetConfiguration"
 	// ControlPlaneServiceCreateRoutingSessionProcedure is the fully-qualified name of the
 	// ControlPlaneService's CreateRoutingSession RPC.
 	ControlPlaneServiceCreateRoutingSessionProcedure = "/rementor.v1.ControlPlaneService/CreateRoutingSession"
@@ -118,6 +229,43 @@ const (
 
 // ControlPlaneServiceClient is a client for the rementor.v1.ControlPlaneService service.
 type ControlPlaneServiceClient interface {
+	GetTailscaleSharing(context.Context, *connect.Request[v1.GetTailscaleSharingRequest]) (*connect.Response[v1.GetTailscaleSharingResponse], error)
+	SetTailscaleSharing(context.Context, *connect.Request[v1.SetTailscaleSharingRequest]) (*connect.Response[v1.SetTailscaleSharingResponse], error)
+	PrepareTailscaleSharing(context.Context, *connect.Request[v1.PrepareTailscaleSharingRequest]) (*connect.Response[v1.PrepareTailscaleSharingResponse], error)
+	GetComputerFollowing(context.Context, *connect.Request[v1.GetComputerFollowingRequest]) (*connect.Response[v1.GetComputerFollowingResponse], error)
+	FollowComputer(context.Context, *connect.Request[v1.FollowComputerRequest]) (*connect.Response[v1.FollowComputerResponse], error)
+	SyncComputerConfiguration(context.Context, *connect.Request[v1.SyncComputerConfigurationRequest]) (*connect.Response[v1.SyncComputerConfigurationResponse], error)
+	StopFollowingComputer(context.Context, *connect.Request[v1.StopFollowingComputerRequest]) (*connect.Response[v1.StopFollowingComputerResponse], error)
+	SetEnvironmentFollowing(context.Context, *connect.Request[v1.SetEnvironmentFollowingRequest]) (*connect.Response[v1.SetEnvironmentFollowingResponse], error)
+	EditFollowedConfiguration(context.Context, *connect.Request[v1.EditFollowedConfigurationRequest]) (*connect.Response[v1.EditFollowedConfigurationResponse], error)
+	GetRoutingWorkspaces(context.Context, *connect.Request[v1.GetRoutingWorkspacesRequest]) (*connect.Response[v1.GetRoutingWorkspacesResponse], error)
+	GetSharedIngress(context.Context, *connect.Request[v1.GetSharedIngressRequest]) (*connect.Response[v1.GetSharedIngressResponse], error)
+	CreateSharedIngress(context.Context, *connect.Request[v1.CreateSharedIngressRequest]) (*connect.Response[v1.CreateSharedIngressResponse], error)
+	SaveSharedIngress(context.Context, *connect.Request[v1.SaveSharedIngressRequest]) (*connect.Response[v1.SaveSharedIngressResponse], error)
+	JoinSharedIngress(context.Context, *connect.Request[v1.JoinSharedIngressRequest]) (*connect.Response[v1.JoinSharedIngressResponse], error)
+	TransferSharedIngress(context.Context, *connect.Request[v1.TransferSharedIngressRequest]) (*connect.Response[v1.TransferSharedIngressResponse], error)
+	RecoverSharedIngress(context.Context, *connect.Request[v1.RecoverSharedIngressRequest]) (*connect.Response[v1.RecoverSharedIngressResponse], error)
+	CancelSharedIngress(context.Context, *connect.Request[v1.CancelSharedIngressRequest]) (*connect.Response[v1.CancelSharedIngressResponse], error)
+	SyncSharedIngress(context.Context, *connect.Request[v1.SyncSharedIngressRequest]) (*connect.Response[v1.SyncSharedIngressResponse], error)
+	GetPublicAccess(context.Context, *connect.Request[v1.GetPublicAccessRequest]) (*connect.Response[v1.GetPublicAccessResponse], error)
+	SavePublicAccess(context.Context, *connect.Request[v1.SavePublicAccessRequest]) (*connect.Response[v1.SavePublicAccessResponse], error)
+	GetPeerState(context.Context, *connect.Request[v1.GetPeerStateRequest]) (*connect.Response[v1.GetPeerStateResponse], error)
+	ConfigurePeerConnection(context.Context, *connect.Request[v1.ConfigurePeerConnectionRequest]) (*connect.Response[v1.ConfigurePeerConnectionResponse], error)
+	CreatePeerInvitation(context.Context, *connect.Request[v1.CreatePeerInvitationRequest]) (*connect.Response[v1.CreatePeerInvitationResponse], error)
+	CancelPeerInvitation(context.Context, *connect.Request[v1.CancelPeerInvitationRequest]) (*connect.Response[v1.CancelPeerInvitationResponse], error)
+	InspectPeerInvitation(context.Context, *connect.Request[v1.InspectPeerInvitationRequest]) (*connect.Response[v1.InspectPeerInvitationResponse], error)
+	PairComputer(context.Context, *connect.Request[v1.PairComputerRequest]) (*connect.Response[v1.PairComputerResponse], error)
+	UnpairComputer(context.Context, *connect.Request[v1.UnpairComputerRequest]) (*connect.Response[v1.UnpairComputerResponse], error)
+	CheckPeerConnection(context.Context, *connect.Request[v1.CheckPeerConnectionRequest]) (*connect.Response[v1.CheckPeerConnectionResponse], error)
+	ListPeerWorkspaces(context.Context, *connect.Request[v1.ListPeerWorkspacesRequest]) (*connect.Response[v1.ListPeerWorkspacesResponse], error)
+	GetWorkspaceInheritance(context.Context, *connect.Request[v1.GetWorkspaceInheritanceRequest]) (*connect.Response[v1.GetWorkspaceInheritanceResponse], error)
+	FollowPeerWorkspace(context.Context, *connect.Request[v1.FollowPeerWorkspaceRequest]) (*connect.Response[v1.FollowPeerWorkspaceResponse], error)
+	SyncPeerWorkspace(context.Context, *connect.Request[v1.SyncPeerWorkspaceRequest]) (*connect.Response[v1.SyncPeerWorkspaceResponse], error)
+	OverrideInheritedRoute(context.Context, *connect.Request[v1.OverrideInheritedRouteRequest]) (*connect.Response[v1.OverrideInheritedRouteResponse], error)
+	StopFollowingWorkspace(context.Context, *connect.Request[v1.StopFollowingWorkspaceRequest]) (*connect.Response[v1.StopFollowingWorkspaceResponse], error)
+	GetFleetConfiguration(context.Context, *connect.Request[v1.GetFleetConfigurationRequest]) (*connect.Response[v1.GetFleetConfigurationResponse], error)
+	ReviewFleetConfiguration(context.Context, *connect.Request[v1.ReviewFleetConfigurationRequest]) (*connect.Response[v1.ReviewFleetConfigurationResponse], error)
+	SaveFleetConfiguration(context.Context, *connect.Request[v1.SaveFleetConfigurationRequest]) (*connect.Response[v1.SaveFleetConfigurationResponse], error)
 	CreateRoutingSession(context.Context, *connect.Request[v1.CreateRoutingSessionRequest]) (*connect.Response[v1.CreateRoutingSessionResponse], error)
 	RefreshRoutingSession(context.Context, *connect.Request[v1.RefreshRoutingSessionRequest]) (*connect.Response[v1.RefreshRoutingSessionResponse], error)
 	ListWorkspaces(context.Context, *connect.Request[v1.ListWorkspacesRequest]) (*connect.Response[v1.ListWorkspacesResponse], error)
@@ -158,6 +306,228 @@ func NewControlPlaneServiceClient(httpClient connect.HTTPClient, baseURL string,
 	baseURL = strings.TrimRight(baseURL, "/")
 	controlPlaneServiceMethods := v1.File_rementor_v1_rementor_proto.Services().ByName("ControlPlaneService").Methods()
 	return &controlPlaneServiceClient{
+		getTailscaleSharing: connect.NewClient[v1.GetTailscaleSharingRequest, v1.GetTailscaleSharingResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceGetTailscaleSharingProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("GetTailscaleSharing")),
+			connect.WithClientOptions(opts...),
+		),
+		setTailscaleSharing: connect.NewClient[v1.SetTailscaleSharingRequest, v1.SetTailscaleSharingResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceSetTailscaleSharingProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("SetTailscaleSharing")),
+			connect.WithClientOptions(opts...),
+		),
+		prepareTailscaleSharing: connect.NewClient[v1.PrepareTailscaleSharingRequest, v1.PrepareTailscaleSharingResponse](
+			httpClient,
+			baseURL+ControlPlaneServicePrepareTailscaleSharingProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("PrepareTailscaleSharing")),
+			connect.WithClientOptions(opts...),
+		),
+		getComputerFollowing: connect.NewClient[v1.GetComputerFollowingRequest, v1.GetComputerFollowingResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceGetComputerFollowingProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("GetComputerFollowing")),
+			connect.WithClientOptions(opts...),
+		),
+		followComputer: connect.NewClient[v1.FollowComputerRequest, v1.FollowComputerResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceFollowComputerProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("FollowComputer")),
+			connect.WithClientOptions(opts...),
+		),
+		syncComputerConfiguration: connect.NewClient[v1.SyncComputerConfigurationRequest, v1.SyncComputerConfigurationResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceSyncComputerConfigurationProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("SyncComputerConfiguration")),
+			connect.WithClientOptions(opts...),
+		),
+		stopFollowingComputer: connect.NewClient[v1.StopFollowingComputerRequest, v1.StopFollowingComputerResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceStopFollowingComputerProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("StopFollowingComputer")),
+			connect.WithClientOptions(opts...),
+		),
+		setEnvironmentFollowing: connect.NewClient[v1.SetEnvironmentFollowingRequest, v1.SetEnvironmentFollowingResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceSetEnvironmentFollowingProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("SetEnvironmentFollowing")),
+			connect.WithClientOptions(opts...),
+		),
+		editFollowedConfiguration: connect.NewClient[v1.EditFollowedConfigurationRequest, v1.EditFollowedConfigurationResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceEditFollowedConfigurationProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("EditFollowedConfiguration")),
+			connect.WithClientOptions(opts...),
+		),
+		getRoutingWorkspaces: connect.NewClient[v1.GetRoutingWorkspacesRequest, v1.GetRoutingWorkspacesResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceGetRoutingWorkspacesProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("GetRoutingWorkspaces")),
+			connect.WithClientOptions(opts...),
+		),
+		getSharedIngress: connect.NewClient[v1.GetSharedIngressRequest, v1.GetSharedIngressResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceGetSharedIngressProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("GetSharedIngress")),
+			connect.WithClientOptions(opts...),
+		),
+		createSharedIngress: connect.NewClient[v1.CreateSharedIngressRequest, v1.CreateSharedIngressResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceCreateSharedIngressProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("CreateSharedIngress")),
+			connect.WithClientOptions(opts...),
+		),
+		saveSharedIngress: connect.NewClient[v1.SaveSharedIngressRequest, v1.SaveSharedIngressResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceSaveSharedIngressProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("SaveSharedIngress")),
+			connect.WithClientOptions(opts...),
+		),
+		joinSharedIngress: connect.NewClient[v1.JoinSharedIngressRequest, v1.JoinSharedIngressResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceJoinSharedIngressProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("JoinSharedIngress")),
+			connect.WithClientOptions(opts...),
+		),
+		transferSharedIngress: connect.NewClient[v1.TransferSharedIngressRequest, v1.TransferSharedIngressResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceTransferSharedIngressProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("TransferSharedIngress")),
+			connect.WithClientOptions(opts...),
+		),
+		recoverSharedIngress: connect.NewClient[v1.RecoverSharedIngressRequest, v1.RecoverSharedIngressResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceRecoverSharedIngressProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("RecoverSharedIngress")),
+			connect.WithClientOptions(opts...),
+		),
+		cancelSharedIngress: connect.NewClient[v1.CancelSharedIngressRequest, v1.CancelSharedIngressResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceCancelSharedIngressProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("CancelSharedIngress")),
+			connect.WithClientOptions(opts...),
+		),
+		syncSharedIngress: connect.NewClient[v1.SyncSharedIngressRequest, v1.SyncSharedIngressResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceSyncSharedIngressProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("SyncSharedIngress")),
+			connect.WithClientOptions(opts...),
+		),
+		getPublicAccess: connect.NewClient[v1.GetPublicAccessRequest, v1.GetPublicAccessResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceGetPublicAccessProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("GetPublicAccess")),
+			connect.WithClientOptions(opts...),
+		),
+		savePublicAccess: connect.NewClient[v1.SavePublicAccessRequest, v1.SavePublicAccessResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceSavePublicAccessProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("SavePublicAccess")),
+			connect.WithClientOptions(opts...),
+		),
+		getPeerState: connect.NewClient[v1.GetPeerStateRequest, v1.GetPeerStateResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceGetPeerStateProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("GetPeerState")),
+			connect.WithClientOptions(opts...),
+		),
+		configurePeerConnection: connect.NewClient[v1.ConfigurePeerConnectionRequest, v1.ConfigurePeerConnectionResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceConfigurePeerConnectionProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("ConfigurePeerConnection")),
+			connect.WithClientOptions(opts...),
+		),
+		createPeerInvitation: connect.NewClient[v1.CreatePeerInvitationRequest, v1.CreatePeerInvitationResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceCreatePeerInvitationProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("CreatePeerInvitation")),
+			connect.WithClientOptions(opts...),
+		),
+		cancelPeerInvitation: connect.NewClient[v1.CancelPeerInvitationRequest, v1.CancelPeerInvitationResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceCancelPeerInvitationProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("CancelPeerInvitation")),
+			connect.WithClientOptions(opts...),
+		),
+		inspectPeerInvitation: connect.NewClient[v1.InspectPeerInvitationRequest, v1.InspectPeerInvitationResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceInspectPeerInvitationProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("InspectPeerInvitation")),
+			connect.WithClientOptions(opts...),
+		),
+		pairComputer: connect.NewClient[v1.PairComputerRequest, v1.PairComputerResponse](
+			httpClient,
+			baseURL+ControlPlaneServicePairComputerProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("PairComputer")),
+			connect.WithClientOptions(opts...),
+		),
+		unpairComputer: connect.NewClient[v1.UnpairComputerRequest, v1.UnpairComputerResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceUnpairComputerProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("UnpairComputer")),
+			connect.WithClientOptions(opts...),
+		),
+		checkPeerConnection: connect.NewClient[v1.CheckPeerConnectionRequest, v1.CheckPeerConnectionResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceCheckPeerConnectionProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("CheckPeerConnection")),
+			connect.WithClientOptions(opts...),
+		),
+		listPeerWorkspaces: connect.NewClient[v1.ListPeerWorkspacesRequest, v1.ListPeerWorkspacesResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceListPeerWorkspacesProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("ListPeerWorkspaces")),
+			connect.WithClientOptions(opts...),
+		),
+		getWorkspaceInheritance: connect.NewClient[v1.GetWorkspaceInheritanceRequest, v1.GetWorkspaceInheritanceResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceGetWorkspaceInheritanceProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("GetWorkspaceInheritance")),
+			connect.WithClientOptions(opts...),
+		),
+		followPeerWorkspace: connect.NewClient[v1.FollowPeerWorkspaceRequest, v1.FollowPeerWorkspaceResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceFollowPeerWorkspaceProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("FollowPeerWorkspace")),
+			connect.WithClientOptions(opts...),
+		),
+		syncPeerWorkspace: connect.NewClient[v1.SyncPeerWorkspaceRequest, v1.SyncPeerWorkspaceResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceSyncPeerWorkspaceProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("SyncPeerWorkspace")),
+			connect.WithClientOptions(opts...),
+		),
+		overrideInheritedRoute: connect.NewClient[v1.OverrideInheritedRouteRequest, v1.OverrideInheritedRouteResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceOverrideInheritedRouteProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("OverrideInheritedRoute")),
+			connect.WithClientOptions(opts...),
+		),
+		stopFollowingWorkspace: connect.NewClient[v1.StopFollowingWorkspaceRequest, v1.StopFollowingWorkspaceResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceStopFollowingWorkspaceProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("StopFollowingWorkspace")),
+			connect.WithClientOptions(opts...),
+		),
+		getFleetConfiguration: connect.NewClient[v1.GetFleetConfigurationRequest, v1.GetFleetConfigurationResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceGetFleetConfigurationProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("GetFleetConfiguration")),
+			connect.WithClientOptions(opts...),
+		),
+		reviewFleetConfiguration: connect.NewClient[v1.ReviewFleetConfigurationRequest, v1.ReviewFleetConfigurationResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceReviewFleetConfigurationProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("ReviewFleetConfiguration")),
+			connect.WithClientOptions(opts...),
+		),
+		saveFleetConfiguration: connect.NewClient[v1.SaveFleetConfigurationRequest, v1.SaveFleetConfigurationResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceSaveFleetConfigurationProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("SaveFleetConfiguration")),
+			connect.WithClientOptions(opts...),
+		),
 		createRoutingSession: connect.NewClient[v1.CreateRoutingSessionRequest, v1.CreateRoutingSessionResponse](
 			httpClient,
 			baseURL+ControlPlaneServiceCreateRoutingSessionProcedure,
@@ -325,33 +695,255 @@ func NewControlPlaneServiceClient(httpClient connect.HTTPClient, baseURL string,
 
 // controlPlaneServiceClient implements ControlPlaneServiceClient.
 type controlPlaneServiceClient struct {
-	createRoutingSession     *connect.Client[v1.CreateRoutingSessionRequest, v1.CreateRoutingSessionResponse]
-	refreshRoutingSession    *connect.Client[v1.RefreshRoutingSessionRequest, v1.RefreshRoutingSessionResponse]
-	listWorkspaces           *connect.Client[v1.ListWorkspacesRequest, v1.ListWorkspacesResponse]
-	getWorkspace             *connect.Client[v1.GetWorkspaceRequest, v1.GetWorkspaceResponse]
-	createWorkspace          *connect.Client[v1.CreateWorkspaceRequest, v1.CreateWorkspaceResponse]
-	updateWorkspace          *connect.Client[v1.UpdateWorkspaceRequest, v1.UpdateWorkspaceResponse]
-	deleteWorkspace          *connect.Client[v1.DeleteWorkspaceRequest, v1.DeleteWorkspaceResponse]
-	listApplications         *connect.Client[v1.ListApplicationsRequest, v1.ListApplicationsResponse]
-	getApplication           *connect.Client[v1.GetApplicationRequest, v1.GetApplicationResponse]
-	resolveApplication       *connect.Client[v1.ResolveApplicationRequest, v1.ResolveApplicationResponse]
-	resolveBrowserURL        *connect.Client[v1.ResolveBrowserURLRequest, v1.ResolveBrowserURLResponse]
-	registerApplicationAlias *connect.Client[v1.RegisterApplicationAliasRequest, v1.RegisterApplicationAliasResponse]
-	upsertApplication        *connect.Client[v1.UpsertApplicationRequest, v1.UpsertApplicationResponse]
-	deleteApplication        *connect.Client[v1.DeleteApplicationRequest, v1.DeleteApplicationResponse]
-	toggleApplication        *connect.Client[v1.ToggleApplicationRequest, v1.ToggleApplicationResponse]
-	toggleAllToRemote        *connect.Client[v1.ToggleAllToRemoteRequest, v1.ToggleAllToRemoteResponse]
-	toggleAllToLocal         *connect.Client[v1.ToggleAllToLocalRequest, v1.ToggleAllToLocalResponse]
-	syncWorkspaceRouting     *connect.Client[v1.SyncWorkspaceRoutingRequest, v1.SyncWorkspaceRoutingResponse]
-	getRoutePattern          *connect.Client[v1.GetRoutePatternRequest, v1.GetRoutePatternResponse]
-	updateRoutePattern       *connect.Client[v1.UpdateRoutePatternRequest, v1.UpdateRoutePatternResponse]
-	getRoute                 *connect.Client[v1.GetRouteRequest, v1.GetRouteResponse]
-	getRouteConflicts        *connect.Client[v1.GetRouteConflictsRequest, v1.GetRouteConflictsResponse]
-	resolveRoute             *connect.Client[v1.ResolveRouteRequest, v1.ResolveRouteResponse]
-	planRoute                *connect.Client[v1.PlanRouteRequest, v1.PlanRouteResponse]
-	applyRoute               *connect.Client[v1.ApplyRouteRequest, v1.ApplyRouteResponse]
-	syncRoute                *connect.Client[v1.SyncRouteRequest, v1.SyncRouteResponse]
-	watchHealth              *connect.Client[v1.WatchHealthRequest, v1.WatchHealthResponse]
+	getTailscaleSharing       *connect.Client[v1.GetTailscaleSharingRequest, v1.GetTailscaleSharingResponse]
+	setTailscaleSharing       *connect.Client[v1.SetTailscaleSharingRequest, v1.SetTailscaleSharingResponse]
+	prepareTailscaleSharing   *connect.Client[v1.PrepareTailscaleSharingRequest, v1.PrepareTailscaleSharingResponse]
+	getComputerFollowing      *connect.Client[v1.GetComputerFollowingRequest, v1.GetComputerFollowingResponse]
+	followComputer            *connect.Client[v1.FollowComputerRequest, v1.FollowComputerResponse]
+	syncComputerConfiguration *connect.Client[v1.SyncComputerConfigurationRequest, v1.SyncComputerConfigurationResponse]
+	stopFollowingComputer     *connect.Client[v1.StopFollowingComputerRequest, v1.StopFollowingComputerResponse]
+	setEnvironmentFollowing   *connect.Client[v1.SetEnvironmentFollowingRequest, v1.SetEnvironmentFollowingResponse]
+	editFollowedConfiguration *connect.Client[v1.EditFollowedConfigurationRequest, v1.EditFollowedConfigurationResponse]
+	getRoutingWorkspaces      *connect.Client[v1.GetRoutingWorkspacesRequest, v1.GetRoutingWorkspacesResponse]
+	getSharedIngress          *connect.Client[v1.GetSharedIngressRequest, v1.GetSharedIngressResponse]
+	createSharedIngress       *connect.Client[v1.CreateSharedIngressRequest, v1.CreateSharedIngressResponse]
+	saveSharedIngress         *connect.Client[v1.SaveSharedIngressRequest, v1.SaveSharedIngressResponse]
+	joinSharedIngress         *connect.Client[v1.JoinSharedIngressRequest, v1.JoinSharedIngressResponse]
+	transferSharedIngress     *connect.Client[v1.TransferSharedIngressRequest, v1.TransferSharedIngressResponse]
+	recoverSharedIngress      *connect.Client[v1.RecoverSharedIngressRequest, v1.RecoverSharedIngressResponse]
+	cancelSharedIngress       *connect.Client[v1.CancelSharedIngressRequest, v1.CancelSharedIngressResponse]
+	syncSharedIngress         *connect.Client[v1.SyncSharedIngressRequest, v1.SyncSharedIngressResponse]
+	getPublicAccess           *connect.Client[v1.GetPublicAccessRequest, v1.GetPublicAccessResponse]
+	savePublicAccess          *connect.Client[v1.SavePublicAccessRequest, v1.SavePublicAccessResponse]
+	getPeerState              *connect.Client[v1.GetPeerStateRequest, v1.GetPeerStateResponse]
+	configurePeerConnection   *connect.Client[v1.ConfigurePeerConnectionRequest, v1.ConfigurePeerConnectionResponse]
+	createPeerInvitation      *connect.Client[v1.CreatePeerInvitationRequest, v1.CreatePeerInvitationResponse]
+	cancelPeerInvitation      *connect.Client[v1.CancelPeerInvitationRequest, v1.CancelPeerInvitationResponse]
+	inspectPeerInvitation     *connect.Client[v1.InspectPeerInvitationRequest, v1.InspectPeerInvitationResponse]
+	pairComputer              *connect.Client[v1.PairComputerRequest, v1.PairComputerResponse]
+	unpairComputer            *connect.Client[v1.UnpairComputerRequest, v1.UnpairComputerResponse]
+	checkPeerConnection       *connect.Client[v1.CheckPeerConnectionRequest, v1.CheckPeerConnectionResponse]
+	listPeerWorkspaces        *connect.Client[v1.ListPeerWorkspacesRequest, v1.ListPeerWorkspacesResponse]
+	getWorkspaceInheritance   *connect.Client[v1.GetWorkspaceInheritanceRequest, v1.GetWorkspaceInheritanceResponse]
+	followPeerWorkspace       *connect.Client[v1.FollowPeerWorkspaceRequest, v1.FollowPeerWorkspaceResponse]
+	syncPeerWorkspace         *connect.Client[v1.SyncPeerWorkspaceRequest, v1.SyncPeerWorkspaceResponse]
+	overrideInheritedRoute    *connect.Client[v1.OverrideInheritedRouteRequest, v1.OverrideInheritedRouteResponse]
+	stopFollowingWorkspace    *connect.Client[v1.StopFollowingWorkspaceRequest, v1.StopFollowingWorkspaceResponse]
+	getFleetConfiguration     *connect.Client[v1.GetFleetConfigurationRequest, v1.GetFleetConfigurationResponse]
+	reviewFleetConfiguration  *connect.Client[v1.ReviewFleetConfigurationRequest, v1.ReviewFleetConfigurationResponse]
+	saveFleetConfiguration    *connect.Client[v1.SaveFleetConfigurationRequest, v1.SaveFleetConfigurationResponse]
+	createRoutingSession      *connect.Client[v1.CreateRoutingSessionRequest, v1.CreateRoutingSessionResponse]
+	refreshRoutingSession     *connect.Client[v1.RefreshRoutingSessionRequest, v1.RefreshRoutingSessionResponse]
+	listWorkspaces            *connect.Client[v1.ListWorkspacesRequest, v1.ListWorkspacesResponse]
+	getWorkspace              *connect.Client[v1.GetWorkspaceRequest, v1.GetWorkspaceResponse]
+	createWorkspace           *connect.Client[v1.CreateWorkspaceRequest, v1.CreateWorkspaceResponse]
+	updateWorkspace           *connect.Client[v1.UpdateWorkspaceRequest, v1.UpdateWorkspaceResponse]
+	deleteWorkspace           *connect.Client[v1.DeleteWorkspaceRequest, v1.DeleteWorkspaceResponse]
+	listApplications          *connect.Client[v1.ListApplicationsRequest, v1.ListApplicationsResponse]
+	getApplication            *connect.Client[v1.GetApplicationRequest, v1.GetApplicationResponse]
+	resolveApplication        *connect.Client[v1.ResolveApplicationRequest, v1.ResolveApplicationResponse]
+	resolveBrowserURL         *connect.Client[v1.ResolveBrowserURLRequest, v1.ResolveBrowserURLResponse]
+	registerApplicationAlias  *connect.Client[v1.RegisterApplicationAliasRequest, v1.RegisterApplicationAliasResponse]
+	upsertApplication         *connect.Client[v1.UpsertApplicationRequest, v1.UpsertApplicationResponse]
+	deleteApplication         *connect.Client[v1.DeleteApplicationRequest, v1.DeleteApplicationResponse]
+	toggleApplication         *connect.Client[v1.ToggleApplicationRequest, v1.ToggleApplicationResponse]
+	toggleAllToRemote         *connect.Client[v1.ToggleAllToRemoteRequest, v1.ToggleAllToRemoteResponse]
+	toggleAllToLocal          *connect.Client[v1.ToggleAllToLocalRequest, v1.ToggleAllToLocalResponse]
+	syncWorkspaceRouting      *connect.Client[v1.SyncWorkspaceRoutingRequest, v1.SyncWorkspaceRoutingResponse]
+	getRoutePattern           *connect.Client[v1.GetRoutePatternRequest, v1.GetRoutePatternResponse]
+	updateRoutePattern        *connect.Client[v1.UpdateRoutePatternRequest, v1.UpdateRoutePatternResponse]
+	getRoute                  *connect.Client[v1.GetRouteRequest, v1.GetRouteResponse]
+	getRouteConflicts         *connect.Client[v1.GetRouteConflictsRequest, v1.GetRouteConflictsResponse]
+	resolveRoute              *connect.Client[v1.ResolveRouteRequest, v1.ResolveRouteResponse]
+	planRoute                 *connect.Client[v1.PlanRouteRequest, v1.PlanRouteResponse]
+	applyRoute                *connect.Client[v1.ApplyRouteRequest, v1.ApplyRouteResponse]
+	syncRoute                 *connect.Client[v1.SyncRouteRequest, v1.SyncRouteResponse]
+	watchHealth               *connect.Client[v1.WatchHealthRequest, v1.WatchHealthResponse]
+}
+
+// GetTailscaleSharing calls rementor.v1.ControlPlaneService.GetTailscaleSharing.
+func (c *controlPlaneServiceClient) GetTailscaleSharing(ctx context.Context, req *connect.Request[v1.GetTailscaleSharingRequest]) (*connect.Response[v1.GetTailscaleSharingResponse], error) {
+	return c.getTailscaleSharing.CallUnary(ctx, req)
+}
+
+// SetTailscaleSharing calls rementor.v1.ControlPlaneService.SetTailscaleSharing.
+func (c *controlPlaneServiceClient) SetTailscaleSharing(ctx context.Context, req *connect.Request[v1.SetTailscaleSharingRequest]) (*connect.Response[v1.SetTailscaleSharingResponse], error) {
+	return c.setTailscaleSharing.CallUnary(ctx, req)
+}
+
+// PrepareTailscaleSharing calls rementor.v1.ControlPlaneService.PrepareTailscaleSharing.
+func (c *controlPlaneServiceClient) PrepareTailscaleSharing(ctx context.Context, req *connect.Request[v1.PrepareTailscaleSharingRequest]) (*connect.Response[v1.PrepareTailscaleSharingResponse], error) {
+	return c.prepareTailscaleSharing.CallUnary(ctx, req)
+}
+
+// GetComputerFollowing calls rementor.v1.ControlPlaneService.GetComputerFollowing.
+func (c *controlPlaneServiceClient) GetComputerFollowing(ctx context.Context, req *connect.Request[v1.GetComputerFollowingRequest]) (*connect.Response[v1.GetComputerFollowingResponse], error) {
+	return c.getComputerFollowing.CallUnary(ctx, req)
+}
+
+// FollowComputer calls rementor.v1.ControlPlaneService.FollowComputer.
+func (c *controlPlaneServiceClient) FollowComputer(ctx context.Context, req *connect.Request[v1.FollowComputerRequest]) (*connect.Response[v1.FollowComputerResponse], error) {
+	return c.followComputer.CallUnary(ctx, req)
+}
+
+// SyncComputerConfiguration calls rementor.v1.ControlPlaneService.SyncComputerConfiguration.
+func (c *controlPlaneServiceClient) SyncComputerConfiguration(ctx context.Context, req *connect.Request[v1.SyncComputerConfigurationRequest]) (*connect.Response[v1.SyncComputerConfigurationResponse], error) {
+	return c.syncComputerConfiguration.CallUnary(ctx, req)
+}
+
+// StopFollowingComputer calls rementor.v1.ControlPlaneService.StopFollowingComputer.
+func (c *controlPlaneServiceClient) StopFollowingComputer(ctx context.Context, req *connect.Request[v1.StopFollowingComputerRequest]) (*connect.Response[v1.StopFollowingComputerResponse], error) {
+	return c.stopFollowingComputer.CallUnary(ctx, req)
+}
+
+// SetEnvironmentFollowing calls rementor.v1.ControlPlaneService.SetEnvironmentFollowing.
+func (c *controlPlaneServiceClient) SetEnvironmentFollowing(ctx context.Context, req *connect.Request[v1.SetEnvironmentFollowingRequest]) (*connect.Response[v1.SetEnvironmentFollowingResponse], error) {
+	return c.setEnvironmentFollowing.CallUnary(ctx, req)
+}
+
+// EditFollowedConfiguration calls rementor.v1.ControlPlaneService.EditFollowedConfiguration.
+func (c *controlPlaneServiceClient) EditFollowedConfiguration(ctx context.Context, req *connect.Request[v1.EditFollowedConfigurationRequest]) (*connect.Response[v1.EditFollowedConfigurationResponse], error) {
+	return c.editFollowedConfiguration.CallUnary(ctx, req)
+}
+
+// GetRoutingWorkspaces calls rementor.v1.ControlPlaneService.GetRoutingWorkspaces.
+func (c *controlPlaneServiceClient) GetRoutingWorkspaces(ctx context.Context, req *connect.Request[v1.GetRoutingWorkspacesRequest]) (*connect.Response[v1.GetRoutingWorkspacesResponse], error) {
+	return c.getRoutingWorkspaces.CallUnary(ctx, req)
+}
+
+// GetSharedIngress calls rementor.v1.ControlPlaneService.GetSharedIngress.
+func (c *controlPlaneServiceClient) GetSharedIngress(ctx context.Context, req *connect.Request[v1.GetSharedIngressRequest]) (*connect.Response[v1.GetSharedIngressResponse], error) {
+	return c.getSharedIngress.CallUnary(ctx, req)
+}
+
+// CreateSharedIngress calls rementor.v1.ControlPlaneService.CreateSharedIngress.
+func (c *controlPlaneServiceClient) CreateSharedIngress(ctx context.Context, req *connect.Request[v1.CreateSharedIngressRequest]) (*connect.Response[v1.CreateSharedIngressResponse], error) {
+	return c.createSharedIngress.CallUnary(ctx, req)
+}
+
+// SaveSharedIngress calls rementor.v1.ControlPlaneService.SaveSharedIngress.
+func (c *controlPlaneServiceClient) SaveSharedIngress(ctx context.Context, req *connect.Request[v1.SaveSharedIngressRequest]) (*connect.Response[v1.SaveSharedIngressResponse], error) {
+	return c.saveSharedIngress.CallUnary(ctx, req)
+}
+
+// JoinSharedIngress calls rementor.v1.ControlPlaneService.JoinSharedIngress.
+func (c *controlPlaneServiceClient) JoinSharedIngress(ctx context.Context, req *connect.Request[v1.JoinSharedIngressRequest]) (*connect.Response[v1.JoinSharedIngressResponse], error) {
+	return c.joinSharedIngress.CallUnary(ctx, req)
+}
+
+// TransferSharedIngress calls rementor.v1.ControlPlaneService.TransferSharedIngress.
+func (c *controlPlaneServiceClient) TransferSharedIngress(ctx context.Context, req *connect.Request[v1.TransferSharedIngressRequest]) (*connect.Response[v1.TransferSharedIngressResponse], error) {
+	return c.transferSharedIngress.CallUnary(ctx, req)
+}
+
+// RecoverSharedIngress calls rementor.v1.ControlPlaneService.RecoverSharedIngress.
+func (c *controlPlaneServiceClient) RecoverSharedIngress(ctx context.Context, req *connect.Request[v1.RecoverSharedIngressRequest]) (*connect.Response[v1.RecoverSharedIngressResponse], error) {
+	return c.recoverSharedIngress.CallUnary(ctx, req)
+}
+
+// CancelSharedIngress calls rementor.v1.ControlPlaneService.CancelSharedIngress.
+func (c *controlPlaneServiceClient) CancelSharedIngress(ctx context.Context, req *connect.Request[v1.CancelSharedIngressRequest]) (*connect.Response[v1.CancelSharedIngressResponse], error) {
+	return c.cancelSharedIngress.CallUnary(ctx, req)
+}
+
+// SyncSharedIngress calls rementor.v1.ControlPlaneService.SyncSharedIngress.
+func (c *controlPlaneServiceClient) SyncSharedIngress(ctx context.Context, req *connect.Request[v1.SyncSharedIngressRequest]) (*connect.Response[v1.SyncSharedIngressResponse], error) {
+	return c.syncSharedIngress.CallUnary(ctx, req)
+}
+
+// GetPublicAccess calls rementor.v1.ControlPlaneService.GetPublicAccess.
+func (c *controlPlaneServiceClient) GetPublicAccess(ctx context.Context, req *connect.Request[v1.GetPublicAccessRequest]) (*connect.Response[v1.GetPublicAccessResponse], error) {
+	return c.getPublicAccess.CallUnary(ctx, req)
+}
+
+// SavePublicAccess calls rementor.v1.ControlPlaneService.SavePublicAccess.
+func (c *controlPlaneServiceClient) SavePublicAccess(ctx context.Context, req *connect.Request[v1.SavePublicAccessRequest]) (*connect.Response[v1.SavePublicAccessResponse], error) {
+	return c.savePublicAccess.CallUnary(ctx, req)
+}
+
+// GetPeerState calls rementor.v1.ControlPlaneService.GetPeerState.
+func (c *controlPlaneServiceClient) GetPeerState(ctx context.Context, req *connect.Request[v1.GetPeerStateRequest]) (*connect.Response[v1.GetPeerStateResponse], error) {
+	return c.getPeerState.CallUnary(ctx, req)
+}
+
+// ConfigurePeerConnection calls rementor.v1.ControlPlaneService.ConfigurePeerConnection.
+func (c *controlPlaneServiceClient) ConfigurePeerConnection(ctx context.Context, req *connect.Request[v1.ConfigurePeerConnectionRequest]) (*connect.Response[v1.ConfigurePeerConnectionResponse], error) {
+	return c.configurePeerConnection.CallUnary(ctx, req)
+}
+
+// CreatePeerInvitation calls rementor.v1.ControlPlaneService.CreatePeerInvitation.
+func (c *controlPlaneServiceClient) CreatePeerInvitation(ctx context.Context, req *connect.Request[v1.CreatePeerInvitationRequest]) (*connect.Response[v1.CreatePeerInvitationResponse], error) {
+	return c.createPeerInvitation.CallUnary(ctx, req)
+}
+
+// CancelPeerInvitation calls rementor.v1.ControlPlaneService.CancelPeerInvitation.
+func (c *controlPlaneServiceClient) CancelPeerInvitation(ctx context.Context, req *connect.Request[v1.CancelPeerInvitationRequest]) (*connect.Response[v1.CancelPeerInvitationResponse], error) {
+	return c.cancelPeerInvitation.CallUnary(ctx, req)
+}
+
+// InspectPeerInvitation calls rementor.v1.ControlPlaneService.InspectPeerInvitation.
+func (c *controlPlaneServiceClient) InspectPeerInvitation(ctx context.Context, req *connect.Request[v1.InspectPeerInvitationRequest]) (*connect.Response[v1.InspectPeerInvitationResponse], error) {
+	return c.inspectPeerInvitation.CallUnary(ctx, req)
+}
+
+// PairComputer calls rementor.v1.ControlPlaneService.PairComputer.
+func (c *controlPlaneServiceClient) PairComputer(ctx context.Context, req *connect.Request[v1.PairComputerRequest]) (*connect.Response[v1.PairComputerResponse], error) {
+	return c.pairComputer.CallUnary(ctx, req)
+}
+
+// UnpairComputer calls rementor.v1.ControlPlaneService.UnpairComputer.
+func (c *controlPlaneServiceClient) UnpairComputer(ctx context.Context, req *connect.Request[v1.UnpairComputerRequest]) (*connect.Response[v1.UnpairComputerResponse], error) {
+	return c.unpairComputer.CallUnary(ctx, req)
+}
+
+// CheckPeerConnection calls rementor.v1.ControlPlaneService.CheckPeerConnection.
+func (c *controlPlaneServiceClient) CheckPeerConnection(ctx context.Context, req *connect.Request[v1.CheckPeerConnectionRequest]) (*connect.Response[v1.CheckPeerConnectionResponse], error) {
+	return c.checkPeerConnection.CallUnary(ctx, req)
+}
+
+// ListPeerWorkspaces calls rementor.v1.ControlPlaneService.ListPeerWorkspaces.
+func (c *controlPlaneServiceClient) ListPeerWorkspaces(ctx context.Context, req *connect.Request[v1.ListPeerWorkspacesRequest]) (*connect.Response[v1.ListPeerWorkspacesResponse], error) {
+	return c.listPeerWorkspaces.CallUnary(ctx, req)
+}
+
+// GetWorkspaceInheritance calls rementor.v1.ControlPlaneService.GetWorkspaceInheritance.
+func (c *controlPlaneServiceClient) GetWorkspaceInheritance(ctx context.Context, req *connect.Request[v1.GetWorkspaceInheritanceRequest]) (*connect.Response[v1.GetWorkspaceInheritanceResponse], error) {
+	return c.getWorkspaceInheritance.CallUnary(ctx, req)
+}
+
+// FollowPeerWorkspace calls rementor.v1.ControlPlaneService.FollowPeerWorkspace.
+func (c *controlPlaneServiceClient) FollowPeerWorkspace(ctx context.Context, req *connect.Request[v1.FollowPeerWorkspaceRequest]) (*connect.Response[v1.FollowPeerWorkspaceResponse], error) {
+	return c.followPeerWorkspace.CallUnary(ctx, req)
+}
+
+// SyncPeerWorkspace calls rementor.v1.ControlPlaneService.SyncPeerWorkspace.
+func (c *controlPlaneServiceClient) SyncPeerWorkspace(ctx context.Context, req *connect.Request[v1.SyncPeerWorkspaceRequest]) (*connect.Response[v1.SyncPeerWorkspaceResponse], error) {
+	return c.syncPeerWorkspace.CallUnary(ctx, req)
+}
+
+// OverrideInheritedRoute calls rementor.v1.ControlPlaneService.OverrideInheritedRoute.
+func (c *controlPlaneServiceClient) OverrideInheritedRoute(ctx context.Context, req *connect.Request[v1.OverrideInheritedRouteRequest]) (*connect.Response[v1.OverrideInheritedRouteResponse], error) {
+	return c.overrideInheritedRoute.CallUnary(ctx, req)
+}
+
+// StopFollowingWorkspace calls rementor.v1.ControlPlaneService.StopFollowingWorkspace.
+func (c *controlPlaneServiceClient) StopFollowingWorkspace(ctx context.Context, req *connect.Request[v1.StopFollowingWorkspaceRequest]) (*connect.Response[v1.StopFollowingWorkspaceResponse], error) {
+	return c.stopFollowingWorkspace.CallUnary(ctx, req)
+}
+
+// GetFleetConfiguration calls rementor.v1.ControlPlaneService.GetFleetConfiguration.
+func (c *controlPlaneServiceClient) GetFleetConfiguration(ctx context.Context, req *connect.Request[v1.GetFleetConfigurationRequest]) (*connect.Response[v1.GetFleetConfigurationResponse], error) {
+	return c.getFleetConfiguration.CallUnary(ctx, req)
+}
+
+// ReviewFleetConfiguration calls rementor.v1.ControlPlaneService.ReviewFleetConfiguration.
+func (c *controlPlaneServiceClient) ReviewFleetConfiguration(ctx context.Context, req *connect.Request[v1.ReviewFleetConfigurationRequest]) (*connect.Response[v1.ReviewFleetConfigurationResponse], error) {
+	return c.reviewFleetConfiguration.CallUnary(ctx, req)
+}
+
+// SaveFleetConfiguration calls rementor.v1.ControlPlaneService.SaveFleetConfiguration.
+func (c *controlPlaneServiceClient) SaveFleetConfiguration(ctx context.Context, req *connect.Request[v1.SaveFleetConfigurationRequest]) (*connect.Response[v1.SaveFleetConfigurationResponse], error) {
+	return c.saveFleetConfiguration.CallUnary(ctx, req)
 }
 
 // CreateRoutingSession calls rementor.v1.ControlPlaneService.CreateRoutingSession.
@@ -491,6 +1083,43 @@ func (c *controlPlaneServiceClient) WatchHealth(ctx context.Context, req *connec
 
 // ControlPlaneServiceHandler is an implementation of the rementor.v1.ControlPlaneService service.
 type ControlPlaneServiceHandler interface {
+	GetTailscaleSharing(context.Context, *connect.Request[v1.GetTailscaleSharingRequest]) (*connect.Response[v1.GetTailscaleSharingResponse], error)
+	SetTailscaleSharing(context.Context, *connect.Request[v1.SetTailscaleSharingRequest]) (*connect.Response[v1.SetTailscaleSharingResponse], error)
+	PrepareTailscaleSharing(context.Context, *connect.Request[v1.PrepareTailscaleSharingRequest]) (*connect.Response[v1.PrepareTailscaleSharingResponse], error)
+	GetComputerFollowing(context.Context, *connect.Request[v1.GetComputerFollowingRequest]) (*connect.Response[v1.GetComputerFollowingResponse], error)
+	FollowComputer(context.Context, *connect.Request[v1.FollowComputerRequest]) (*connect.Response[v1.FollowComputerResponse], error)
+	SyncComputerConfiguration(context.Context, *connect.Request[v1.SyncComputerConfigurationRequest]) (*connect.Response[v1.SyncComputerConfigurationResponse], error)
+	StopFollowingComputer(context.Context, *connect.Request[v1.StopFollowingComputerRequest]) (*connect.Response[v1.StopFollowingComputerResponse], error)
+	SetEnvironmentFollowing(context.Context, *connect.Request[v1.SetEnvironmentFollowingRequest]) (*connect.Response[v1.SetEnvironmentFollowingResponse], error)
+	EditFollowedConfiguration(context.Context, *connect.Request[v1.EditFollowedConfigurationRequest]) (*connect.Response[v1.EditFollowedConfigurationResponse], error)
+	GetRoutingWorkspaces(context.Context, *connect.Request[v1.GetRoutingWorkspacesRequest]) (*connect.Response[v1.GetRoutingWorkspacesResponse], error)
+	GetSharedIngress(context.Context, *connect.Request[v1.GetSharedIngressRequest]) (*connect.Response[v1.GetSharedIngressResponse], error)
+	CreateSharedIngress(context.Context, *connect.Request[v1.CreateSharedIngressRequest]) (*connect.Response[v1.CreateSharedIngressResponse], error)
+	SaveSharedIngress(context.Context, *connect.Request[v1.SaveSharedIngressRequest]) (*connect.Response[v1.SaveSharedIngressResponse], error)
+	JoinSharedIngress(context.Context, *connect.Request[v1.JoinSharedIngressRequest]) (*connect.Response[v1.JoinSharedIngressResponse], error)
+	TransferSharedIngress(context.Context, *connect.Request[v1.TransferSharedIngressRequest]) (*connect.Response[v1.TransferSharedIngressResponse], error)
+	RecoverSharedIngress(context.Context, *connect.Request[v1.RecoverSharedIngressRequest]) (*connect.Response[v1.RecoverSharedIngressResponse], error)
+	CancelSharedIngress(context.Context, *connect.Request[v1.CancelSharedIngressRequest]) (*connect.Response[v1.CancelSharedIngressResponse], error)
+	SyncSharedIngress(context.Context, *connect.Request[v1.SyncSharedIngressRequest]) (*connect.Response[v1.SyncSharedIngressResponse], error)
+	GetPublicAccess(context.Context, *connect.Request[v1.GetPublicAccessRequest]) (*connect.Response[v1.GetPublicAccessResponse], error)
+	SavePublicAccess(context.Context, *connect.Request[v1.SavePublicAccessRequest]) (*connect.Response[v1.SavePublicAccessResponse], error)
+	GetPeerState(context.Context, *connect.Request[v1.GetPeerStateRequest]) (*connect.Response[v1.GetPeerStateResponse], error)
+	ConfigurePeerConnection(context.Context, *connect.Request[v1.ConfigurePeerConnectionRequest]) (*connect.Response[v1.ConfigurePeerConnectionResponse], error)
+	CreatePeerInvitation(context.Context, *connect.Request[v1.CreatePeerInvitationRequest]) (*connect.Response[v1.CreatePeerInvitationResponse], error)
+	CancelPeerInvitation(context.Context, *connect.Request[v1.CancelPeerInvitationRequest]) (*connect.Response[v1.CancelPeerInvitationResponse], error)
+	InspectPeerInvitation(context.Context, *connect.Request[v1.InspectPeerInvitationRequest]) (*connect.Response[v1.InspectPeerInvitationResponse], error)
+	PairComputer(context.Context, *connect.Request[v1.PairComputerRequest]) (*connect.Response[v1.PairComputerResponse], error)
+	UnpairComputer(context.Context, *connect.Request[v1.UnpairComputerRequest]) (*connect.Response[v1.UnpairComputerResponse], error)
+	CheckPeerConnection(context.Context, *connect.Request[v1.CheckPeerConnectionRequest]) (*connect.Response[v1.CheckPeerConnectionResponse], error)
+	ListPeerWorkspaces(context.Context, *connect.Request[v1.ListPeerWorkspacesRequest]) (*connect.Response[v1.ListPeerWorkspacesResponse], error)
+	GetWorkspaceInheritance(context.Context, *connect.Request[v1.GetWorkspaceInheritanceRequest]) (*connect.Response[v1.GetWorkspaceInheritanceResponse], error)
+	FollowPeerWorkspace(context.Context, *connect.Request[v1.FollowPeerWorkspaceRequest]) (*connect.Response[v1.FollowPeerWorkspaceResponse], error)
+	SyncPeerWorkspace(context.Context, *connect.Request[v1.SyncPeerWorkspaceRequest]) (*connect.Response[v1.SyncPeerWorkspaceResponse], error)
+	OverrideInheritedRoute(context.Context, *connect.Request[v1.OverrideInheritedRouteRequest]) (*connect.Response[v1.OverrideInheritedRouteResponse], error)
+	StopFollowingWorkspace(context.Context, *connect.Request[v1.StopFollowingWorkspaceRequest]) (*connect.Response[v1.StopFollowingWorkspaceResponse], error)
+	GetFleetConfiguration(context.Context, *connect.Request[v1.GetFleetConfigurationRequest]) (*connect.Response[v1.GetFleetConfigurationResponse], error)
+	ReviewFleetConfiguration(context.Context, *connect.Request[v1.ReviewFleetConfigurationRequest]) (*connect.Response[v1.ReviewFleetConfigurationResponse], error)
+	SaveFleetConfiguration(context.Context, *connect.Request[v1.SaveFleetConfigurationRequest]) (*connect.Response[v1.SaveFleetConfigurationResponse], error)
 	CreateRoutingSession(context.Context, *connect.Request[v1.CreateRoutingSessionRequest]) (*connect.Response[v1.CreateRoutingSessionResponse], error)
 	RefreshRoutingSession(context.Context, *connect.Request[v1.RefreshRoutingSessionRequest]) (*connect.Response[v1.RefreshRoutingSessionResponse], error)
 	ListWorkspaces(context.Context, *connect.Request[v1.ListWorkspacesRequest]) (*connect.Response[v1.ListWorkspacesResponse], error)
@@ -527,6 +1156,228 @@ type ControlPlaneServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewControlPlaneServiceHandler(svc ControlPlaneServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	controlPlaneServiceMethods := v1.File_rementor_v1_rementor_proto.Services().ByName("ControlPlaneService").Methods()
+	controlPlaneServiceGetTailscaleSharingHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceGetTailscaleSharingProcedure,
+		svc.GetTailscaleSharing,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("GetTailscaleSharing")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceSetTailscaleSharingHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceSetTailscaleSharingProcedure,
+		svc.SetTailscaleSharing,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("SetTailscaleSharing")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServicePrepareTailscaleSharingHandler := connect.NewUnaryHandler(
+		ControlPlaneServicePrepareTailscaleSharingProcedure,
+		svc.PrepareTailscaleSharing,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("PrepareTailscaleSharing")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceGetComputerFollowingHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceGetComputerFollowingProcedure,
+		svc.GetComputerFollowing,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("GetComputerFollowing")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceFollowComputerHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceFollowComputerProcedure,
+		svc.FollowComputer,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("FollowComputer")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceSyncComputerConfigurationHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceSyncComputerConfigurationProcedure,
+		svc.SyncComputerConfiguration,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("SyncComputerConfiguration")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceStopFollowingComputerHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceStopFollowingComputerProcedure,
+		svc.StopFollowingComputer,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("StopFollowingComputer")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceSetEnvironmentFollowingHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceSetEnvironmentFollowingProcedure,
+		svc.SetEnvironmentFollowing,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("SetEnvironmentFollowing")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceEditFollowedConfigurationHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceEditFollowedConfigurationProcedure,
+		svc.EditFollowedConfiguration,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("EditFollowedConfiguration")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceGetRoutingWorkspacesHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceGetRoutingWorkspacesProcedure,
+		svc.GetRoutingWorkspaces,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("GetRoutingWorkspaces")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceGetSharedIngressHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceGetSharedIngressProcedure,
+		svc.GetSharedIngress,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("GetSharedIngress")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceCreateSharedIngressHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceCreateSharedIngressProcedure,
+		svc.CreateSharedIngress,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("CreateSharedIngress")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceSaveSharedIngressHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceSaveSharedIngressProcedure,
+		svc.SaveSharedIngress,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("SaveSharedIngress")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceJoinSharedIngressHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceJoinSharedIngressProcedure,
+		svc.JoinSharedIngress,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("JoinSharedIngress")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceTransferSharedIngressHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceTransferSharedIngressProcedure,
+		svc.TransferSharedIngress,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("TransferSharedIngress")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceRecoverSharedIngressHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceRecoverSharedIngressProcedure,
+		svc.RecoverSharedIngress,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("RecoverSharedIngress")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceCancelSharedIngressHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceCancelSharedIngressProcedure,
+		svc.CancelSharedIngress,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("CancelSharedIngress")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceSyncSharedIngressHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceSyncSharedIngressProcedure,
+		svc.SyncSharedIngress,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("SyncSharedIngress")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceGetPublicAccessHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceGetPublicAccessProcedure,
+		svc.GetPublicAccess,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("GetPublicAccess")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceSavePublicAccessHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceSavePublicAccessProcedure,
+		svc.SavePublicAccess,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("SavePublicAccess")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceGetPeerStateHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceGetPeerStateProcedure,
+		svc.GetPeerState,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("GetPeerState")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceConfigurePeerConnectionHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceConfigurePeerConnectionProcedure,
+		svc.ConfigurePeerConnection,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("ConfigurePeerConnection")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceCreatePeerInvitationHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceCreatePeerInvitationProcedure,
+		svc.CreatePeerInvitation,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("CreatePeerInvitation")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceCancelPeerInvitationHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceCancelPeerInvitationProcedure,
+		svc.CancelPeerInvitation,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("CancelPeerInvitation")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceInspectPeerInvitationHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceInspectPeerInvitationProcedure,
+		svc.InspectPeerInvitation,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("InspectPeerInvitation")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServicePairComputerHandler := connect.NewUnaryHandler(
+		ControlPlaneServicePairComputerProcedure,
+		svc.PairComputer,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("PairComputer")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceUnpairComputerHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceUnpairComputerProcedure,
+		svc.UnpairComputer,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("UnpairComputer")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceCheckPeerConnectionHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceCheckPeerConnectionProcedure,
+		svc.CheckPeerConnection,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("CheckPeerConnection")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceListPeerWorkspacesHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceListPeerWorkspacesProcedure,
+		svc.ListPeerWorkspaces,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("ListPeerWorkspaces")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceGetWorkspaceInheritanceHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceGetWorkspaceInheritanceProcedure,
+		svc.GetWorkspaceInheritance,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("GetWorkspaceInheritance")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceFollowPeerWorkspaceHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceFollowPeerWorkspaceProcedure,
+		svc.FollowPeerWorkspace,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("FollowPeerWorkspace")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceSyncPeerWorkspaceHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceSyncPeerWorkspaceProcedure,
+		svc.SyncPeerWorkspace,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("SyncPeerWorkspace")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceOverrideInheritedRouteHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceOverrideInheritedRouteProcedure,
+		svc.OverrideInheritedRoute,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("OverrideInheritedRoute")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceStopFollowingWorkspaceHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceStopFollowingWorkspaceProcedure,
+		svc.StopFollowingWorkspace,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("StopFollowingWorkspace")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceGetFleetConfigurationHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceGetFleetConfigurationProcedure,
+		svc.GetFleetConfiguration,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("GetFleetConfiguration")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceReviewFleetConfigurationHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceReviewFleetConfigurationProcedure,
+		svc.ReviewFleetConfiguration,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("ReviewFleetConfiguration")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceSaveFleetConfigurationHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceSaveFleetConfigurationProcedure,
+		svc.SaveFleetConfiguration,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("SaveFleetConfiguration")),
+		connect.WithHandlerOptions(opts...),
+	)
 	controlPlaneServiceCreateRoutingSessionHandler := connect.NewUnaryHandler(
 		ControlPlaneServiceCreateRoutingSessionProcedure,
 		svc.CreateRoutingSession,
@@ -691,6 +1542,80 @@ func NewControlPlaneServiceHandler(svc ControlPlaneServiceHandler, opts ...conne
 	)
 	return "/rementor.v1.ControlPlaneService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case ControlPlaneServiceGetTailscaleSharingProcedure:
+			controlPlaneServiceGetTailscaleSharingHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceSetTailscaleSharingProcedure:
+			controlPlaneServiceSetTailscaleSharingHandler.ServeHTTP(w, r)
+		case ControlPlaneServicePrepareTailscaleSharingProcedure:
+			controlPlaneServicePrepareTailscaleSharingHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceGetComputerFollowingProcedure:
+			controlPlaneServiceGetComputerFollowingHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceFollowComputerProcedure:
+			controlPlaneServiceFollowComputerHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceSyncComputerConfigurationProcedure:
+			controlPlaneServiceSyncComputerConfigurationHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceStopFollowingComputerProcedure:
+			controlPlaneServiceStopFollowingComputerHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceSetEnvironmentFollowingProcedure:
+			controlPlaneServiceSetEnvironmentFollowingHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceEditFollowedConfigurationProcedure:
+			controlPlaneServiceEditFollowedConfigurationHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceGetRoutingWorkspacesProcedure:
+			controlPlaneServiceGetRoutingWorkspacesHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceGetSharedIngressProcedure:
+			controlPlaneServiceGetSharedIngressHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceCreateSharedIngressProcedure:
+			controlPlaneServiceCreateSharedIngressHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceSaveSharedIngressProcedure:
+			controlPlaneServiceSaveSharedIngressHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceJoinSharedIngressProcedure:
+			controlPlaneServiceJoinSharedIngressHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceTransferSharedIngressProcedure:
+			controlPlaneServiceTransferSharedIngressHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceRecoverSharedIngressProcedure:
+			controlPlaneServiceRecoverSharedIngressHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceCancelSharedIngressProcedure:
+			controlPlaneServiceCancelSharedIngressHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceSyncSharedIngressProcedure:
+			controlPlaneServiceSyncSharedIngressHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceGetPublicAccessProcedure:
+			controlPlaneServiceGetPublicAccessHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceSavePublicAccessProcedure:
+			controlPlaneServiceSavePublicAccessHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceGetPeerStateProcedure:
+			controlPlaneServiceGetPeerStateHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceConfigurePeerConnectionProcedure:
+			controlPlaneServiceConfigurePeerConnectionHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceCreatePeerInvitationProcedure:
+			controlPlaneServiceCreatePeerInvitationHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceCancelPeerInvitationProcedure:
+			controlPlaneServiceCancelPeerInvitationHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceInspectPeerInvitationProcedure:
+			controlPlaneServiceInspectPeerInvitationHandler.ServeHTTP(w, r)
+		case ControlPlaneServicePairComputerProcedure:
+			controlPlaneServicePairComputerHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceUnpairComputerProcedure:
+			controlPlaneServiceUnpairComputerHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceCheckPeerConnectionProcedure:
+			controlPlaneServiceCheckPeerConnectionHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceListPeerWorkspacesProcedure:
+			controlPlaneServiceListPeerWorkspacesHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceGetWorkspaceInheritanceProcedure:
+			controlPlaneServiceGetWorkspaceInheritanceHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceFollowPeerWorkspaceProcedure:
+			controlPlaneServiceFollowPeerWorkspaceHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceSyncPeerWorkspaceProcedure:
+			controlPlaneServiceSyncPeerWorkspaceHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceOverrideInheritedRouteProcedure:
+			controlPlaneServiceOverrideInheritedRouteHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceStopFollowingWorkspaceProcedure:
+			controlPlaneServiceStopFollowingWorkspaceHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceGetFleetConfigurationProcedure:
+			controlPlaneServiceGetFleetConfigurationHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceReviewFleetConfigurationProcedure:
+			controlPlaneServiceReviewFleetConfigurationHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceSaveFleetConfigurationProcedure:
+			controlPlaneServiceSaveFleetConfigurationHandler.ServeHTTP(w, r)
 		case ControlPlaneServiceCreateRoutingSessionProcedure:
 			controlPlaneServiceCreateRoutingSessionHandler.ServeHTTP(w, r)
 		case ControlPlaneServiceRefreshRoutingSessionProcedure:
@@ -753,6 +1678,154 @@ func NewControlPlaneServiceHandler(svc ControlPlaneServiceHandler, opts ...conne
 
 // UnimplementedControlPlaneServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedControlPlaneServiceHandler struct{}
+
+func (UnimplementedControlPlaneServiceHandler) GetTailscaleSharing(context.Context, *connect.Request[v1.GetTailscaleSharingRequest]) (*connect.Response[v1.GetTailscaleSharingResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.GetTailscaleSharing is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) SetTailscaleSharing(context.Context, *connect.Request[v1.SetTailscaleSharingRequest]) (*connect.Response[v1.SetTailscaleSharingResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.SetTailscaleSharing is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) PrepareTailscaleSharing(context.Context, *connect.Request[v1.PrepareTailscaleSharingRequest]) (*connect.Response[v1.PrepareTailscaleSharingResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.PrepareTailscaleSharing is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) GetComputerFollowing(context.Context, *connect.Request[v1.GetComputerFollowingRequest]) (*connect.Response[v1.GetComputerFollowingResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.GetComputerFollowing is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) FollowComputer(context.Context, *connect.Request[v1.FollowComputerRequest]) (*connect.Response[v1.FollowComputerResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.FollowComputer is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) SyncComputerConfiguration(context.Context, *connect.Request[v1.SyncComputerConfigurationRequest]) (*connect.Response[v1.SyncComputerConfigurationResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.SyncComputerConfiguration is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) StopFollowingComputer(context.Context, *connect.Request[v1.StopFollowingComputerRequest]) (*connect.Response[v1.StopFollowingComputerResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.StopFollowingComputer is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) SetEnvironmentFollowing(context.Context, *connect.Request[v1.SetEnvironmentFollowingRequest]) (*connect.Response[v1.SetEnvironmentFollowingResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.SetEnvironmentFollowing is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) EditFollowedConfiguration(context.Context, *connect.Request[v1.EditFollowedConfigurationRequest]) (*connect.Response[v1.EditFollowedConfigurationResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.EditFollowedConfiguration is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) GetRoutingWorkspaces(context.Context, *connect.Request[v1.GetRoutingWorkspacesRequest]) (*connect.Response[v1.GetRoutingWorkspacesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.GetRoutingWorkspaces is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) GetSharedIngress(context.Context, *connect.Request[v1.GetSharedIngressRequest]) (*connect.Response[v1.GetSharedIngressResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.GetSharedIngress is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) CreateSharedIngress(context.Context, *connect.Request[v1.CreateSharedIngressRequest]) (*connect.Response[v1.CreateSharedIngressResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.CreateSharedIngress is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) SaveSharedIngress(context.Context, *connect.Request[v1.SaveSharedIngressRequest]) (*connect.Response[v1.SaveSharedIngressResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.SaveSharedIngress is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) JoinSharedIngress(context.Context, *connect.Request[v1.JoinSharedIngressRequest]) (*connect.Response[v1.JoinSharedIngressResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.JoinSharedIngress is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) TransferSharedIngress(context.Context, *connect.Request[v1.TransferSharedIngressRequest]) (*connect.Response[v1.TransferSharedIngressResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.TransferSharedIngress is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) RecoverSharedIngress(context.Context, *connect.Request[v1.RecoverSharedIngressRequest]) (*connect.Response[v1.RecoverSharedIngressResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.RecoverSharedIngress is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) CancelSharedIngress(context.Context, *connect.Request[v1.CancelSharedIngressRequest]) (*connect.Response[v1.CancelSharedIngressResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.CancelSharedIngress is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) SyncSharedIngress(context.Context, *connect.Request[v1.SyncSharedIngressRequest]) (*connect.Response[v1.SyncSharedIngressResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.SyncSharedIngress is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) GetPublicAccess(context.Context, *connect.Request[v1.GetPublicAccessRequest]) (*connect.Response[v1.GetPublicAccessResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.GetPublicAccess is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) SavePublicAccess(context.Context, *connect.Request[v1.SavePublicAccessRequest]) (*connect.Response[v1.SavePublicAccessResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.SavePublicAccess is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) GetPeerState(context.Context, *connect.Request[v1.GetPeerStateRequest]) (*connect.Response[v1.GetPeerStateResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.GetPeerState is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) ConfigurePeerConnection(context.Context, *connect.Request[v1.ConfigurePeerConnectionRequest]) (*connect.Response[v1.ConfigurePeerConnectionResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.ConfigurePeerConnection is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) CreatePeerInvitation(context.Context, *connect.Request[v1.CreatePeerInvitationRequest]) (*connect.Response[v1.CreatePeerInvitationResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.CreatePeerInvitation is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) CancelPeerInvitation(context.Context, *connect.Request[v1.CancelPeerInvitationRequest]) (*connect.Response[v1.CancelPeerInvitationResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.CancelPeerInvitation is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) InspectPeerInvitation(context.Context, *connect.Request[v1.InspectPeerInvitationRequest]) (*connect.Response[v1.InspectPeerInvitationResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.InspectPeerInvitation is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) PairComputer(context.Context, *connect.Request[v1.PairComputerRequest]) (*connect.Response[v1.PairComputerResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.PairComputer is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) UnpairComputer(context.Context, *connect.Request[v1.UnpairComputerRequest]) (*connect.Response[v1.UnpairComputerResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.UnpairComputer is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) CheckPeerConnection(context.Context, *connect.Request[v1.CheckPeerConnectionRequest]) (*connect.Response[v1.CheckPeerConnectionResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.CheckPeerConnection is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) ListPeerWorkspaces(context.Context, *connect.Request[v1.ListPeerWorkspacesRequest]) (*connect.Response[v1.ListPeerWorkspacesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.ListPeerWorkspaces is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) GetWorkspaceInheritance(context.Context, *connect.Request[v1.GetWorkspaceInheritanceRequest]) (*connect.Response[v1.GetWorkspaceInheritanceResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.GetWorkspaceInheritance is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) FollowPeerWorkspace(context.Context, *connect.Request[v1.FollowPeerWorkspaceRequest]) (*connect.Response[v1.FollowPeerWorkspaceResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.FollowPeerWorkspace is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) SyncPeerWorkspace(context.Context, *connect.Request[v1.SyncPeerWorkspaceRequest]) (*connect.Response[v1.SyncPeerWorkspaceResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.SyncPeerWorkspace is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) OverrideInheritedRoute(context.Context, *connect.Request[v1.OverrideInheritedRouteRequest]) (*connect.Response[v1.OverrideInheritedRouteResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.OverrideInheritedRoute is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) StopFollowingWorkspace(context.Context, *connect.Request[v1.StopFollowingWorkspaceRequest]) (*connect.Response[v1.StopFollowingWorkspaceResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.StopFollowingWorkspace is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) GetFleetConfiguration(context.Context, *connect.Request[v1.GetFleetConfigurationRequest]) (*connect.Response[v1.GetFleetConfigurationResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.GetFleetConfiguration is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) ReviewFleetConfiguration(context.Context, *connect.Request[v1.ReviewFleetConfigurationRequest]) (*connect.Response[v1.ReviewFleetConfigurationResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.ReviewFleetConfiguration is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) SaveFleetConfiguration(context.Context, *connect.Request[v1.SaveFleetConfigurationRequest]) (*connect.Response[v1.SaveFleetConfigurationResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.SaveFleetConfiguration is not implemented"))
+}
 
 func (UnimplementedControlPlaneServiceHandler) CreateRoutingSession(context.Context, *connect.Request[v1.CreateRoutingSessionRequest]) (*connect.Response[v1.CreateRoutingSessionResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.CreateRoutingSession is not implemented"))

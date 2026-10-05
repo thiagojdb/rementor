@@ -37,7 +37,7 @@ func TestRenderConfigActiveLocalRootApp(t *testing.T) {
 	assertContains(t, conf, "proxy_pass http://localhost:9311;")
 	assertContains(t, conf, "location /portal/ {")
 	assertContains(t, conf, "proxy_pass http://localhost:9311/;")
-	assertNotContains(t, conf, "proxy_pass https://remote.example.test:443;")
+	assertNotContains(t, conf, `set $rementor_remote_authority "remote.example.test:443";`)
 }
 
 func TestRenderConfigRemoteRootAppUsesContextAwareFallback(t *testing.T) {
@@ -62,9 +62,10 @@ func TestRenderConfigRemoteRootAppUsesContextAwareFallback(t *testing.T) {
 	assertContains(t, conf, "rewrite ^ /portal/home break;")
 	assertContains(t, conf, "location / {")
 	assertContains(t, conf, "rewrite ^ /portal$uri break;")
-	assertContains(t, conf, "proxy_pass https://remote.example.test:443;")
-	assertNotContains(t, conf, "proxy_pass https://root.remote.example.test:443;")
-	assertContains(t, conf, "proxy_set_header X-Forwarded-Host remote.example.test;")
+	assertContains(t, conf, `set $rementor_remote_authority "remote.example.test:443";`)
+	assertNotContains(t, conf, `set $rementor_remote_authority "root.remote.example.test:443";`)
+	assertContains(t, conf, "proxy_set_header X-Forwarded-Host $rementor_ingress_host;")
+	assertContains(t, conf, `"remote.example.test"`)
 	assertContains(t, conf, "proxy_ssl_server_name on;")
 }
 
@@ -332,7 +333,7 @@ func TestRenderConfigMarksMissingLocalTargetAsFallback(t *testing.T) {
 
 	block := serverBlock(t, conf, "api.localhost")
 	assertContains(t, block, `add_header X-Rementor-Effective-Mode $rementor_proof_mode always;`)
-	assertContains(t, block, `proxy_pass https://orders.remote.example.test:443;`)
+	assertContains(t, block, `set $rementor_remote_authority "orders.remote.example.test:443";`)
 }
 
 func TestGeneratedConfigParsesWithNginxWhenAvailable(t *testing.T) {

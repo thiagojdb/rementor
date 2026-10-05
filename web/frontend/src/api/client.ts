@@ -194,3 +194,56 @@ export function refreshRoutingSession(id: string, previewToken = '', apply = fal
 export function registerSessionApplication(workspaceId: string, application: { id: string; port: number }) {
   return call(() => client.upsertApplication({ workspaceId, application }))
 }
+
+export function getFleetConfiguration() {
+  return call(() => client.getFleetConfiguration({}))
+}
+
+export function reviewFleetConfiguration(request: import('../gen/rementor/v1/rementor_pb').ReviewFleetConfigurationRequest) {
+  return call(() => client.reviewFleetConfiguration(request))
+}
+
+export function saveFleetConfiguration(request: import('../gen/rementor/v1/rementor_pb').SaveFleetConfigurationRequest) {
+  return call(() => client.saveFleetConfiguration(request))
+}
+
+export const getPeerState = () => call(() => client.getPeerState({}))
+export const configurePeerConnection = (listenAddress: string, url: string) => call(async () => { const result = await client.configurePeerConnection({ listenAddress, url }); if (!result.state) throw new Error('Missing connection state'); return result.state })
+export const createPeerInvitation = () => call(() => client.createPeerInvitation({}))
+export const cancelPeerInvitation = () => call(() => client.cancelPeerInvitation({}))
+export const inspectPeerInvitation = (invitation: string) => call(() => client.inspectPeerInvitation({ invitation }))
+export const pairComputer = (invitation: string, confirmedFingerprint: string) => call(() => client.pairComputer({ invitation, confirmedFingerprint }))
+export const unpairComputer = (fingerprint: string) => call(async () => { const result = await client.unpairComputer({ fingerprint }); if (!result.state) throw new Error('Missing connection state'); return result.state })
+export const checkPeerConnection = (fingerprint: string) => call(() => client.checkPeerConnection({ fingerprint }))
+
+export const listPeerWorkspaces = (fingerprint: string) => call(() => client.listPeerWorkspaces({ fingerprint }))
+export const getWorkspaceInheritance = (workspaceId: string) => call(() => client.getWorkspaceInheritance({ workspaceId }))
+export const followPeerWorkspace = (workspaceId: string, fingerprint: string, scope: import('@bufbuild/protobuf').PlainMessage<import('../gen/rementor/v1/rementor_pb').PeerWorkspaceScope>, expectedRouteVersion: bigint) => call(() => client.followPeerWorkspace({ workspaceId, fingerprint, scope, expectedRouteVersion }))
+export const syncPeerWorkspace = (workspaceId: string) => call(() => client.syncPeerWorkspace({ workspaceId }))
+export const overrideInheritedRoute = (workspaceId: string, applicationId: string, expectedRouteVersion: bigint, selection?: import('@bufbuild/protobuf').PlainMessage<import('../gen/rementor/v1/rementor_pb').InheritedRouteSelection>) => call(() => client.overrideInheritedRoute({ workspaceId, applicationId, expectedRouteVersion, selection }))
+export const stopFollowingWorkspace = (workspaceId: string, expectedRouteVersion: bigint) => call(() => client.stopFollowingWorkspace({ workspaceId, expectedRouteVersion }))
+
+export const getPublicAccess = () => call(() => client.getPublicAccess({}))
+export const getTailscaleSharing = () => call(() => client.getTailscaleSharing({}))
+export const setTailscaleSharing = (enabled: boolean, expectedRevision: bigint) => call(() => client.setTailscaleSharing({ enabled, expectedRevision }))
+export const prepareTailscaleSharing = (workspaceId: string) => call(() => client.prepareTailscaleSharing({ workspaceId }))
+export const savePublicAccess = (document: import('../gen/rementor/v1/rementor_pb').PublicAccessDocument, expectedRevision: bigint) => call(() => client.savePublicAccess({ document, expectedRevision }))
+
+export const getSharedIngress = () => call(() => client.getSharedIngress({}))
+export const createSharedIngress = (configuration: import('../gen/rementor/v1/rementor_pb').SharedIngressConfiguration, expectedRevision: bigint) => call(() => client.createSharedIngress({ configuration, expectedRevision }))
+export const saveSharedIngress = (configuration: import('../gen/rementor/v1/rementor_pb').SharedIngressConfiguration, expectedVersion: bigint) => call(() => client.saveSharedIngress({ configuration, expectedVersion }))
+export const joinSharedIngress = (ownerFingerprint: string, expectedRevision: bigint) => call(() => client.joinSharedIngress({ ownerFingerprint, expectedRevision }))
+export const transferSharedIngress = (destinationFingerprint: string, expectedVersion: bigint) => call(() => client.transferSharedIngress({ destinationFingerprint, expectedVersion }))
+export const recoverSharedIngress = (expectedRevision: bigint) => call(() => client.recoverSharedIngress({ expectedRevision }))
+export const cancelSharedIngress = (expectedRevision: bigint) => call(() => client.cancelSharedIngress({ expectedRevision }))
+export const syncSharedIngress = () => call(() => client.syncSharedIngress({}))
+
+export const getRoutingWorkspaces = (routingOwnerFingerprint: string) => call(() => client.getRoutingWorkspaces({ routingOwnerFingerprint }))
+
+export const getComputerFollowing = () => call(() => client.getComputerFollowing({}))
+export const followComputer = (fingerprint: string, expectedRevision: bigint) => call(() => client.followComputer({fingerprint, expectedRevision}))
+export const syncComputerConfiguration = () => call(() => client.syncComputerConfiguration({}))
+export const stopFollowingComputer = (expectedRevision: bigint) => call(() => client.stopFollowingComputer({expectedRevision}))
+export const setEnvironmentFollowing = (workspaceId: string, following: boolean, expectedRevision: bigint, expectedWorkspaceVersion: bigint) => call(() => client.setEnvironmentFollowing({workspaceId, following, expectedRevision, expectedWorkspaceVersion}))
+
+export const editFollowedConfiguration = (request: import('@bufbuild/protobuf').PartialMessage<import('../gen/rementor/v1/rementor_pb').EditFollowedConfigurationRequest>) => call(() => client.editFollowedConfiguration(request))

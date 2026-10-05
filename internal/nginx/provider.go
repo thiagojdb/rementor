@@ -389,11 +389,13 @@ func (rp *RoutingProvider) render(workspaces []*models.Workspace) (string, error
 			legacy = append(legacy, app.LegacyPublicPath, app.LegacyUpstreamContext)
 		}
 		encoded, err := json.Marshal(struct {
-			Workspace *models.Workspace
-			Legacy    []bool
-			Domain    string
-			Listen    []string
-		}{&copyWS, legacy, config.Config.RementorDomain, listenDirectives()})
+			Workspace   *models.Workspace
+			Legacy      []bool
+			Domain      string
+			Listen      []string
+			PeerGateway string
+			ControlPort int
+		}{&copyWS, legacy, config.Config.RementorDomain, listenDirectives(), os.Getenv("REMENTOR_PEER_GATEWAY_PORT"), controlPlanePort()})
 		if err != nil {
 			return "", err
 		}
@@ -406,8 +408,7 @@ func (rp *RoutingProvider) render(workspaces []*models.Workspace) (string, error
 			}
 			namespace := sha256.Sum256([]byte(ws.WorkspaceID))
 			prefix := "$rementor_" + hex.EncodeToString(namespace[:8]) + "_"
-			fragment = strings.ReplaceAll(fragment, "$rementor_proof", prefix+"proof")
-			fragment = strings.ReplaceAll(fragment, "$rementor_location", prefix+"location")
+			fragment = strings.ReplaceAll(fragment, "$rementor_", prefix)
 			fragment = configDigestPattern.ReplaceAllString(fragment, `X-Rementor-Config "REMENTOR_CONFIG_DIGEST"`)
 			entry = renderCacheEntry{key: key, text: fragment}
 		}

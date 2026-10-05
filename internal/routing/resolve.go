@@ -34,6 +34,27 @@ type Availability struct {
 	UnavailableNodes   map[string]bool
 }
 
+// InspectRoute reports intent for a specific route, including routes shadowed
+// by a more specific public matcher. It makes no network requests.
+func (r *Resolver) InspectRoute(routeID, instanceID string) (Resolution, error) {
+	if _, ok := r.instances[instanceID]; !ok {
+		return Resolution{}, ErrInstanceNotFound
+	}
+	route, ok := r.routes[routeID]
+	if !ok {
+		return Resolution{}, ErrRouteNotFound
+	}
+	targetID, source, chain := r.selection(routeID, instanceID)
+	result := Resolution{RouteID: routeID, AppID: route.AppID, ServiceID: route.ServiceID, InstanceID: instanceID, SourceInstance: source, InstanceChain: chain, SelectedTargetID: targetID, SelectionSource: "default"}
+	if source == instanceID {
+		result.SelectionSource = "instance"
+	} else if source != "" {
+		result.SelectionSource = "inherited"
+	}
+	result.Target, result.RouteChain, _ = r.resolveTarget(routeID, instanceID, Availability{})
+	return result, nil
+}
+
 // Resolve selects a target for a URL at the serving Rementor instance.
 // Empty instanceID selects the declared shared ingress environment.
 // availability is an observation for this inspection: omitted targets have

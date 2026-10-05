@@ -47,11 +47,21 @@ _Avoid_: Global local mode
 
 **Rementor instance**:
 A member of the user's fleet that owns routing intent and can serve requests.
-It may inherit another instance's environment and override individual routes.
+It may follow another instance’s complete environment configuration. Edits to
+followed routes change the source instance. Extra environments remain local.
+An environment can stop following, keeping its current setup for local edits.
 _Avoid_: Client device, routing profile
 
+**Followed configuration**:
+The complete set of environments followed from another instance, excluding its
+routing sessions. Source edits propagate to followers; additional local
+environments remain independent. Individually excluded environments also remain
+local across synchronization and restart. Resuming replaces their local settings
+with the current source configuration.
+_Avoid_: Session attachment, per-service receiver override
+
 **Inherited environment**:
-The routing choices followed from another instance. An inherited endpoint keeps
+An environment in a followed configuration. An inherited endpoint keeps
 its owning device; inheriting Brutus's local service still targets Brutus.
 _Avoid_: Configuration copy, local port on the inheriting device
 

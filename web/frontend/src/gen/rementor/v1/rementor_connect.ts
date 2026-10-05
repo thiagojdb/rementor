@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { ApplyRouteRequest, ApplyRouteResponse, CreateRoutingSessionRequest, CreateRoutingSessionResponse, CreateWorkspaceRequest, CreateWorkspaceResponse, DeleteApplicationRequest, DeleteApplicationResponse, DeleteWorkspaceRequest, DeleteWorkspaceResponse, GetApplicationRequest, GetApplicationResponse, GetRouteConflictsRequest, GetRouteConflictsResponse, GetRoutePatternRequest, GetRoutePatternResponse, GetRouteRequest, GetRouteResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListApplicationsRequest, ListApplicationsResponse, ListWorkspacesRequest, ListWorkspacesResponse, PlanRouteRequest, PlanRouteResponse, RefreshRoutingSessionRequest, RefreshRoutingSessionResponse, RegisterApplicationAliasRequest, RegisterApplicationAliasResponse, ResolveApplicationRequest, ResolveApplicationResponse, ResolveBrowserURLRequest, ResolveBrowserURLResponse, ResolveRouteRequest, ResolveRouteResponse, SyncRouteRequest, SyncRouteResponse, SyncWorkspaceRoutingRequest, SyncWorkspaceRoutingResponse, ToggleAllToLocalRequest, ToggleAllToLocalResponse, ToggleAllToRemoteRequest, ToggleAllToRemoteResponse, ToggleApplicationRequest, ToggleApplicationResponse, UpdateRoutePatternRequest, UpdateRoutePatternResponse, UpdateWorkspaceRequest, UpdateWorkspaceResponse, UpsertApplicationRequest, UpsertApplicationResponse, WatchHealthRequest, WatchHealthResponse } from "./rementor_pb.js";
+import { ApplyRouteRequest, ApplyRouteResponse, CancelPeerInvitationRequest, CancelPeerInvitationResponse, CancelSharedIngressRequest, CancelSharedIngressResponse, CheckPeerConnectionRequest, CheckPeerConnectionResponse, ConfigurePeerConnectionRequest, ConfigurePeerConnectionResponse, CreatePeerInvitationRequest, CreatePeerInvitationResponse, CreateRoutingSessionRequest, CreateRoutingSessionResponse, CreateSharedIngressRequest, CreateSharedIngressResponse, CreateWorkspaceRequest, CreateWorkspaceResponse, DeleteApplicationRequest, DeleteApplicationResponse, DeleteWorkspaceRequest, DeleteWorkspaceResponse, EditFollowedConfigurationRequest, EditFollowedConfigurationResponse, FollowComputerRequest, FollowComputerResponse, FollowPeerWorkspaceRequest, FollowPeerWorkspaceResponse, GetApplicationRequest, GetApplicationResponse, GetComputerFollowingRequest, GetComputerFollowingResponse, GetFleetConfigurationRequest, GetFleetConfigurationResponse, GetPeerStateRequest, GetPeerStateResponse, GetPublicAccessRequest, GetPublicAccessResponse, GetRouteConflictsRequest, GetRouteConflictsResponse, GetRoutePatternRequest, GetRoutePatternResponse, GetRouteRequest, GetRouteResponse, GetRoutingWorkspacesRequest, GetRoutingWorkspacesResponse, GetSharedIngressRequest, GetSharedIngressResponse, GetTailscaleSharingRequest, GetTailscaleSharingResponse, GetWorkspaceInheritanceRequest, GetWorkspaceInheritanceResponse, GetWorkspaceRequest, GetWorkspaceResponse, InspectPeerInvitationRequest, InspectPeerInvitationResponse, JoinSharedIngressRequest, JoinSharedIngressResponse, ListApplicationsRequest, ListApplicationsResponse, ListPeerWorkspacesRequest, ListPeerWorkspacesResponse, ListWorkspacesRequest, ListWorkspacesResponse, OverrideInheritedRouteRequest, OverrideInheritedRouteResponse, PairComputerRequest, PairComputerResponse, PlanRouteRequest, PlanRouteResponse, PrepareTailscaleSharingRequest, PrepareTailscaleSharingResponse, RecoverSharedIngressRequest, RecoverSharedIngressResponse, RefreshRoutingSessionRequest, RefreshRoutingSessionResponse, RegisterApplicationAliasRequest, RegisterApplicationAliasResponse, ResolveApplicationRequest, ResolveApplicationResponse, ResolveBrowserURLRequest, ResolveBrowserURLResponse, ResolveRouteRequest, ResolveRouteResponse, ReviewFleetConfigurationRequest, ReviewFleetConfigurationResponse, SaveFleetConfigurationRequest, SaveFleetConfigurationResponse, SavePublicAccessRequest, SavePublicAccessResponse, SaveSharedIngressRequest, SaveSharedIngressResponse, SetEnvironmentFollowingRequest, SetEnvironmentFollowingResponse, SetTailscaleSharingRequest, SetTailscaleSharingResponse, StopFollowingComputerRequest, StopFollowingComputerResponse, StopFollowingWorkspaceRequest, StopFollowingWorkspaceResponse, SyncComputerConfigurationRequest, SyncComputerConfigurationResponse, SyncPeerWorkspaceRequest, SyncPeerWorkspaceResponse, SyncRouteRequest, SyncRouteResponse, SyncSharedIngressRequest, SyncSharedIngressResponse, SyncWorkspaceRoutingRequest, SyncWorkspaceRoutingResponse, ToggleAllToLocalRequest, ToggleAllToLocalResponse, ToggleAllToRemoteRequest, ToggleAllToRemoteResponse, ToggleApplicationRequest, ToggleApplicationResponse, TransferSharedIngressRequest, TransferSharedIngressResponse, UnpairComputerRequest, UnpairComputerResponse, UpdateRoutePatternRequest, UpdateRoutePatternResponse, UpdateWorkspaceRequest, UpdateWorkspaceResponse, UpsertApplicationRequest, UpsertApplicationResponse, WatchHealthRequest, WatchHealthResponse } from "./rementor_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -12,6 +12,339 @@ import { MethodKind } from "@bufbuild/protobuf";
 export const ControlPlaneService = {
   typeName: "rementor.v1.ControlPlaneService",
   methods: {
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.GetTailscaleSharing
+     */
+    getTailscaleSharing: {
+      name: "GetTailscaleSharing",
+      I: GetTailscaleSharingRequest,
+      O: GetTailscaleSharingResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.SetTailscaleSharing
+     */
+    setTailscaleSharing: {
+      name: "SetTailscaleSharing",
+      I: SetTailscaleSharingRequest,
+      O: SetTailscaleSharingResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.PrepareTailscaleSharing
+     */
+    prepareTailscaleSharing: {
+      name: "PrepareTailscaleSharing",
+      I: PrepareTailscaleSharingRequest,
+      O: PrepareTailscaleSharingResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.GetComputerFollowing
+     */
+    getComputerFollowing: {
+      name: "GetComputerFollowing",
+      I: GetComputerFollowingRequest,
+      O: GetComputerFollowingResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.FollowComputer
+     */
+    followComputer: {
+      name: "FollowComputer",
+      I: FollowComputerRequest,
+      O: FollowComputerResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.SyncComputerConfiguration
+     */
+    syncComputerConfiguration: {
+      name: "SyncComputerConfiguration",
+      I: SyncComputerConfigurationRequest,
+      O: SyncComputerConfigurationResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.StopFollowingComputer
+     */
+    stopFollowingComputer: {
+      name: "StopFollowingComputer",
+      I: StopFollowingComputerRequest,
+      O: StopFollowingComputerResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.SetEnvironmentFollowing
+     */
+    setEnvironmentFollowing: {
+      name: "SetEnvironmentFollowing",
+      I: SetEnvironmentFollowingRequest,
+      O: SetEnvironmentFollowingResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.EditFollowedConfiguration
+     */
+    editFollowedConfiguration: {
+      name: "EditFollowedConfiguration",
+      I: EditFollowedConfigurationRequest,
+      O: EditFollowedConfigurationResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.GetRoutingWorkspaces
+     */
+    getRoutingWorkspaces: {
+      name: "GetRoutingWorkspaces",
+      I: GetRoutingWorkspacesRequest,
+      O: GetRoutingWorkspacesResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.GetSharedIngress
+     */
+    getSharedIngress: {
+      name: "GetSharedIngress",
+      I: GetSharedIngressRequest,
+      O: GetSharedIngressResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.CreateSharedIngress
+     */
+    createSharedIngress: {
+      name: "CreateSharedIngress",
+      I: CreateSharedIngressRequest,
+      O: CreateSharedIngressResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.SaveSharedIngress
+     */
+    saveSharedIngress: {
+      name: "SaveSharedIngress",
+      I: SaveSharedIngressRequest,
+      O: SaveSharedIngressResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.JoinSharedIngress
+     */
+    joinSharedIngress: {
+      name: "JoinSharedIngress",
+      I: JoinSharedIngressRequest,
+      O: JoinSharedIngressResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.TransferSharedIngress
+     */
+    transferSharedIngress: {
+      name: "TransferSharedIngress",
+      I: TransferSharedIngressRequest,
+      O: TransferSharedIngressResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.RecoverSharedIngress
+     */
+    recoverSharedIngress: {
+      name: "RecoverSharedIngress",
+      I: RecoverSharedIngressRequest,
+      O: RecoverSharedIngressResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.CancelSharedIngress
+     */
+    cancelSharedIngress: {
+      name: "CancelSharedIngress",
+      I: CancelSharedIngressRequest,
+      O: CancelSharedIngressResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.SyncSharedIngress
+     */
+    syncSharedIngress: {
+      name: "SyncSharedIngress",
+      I: SyncSharedIngressRequest,
+      O: SyncSharedIngressResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.GetPublicAccess
+     */
+    getPublicAccess: {
+      name: "GetPublicAccess",
+      I: GetPublicAccessRequest,
+      O: GetPublicAccessResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.SavePublicAccess
+     */
+    savePublicAccess: {
+      name: "SavePublicAccess",
+      I: SavePublicAccessRequest,
+      O: SavePublicAccessResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.GetPeerState
+     */
+    getPeerState: {
+      name: "GetPeerState",
+      I: GetPeerStateRequest,
+      O: GetPeerStateResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.ConfigurePeerConnection
+     */
+    configurePeerConnection: {
+      name: "ConfigurePeerConnection",
+      I: ConfigurePeerConnectionRequest,
+      O: ConfigurePeerConnectionResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.CreatePeerInvitation
+     */
+    createPeerInvitation: {
+      name: "CreatePeerInvitation",
+      I: CreatePeerInvitationRequest,
+      O: CreatePeerInvitationResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.CancelPeerInvitation
+     */
+    cancelPeerInvitation: {
+      name: "CancelPeerInvitation",
+      I: CancelPeerInvitationRequest,
+      O: CancelPeerInvitationResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.InspectPeerInvitation
+     */
+    inspectPeerInvitation: {
+      name: "InspectPeerInvitation",
+      I: InspectPeerInvitationRequest,
+      O: InspectPeerInvitationResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.PairComputer
+     */
+    pairComputer: {
+      name: "PairComputer",
+      I: PairComputerRequest,
+      O: PairComputerResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.UnpairComputer
+     */
+    unpairComputer: {
+      name: "UnpairComputer",
+      I: UnpairComputerRequest,
+      O: UnpairComputerResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.CheckPeerConnection
+     */
+    checkPeerConnection: {
+      name: "CheckPeerConnection",
+      I: CheckPeerConnectionRequest,
+      O: CheckPeerConnectionResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.ListPeerWorkspaces
+     */
+    listPeerWorkspaces: {
+      name: "ListPeerWorkspaces",
+      I: ListPeerWorkspacesRequest,
+      O: ListPeerWorkspacesResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.GetWorkspaceInheritance
+     */
+    getWorkspaceInheritance: {
+      name: "GetWorkspaceInheritance",
+      I: GetWorkspaceInheritanceRequest,
+      O: GetWorkspaceInheritanceResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.FollowPeerWorkspace
+     */
+    followPeerWorkspace: {
+      name: "FollowPeerWorkspace",
+      I: FollowPeerWorkspaceRequest,
+      O: FollowPeerWorkspaceResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.SyncPeerWorkspace
+     */
+    syncPeerWorkspace: {
+      name: "SyncPeerWorkspace",
+      I: SyncPeerWorkspaceRequest,
+      O: SyncPeerWorkspaceResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.OverrideInheritedRoute
+     */
+    overrideInheritedRoute: {
+      name: "OverrideInheritedRoute",
+      I: OverrideInheritedRouteRequest,
+      O: OverrideInheritedRouteResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.StopFollowingWorkspace
+     */
+    stopFollowingWorkspace: {
+      name: "StopFollowingWorkspace",
+      I: StopFollowingWorkspaceRequest,
+      O: StopFollowingWorkspaceResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.GetFleetConfiguration
+     */
+    getFleetConfiguration: {
+      name: "GetFleetConfiguration",
+      I: GetFleetConfigurationRequest,
+      O: GetFleetConfigurationResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.ReviewFleetConfiguration
+     */
+    reviewFleetConfiguration: {
+      name: "ReviewFleetConfiguration",
+      I: ReviewFleetConfigurationRequest,
+      O: ReviewFleetConfigurationResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc rementor.v1.ControlPlaneService.SaveFleetConfiguration
+     */
+    saveFleetConfiguration: {
+      name: "SaveFleetConfiguration",
+      I: SaveFleetConfigurationRequest,
+      O: SaveFleetConfigurationResponse,
+      kind: MethodKind.Unary,
+    },
     /**
      * @generated from rpc rementor.v1.ControlPlaneService.CreateRoutingSession
      */
