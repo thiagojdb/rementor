@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"connectrpc.com/connect"
+	"github.com/thiagojdb/rementor/internal/access"
 	"github.com/thiagojdb/rementor/internal/config"
 	rementorv1 "github.com/thiagojdb/rementor/internal/gen/rementor/v1"
 	"github.com/thiagojdb/rementor/internal/models"
@@ -50,5 +51,15 @@ func TestWorkspaceAndSessionLinksUseTheFrontendBinding(t *testing.T) {
 		if get.Msg.Workspace.BrowserUrl != want {
 			t.Fatalf("get %s URL = %q", ws.Id, get.Msg.Workspace.BrowserUrl)
 		}
+	}
+	if _, err := r.SavePublicAccessConfiguration(access.Document{SchemaVersion: 1, AllowedUserIDs: []uint64{1234}, SharedWorkspaceID: created.Msg.Workspace.Id, Origins: []access.Origin{{ID: "frontend", URL: "https://feature.example.test"}}, Bindings: []access.Binding{{WorkspaceID: created.Msg.Workspace.Id, OriginID: "frontend", LocalHost: "feature.dev.giss.localhost"}}}, 0); err != nil {
+		t.Fatal(err)
+	}
+	published, err := s.GetWorkspace(ctx, connect.NewRequest(&rementorv1.GetWorkspaceRequest{WorkspaceId: created.Msg.Workspace.Id}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if published.Msg.Workspace.BrowserUrl != "https://feature.example.test/" {
+		t.Fatalf("published frontend URL = %q", published.Msg.Workspace.BrowserUrl)
 	}
 }

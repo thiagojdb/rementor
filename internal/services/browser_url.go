@@ -188,7 +188,7 @@ func (r *Registry) ResolveBrowserURL(workspaceID, applicationRef string) (Browse
 	return BrowserURLResolution{
 		WorkspaceID: ws.WorkspaceID, Environment: ws.EnvironmentID(), ApplicationRef: applicationRef,
 		CanonicalAppID: app.CanonicalAppID(), ServiceID: app.ServiceID, Repository: app.Repository,
-		PublicHost: host, PublicPath: path, URL: PublicOrigin(host) + path, BrowserURL: PublicOrigin(host) + path,
+		PublicHost: host, PublicPath: path, URL: r.PublicOriginForHost(ws.WorkspaceID, host) + path, BrowserURL: r.PublicOriginForHost(ws.WorkspaceID, host) + path,
 		Target: resolvedRoute.Target, LocalTarget: resolvedRoute.LocalTarget, RemoteTarget: resolvedRoute.RemoteTarget,
 		DesiredMode: resolvedRoute.DesiredMode, EffectiveMode: resolvedRoute.EffectiveMode,
 		RouteVersion: version, OperationID: state.OperationID,

@@ -223,8 +223,22 @@ export const syncPeerWorkspace = (workspaceId: string) => call(() => client.sync
 export const overrideInheritedRoute = (workspaceId: string, applicationId: string, expectedRouteVersion: bigint, selection?: import('@bufbuild/protobuf').PlainMessage<import('../gen/rementor/v1/rementor_pb').InheritedRouteSelection>) => call(() => client.overrideInheritedRoute({ workspaceId, applicationId, expectedRouteVersion, selection }))
 export const stopFollowingWorkspace = (workspaceId: string, expectedRouteVersion: bigint) => call(() => client.stopFollowingWorkspace({ workspaceId, expectedRouteVersion }))
 
+export const getPublicAccess = () => call(() => client.getPublicAccess({}))
+export const getTailscaleSharing = () => call(() => client.getTailscaleSharing({}))
+export const setTailscaleSharing = (enabled: boolean, expectedRevision: bigint) => call(() => client.setTailscaleSharing({ enabled, expectedRevision }))
+export const prepareTailscaleSharing = (workspaceId: string) => call(() => client.prepareTailscaleSharing({ workspaceId }))
+export const savePublicAccess = (document: import('../gen/rementor/v1/rementor_pb').PublicAccessDocument, expectedRevision: bigint) => call(() => client.savePublicAccess({ document, expectedRevision }))
 
+export const getSharedIngress = () => call(() => client.getSharedIngress({}))
+export const createSharedIngress = (configuration: import('../gen/rementor/v1/rementor_pb').SharedIngressConfiguration, expectedRevision: bigint) => call(() => client.createSharedIngress({ configuration, expectedRevision }))
+export const saveSharedIngress = (configuration: import('../gen/rementor/v1/rementor_pb').SharedIngressConfiguration, expectedVersion: bigint) => call(() => client.saveSharedIngress({ configuration, expectedVersion }))
+export const joinSharedIngress = (ownerFingerprint: string, expectedRevision: bigint) => call(() => client.joinSharedIngress({ ownerFingerprint, expectedRevision }))
+export const transferSharedIngress = (destinationFingerprint: string, expectedVersion: bigint) => call(() => client.transferSharedIngress({ destinationFingerprint, expectedVersion }))
+export const recoverSharedIngress = (expectedRevision: bigint) => call(() => client.recoverSharedIngress({ expectedRevision }))
+export const cancelSharedIngress = (expectedRevision: bigint) => call(() => client.cancelSharedIngress({ expectedRevision }))
+export const syncSharedIngress = () => call(() => client.syncSharedIngress({}))
 
+export const getRoutingWorkspaces = (routingOwnerFingerprint: string) => call(() => client.getRoutingWorkspaces({ routingOwnerFingerprint }))
 
 export const getComputerFollowing = () => call(() => client.getComputerFollowing({}))
 export const followComputer = (fingerprint: string, expectedRevision: bigint) => call(() => client.followComputer({fingerprint, expectedRevision}))
@@ -233,3 +247,6 @@ export const stopFollowingComputer = (expectedRevision: bigint) => call(() => cl
 export const setEnvironmentFollowing = (workspaceId: string, following: boolean, expectedRevision: bigint, expectedWorkspaceVersion: bigint) => call(() => client.setEnvironmentFollowing({workspaceId, following, expectedRevision, expectedWorkspaceVersion}))
 
 export const editFollowedConfiguration = (request: import('@bufbuild/protobuf').PartialMessage<import('../gen/rementor/v1/rementor_pb').EditFollowedConfigurationRequest>) => call(() => client.editFollowedConfiguration(request))
+
+export const getTailnetPublishing = () => call(() => client.getTailnetPublishing({}))
+export const saveTailnetPublishing = (configuration: import('../gen/rementor/v1/rementor_pb').TailnetPublishingConfiguration, expectedRevision: bigint) => call(() => client.saveTailnetPublishing({configuration, expectedRevision}))

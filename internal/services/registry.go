@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/thiagojdb/rementor/internal/access"
 	"github.com/thiagojdb/rementor/internal/config"
 	"github.com/thiagojdb/rementor/internal/fleet"
 	"github.com/thiagojdb/rementor/internal/models"
@@ -23,6 +24,10 @@ import (
 // route state; the registry adds runtime-only state such as health results,
 // subscribers, streams, and the routing provider.
 type Registry struct {
+	accessMu            sync.RWMutex
+	publicAccess        access.Configuration
+	accessSequence      uint64
+	accessRequests      map[uint64]context.CancelFunc
 	workspaces          []*models.Workspace
 	workspacesMu        sync.RWMutex
 	mutationMu          sync.Mutex
@@ -184,6 +189,16 @@ func (r *Registry) Load() error {
 		}
 		r.computerFollowing = state
 	}
+	publicAccess, err := config.LoadPublicAccessConfiguration()
+	if err != nil {
+		return err
+	}
+	if err := validatePublicBindings(publicAccess.Document, workspaces); err != nil {
+		return err
+	}
+	r.accessMu.Lock()
+	r.publicAccess = publicAccess
+	r.accessMu.Unlock()
 	r.workspacesMu.Lock()
 	r.workspaces = workspaces
 	r.workspacesMu.Unlock()
@@ -2233,6 +2248,9 @@ func (r *Registry) markRoutingState(workspaces []*models.Workspace, status strin
 }
 
 func (r *Registry) applyRouting(workspaces []*models.Workspace, required bool) error {
+	if err := r.validatePublicAccessWorkspaces(workspaces); err != nil {
+		return err
+	}
 	// Validate route metadata before handing any projection to the proxy. This
 	// also protects startup/reconciliation paths that load legacy or externally
 	// edited SQLite state without going through mutate.

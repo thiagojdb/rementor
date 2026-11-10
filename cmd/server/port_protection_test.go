@@ -76,7 +76,7 @@ func TestStartupKeepsAllIngressListenersProtectedFromPeerForwarding(t *testing.T
 		t.Fatal(err)
 	}
 	ws := models.WorkspaceConfig{ID: "guard", Name: "Listener guard", Type: models.WorkspaceTypeRouting, Routing: models.RoutingConfig{LocalDomain: "guard.localhost", DefaultRemoteBaseURL: "https://remote.example.test"}}
-	for offset, name := range map[int]string{0: "management", 1: "peer-gateway", 3: "nginx-ingress"} {
+	for offset, name := range []string{"management", "peer-gateway", "public-ingress", "nginx-ingress"} {
 		ws.Applications = append(ws.Applications, models.ApplicationConfig{ID: name, AppID: name, ServiceID: name, Name: name, Path: "/" + name, Port: port + offset})
 	}
 	if err := config.ReplaceWorkspaces([]*models.Workspace{config.WorkspaceFromConfig(ws)}); err != nil {
@@ -124,22 +124,6 @@ func TestStartupKeepsAllIngressListenersProtectedFromPeerForwarding(t *testing.T
 	if !ready {
 		log, _ := os.ReadFile(logFile.Name())
 		t.Fatalf("isolated daemon did not start: %s", log)
-	}
-	// A saved publishing port must not start a retired public listener.
-	retired, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port+2))
-	if err != nil {
-		t.Fatalf("retired public listener is still running: %v", err)
-	}
-	retired.Close()
-	for _, procedure := range []string{"GetTailnetPublishing", "GetTailscaleSharing", "GetPublicAccess", "GetSharedIngress"} {
-		response, err := client.Post(base+"/rpc/rementor.v1.ControlPlaneService/"+procedure, "application/json", strings.NewReader("{}"))
-		if err != nil {
-			t.Fatal(err)
-		}
-		response.Body.Close()
-		if response.StatusCode != http.StatusNotFound {
-			t.Fatalf("retired %s remains callable: HTTP %d", procedure, response.StatusCode)
-		}
 	}
 	api := rementorv1connect.NewControlPlaneServiceClient(client, base+"/rpc")
 	peerReservation, err := net.Listen("tcp", "127.0.0.1:0")

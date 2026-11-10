@@ -12,17 +12,28 @@ import (
 	"connectrpc.com/connect"
 	rementorv1 "github.com/thiagojdb/rementor/internal/gen/rementor/v1"
 	"github.com/thiagojdb/rementor/internal/gen/rementor/v1/rementorv1connect"
+	"github.com/thiagojdb/rementor/internal/ingress"
 	"github.com/thiagojdb/rementor/internal/models"
 	"github.com/thiagojdb/rementor/internal/peers"
+	"github.com/thiagojdb/rementor/internal/publication"
 	"github.com/thiagojdb/rementor/internal/services"
+	"github.com/thiagojdb/rementor/internal/shared"
+	"github.com/thiagojdb/rementor/internal/tailnode"
+	"github.com/thiagojdb/rementor/internal/tailshare"
 	"github.com/thiagojdb/rementor/internal/validation"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type ControlPlaneService struct {
-	registry       *services.Registry
-	peers          *peers.Manager
-	fleetReviewKey [32]byte
+	registry           *services.Registry
+	sharedIngress      *shared.Authority
+	peers              *peers.Manager
+	publicIngress      *ingress.Runtime
+	publicDevices      publicDeviceCatalog
+	tailscaleSharing   *tailshare.Manager
+	tailnetPublishing  *publication.Manager
+	publicationNetwork *tailnode.Network
+	fleetReviewKey     [32]byte
 }
 
 func NewControlPlaneService(registry *services.Registry) *ControlPlaneService {

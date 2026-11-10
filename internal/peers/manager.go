@@ -32,6 +32,7 @@ import (
 	"time"
 
 	"github.com/thiagojdb/rementor/internal/fleet"
+	"github.com/thiagojdb/rementor/internal/shared"
 )
 
 const invitationTTL = 5 * time.Minute
@@ -74,22 +75,25 @@ type enrollment struct {
 	URL   string `json:"url"`
 }
 type Manager struct {
-	mu              sync.Mutex
-	path            string
-	state           diskState
-	identity        tls.Certificate
-	server          *http.Server
-	inviteHash      [32]byte
-	inviteExpires   time.Time
-	listenerError   string
-	generation      uint64
-	workspaceSource fleet.WorkspaceSource
-	forwards        map[uint64]activeForward
-	forwardSequence uint64
-	managementPort  int
-	protectedPorts  map[int]bool
-	now             func() time.Time
-	autoAddresses   func() []string
+	mu                 sync.Mutex
+	path               string
+	state              diskState
+	identity           tls.Certificate
+	server             *http.Server
+	inviteHash         [32]byte
+	inviteExpires      time.Time
+	listenerError      string
+	generation         uint64
+	workspaceSource    fleet.WorkspaceSource
+	sharedAuthority    *shared.Authority
+	sharedIngress      SharedIngress
+	publicationIngress PublicationIngress
+	forwards           map[uint64]activeForward
+	forwardSequence    uint64
+	managementPort     int
+	protectedPorts     map[int]bool
+	now                func() time.Time
+	autoAddresses      func() []string
 }
 
 func Open(directory, name string) (*Manager, error) {
@@ -562,6 +566,22 @@ func (m *Manager) handle(w http.ResponseWriter, r *http.Request) {
 	m.mu.Unlock()
 	if !trusted || !active {
 		http.Error(w, "computer is not paired", http.StatusForbidden)
+		return
+	}
+	if r.URL.Path == publicWorkspaceCatalogPath {
+		m.handlePublicWorkspaceCatalog(w, r, id, own.Fingerprint)
+		return
+	}
+	if strings.HasPrefix(r.URL.Path, publicationForwardPrefix+"/") {
+		m.handlePublicationForward(w, r, id)
+		return
+	}
+	if strings.HasPrefix(r.URL.Path, sharedForwardPrefix+"/") {
+		m.handleSharedForward(w, r, id)
+		return
+	}
+	if r.URL.Path == sharedPrefix || strings.HasPrefix(r.URL.Path, sharedPrefix+"/") {
+		m.handleShared(w, r, id)
 		return
 	}
 	if strings.HasPrefix(r.URL.Path, forwardPrefix+"/") {
