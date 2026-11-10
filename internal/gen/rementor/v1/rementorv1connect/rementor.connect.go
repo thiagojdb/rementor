@@ -33,6 +33,75 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// ControlPlaneServiceGetComputerFollowingProcedure is the fully-qualified name of the
+	// ControlPlaneService's GetComputerFollowing RPC.
+	ControlPlaneServiceGetComputerFollowingProcedure = "/rementor.v1.ControlPlaneService/GetComputerFollowing"
+	// ControlPlaneServiceFollowComputerProcedure is the fully-qualified name of the
+	// ControlPlaneService's FollowComputer RPC.
+	ControlPlaneServiceFollowComputerProcedure = "/rementor.v1.ControlPlaneService/FollowComputer"
+	// ControlPlaneServiceSyncComputerConfigurationProcedure is the fully-qualified name of the
+	// ControlPlaneService's SyncComputerConfiguration RPC.
+	ControlPlaneServiceSyncComputerConfigurationProcedure = "/rementor.v1.ControlPlaneService/SyncComputerConfiguration"
+	// ControlPlaneServiceStopFollowingComputerProcedure is the fully-qualified name of the
+	// ControlPlaneService's StopFollowingComputer RPC.
+	ControlPlaneServiceStopFollowingComputerProcedure = "/rementor.v1.ControlPlaneService/StopFollowingComputer"
+	// ControlPlaneServiceSetEnvironmentFollowingProcedure is the fully-qualified name of the
+	// ControlPlaneService's SetEnvironmentFollowing RPC.
+	ControlPlaneServiceSetEnvironmentFollowingProcedure = "/rementor.v1.ControlPlaneService/SetEnvironmentFollowing"
+	// ControlPlaneServiceEditFollowedConfigurationProcedure is the fully-qualified name of the
+	// ControlPlaneService's EditFollowedConfiguration RPC.
+	ControlPlaneServiceEditFollowedConfigurationProcedure = "/rementor.v1.ControlPlaneService/EditFollowedConfiguration"
+	// ControlPlaneServiceGetPeerStateProcedure is the fully-qualified name of the ControlPlaneService's
+	// GetPeerState RPC.
+	ControlPlaneServiceGetPeerStateProcedure = "/rementor.v1.ControlPlaneService/GetPeerState"
+	// ControlPlaneServiceConfigurePeerConnectionProcedure is the fully-qualified name of the
+	// ControlPlaneService's ConfigurePeerConnection RPC.
+	ControlPlaneServiceConfigurePeerConnectionProcedure = "/rementor.v1.ControlPlaneService/ConfigurePeerConnection"
+	// ControlPlaneServiceCreatePeerInvitationProcedure is the fully-qualified name of the
+	// ControlPlaneService's CreatePeerInvitation RPC.
+	ControlPlaneServiceCreatePeerInvitationProcedure = "/rementor.v1.ControlPlaneService/CreatePeerInvitation"
+	// ControlPlaneServiceCancelPeerInvitationProcedure is the fully-qualified name of the
+	// ControlPlaneService's CancelPeerInvitation RPC.
+	ControlPlaneServiceCancelPeerInvitationProcedure = "/rementor.v1.ControlPlaneService/CancelPeerInvitation"
+	// ControlPlaneServiceInspectPeerInvitationProcedure is the fully-qualified name of the
+	// ControlPlaneService's InspectPeerInvitation RPC.
+	ControlPlaneServiceInspectPeerInvitationProcedure = "/rementor.v1.ControlPlaneService/InspectPeerInvitation"
+	// ControlPlaneServicePairComputerProcedure is the fully-qualified name of the ControlPlaneService's
+	// PairComputer RPC.
+	ControlPlaneServicePairComputerProcedure = "/rementor.v1.ControlPlaneService/PairComputer"
+	// ControlPlaneServiceUnpairComputerProcedure is the fully-qualified name of the
+	// ControlPlaneService's UnpairComputer RPC.
+	ControlPlaneServiceUnpairComputerProcedure = "/rementor.v1.ControlPlaneService/UnpairComputer"
+	// ControlPlaneServiceCheckPeerConnectionProcedure is the fully-qualified name of the
+	// ControlPlaneService's CheckPeerConnection RPC.
+	ControlPlaneServiceCheckPeerConnectionProcedure = "/rementor.v1.ControlPlaneService/CheckPeerConnection"
+	// ControlPlaneServiceListPeerWorkspacesProcedure is the fully-qualified name of the
+	// ControlPlaneService's ListPeerWorkspaces RPC.
+	ControlPlaneServiceListPeerWorkspacesProcedure = "/rementor.v1.ControlPlaneService/ListPeerWorkspaces"
+	// ControlPlaneServiceGetWorkspaceInheritanceProcedure is the fully-qualified name of the
+	// ControlPlaneService's GetWorkspaceInheritance RPC.
+	ControlPlaneServiceGetWorkspaceInheritanceProcedure = "/rementor.v1.ControlPlaneService/GetWorkspaceInheritance"
+	// ControlPlaneServiceFollowPeerWorkspaceProcedure is the fully-qualified name of the
+	// ControlPlaneService's FollowPeerWorkspace RPC.
+	ControlPlaneServiceFollowPeerWorkspaceProcedure = "/rementor.v1.ControlPlaneService/FollowPeerWorkspace"
+	// ControlPlaneServiceSyncPeerWorkspaceProcedure is the fully-qualified name of the
+	// ControlPlaneService's SyncPeerWorkspace RPC.
+	ControlPlaneServiceSyncPeerWorkspaceProcedure = "/rementor.v1.ControlPlaneService/SyncPeerWorkspace"
+	// ControlPlaneServiceOverrideInheritedRouteProcedure is the fully-qualified name of the
+	// ControlPlaneService's OverrideInheritedRoute RPC.
+	ControlPlaneServiceOverrideInheritedRouteProcedure = "/rementor.v1.ControlPlaneService/OverrideInheritedRoute"
+	// ControlPlaneServiceStopFollowingWorkspaceProcedure is the fully-qualified name of the
+	// ControlPlaneService's StopFollowingWorkspace RPC.
+	ControlPlaneServiceStopFollowingWorkspaceProcedure = "/rementor.v1.ControlPlaneService/StopFollowingWorkspace"
+	// ControlPlaneServiceGetFleetConfigurationProcedure is the fully-qualified name of the
+	// ControlPlaneService's GetFleetConfiguration RPC.
+	ControlPlaneServiceGetFleetConfigurationProcedure = "/rementor.v1.ControlPlaneService/GetFleetConfiguration"
+	// ControlPlaneServiceReviewFleetConfigurationProcedure is the fully-qualified name of the
+	// ControlPlaneService's ReviewFleetConfiguration RPC.
+	ControlPlaneServiceReviewFleetConfigurationProcedure = "/rementor.v1.ControlPlaneService/ReviewFleetConfiguration"
+	// ControlPlaneServiceSaveFleetConfigurationProcedure is the fully-qualified name of the
+	// ControlPlaneService's SaveFleetConfiguration RPC.
+	ControlPlaneServiceSaveFleetConfigurationProcedure = "/rementor.v1.ControlPlaneService/SaveFleetConfiguration"
 	// ControlPlaneServiceCreateRoutingSessionProcedure is the fully-qualified name of the
 	// ControlPlaneService's CreateRoutingSession RPC.
 	ControlPlaneServiceCreateRoutingSessionProcedure = "/rementor.v1.ControlPlaneService/CreateRoutingSession"
@@ -118,6 +187,29 @@ const (
 
 // ControlPlaneServiceClient is a client for the rementor.v1.ControlPlaneService service.
 type ControlPlaneServiceClient interface {
+	GetComputerFollowing(context.Context, *connect.Request[v1.GetComputerFollowingRequest]) (*connect.Response[v1.GetComputerFollowingResponse], error)
+	FollowComputer(context.Context, *connect.Request[v1.FollowComputerRequest]) (*connect.Response[v1.FollowComputerResponse], error)
+	SyncComputerConfiguration(context.Context, *connect.Request[v1.SyncComputerConfigurationRequest]) (*connect.Response[v1.SyncComputerConfigurationResponse], error)
+	StopFollowingComputer(context.Context, *connect.Request[v1.StopFollowingComputerRequest]) (*connect.Response[v1.StopFollowingComputerResponse], error)
+	SetEnvironmentFollowing(context.Context, *connect.Request[v1.SetEnvironmentFollowingRequest]) (*connect.Response[v1.SetEnvironmentFollowingResponse], error)
+	EditFollowedConfiguration(context.Context, *connect.Request[v1.EditFollowedConfigurationRequest]) (*connect.Response[v1.EditFollowedConfigurationResponse], error)
+	GetPeerState(context.Context, *connect.Request[v1.GetPeerStateRequest]) (*connect.Response[v1.GetPeerStateResponse], error)
+	ConfigurePeerConnection(context.Context, *connect.Request[v1.ConfigurePeerConnectionRequest]) (*connect.Response[v1.ConfigurePeerConnectionResponse], error)
+	CreatePeerInvitation(context.Context, *connect.Request[v1.CreatePeerInvitationRequest]) (*connect.Response[v1.CreatePeerInvitationResponse], error)
+	CancelPeerInvitation(context.Context, *connect.Request[v1.CancelPeerInvitationRequest]) (*connect.Response[v1.CancelPeerInvitationResponse], error)
+	InspectPeerInvitation(context.Context, *connect.Request[v1.InspectPeerInvitationRequest]) (*connect.Response[v1.InspectPeerInvitationResponse], error)
+	PairComputer(context.Context, *connect.Request[v1.PairComputerRequest]) (*connect.Response[v1.PairComputerResponse], error)
+	UnpairComputer(context.Context, *connect.Request[v1.UnpairComputerRequest]) (*connect.Response[v1.UnpairComputerResponse], error)
+	CheckPeerConnection(context.Context, *connect.Request[v1.CheckPeerConnectionRequest]) (*connect.Response[v1.CheckPeerConnectionResponse], error)
+	ListPeerWorkspaces(context.Context, *connect.Request[v1.ListPeerWorkspacesRequest]) (*connect.Response[v1.ListPeerWorkspacesResponse], error)
+	GetWorkspaceInheritance(context.Context, *connect.Request[v1.GetWorkspaceInheritanceRequest]) (*connect.Response[v1.GetWorkspaceInheritanceResponse], error)
+	FollowPeerWorkspace(context.Context, *connect.Request[v1.FollowPeerWorkspaceRequest]) (*connect.Response[v1.FollowPeerWorkspaceResponse], error)
+	SyncPeerWorkspace(context.Context, *connect.Request[v1.SyncPeerWorkspaceRequest]) (*connect.Response[v1.SyncPeerWorkspaceResponse], error)
+	OverrideInheritedRoute(context.Context, *connect.Request[v1.OverrideInheritedRouteRequest]) (*connect.Response[v1.OverrideInheritedRouteResponse], error)
+	StopFollowingWorkspace(context.Context, *connect.Request[v1.StopFollowingWorkspaceRequest]) (*connect.Response[v1.StopFollowingWorkspaceResponse], error)
+	GetFleetConfiguration(context.Context, *connect.Request[v1.GetFleetConfigurationRequest]) (*connect.Response[v1.GetFleetConfigurationResponse], error)
+	ReviewFleetConfiguration(context.Context, *connect.Request[v1.ReviewFleetConfigurationRequest]) (*connect.Response[v1.ReviewFleetConfigurationResponse], error)
+	SaveFleetConfiguration(context.Context, *connect.Request[v1.SaveFleetConfigurationRequest]) (*connect.Response[v1.SaveFleetConfigurationResponse], error)
 	CreateRoutingSession(context.Context, *connect.Request[v1.CreateRoutingSessionRequest]) (*connect.Response[v1.CreateRoutingSessionResponse], error)
 	RefreshRoutingSession(context.Context, *connect.Request[v1.RefreshRoutingSessionRequest]) (*connect.Response[v1.RefreshRoutingSessionResponse], error)
 	ListWorkspaces(context.Context, *connect.Request[v1.ListWorkspacesRequest]) (*connect.Response[v1.ListWorkspacesResponse], error)
@@ -158,6 +250,144 @@ func NewControlPlaneServiceClient(httpClient connect.HTTPClient, baseURL string,
 	baseURL = strings.TrimRight(baseURL, "/")
 	controlPlaneServiceMethods := v1.File_rementor_v1_rementor_proto.Services().ByName("ControlPlaneService").Methods()
 	return &controlPlaneServiceClient{
+		getComputerFollowing: connect.NewClient[v1.GetComputerFollowingRequest, v1.GetComputerFollowingResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceGetComputerFollowingProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("GetComputerFollowing")),
+			connect.WithClientOptions(opts...),
+		),
+		followComputer: connect.NewClient[v1.FollowComputerRequest, v1.FollowComputerResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceFollowComputerProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("FollowComputer")),
+			connect.WithClientOptions(opts...),
+		),
+		syncComputerConfiguration: connect.NewClient[v1.SyncComputerConfigurationRequest, v1.SyncComputerConfigurationResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceSyncComputerConfigurationProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("SyncComputerConfiguration")),
+			connect.WithClientOptions(opts...),
+		),
+		stopFollowingComputer: connect.NewClient[v1.StopFollowingComputerRequest, v1.StopFollowingComputerResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceStopFollowingComputerProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("StopFollowingComputer")),
+			connect.WithClientOptions(opts...),
+		),
+		setEnvironmentFollowing: connect.NewClient[v1.SetEnvironmentFollowingRequest, v1.SetEnvironmentFollowingResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceSetEnvironmentFollowingProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("SetEnvironmentFollowing")),
+			connect.WithClientOptions(opts...),
+		),
+		editFollowedConfiguration: connect.NewClient[v1.EditFollowedConfigurationRequest, v1.EditFollowedConfigurationResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceEditFollowedConfigurationProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("EditFollowedConfiguration")),
+			connect.WithClientOptions(opts...),
+		),
+		getPeerState: connect.NewClient[v1.GetPeerStateRequest, v1.GetPeerStateResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceGetPeerStateProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("GetPeerState")),
+			connect.WithClientOptions(opts...),
+		),
+		configurePeerConnection: connect.NewClient[v1.ConfigurePeerConnectionRequest, v1.ConfigurePeerConnectionResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceConfigurePeerConnectionProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("ConfigurePeerConnection")),
+			connect.WithClientOptions(opts...),
+		),
+		createPeerInvitation: connect.NewClient[v1.CreatePeerInvitationRequest, v1.CreatePeerInvitationResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceCreatePeerInvitationProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("CreatePeerInvitation")),
+			connect.WithClientOptions(opts...),
+		),
+		cancelPeerInvitation: connect.NewClient[v1.CancelPeerInvitationRequest, v1.CancelPeerInvitationResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceCancelPeerInvitationProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("CancelPeerInvitation")),
+			connect.WithClientOptions(opts...),
+		),
+		inspectPeerInvitation: connect.NewClient[v1.InspectPeerInvitationRequest, v1.InspectPeerInvitationResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceInspectPeerInvitationProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("InspectPeerInvitation")),
+			connect.WithClientOptions(opts...),
+		),
+		pairComputer: connect.NewClient[v1.PairComputerRequest, v1.PairComputerResponse](
+			httpClient,
+			baseURL+ControlPlaneServicePairComputerProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("PairComputer")),
+			connect.WithClientOptions(opts...),
+		),
+		unpairComputer: connect.NewClient[v1.UnpairComputerRequest, v1.UnpairComputerResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceUnpairComputerProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("UnpairComputer")),
+			connect.WithClientOptions(opts...),
+		),
+		checkPeerConnection: connect.NewClient[v1.CheckPeerConnectionRequest, v1.CheckPeerConnectionResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceCheckPeerConnectionProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("CheckPeerConnection")),
+			connect.WithClientOptions(opts...),
+		),
+		listPeerWorkspaces: connect.NewClient[v1.ListPeerWorkspacesRequest, v1.ListPeerWorkspacesResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceListPeerWorkspacesProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("ListPeerWorkspaces")),
+			connect.WithClientOptions(opts...),
+		),
+		getWorkspaceInheritance: connect.NewClient[v1.GetWorkspaceInheritanceRequest, v1.GetWorkspaceInheritanceResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceGetWorkspaceInheritanceProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("GetWorkspaceInheritance")),
+			connect.WithClientOptions(opts...),
+		),
+		followPeerWorkspace: connect.NewClient[v1.FollowPeerWorkspaceRequest, v1.FollowPeerWorkspaceResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceFollowPeerWorkspaceProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("FollowPeerWorkspace")),
+			connect.WithClientOptions(opts...),
+		),
+		syncPeerWorkspace: connect.NewClient[v1.SyncPeerWorkspaceRequest, v1.SyncPeerWorkspaceResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceSyncPeerWorkspaceProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("SyncPeerWorkspace")),
+			connect.WithClientOptions(opts...),
+		),
+		overrideInheritedRoute: connect.NewClient[v1.OverrideInheritedRouteRequest, v1.OverrideInheritedRouteResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceOverrideInheritedRouteProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("OverrideInheritedRoute")),
+			connect.WithClientOptions(opts...),
+		),
+		stopFollowingWorkspace: connect.NewClient[v1.StopFollowingWorkspaceRequest, v1.StopFollowingWorkspaceResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceStopFollowingWorkspaceProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("StopFollowingWorkspace")),
+			connect.WithClientOptions(opts...),
+		),
+		getFleetConfiguration: connect.NewClient[v1.GetFleetConfigurationRequest, v1.GetFleetConfigurationResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceGetFleetConfigurationProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("GetFleetConfiguration")),
+			connect.WithClientOptions(opts...),
+		),
+		reviewFleetConfiguration: connect.NewClient[v1.ReviewFleetConfigurationRequest, v1.ReviewFleetConfigurationResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceReviewFleetConfigurationProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("ReviewFleetConfiguration")),
+			connect.WithClientOptions(opts...),
+		),
+		saveFleetConfiguration: connect.NewClient[v1.SaveFleetConfigurationRequest, v1.SaveFleetConfigurationResponse](
+			httpClient,
+			baseURL+ControlPlaneServiceSaveFleetConfigurationProcedure,
+			connect.WithSchema(controlPlaneServiceMethods.ByName("SaveFleetConfiguration")),
+			connect.WithClientOptions(opts...),
+		),
 		createRoutingSession: connect.NewClient[v1.CreateRoutingSessionRequest, v1.CreateRoutingSessionResponse](
 			httpClient,
 			baseURL+ControlPlaneServiceCreateRoutingSessionProcedure,
@@ -325,33 +555,171 @@ func NewControlPlaneServiceClient(httpClient connect.HTTPClient, baseURL string,
 
 // controlPlaneServiceClient implements ControlPlaneServiceClient.
 type controlPlaneServiceClient struct {
-	createRoutingSession     *connect.Client[v1.CreateRoutingSessionRequest, v1.CreateRoutingSessionResponse]
-	refreshRoutingSession    *connect.Client[v1.RefreshRoutingSessionRequest, v1.RefreshRoutingSessionResponse]
-	listWorkspaces           *connect.Client[v1.ListWorkspacesRequest, v1.ListWorkspacesResponse]
-	getWorkspace             *connect.Client[v1.GetWorkspaceRequest, v1.GetWorkspaceResponse]
-	createWorkspace          *connect.Client[v1.CreateWorkspaceRequest, v1.CreateWorkspaceResponse]
-	updateWorkspace          *connect.Client[v1.UpdateWorkspaceRequest, v1.UpdateWorkspaceResponse]
-	deleteWorkspace          *connect.Client[v1.DeleteWorkspaceRequest, v1.DeleteWorkspaceResponse]
-	listApplications         *connect.Client[v1.ListApplicationsRequest, v1.ListApplicationsResponse]
-	getApplication           *connect.Client[v1.GetApplicationRequest, v1.GetApplicationResponse]
-	resolveApplication       *connect.Client[v1.ResolveApplicationRequest, v1.ResolveApplicationResponse]
-	resolveBrowserURL        *connect.Client[v1.ResolveBrowserURLRequest, v1.ResolveBrowserURLResponse]
-	registerApplicationAlias *connect.Client[v1.RegisterApplicationAliasRequest, v1.RegisterApplicationAliasResponse]
-	upsertApplication        *connect.Client[v1.UpsertApplicationRequest, v1.UpsertApplicationResponse]
-	deleteApplication        *connect.Client[v1.DeleteApplicationRequest, v1.DeleteApplicationResponse]
-	toggleApplication        *connect.Client[v1.ToggleApplicationRequest, v1.ToggleApplicationResponse]
-	toggleAllToRemote        *connect.Client[v1.ToggleAllToRemoteRequest, v1.ToggleAllToRemoteResponse]
-	toggleAllToLocal         *connect.Client[v1.ToggleAllToLocalRequest, v1.ToggleAllToLocalResponse]
-	syncWorkspaceRouting     *connect.Client[v1.SyncWorkspaceRoutingRequest, v1.SyncWorkspaceRoutingResponse]
-	getRoutePattern          *connect.Client[v1.GetRoutePatternRequest, v1.GetRoutePatternResponse]
-	updateRoutePattern       *connect.Client[v1.UpdateRoutePatternRequest, v1.UpdateRoutePatternResponse]
-	getRoute                 *connect.Client[v1.GetRouteRequest, v1.GetRouteResponse]
-	getRouteConflicts        *connect.Client[v1.GetRouteConflictsRequest, v1.GetRouteConflictsResponse]
-	resolveRoute             *connect.Client[v1.ResolveRouteRequest, v1.ResolveRouteResponse]
-	planRoute                *connect.Client[v1.PlanRouteRequest, v1.PlanRouteResponse]
-	applyRoute               *connect.Client[v1.ApplyRouteRequest, v1.ApplyRouteResponse]
-	syncRoute                *connect.Client[v1.SyncRouteRequest, v1.SyncRouteResponse]
-	watchHealth              *connect.Client[v1.WatchHealthRequest, v1.WatchHealthResponse]
+	getComputerFollowing      *connect.Client[v1.GetComputerFollowingRequest, v1.GetComputerFollowingResponse]
+	followComputer            *connect.Client[v1.FollowComputerRequest, v1.FollowComputerResponse]
+	syncComputerConfiguration *connect.Client[v1.SyncComputerConfigurationRequest, v1.SyncComputerConfigurationResponse]
+	stopFollowingComputer     *connect.Client[v1.StopFollowingComputerRequest, v1.StopFollowingComputerResponse]
+	setEnvironmentFollowing   *connect.Client[v1.SetEnvironmentFollowingRequest, v1.SetEnvironmentFollowingResponse]
+	editFollowedConfiguration *connect.Client[v1.EditFollowedConfigurationRequest, v1.EditFollowedConfigurationResponse]
+	getPeerState              *connect.Client[v1.GetPeerStateRequest, v1.GetPeerStateResponse]
+	configurePeerConnection   *connect.Client[v1.ConfigurePeerConnectionRequest, v1.ConfigurePeerConnectionResponse]
+	createPeerInvitation      *connect.Client[v1.CreatePeerInvitationRequest, v1.CreatePeerInvitationResponse]
+	cancelPeerInvitation      *connect.Client[v1.CancelPeerInvitationRequest, v1.CancelPeerInvitationResponse]
+	inspectPeerInvitation     *connect.Client[v1.InspectPeerInvitationRequest, v1.InspectPeerInvitationResponse]
+	pairComputer              *connect.Client[v1.PairComputerRequest, v1.PairComputerResponse]
+	unpairComputer            *connect.Client[v1.UnpairComputerRequest, v1.UnpairComputerResponse]
+	checkPeerConnection       *connect.Client[v1.CheckPeerConnectionRequest, v1.CheckPeerConnectionResponse]
+	listPeerWorkspaces        *connect.Client[v1.ListPeerWorkspacesRequest, v1.ListPeerWorkspacesResponse]
+	getWorkspaceInheritance   *connect.Client[v1.GetWorkspaceInheritanceRequest, v1.GetWorkspaceInheritanceResponse]
+	followPeerWorkspace       *connect.Client[v1.FollowPeerWorkspaceRequest, v1.FollowPeerWorkspaceResponse]
+	syncPeerWorkspace         *connect.Client[v1.SyncPeerWorkspaceRequest, v1.SyncPeerWorkspaceResponse]
+	overrideInheritedRoute    *connect.Client[v1.OverrideInheritedRouteRequest, v1.OverrideInheritedRouteResponse]
+	stopFollowingWorkspace    *connect.Client[v1.StopFollowingWorkspaceRequest, v1.StopFollowingWorkspaceResponse]
+	getFleetConfiguration     *connect.Client[v1.GetFleetConfigurationRequest, v1.GetFleetConfigurationResponse]
+	reviewFleetConfiguration  *connect.Client[v1.ReviewFleetConfigurationRequest, v1.ReviewFleetConfigurationResponse]
+	saveFleetConfiguration    *connect.Client[v1.SaveFleetConfigurationRequest, v1.SaveFleetConfigurationResponse]
+	createRoutingSession      *connect.Client[v1.CreateRoutingSessionRequest, v1.CreateRoutingSessionResponse]
+	refreshRoutingSession     *connect.Client[v1.RefreshRoutingSessionRequest, v1.RefreshRoutingSessionResponse]
+	listWorkspaces            *connect.Client[v1.ListWorkspacesRequest, v1.ListWorkspacesResponse]
+	getWorkspace              *connect.Client[v1.GetWorkspaceRequest, v1.GetWorkspaceResponse]
+	createWorkspace           *connect.Client[v1.CreateWorkspaceRequest, v1.CreateWorkspaceResponse]
+	updateWorkspace           *connect.Client[v1.UpdateWorkspaceRequest, v1.UpdateWorkspaceResponse]
+	deleteWorkspace           *connect.Client[v1.DeleteWorkspaceRequest, v1.DeleteWorkspaceResponse]
+	listApplications          *connect.Client[v1.ListApplicationsRequest, v1.ListApplicationsResponse]
+	getApplication            *connect.Client[v1.GetApplicationRequest, v1.GetApplicationResponse]
+	resolveApplication        *connect.Client[v1.ResolveApplicationRequest, v1.ResolveApplicationResponse]
+	resolveBrowserURL         *connect.Client[v1.ResolveBrowserURLRequest, v1.ResolveBrowserURLResponse]
+	registerApplicationAlias  *connect.Client[v1.RegisterApplicationAliasRequest, v1.RegisterApplicationAliasResponse]
+	upsertApplication         *connect.Client[v1.UpsertApplicationRequest, v1.UpsertApplicationResponse]
+	deleteApplication         *connect.Client[v1.DeleteApplicationRequest, v1.DeleteApplicationResponse]
+	toggleApplication         *connect.Client[v1.ToggleApplicationRequest, v1.ToggleApplicationResponse]
+	toggleAllToRemote         *connect.Client[v1.ToggleAllToRemoteRequest, v1.ToggleAllToRemoteResponse]
+	toggleAllToLocal          *connect.Client[v1.ToggleAllToLocalRequest, v1.ToggleAllToLocalResponse]
+	syncWorkspaceRouting      *connect.Client[v1.SyncWorkspaceRoutingRequest, v1.SyncWorkspaceRoutingResponse]
+	getRoutePattern           *connect.Client[v1.GetRoutePatternRequest, v1.GetRoutePatternResponse]
+	updateRoutePattern        *connect.Client[v1.UpdateRoutePatternRequest, v1.UpdateRoutePatternResponse]
+	getRoute                  *connect.Client[v1.GetRouteRequest, v1.GetRouteResponse]
+	getRouteConflicts         *connect.Client[v1.GetRouteConflictsRequest, v1.GetRouteConflictsResponse]
+	resolveRoute              *connect.Client[v1.ResolveRouteRequest, v1.ResolveRouteResponse]
+	planRoute                 *connect.Client[v1.PlanRouteRequest, v1.PlanRouteResponse]
+	applyRoute                *connect.Client[v1.ApplyRouteRequest, v1.ApplyRouteResponse]
+	syncRoute                 *connect.Client[v1.SyncRouteRequest, v1.SyncRouteResponse]
+	watchHealth               *connect.Client[v1.WatchHealthRequest, v1.WatchHealthResponse]
+}
+
+// GetComputerFollowing calls rementor.v1.ControlPlaneService.GetComputerFollowing.
+func (c *controlPlaneServiceClient) GetComputerFollowing(ctx context.Context, req *connect.Request[v1.GetComputerFollowingRequest]) (*connect.Response[v1.GetComputerFollowingResponse], error) {
+	return c.getComputerFollowing.CallUnary(ctx, req)
+}
+
+// FollowComputer calls rementor.v1.ControlPlaneService.FollowComputer.
+func (c *controlPlaneServiceClient) FollowComputer(ctx context.Context, req *connect.Request[v1.FollowComputerRequest]) (*connect.Response[v1.FollowComputerResponse], error) {
+	return c.followComputer.CallUnary(ctx, req)
+}
+
+// SyncComputerConfiguration calls rementor.v1.ControlPlaneService.SyncComputerConfiguration.
+func (c *controlPlaneServiceClient) SyncComputerConfiguration(ctx context.Context, req *connect.Request[v1.SyncComputerConfigurationRequest]) (*connect.Response[v1.SyncComputerConfigurationResponse], error) {
+	return c.syncComputerConfiguration.CallUnary(ctx, req)
+}
+
+// StopFollowingComputer calls rementor.v1.ControlPlaneService.StopFollowingComputer.
+func (c *controlPlaneServiceClient) StopFollowingComputer(ctx context.Context, req *connect.Request[v1.StopFollowingComputerRequest]) (*connect.Response[v1.StopFollowingComputerResponse], error) {
+	return c.stopFollowingComputer.CallUnary(ctx, req)
+}
+
+// SetEnvironmentFollowing calls rementor.v1.ControlPlaneService.SetEnvironmentFollowing.
+func (c *controlPlaneServiceClient) SetEnvironmentFollowing(ctx context.Context, req *connect.Request[v1.SetEnvironmentFollowingRequest]) (*connect.Response[v1.SetEnvironmentFollowingResponse], error) {
+	return c.setEnvironmentFollowing.CallUnary(ctx, req)
+}
+
+// EditFollowedConfiguration calls rementor.v1.ControlPlaneService.EditFollowedConfiguration.
+func (c *controlPlaneServiceClient) EditFollowedConfiguration(ctx context.Context, req *connect.Request[v1.EditFollowedConfigurationRequest]) (*connect.Response[v1.EditFollowedConfigurationResponse], error) {
+	return c.editFollowedConfiguration.CallUnary(ctx, req)
+}
+
+// GetPeerState calls rementor.v1.ControlPlaneService.GetPeerState.
+func (c *controlPlaneServiceClient) GetPeerState(ctx context.Context, req *connect.Request[v1.GetPeerStateRequest]) (*connect.Response[v1.GetPeerStateResponse], error) {
+	return c.getPeerState.CallUnary(ctx, req)
+}
+
+// ConfigurePeerConnection calls rementor.v1.ControlPlaneService.ConfigurePeerConnection.
+func (c *controlPlaneServiceClient) ConfigurePeerConnection(ctx context.Context, req *connect.Request[v1.ConfigurePeerConnectionRequest]) (*connect.Response[v1.ConfigurePeerConnectionResponse], error) {
+	return c.configurePeerConnection.CallUnary(ctx, req)
+}
+
+// CreatePeerInvitation calls rementor.v1.ControlPlaneService.CreatePeerInvitation.
+func (c *controlPlaneServiceClient) CreatePeerInvitation(ctx context.Context, req *connect.Request[v1.CreatePeerInvitationRequest]) (*connect.Response[v1.CreatePeerInvitationResponse], error) {
+	return c.createPeerInvitation.CallUnary(ctx, req)
+}
+
+// CancelPeerInvitation calls rementor.v1.ControlPlaneService.CancelPeerInvitation.
+func (c *controlPlaneServiceClient) CancelPeerInvitation(ctx context.Context, req *connect.Request[v1.CancelPeerInvitationRequest]) (*connect.Response[v1.CancelPeerInvitationResponse], error) {
+	return c.cancelPeerInvitation.CallUnary(ctx, req)
+}
+
+// InspectPeerInvitation calls rementor.v1.ControlPlaneService.InspectPeerInvitation.
+func (c *controlPlaneServiceClient) InspectPeerInvitation(ctx context.Context, req *connect.Request[v1.InspectPeerInvitationRequest]) (*connect.Response[v1.InspectPeerInvitationResponse], error) {
+	return c.inspectPeerInvitation.CallUnary(ctx, req)
+}
+
+// PairComputer calls rementor.v1.ControlPlaneService.PairComputer.
+func (c *controlPlaneServiceClient) PairComputer(ctx context.Context, req *connect.Request[v1.PairComputerRequest]) (*connect.Response[v1.PairComputerResponse], error) {
+	return c.pairComputer.CallUnary(ctx, req)
+}
+
+// UnpairComputer calls rementor.v1.ControlPlaneService.UnpairComputer.
+func (c *controlPlaneServiceClient) UnpairComputer(ctx context.Context, req *connect.Request[v1.UnpairComputerRequest]) (*connect.Response[v1.UnpairComputerResponse], error) {
+	return c.unpairComputer.CallUnary(ctx, req)
+}
+
+// CheckPeerConnection calls rementor.v1.ControlPlaneService.CheckPeerConnection.
+func (c *controlPlaneServiceClient) CheckPeerConnection(ctx context.Context, req *connect.Request[v1.CheckPeerConnectionRequest]) (*connect.Response[v1.CheckPeerConnectionResponse], error) {
+	return c.checkPeerConnection.CallUnary(ctx, req)
+}
+
+// ListPeerWorkspaces calls rementor.v1.ControlPlaneService.ListPeerWorkspaces.
+func (c *controlPlaneServiceClient) ListPeerWorkspaces(ctx context.Context, req *connect.Request[v1.ListPeerWorkspacesRequest]) (*connect.Response[v1.ListPeerWorkspacesResponse], error) {
+	return c.listPeerWorkspaces.CallUnary(ctx, req)
+}
+
+// GetWorkspaceInheritance calls rementor.v1.ControlPlaneService.GetWorkspaceInheritance.
+func (c *controlPlaneServiceClient) GetWorkspaceInheritance(ctx context.Context, req *connect.Request[v1.GetWorkspaceInheritanceRequest]) (*connect.Response[v1.GetWorkspaceInheritanceResponse], error) {
+	return c.getWorkspaceInheritance.CallUnary(ctx, req)
+}
+
+// FollowPeerWorkspace calls rementor.v1.ControlPlaneService.FollowPeerWorkspace.
+func (c *controlPlaneServiceClient) FollowPeerWorkspace(ctx context.Context, req *connect.Request[v1.FollowPeerWorkspaceRequest]) (*connect.Response[v1.FollowPeerWorkspaceResponse], error) {
+	return c.followPeerWorkspace.CallUnary(ctx, req)
+}
+
+// SyncPeerWorkspace calls rementor.v1.ControlPlaneService.SyncPeerWorkspace.
+func (c *controlPlaneServiceClient) SyncPeerWorkspace(ctx context.Context, req *connect.Request[v1.SyncPeerWorkspaceRequest]) (*connect.Response[v1.SyncPeerWorkspaceResponse], error) {
+	return c.syncPeerWorkspace.CallUnary(ctx, req)
+}
+
+// OverrideInheritedRoute calls rementor.v1.ControlPlaneService.OverrideInheritedRoute.
+func (c *controlPlaneServiceClient) OverrideInheritedRoute(ctx context.Context, req *connect.Request[v1.OverrideInheritedRouteRequest]) (*connect.Response[v1.OverrideInheritedRouteResponse], error) {
+	return c.overrideInheritedRoute.CallUnary(ctx, req)
+}
+
+// StopFollowingWorkspace calls rementor.v1.ControlPlaneService.StopFollowingWorkspace.
+func (c *controlPlaneServiceClient) StopFollowingWorkspace(ctx context.Context, req *connect.Request[v1.StopFollowingWorkspaceRequest]) (*connect.Response[v1.StopFollowingWorkspaceResponse], error) {
+	return c.stopFollowingWorkspace.CallUnary(ctx, req)
+}
+
+// GetFleetConfiguration calls rementor.v1.ControlPlaneService.GetFleetConfiguration.
+func (c *controlPlaneServiceClient) GetFleetConfiguration(ctx context.Context, req *connect.Request[v1.GetFleetConfigurationRequest]) (*connect.Response[v1.GetFleetConfigurationResponse], error) {
+	return c.getFleetConfiguration.CallUnary(ctx, req)
+}
+
+// ReviewFleetConfiguration calls rementor.v1.ControlPlaneService.ReviewFleetConfiguration.
+func (c *controlPlaneServiceClient) ReviewFleetConfiguration(ctx context.Context, req *connect.Request[v1.ReviewFleetConfigurationRequest]) (*connect.Response[v1.ReviewFleetConfigurationResponse], error) {
+	return c.reviewFleetConfiguration.CallUnary(ctx, req)
+}
+
+// SaveFleetConfiguration calls rementor.v1.ControlPlaneService.SaveFleetConfiguration.
+func (c *controlPlaneServiceClient) SaveFleetConfiguration(ctx context.Context, req *connect.Request[v1.SaveFleetConfigurationRequest]) (*connect.Response[v1.SaveFleetConfigurationResponse], error) {
+	return c.saveFleetConfiguration.CallUnary(ctx, req)
 }
 
 // CreateRoutingSession calls rementor.v1.ControlPlaneService.CreateRoutingSession.
@@ -491,6 +859,29 @@ func (c *controlPlaneServiceClient) WatchHealth(ctx context.Context, req *connec
 
 // ControlPlaneServiceHandler is an implementation of the rementor.v1.ControlPlaneService service.
 type ControlPlaneServiceHandler interface {
+	GetComputerFollowing(context.Context, *connect.Request[v1.GetComputerFollowingRequest]) (*connect.Response[v1.GetComputerFollowingResponse], error)
+	FollowComputer(context.Context, *connect.Request[v1.FollowComputerRequest]) (*connect.Response[v1.FollowComputerResponse], error)
+	SyncComputerConfiguration(context.Context, *connect.Request[v1.SyncComputerConfigurationRequest]) (*connect.Response[v1.SyncComputerConfigurationResponse], error)
+	StopFollowingComputer(context.Context, *connect.Request[v1.StopFollowingComputerRequest]) (*connect.Response[v1.StopFollowingComputerResponse], error)
+	SetEnvironmentFollowing(context.Context, *connect.Request[v1.SetEnvironmentFollowingRequest]) (*connect.Response[v1.SetEnvironmentFollowingResponse], error)
+	EditFollowedConfiguration(context.Context, *connect.Request[v1.EditFollowedConfigurationRequest]) (*connect.Response[v1.EditFollowedConfigurationResponse], error)
+	GetPeerState(context.Context, *connect.Request[v1.GetPeerStateRequest]) (*connect.Response[v1.GetPeerStateResponse], error)
+	ConfigurePeerConnection(context.Context, *connect.Request[v1.ConfigurePeerConnectionRequest]) (*connect.Response[v1.ConfigurePeerConnectionResponse], error)
+	CreatePeerInvitation(context.Context, *connect.Request[v1.CreatePeerInvitationRequest]) (*connect.Response[v1.CreatePeerInvitationResponse], error)
+	CancelPeerInvitation(context.Context, *connect.Request[v1.CancelPeerInvitationRequest]) (*connect.Response[v1.CancelPeerInvitationResponse], error)
+	InspectPeerInvitation(context.Context, *connect.Request[v1.InspectPeerInvitationRequest]) (*connect.Response[v1.InspectPeerInvitationResponse], error)
+	PairComputer(context.Context, *connect.Request[v1.PairComputerRequest]) (*connect.Response[v1.PairComputerResponse], error)
+	UnpairComputer(context.Context, *connect.Request[v1.UnpairComputerRequest]) (*connect.Response[v1.UnpairComputerResponse], error)
+	CheckPeerConnection(context.Context, *connect.Request[v1.CheckPeerConnectionRequest]) (*connect.Response[v1.CheckPeerConnectionResponse], error)
+	ListPeerWorkspaces(context.Context, *connect.Request[v1.ListPeerWorkspacesRequest]) (*connect.Response[v1.ListPeerWorkspacesResponse], error)
+	GetWorkspaceInheritance(context.Context, *connect.Request[v1.GetWorkspaceInheritanceRequest]) (*connect.Response[v1.GetWorkspaceInheritanceResponse], error)
+	FollowPeerWorkspace(context.Context, *connect.Request[v1.FollowPeerWorkspaceRequest]) (*connect.Response[v1.FollowPeerWorkspaceResponse], error)
+	SyncPeerWorkspace(context.Context, *connect.Request[v1.SyncPeerWorkspaceRequest]) (*connect.Response[v1.SyncPeerWorkspaceResponse], error)
+	OverrideInheritedRoute(context.Context, *connect.Request[v1.OverrideInheritedRouteRequest]) (*connect.Response[v1.OverrideInheritedRouteResponse], error)
+	StopFollowingWorkspace(context.Context, *connect.Request[v1.StopFollowingWorkspaceRequest]) (*connect.Response[v1.StopFollowingWorkspaceResponse], error)
+	GetFleetConfiguration(context.Context, *connect.Request[v1.GetFleetConfigurationRequest]) (*connect.Response[v1.GetFleetConfigurationResponse], error)
+	ReviewFleetConfiguration(context.Context, *connect.Request[v1.ReviewFleetConfigurationRequest]) (*connect.Response[v1.ReviewFleetConfigurationResponse], error)
+	SaveFleetConfiguration(context.Context, *connect.Request[v1.SaveFleetConfigurationRequest]) (*connect.Response[v1.SaveFleetConfigurationResponse], error)
 	CreateRoutingSession(context.Context, *connect.Request[v1.CreateRoutingSessionRequest]) (*connect.Response[v1.CreateRoutingSessionResponse], error)
 	RefreshRoutingSession(context.Context, *connect.Request[v1.RefreshRoutingSessionRequest]) (*connect.Response[v1.RefreshRoutingSessionResponse], error)
 	ListWorkspaces(context.Context, *connect.Request[v1.ListWorkspacesRequest]) (*connect.Response[v1.ListWorkspacesResponse], error)
@@ -527,6 +918,144 @@ type ControlPlaneServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewControlPlaneServiceHandler(svc ControlPlaneServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	controlPlaneServiceMethods := v1.File_rementor_v1_rementor_proto.Services().ByName("ControlPlaneService").Methods()
+	controlPlaneServiceGetComputerFollowingHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceGetComputerFollowingProcedure,
+		svc.GetComputerFollowing,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("GetComputerFollowing")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceFollowComputerHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceFollowComputerProcedure,
+		svc.FollowComputer,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("FollowComputer")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceSyncComputerConfigurationHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceSyncComputerConfigurationProcedure,
+		svc.SyncComputerConfiguration,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("SyncComputerConfiguration")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceStopFollowingComputerHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceStopFollowingComputerProcedure,
+		svc.StopFollowingComputer,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("StopFollowingComputer")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceSetEnvironmentFollowingHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceSetEnvironmentFollowingProcedure,
+		svc.SetEnvironmentFollowing,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("SetEnvironmentFollowing")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceEditFollowedConfigurationHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceEditFollowedConfigurationProcedure,
+		svc.EditFollowedConfiguration,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("EditFollowedConfiguration")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceGetPeerStateHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceGetPeerStateProcedure,
+		svc.GetPeerState,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("GetPeerState")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceConfigurePeerConnectionHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceConfigurePeerConnectionProcedure,
+		svc.ConfigurePeerConnection,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("ConfigurePeerConnection")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceCreatePeerInvitationHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceCreatePeerInvitationProcedure,
+		svc.CreatePeerInvitation,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("CreatePeerInvitation")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceCancelPeerInvitationHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceCancelPeerInvitationProcedure,
+		svc.CancelPeerInvitation,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("CancelPeerInvitation")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceInspectPeerInvitationHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceInspectPeerInvitationProcedure,
+		svc.InspectPeerInvitation,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("InspectPeerInvitation")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServicePairComputerHandler := connect.NewUnaryHandler(
+		ControlPlaneServicePairComputerProcedure,
+		svc.PairComputer,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("PairComputer")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceUnpairComputerHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceUnpairComputerProcedure,
+		svc.UnpairComputer,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("UnpairComputer")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceCheckPeerConnectionHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceCheckPeerConnectionProcedure,
+		svc.CheckPeerConnection,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("CheckPeerConnection")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceListPeerWorkspacesHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceListPeerWorkspacesProcedure,
+		svc.ListPeerWorkspaces,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("ListPeerWorkspaces")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceGetWorkspaceInheritanceHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceGetWorkspaceInheritanceProcedure,
+		svc.GetWorkspaceInheritance,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("GetWorkspaceInheritance")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceFollowPeerWorkspaceHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceFollowPeerWorkspaceProcedure,
+		svc.FollowPeerWorkspace,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("FollowPeerWorkspace")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceSyncPeerWorkspaceHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceSyncPeerWorkspaceProcedure,
+		svc.SyncPeerWorkspace,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("SyncPeerWorkspace")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceOverrideInheritedRouteHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceOverrideInheritedRouteProcedure,
+		svc.OverrideInheritedRoute,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("OverrideInheritedRoute")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceStopFollowingWorkspaceHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceStopFollowingWorkspaceProcedure,
+		svc.StopFollowingWorkspace,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("StopFollowingWorkspace")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceGetFleetConfigurationHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceGetFleetConfigurationProcedure,
+		svc.GetFleetConfiguration,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("GetFleetConfiguration")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceReviewFleetConfigurationHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceReviewFleetConfigurationProcedure,
+		svc.ReviewFleetConfiguration,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("ReviewFleetConfiguration")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlPlaneServiceSaveFleetConfigurationHandler := connect.NewUnaryHandler(
+		ControlPlaneServiceSaveFleetConfigurationProcedure,
+		svc.SaveFleetConfiguration,
+		connect.WithSchema(controlPlaneServiceMethods.ByName("SaveFleetConfiguration")),
+		connect.WithHandlerOptions(opts...),
+	)
 	controlPlaneServiceCreateRoutingSessionHandler := connect.NewUnaryHandler(
 		ControlPlaneServiceCreateRoutingSessionProcedure,
 		svc.CreateRoutingSession,
@@ -691,6 +1220,52 @@ func NewControlPlaneServiceHandler(svc ControlPlaneServiceHandler, opts ...conne
 	)
 	return "/rementor.v1.ControlPlaneService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case ControlPlaneServiceGetComputerFollowingProcedure:
+			controlPlaneServiceGetComputerFollowingHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceFollowComputerProcedure:
+			controlPlaneServiceFollowComputerHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceSyncComputerConfigurationProcedure:
+			controlPlaneServiceSyncComputerConfigurationHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceStopFollowingComputerProcedure:
+			controlPlaneServiceStopFollowingComputerHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceSetEnvironmentFollowingProcedure:
+			controlPlaneServiceSetEnvironmentFollowingHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceEditFollowedConfigurationProcedure:
+			controlPlaneServiceEditFollowedConfigurationHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceGetPeerStateProcedure:
+			controlPlaneServiceGetPeerStateHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceConfigurePeerConnectionProcedure:
+			controlPlaneServiceConfigurePeerConnectionHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceCreatePeerInvitationProcedure:
+			controlPlaneServiceCreatePeerInvitationHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceCancelPeerInvitationProcedure:
+			controlPlaneServiceCancelPeerInvitationHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceInspectPeerInvitationProcedure:
+			controlPlaneServiceInspectPeerInvitationHandler.ServeHTTP(w, r)
+		case ControlPlaneServicePairComputerProcedure:
+			controlPlaneServicePairComputerHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceUnpairComputerProcedure:
+			controlPlaneServiceUnpairComputerHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceCheckPeerConnectionProcedure:
+			controlPlaneServiceCheckPeerConnectionHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceListPeerWorkspacesProcedure:
+			controlPlaneServiceListPeerWorkspacesHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceGetWorkspaceInheritanceProcedure:
+			controlPlaneServiceGetWorkspaceInheritanceHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceFollowPeerWorkspaceProcedure:
+			controlPlaneServiceFollowPeerWorkspaceHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceSyncPeerWorkspaceProcedure:
+			controlPlaneServiceSyncPeerWorkspaceHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceOverrideInheritedRouteProcedure:
+			controlPlaneServiceOverrideInheritedRouteHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceStopFollowingWorkspaceProcedure:
+			controlPlaneServiceStopFollowingWorkspaceHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceGetFleetConfigurationProcedure:
+			controlPlaneServiceGetFleetConfigurationHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceReviewFleetConfigurationProcedure:
+			controlPlaneServiceReviewFleetConfigurationHandler.ServeHTTP(w, r)
+		case ControlPlaneServiceSaveFleetConfigurationProcedure:
+			controlPlaneServiceSaveFleetConfigurationHandler.ServeHTTP(w, r)
 		case ControlPlaneServiceCreateRoutingSessionProcedure:
 			controlPlaneServiceCreateRoutingSessionHandler.ServeHTTP(w, r)
 		case ControlPlaneServiceRefreshRoutingSessionProcedure:
@@ -753,6 +1328,98 @@ func NewControlPlaneServiceHandler(svc ControlPlaneServiceHandler, opts ...conne
 
 // UnimplementedControlPlaneServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedControlPlaneServiceHandler struct{}
+
+func (UnimplementedControlPlaneServiceHandler) GetComputerFollowing(context.Context, *connect.Request[v1.GetComputerFollowingRequest]) (*connect.Response[v1.GetComputerFollowingResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.GetComputerFollowing is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) FollowComputer(context.Context, *connect.Request[v1.FollowComputerRequest]) (*connect.Response[v1.FollowComputerResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.FollowComputer is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) SyncComputerConfiguration(context.Context, *connect.Request[v1.SyncComputerConfigurationRequest]) (*connect.Response[v1.SyncComputerConfigurationResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.SyncComputerConfiguration is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) StopFollowingComputer(context.Context, *connect.Request[v1.StopFollowingComputerRequest]) (*connect.Response[v1.StopFollowingComputerResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.StopFollowingComputer is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) SetEnvironmentFollowing(context.Context, *connect.Request[v1.SetEnvironmentFollowingRequest]) (*connect.Response[v1.SetEnvironmentFollowingResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.SetEnvironmentFollowing is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) EditFollowedConfiguration(context.Context, *connect.Request[v1.EditFollowedConfigurationRequest]) (*connect.Response[v1.EditFollowedConfigurationResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.EditFollowedConfiguration is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) GetPeerState(context.Context, *connect.Request[v1.GetPeerStateRequest]) (*connect.Response[v1.GetPeerStateResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.GetPeerState is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) ConfigurePeerConnection(context.Context, *connect.Request[v1.ConfigurePeerConnectionRequest]) (*connect.Response[v1.ConfigurePeerConnectionResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.ConfigurePeerConnection is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) CreatePeerInvitation(context.Context, *connect.Request[v1.CreatePeerInvitationRequest]) (*connect.Response[v1.CreatePeerInvitationResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.CreatePeerInvitation is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) CancelPeerInvitation(context.Context, *connect.Request[v1.CancelPeerInvitationRequest]) (*connect.Response[v1.CancelPeerInvitationResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.CancelPeerInvitation is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) InspectPeerInvitation(context.Context, *connect.Request[v1.InspectPeerInvitationRequest]) (*connect.Response[v1.InspectPeerInvitationResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.InspectPeerInvitation is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) PairComputer(context.Context, *connect.Request[v1.PairComputerRequest]) (*connect.Response[v1.PairComputerResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.PairComputer is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) UnpairComputer(context.Context, *connect.Request[v1.UnpairComputerRequest]) (*connect.Response[v1.UnpairComputerResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.UnpairComputer is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) CheckPeerConnection(context.Context, *connect.Request[v1.CheckPeerConnectionRequest]) (*connect.Response[v1.CheckPeerConnectionResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.CheckPeerConnection is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) ListPeerWorkspaces(context.Context, *connect.Request[v1.ListPeerWorkspacesRequest]) (*connect.Response[v1.ListPeerWorkspacesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.ListPeerWorkspaces is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) GetWorkspaceInheritance(context.Context, *connect.Request[v1.GetWorkspaceInheritanceRequest]) (*connect.Response[v1.GetWorkspaceInheritanceResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.GetWorkspaceInheritance is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) FollowPeerWorkspace(context.Context, *connect.Request[v1.FollowPeerWorkspaceRequest]) (*connect.Response[v1.FollowPeerWorkspaceResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.FollowPeerWorkspace is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) SyncPeerWorkspace(context.Context, *connect.Request[v1.SyncPeerWorkspaceRequest]) (*connect.Response[v1.SyncPeerWorkspaceResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.SyncPeerWorkspace is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) OverrideInheritedRoute(context.Context, *connect.Request[v1.OverrideInheritedRouteRequest]) (*connect.Response[v1.OverrideInheritedRouteResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.OverrideInheritedRoute is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) StopFollowingWorkspace(context.Context, *connect.Request[v1.StopFollowingWorkspaceRequest]) (*connect.Response[v1.StopFollowingWorkspaceResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.StopFollowingWorkspace is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) GetFleetConfiguration(context.Context, *connect.Request[v1.GetFleetConfigurationRequest]) (*connect.Response[v1.GetFleetConfigurationResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.GetFleetConfiguration is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) ReviewFleetConfiguration(context.Context, *connect.Request[v1.ReviewFleetConfigurationRequest]) (*connect.Response[v1.ReviewFleetConfigurationResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.ReviewFleetConfiguration is not implemented"))
+}
+
+func (UnimplementedControlPlaneServiceHandler) SaveFleetConfiguration(context.Context, *connect.Request[v1.SaveFleetConfigurationRequest]) (*connect.Response[v1.SaveFleetConfigurationResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.SaveFleetConfiguration is not implemented"))
+}
 
 func (UnimplementedControlPlaneServiceHandler) CreateRoutingSession(context.Context, *connect.Request[v1.CreateRoutingSessionRequest]) (*connect.Response[v1.CreateRoutingSessionResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("rementor.v1.ControlPlaneService.CreateRoutingSession is not implemented"))

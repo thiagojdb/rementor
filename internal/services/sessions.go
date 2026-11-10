@@ -18,7 +18,7 @@ func cloneSession(source *models.RoutingSession) *models.RoutingSession {
 		return nil
 	}
 	copy := *source
-	copy.Baseline = append([]models.ApplicationConfig(nil), source.Baseline...)
+	copy.Baseline = models.CloneApplicationConfigs(source.Baseline)
 	for i := range copy.Baseline {
 		copy.Baseline[i].Aliases = append([]string(nil), source.Baseline[i].Aliases...)
 		copy.Baseline[i].RoutePattern = cloneStringPtr(source.Baseline[i].RoutePattern)
@@ -120,6 +120,7 @@ func sessionBaseline(base *models.Workspace, hostPrefix string) []models.Applica
 		a.LegacyPublicPath = false
 		a.LegacyUpstreamContext = false
 		a.Port = 0
+		a.PeerEndpoint = nil
 		a.Active = false
 		a.Route = models.RouteState{}
 		a.LastOperation = nil
@@ -203,6 +204,9 @@ func refreshSession(workspaces []*models.Workspace, id string) (SessionRefresh, 
 	ws := findWorkspace(workspaces, id)
 	if ws == nil || ws.Session == nil {
 		return SessionRefresh{}, fmt.Errorf("routing session not found: %s", id)
+	}
+	if ws.Inheritance != nil {
+		return SessionRefresh{}, fmt.Errorf("stop following before refreshing the pinned session baseline")
 	}
 	base := findWorkspace(workspaces, ws.Session.EnvironmentID)
 	if base == nil {
@@ -461,6 +465,9 @@ func (r *Registry) EditSessionApplication(id, appRef, correlation string, edit f
 		ws := findWorkspace(*candidate, id)
 		if ws == nil || ws.Session == nil {
 			return fmt.Errorf("routing session not found: %s", id)
+		}
+		if ws.Inheritance != nil {
+			return fmt.Errorf("stop following before editing route definitions; use inheritance overrides to change targets")
 		}
 		apps := applicationConfigs(ws.Applications)
 		_, existing, lookupErr := findAppInWorkspace(ws, appRef)

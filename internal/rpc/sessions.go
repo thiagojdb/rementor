@@ -42,14 +42,14 @@ func (s *ControlPlaneService) CreateRoutingSession(ctx context.Context, req *con
 	if err != nil {
 		return nil, newRPCError(connect.CodeInvalidArgument, err)
 	}
-	return connect.NewResponse(&rementorv1.CreateRoutingSessionResponse{Workspace: toProtoWorkspace(ws)}), nil
+	return connect.NewResponse(&rementorv1.CreateRoutingSessionResponse{Workspace: s.workspaceProto(ws)}), nil
 }
 func (s *ControlPlaneService) RefreshRoutingSession(ctx context.Context, req *connect.Request[rementorv1.RefreshRoutingSessionRequest]) (*connect.Response[rementorv1.RefreshRoutingSessionResponse], error) {
 	result, err := s.registry.RefreshRoutingSession(req.Msg.Id, req.Msg.PreviewToken, correlationID(req.Msg.CorrelationId, req.Header()), req.Msg.Apply)
 	if err != nil {
 		return nil, newRPCError(connect.CodeFailedPrecondition, err)
 	}
-	return connect.NewResponse(&rementorv1.RefreshRoutingSessionResponse{Workspace: toProtoWorkspace(result.Workspace), Changes: result.Changes, Conflicts: result.Conflicts, PreviewToken: result.Token}), nil
+	return connect.NewResponse(&rementorv1.RefreshRoutingSessionResponse{Workspace: s.workspaceProto(result.Workspace), Changes: result.Changes, Conflicts: result.Conflicts, PreviewToken: result.Token}), nil
 }
 
 func (s *ControlPlaneService) upsertSession(req *connect.Request[rementorv1.UpsertApplicationRequest]) (*connect.Response[rementorv1.UpsertApplicationResponse], error) {

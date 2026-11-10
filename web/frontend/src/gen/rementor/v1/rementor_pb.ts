@@ -588,6 +588,16 @@ export class StructuredError extends Message<StructuredError> {
  */
 export class Application extends Message<Application> {
   /**
+   * @generated from field: optional int32 source_port = 41;
+   */
+  sourcePort?: number;
+
+  /**
+   * @generated from field: rementor.v1.PeerEndpoint peer_endpoint = 25;
+   */
+  peerEndpoint?: PeerEndpoint;
+
+  /**
    * @generated from field: repeated string shared_with = 40;
    */
   sharedWith: string[] = [];
@@ -720,6 +730,8 @@ export class Application extends Message<Application> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "rementor.v1.Application";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 41, name: "source_port", kind: "scalar", T: 5 /* ScalarType.INT32 */, opt: true },
+    { no: 25, name: "peer_endpoint", kind: "message", T: PeerEndpoint },
     { no: 40, name: "shared_with", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
@@ -768,6 +780,16 @@ export class Application extends Message<Application> {
  * @generated from message rementor.v1.Workspace
  */
 export class Workspace extends Message<Workspace> {
+  /**
+   * @generated from field: bool computer_followed = 12;
+   */
+  computerFollowed = false;
+
+  /**
+   * @generated from field: rementor.v1.WorkspaceInheritance inheritance = 11;
+   */
+  inheritance?: WorkspaceInheritance;
+
   /**
    * @generated from field: string browser_url = 10;
    */
@@ -826,6 +848,8 @@ export class Workspace extends Message<Workspace> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "rementor.v1.Workspace";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 12, name: "computer_followed", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 11, name: "inheritance", kind: "message", T: WorkspaceInheritance },
     { no: 10, name: "browser_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 9, name: "session", kind: "message", T: RoutingSession },
     { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
@@ -901,6 +925,116 @@ export class Routing extends Message<Routing> {
 
   static equals(a: Routing | PlainMessage<Routing> | undefined, b: Routing | PlainMessage<Routing> | undefined): boolean {
     return proto3.util.equals(Routing, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.EditFollowedConfigurationRequest
+ */
+export class EditFollowedConfigurationRequest extends Message<EditFollowedConfigurationRequest> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  /**
+   * @generated from field: uint64 expected_version = 2;
+   */
+  expectedVersion = protoInt64.zero;
+
+  /**
+   * @generated from field: string action = 3;
+   */
+  action = "";
+
+  /**
+   * @generated from field: string application_id = 4;
+   */
+  applicationId = "";
+
+  /**
+   * @generated from field: rementor.v1.ApplicationConfigInput application = 5;
+   */
+  application?: ApplicationConfigInput;
+
+  /**
+   * @generated from field: rementor.v1.Routing routing = 6;
+   */
+  routing?: Routing;
+
+  /**
+   * @generated from field: optional int32 registration_port = 7;
+   */
+  registrationPort?: number;
+
+  constructor(data?: PartialMessage<EditFollowedConfigurationRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.EditFollowedConfigurationRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "expected_version", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
+    { no: 3, name: "action", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "application_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "application", kind: "message", T: ApplicationConfigInput },
+    { no: 6, name: "routing", kind: "message", T: Routing },
+    { no: 7, name: "registration_port", kind: "scalar", T: 5 /* ScalarType.INT32 */, opt: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): EditFollowedConfigurationRequest {
+    return new EditFollowedConfigurationRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): EditFollowedConfigurationRequest {
+    return new EditFollowedConfigurationRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): EditFollowedConfigurationRequest {
+    return new EditFollowedConfigurationRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: EditFollowedConfigurationRequest | PlainMessage<EditFollowedConfigurationRequest> | undefined, b: EditFollowedConfigurationRequest | PlainMessage<EditFollowedConfigurationRequest> | undefined): boolean {
+    return proto3.util.equals(EditFollowedConfigurationRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.EditFollowedConfigurationResponse
+ */
+export class EditFollowedConfigurationResponse extends Message<EditFollowedConfigurationResponse> {
+  /**
+   * @generated from field: rementor.v1.Workspace workspace = 1;
+   */
+  workspace?: Workspace;
+
+  constructor(data?: PartialMessage<EditFollowedConfigurationResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.EditFollowedConfigurationResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace", kind: "message", T: Workspace },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): EditFollowedConfigurationResponse {
+    return new EditFollowedConfigurationResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): EditFollowedConfigurationResponse {
+    return new EditFollowedConfigurationResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): EditFollowedConfigurationResponse {
+    return new EditFollowedConfigurationResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: EditFollowedConfigurationResponse | PlainMessage<EditFollowedConfigurationResponse> | undefined, b: EditFollowedConfigurationResponse | PlainMessage<EditFollowedConfigurationResponse> | undefined): boolean {
+    return proto3.util.equals(EditFollowedConfigurationResponse, a, b);
   }
 }
 
@@ -4755,6 +4889,2866 @@ export class RefreshRoutingSessionResponse extends Message<RefreshRoutingSession
 
   static equals(a: RefreshRoutingSessionResponse | PlainMessage<RefreshRoutingSessionResponse> | undefined, b: RefreshRoutingSessionResponse | PlainMessage<RefreshRoutingSessionResponse> | undefined): boolean {
     return proto3.util.equals(RefreshRoutingSessionResponse, a, b);
+  }
+}
+
+/**
+ * Fleet configuration is saved routing intent. It does not enroll peers or
+ * alter existing workspace/session proxy routing.
+ *
+ * @generated from message rementor.v1.FleetTopology
+ */
+export class FleetTopology extends Message<FleetTopology> {
+  /**
+   * @generated from field: int32 version = 1;
+   */
+  version = 0;
+
+  /**
+   * @generated from field: repeated rementor.v1.FleetNode nodes = 2;
+   */
+  nodes: FleetNode[] = [];
+
+  /**
+   * @generated from field: repeated rementor.v1.FleetOrigin origins = 3;
+   */
+  origins: FleetOrigin[] = [];
+
+  /**
+   * @generated from field: repeated rementor.v1.FleetTarget targets = 4;
+   */
+  targets: FleetTarget[] = [];
+
+  /**
+   * @generated from field: repeated rementor.v1.FleetRoute routes = 5;
+   */
+  routes: FleetRoute[] = [];
+
+  /**
+   * @generated from field: repeated rementor.v1.FleetInstance instances = 6;
+   */
+  instances: FleetInstance[] = [];
+
+  /**
+   * @generated from field: string shared_instance = 7;
+   */
+  sharedInstance = "";
+
+  /**
+   * @generated from field: string local_instance = 8;
+   */
+  localInstance = "";
+
+  constructor(data?: PartialMessage<FleetTopology>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.FleetTopology";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "version", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 2, name: "nodes", kind: "message", T: FleetNode, repeated: true },
+    { no: 3, name: "origins", kind: "message", T: FleetOrigin, repeated: true },
+    { no: 4, name: "targets", kind: "message", T: FleetTarget, repeated: true },
+    { no: 5, name: "routes", kind: "message", T: FleetRoute, repeated: true },
+    { no: 6, name: "instances", kind: "message", T: FleetInstance, repeated: true },
+    { no: 7, name: "shared_instance", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 8, name: "local_instance", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): FleetTopology {
+    return new FleetTopology().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): FleetTopology {
+    return new FleetTopology().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): FleetTopology {
+    return new FleetTopology().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: FleetTopology | PlainMessage<FleetTopology> | undefined, b: FleetTopology | PlainMessage<FleetTopology> | undefined): boolean {
+    return proto3.util.equals(FleetTopology, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.FleetNode
+ */
+export class FleetNode extends Message<FleetNode> {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * @generated from field: string gateway_url = 2;
+   */
+  gatewayUrl = "";
+
+  constructor(data?: PartialMessage<FleetNode>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.FleetNode";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "gateway_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): FleetNode {
+    return new FleetNode().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): FleetNode {
+    return new FleetNode().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): FleetNode {
+    return new FleetNode().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: FleetNode | PlainMessage<FleetNode> | undefined, b: FleetNode | PlainMessage<FleetNode> | undefined): boolean {
+    return proto3.util.equals(FleetNode, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.FleetOrigin
+ */
+export class FleetOrigin extends Message<FleetOrigin> {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * @generated from field: string url = 2;
+   */
+  url = "";
+
+  constructor(data?: PartialMessage<FleetOrigin>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.FleetOrigin";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): FleetOrigin {
+    return new FleetOrigin().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): FleetOrigin {
+    return new FleetOrigin().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): FleetOrigin {
+    return new FleetOrigin().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: FleetOrigin | PlainMessage<FleetOrigin> | undefined, b: FleetOrigin | PlainMessage<FleetOrigin> | undefined): boolean {
+    return proto3.util.equals(FleetOrigin, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.FleetTarget
+ */
+export class FleetTarget extends Message<FleetTarget> {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * @generated from field: string kind = 2;
+   */
+  kind = "";
+
+  /**
+   * @generated from field: string url = 3;
+   */
+  url = "";
+
+  /**
+   * @generated from field: string node_id = 4;
+   */
+  nodeId = "";
+
+  /**
+   * @generated from field: string route_id = 5;
+   */
+  routeId = "";
+
+  constructor(data?: PartialMessage<FleetTarget>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.FleetTarget";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "kind", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "node_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "route_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): FleetTarget {
+    return new FleetTarget().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): FleetTarget {
+    return new FleetTarget().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): FleetTarget {
+    return new FleetTarget().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: FleetTarget | PlainMessage<FleetTarget> | undefined, b: FleetTarget | PlainMessage<FleetTarget> | undefined): boolean {
+    return proto3.util.equals(FleetTarget, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.FleetRoute
+ */
+export class FleetRoute extends Message<FleetRoute> {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * @generated from field: string origin_id = 2;
+   */
+  originId = "";
+
+  /**
+   * @generated from field: string path = 3;
+   */
+  path = "";
+
+  /**
+   * @generated from field: string match = 4;
+   */
+  match = "";
+
+  /**
+   * @generated from field: string app_id = 5;
+   */
+  appId = "";
+
+  /**
+   * @generated from field: string service_id = 6;
+   */
+  serviceId = "";
+
+  /**
+   * @generated from field: string target_id = 7;
+   */
+  targetId = "";
+
+  constructor(data?: PartialMessage<FleetRoute>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.FleetRoute";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "origin_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "path", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "match", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "app_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "service_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "target_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): FleetRoute {
+    return new FleetRoute().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): FleetRoute {
+    return new FleetRoute().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): FleetRoute {
+    return new FleetRoute().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: FleetRoute | PlainMessage<FleetRoute> | undefined, b: FleetRoute | PlainMessage<FleetRoute> | undefined): boolean {
+    return proto3.util.equals(FleetRoute, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.FleetInstance
+ */
+export class FleetInstance extends Message<FleetInstance> {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * @generated from field: string node_id = 2;
+   */
+  nodeId = "";
+
+  /**
+   * @generated from field: string inherit = 3;
+   */
+  inherit = "";
+
+  /**
+   * @generated from field: map<string, string> overrides = 4;
+   */
+  overrides: { [key: string]: string } = {};
+
+  constructor(data?: PartialMessage<FleetInstance>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.FleetInstance";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "node_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "inherit", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "overrides", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): FleetInstance {
+    return new FleetInstance().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): FleetInstance {
+    return new FleetInstance().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): FleetInstance {
+    return new FleetInstance().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: FleetInstance | PlainMessage<FleetInstance> | undefined, b: FleetInstance | PlainMessage<FleetInstance> | undefined): boolean {
+    return proto3.util.equals(FleetInstance, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.FleetRouteSelection
+ */
+export class FleetRouteSelection extends Message<FleetRouteSelection> {
+  /**
+   * @generated from field: string instance_id = 1;
+   */
+  instanceId = "";
+
+  /**
+   * @generated from field: string route_id = 2;
+   */
+  routeId = "";
+
+  /**
+   * @generated from field: string selection_source = 3;
+   */
+  selectionSource = "";
+
+  /**
+   * @generated from field: string source_instance = 4;
+   */
+  sourceInstance = "";
+
+  /**
+   * @generated from field: repeated string instance_chain = 5;
+   */
+  instanceChain: string[] = [];
+
+  /**
+   * @generated from field: string selected_target_id = 6;
+   */
+  selectedTargetId = "";
+
+  /**
+   * @generated from field: rementor.v1.FleetTarget endpoint = 7;
+   */
+  endpoint?: FleetTarget;
+
+  /**
+   * @generated from field: repeated string route_chain = 8;
+   */
+  routeChain: string[] = [];
+
+  constructor(data?: PartialMessage<FleetRouteSelection>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.FleetRouteSelection";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "instance_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "route_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "selection_source", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "source_instance", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "instance_chain", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 6, name: "selected_target_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "endpoint", kind: "message", T: FleetTarget },
+    { no: 8, name: "route_chain", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): FleetRouteSelection {
+    return new FleetRouteSelection().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): FleetRouteSelection {
+    return new FleetRouteSelection().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): FleetRouteSelection {
+    return new FleetRouteSelection().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: FleetRouteSelection | PlainMessage<FleetRouteSelection> | undefined, b: FleetRouteSelection | PlainMessage<FleetRouteSelection> | undefined): boolean {
+    return proto3.util.equals(FleetRouteSelection, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.FleetConfiguration
+ */
+export class FleetConfiguration extends Message<FleetConfiguration> {
+  /**
+   * @generated from field: uint64 revision = 1;
+   */
+  revision = protoInt64.zero;
+
+  /**
+   * @generated from field: rementor.v1.FleetTopology topology = 2;
+   */
+  topology?: FleetTopology;
+
+  constructor(data?: PartialMessage<FleetConfiguration>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.FleetConfiguration";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "revision", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
+    { no: 2, name: "topology", kind: "message", T: FleetTopology },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): FleetConfiguration {
+    return new FleetConfiguration().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): FleetConfiguration {
+    return new FleetConfiguration().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): FleetConfiguration {
+    return new FleetConfiguration().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: FleetConfiguration | PlainMessage<FleetConfiguration> | undefined, b: FleetConfiguration | PlainMessage<FleetConfiguration> | undefined): boolean {
+    return proto3.util.equals(FleetConfiguration, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.GetFleetConfigurationRequest
+ */
+export class GetFleetConfigurationRequest extends Message<GetFleetConfigurationRequest> {
+  constructor(data?: PartialMessage<GetFleetConfigurationRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.GetFleetConfigurationRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetFleetConfigurationRequest {
+    return new GetFleetConfigurationRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetFleetConfigurationRequest {
+    return new GetFleetConfigurationRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetFleetConfigurationRequest {
+    return new GetFleetConfigurationRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetFleetConfigurationRequest | PlainMessage<GetFleetConfigurationRequest> | undefined, b: GetFleetConfigurationRequest | PlainMessage<GetFleetConfigurationRequest> | undefined): boolean {
+    return proto3.util.equals(GetFleetConfigurationRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.GetFleetConfigurationResponse
+ */
+export class GetFleetConfigurationResponse extends Message<GetFleetConfigurationResponse> {
+  /**
+   * @generated from field: rementor.v1.FleetConfiguration configuration = 1;
+   */
+  configuration?: FleetConfiguration;
+
+  constructor(data?: PartialMessage<GetFleetConfigurationResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.GetFleetConfigurationResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "configuration", kind: "message", T: FleetConfiguration },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetFleetConfigurationResponse {
+    return new GetFleetConfigurationResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetFleetConfigurationResponse {
+    return new GetFleetConfigurationResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetFleetConfigurationResponse {
+    return new GetFleetConfigurationResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetFleetConfigurationResponse | PlainMessage<GetFleetConfigurationResponse> | undefined, b: GetFleetConfigurationResponse | PlainMessage<GetFleetConfigurationResponse> | undefined): boolean {
+    return proto3.util.equals(GetFleetConfigurationResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.ReviewFleetConfigurationRequest
+ */
+export class ReviewFleetConfigurationRequest extends Message<ReviewFleetConfigurationRequest> {
+  /**
+   * @generated from field: uint64 expected_revision = 1;
+   */
+  expectedRevision = protoInt64.zero;
+
+  /**
+   * @generated from field: rementor.v1.FleetTopology topology = 2;
+   */
+  topology?: FleetTopology;
+
+  constructor(data?: PartialMessage<ReviewFleetConfigurationRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.ReviewFleetConfigurationRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "expected_revision", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
+    { no: 2, name: "topology", kind: "message", T: FleetTopology },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ReviewFleetConfigurationRequest {
+    return new ReviewFleetConfigurationRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ReviewFleetConfigurationRequest {
+    return new ReviewFleetConfigurationRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ReviewFleetConfigurationRequest {
+    return new ReviewFleetConfigurationRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ReviewFleetConfigurationRequest | PlainMessage<ReviewFleetConfigurationRequest> | undefined, b: ReviewFleetConfigurationRequest | PlainMessage<ReviewFleetConfigurationRequest> | undefined): boolean {
+    return proto3.util.equals(ReviewFleetConfigurationRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.ReviewFleetConfigurationResponse
+ */
+export class ReviewFleetConfigurationResponse extends Message<ReviewFleetConfigurationResponse> {
+  /**
+   * @generated from field: string review_token = 1;
+   */
+  reviewToken = "";
+
+  /**
+   * @generated from field: repeated rementor.v1.FleetRouteSelection before = 2;
+   */
+  before: FleetRouteSelection[] = [];
+
+  /**
+   * @generated from field: repeated rementor.v1.FleetRouteSelection after = 3;
+   */
+  after: FleetRouteSelection[] = [];
+
+  /**
+   * @generated from field: repeated string warnings = 4;
+   */
+  warnings: string[] = [];
+
+  constructor(data?: PartialMessage<ReviewFleetConfigurationResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.ReviewFleetConfigurationResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "review_token", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "before", kind: "message", T: FleetRouteSelection, repeated: true },
+    { no: 3, name: "after", kind: "message", T: FleetRouteSelection, repeated: true },
+    { no: 4, name: "warnings", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ReviewFleetConfigurationResponse {
+    return new ReviewFleetConfigurationResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ReviewFleetConfigurationResponse {
+    return new ReviewFleetConfigurationResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ReviewFleetConfigurationResponse {
+    return new ReviewFleetConfigurationResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ReviewFleetConfigurationResponse | PlainMessage<ReviewFleetConfigurationResponse> | undefined, b: ReviewFleetConfigurationResponse | PlainMessage<ReviewFleetConfigurationResponse> | undefined): boolean {
+    return proto3.util.equals(ReviewFleetConfigurationResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.SaveFleetConfigurationRequest
+ */
+export class SaveFleetConfigurationRequest extends Message<SaveFleetConfigurationRequest> {
+  /**
+   * @generated from field: uint64 expected_revision = 1;
+   */
+  expectedRevision = protoInt64.zero;
+
+  /**
+   * @generated from field: rementor.v1.FleetTopology topology = 2;
+   */
+  topology?: FleetTopology;
+
+  /**
+   * @generated from field: string review_token = 3;
+   */
+  reviewToken = "";
+
+  constructor(data?: PartialMessage<SaveFleetConfigurationRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.SaveFleetConfigurationRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "expected_revision", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
+    { no: 2, name: "topology", kind: "message", T: FleetTopology },
+    { no: 3, name: "review_token", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SaveFleetConfigurationRequest {
+    return new SaveFleetConfigurationRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SaveFleetConfigurationRequest {
+    return new SaveFleetConfigurationRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SaveFleetConfigurationRequest {
+    return new SaveFleetConfigurationRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: SaveFleetConfigurationRequest | PlainMessage<SaveFleetConfigurationRequest> | undefined, b: SaveFleetConfigurationRequest | PlainMessage<SaveFleetConfigurationRequest> | undefined): boolean {
+    return proto3.util.equals(SaveFleetConfigurationRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.SaveFleetConfigurationResponse
+ */
+export class SaveFleetConfigurationResponse extends Message<SaveFleetConfigurationResponse> {
+  /**
+   * @generated from field: rementor.v1.FleetConfiguration configuration = 1;
+   */
+  configuration?: FleetConfiguration;
+
+  constructor(data?: PartialMessage<SaveFleetConfigurationResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.SaveFleetConfigurationResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "configuration", kind: "message", T: FleetConfiguration },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SaveFleetConfigurationResponse {
+    return new SaveFleetConfigurationResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SaveFleetConfigurationResponse {
+    return new SaveFleetConfigurationResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SaveFleetConfigurationResponse {
+    return new SaveFleetConfigurationResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: SaveFleetConfigurationResponse | PlainMessage<SaveFleetConfigurationResponse> | undefined, b: SaveFleetConfigurationResponse | PlainMessage<SaveFleetConfigurationResponse> | undefined): boolean {
+    return proto3.util.equals(SaveFleetConfigurationResponse, a, b);
+  }
+}
+
+/**
+ * Peer enrollment is separate from the loopback management control plane.
+ *
+ * @generated from message rementor.v1.PairedComputer
+ */
+export class PairedComputer extends Message<PairedComputer> {
+  /**
+   * @generated from field: string fingerprint = 1;
+   */
+  fingerprint = "";
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name = "";
+
+  /**
+   * @generated from field: string url = 3;
+   */
+  url = "";
+
+  constructor(data?: PartialMessage<PairedComputer>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.PairedComputer";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "fingerprint", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PairedComputer {
+    return new PairedComputer().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PairedComputer {
+    return new PairedComputer().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PairedComputer {
+    return new PairedComputer().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: PairedComputer | PlainMessage<PairedComputer> | undefined, b: PairedComputer | PlainMessage<PairedComputer> | undefined): boolean {
+    return proto3.util.equals(PairedComputer, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.GetPeerStateRequest
+ */
+export class GetPeerStateRequest extends Message<GetPeerStateRequest> {
+  constructor(data?: PartialMessage<GetPeerStateRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.GetPeerStateRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetPeerStateRequest {
+    return new GetPeerStateRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetPeerStateRequest {
+    return new GetPeerStateRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetPeerStateRequest {
+    return new GetPeerStateRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetPeerStateRequest | PlainMessage<GetPeerStateRequest> | undefined, b: GetPeerStateRequest | PlainMessage<GetPeerStateRequest> | undefined): boolean {
+    return proto3.util.equals(GetPeerStateRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.GetPeerStateResponse
+ */
+export class GetPeerStateResponse extends Message<GetPeerStateResponse> {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name = "";
+
+  /**
+   * @generated from field: string fingerprint = 2;
+   */
+  fingerprint = "";
+
+  /**
+   * @generated from field: string listen_address = 3;
+   */
+  listenAddress = "";
+
+  /**
+   * @generated from field: string url = 4;
+   */
+  url = "";
+
+  /**
+   * @generated from field: bool active = 5;
+   */
+  active = false;
+
+  /**
+   * @generated from field: string listener_error = 6;
+   */
+  listenerError = "";
+
+  /**
+   * @generated from field: repeated rementor.v1.PairedComputer computers = 7;
+   */
+  computers: PairedComputer[] = [];
+
+  /**
+   * @generated from field: repeated string private_addresses = 8;
+   */
+  privateAddresses: string[] = [];
+
+  constructor(data?: PartialMessage<GetPeerStateResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.GetPeerStateResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "fingerprint", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "listen_address", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "active", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 6, name: "listener_error", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "computers", kind: "message", T: PairedComputer, repeated: true },
+    { no: 8, name: "private_addresses", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetPeerStateResponse {
+    return new GetPeerStateResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetPeerStateResponse {
+    return new GetPeerStateResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetPeerStateResponse {
+    return new GetPeerStateResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetPeerStateResponse | PlainMessage<GetPeerStateResponse> | undefined, b: GetPeerStateResponse | PlainMessage<GetPeerStateResponse> | undefined): boolean {
+    return proto3.util.equals(GetPeerStateResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.ConfigurePeerConnectionRequest
+ */
+export class ConfigurePeerConnectionRequest extends Message<ConfigurePeerConnectionRequest> {
+  /**
+   * Empty disables incoming connections and cancels invitations.
+   *
+   * @generated from field: string listen_address = 1;
+   */
+  listenAddress = "";
+
+  /**
+   * @generated from field: string url = 2;
+   */
+  url = "";
+
+  constructor(data?: PartialMessage<ConfigurePeerConnectionRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.ConfigurePeerConnectionRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "listen_address", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ConfigurePeerConnectionRequest {
+    return new ConfigurePeerConnectionRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ConfigurePeerConnectionRequest {
+    return new ConfigurePeerConnectionRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ConfigurePeerConnectionRequest {
+    return new ConfigurePeerConnectionRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ConfigurePeerConnectionRequest | PlainMessage<ConfigurePeerConnectionRequest> | undefined, b: ConfigurePeerConnectionRequest | PlainMessage<ConfigurePeerConnectionRequest> | undefined): boolean {
+    return proto3.util.equals(ConfigurePeerConnectionRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.CreatePeerInvitationRequest
+ */
+export class CreatePeerInvitationRequest extends Message<CreatePeerInvitationRequest> {
+  constructor(data?: PartialMessage<CreatePeerInvitationRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.CreatePeerInvitationRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreatePeerInvitationRequest {
+    return new CreatePeerInvitationRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreatePeerInvitationRequest {
+    return new CreatePeerInvitationRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreatePeerInvitationRequest {
+    return new CreatePeerInvitationRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: CreatePeerInvitationRequest | PlainMessage<CreatePeerInvitationRequest> | undefined, b: CreatePeerInvitationRequest | PlainMessage<CreatePeerInvitationRequest> | undefined): boolean {
+    return proto3.util.equals(CreatePeerInvitationRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.CreatePeerInvitationResponse
+ */
+export class CreatePeerInvitationResponse extends Message<CreatePeerInvitationResponse> {
+  /**
+   * @generated from field: string invitation = 1;
+   */
+  invitation = "";
+
+  /**
+   * @generated from field: string fingerprint = 2;
+   */
+  fingerprint = "";
+
+  /**
+   * @generated from field: google.protobuf.Timestamp expires_at = 3;
+   */
+  expiresAt?: Timestamp;
+
+  constructor(data?: PartialMessage<CreatePeerInvitationResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.CreatePeerInvitationResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "invitation", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "fingerprint", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "expires_at", kind: "message", T: Timestamp },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreatePeerInvitationResponse {
+    return new CreatePeerInvitationResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreatePeerInvitationResponse {
+    return new CreatePeerInvitationResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreatePeerInvitationResponse {
+    return new CreatePeerInvitationResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: CreatePeerInvitationResponse | PlainMessage<CreatePeerInvitationResponse> | undefined, b: CreatePeerInvitationResponse | PlainMessage<CreatePeerInvitationResponse> | undefined): boolean {
+    return proto3.util.equals(CreatePeerInvitationResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.CancelPeerInvitationRequest
+ */
+export class CancelPeerInvitationRequest extends Message<CancelPeerInvitationRequest> {
+  constructor(data?: PartialMessage<CancelPeerInvitationRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.CancelPeerInvitationRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CancelPeerInvitationRequest {
+    return new CancelPeerInvitationRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CancelPeerInvitationRequest {
+    return new CancelPeerInvitationRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CancelPeerInvitationRequest {
+    return new CancelPeerInvitationRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: CancelPeerInvitationRequest | PlainMessage<CancelPeerInvitationRequest> | undefined, b: CancelPeerInvitationRequest | PlainMessage<CancelPeerInvitationRequest> | undefined): boolean {
+    return proto3.util.equals(CancelPeerInvitationRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.CancelPeerInvitationResponse
+ */
+export class CancelPeerInvitationResponse extends Message<CancelPeerInvitationResponse> {
+  constructor(data?: PartialMessage<CancelPeerInvitationResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.CancelPeerInvitationResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CancelPeerInvitationResponse {
+    return new CancelPeerInvitationResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CancelPeerInvitationResponse {
+    return new CancelPeerInvitationResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CancelPeerInvitationResponse {
+    return new CancelPeerInvitationResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: CancelPeerInvitationResponse | PlainMessage<CancelPeerInvitationResponse> | undefined, b: CancelPeerInvitationResponse | PlainMessage<CancelPeerInvitationResponse> | undefined): boolean {
+    return proto3.util.equals(CancelPeerInvitationResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.InspectPeerInvitationRequest
+ */
+export class InspectPeerInvitationRequest extends Message<InspectPeerInvitationRequest> {
+  /**
+   * @generated from field: string invitation = 1;
+   */
+  invitation = "";
+
+  constructor(data?: PartialMessage<InspectPeerInvitationRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.InspectPeerInvitationRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "invitation", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): InspectPeerInvitationRequest {
+    return new InspectPeerInvitationRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): InspectPeerInvitationRequest {
+    return new InspectPeerInvitationRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): InspectPeerInvitationRequest {
+    return new InspectPeerInvitationRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: InspectPeerInvitationRequest | PlainMessage<InspectPeerInvitationRequest> | undefined, b: InspectPeerInvitationRequest | PlainMessage<InspectPeerInvitationRequest> | undefined): boolean {
+    return proto3.util.equals(InspectPeerInvitationRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.InspectPeerInvitationResponse
+ */
+export class InspectPeerInvitationResponse extends Message<InspectPeerInvitationResponse> {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name = "";
+
+  /**
+   * @generated from field: string url = 2;
+   */
+  url = "";
+
+  /**
+   * @generated from field: string fingerprint = 3;
+   */
+  fingerprint = "";
+
+  /**
+   * @generated from field: google.protobuf.Timestamp expires_at = 4;
+   */
+  expiresAt?: Timestamp;
+
+  constructor(data?: PartialMessage<InspectPeerInvitationResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.InspectPeerInvitationResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "fingerprint", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "expires_at", kind: "message", T: Timestamp },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): InspectPeerInvitationResponse {
+    return new InspectPeerInvitationResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): InspectPeerInvitationResponse {
+    return new InspectPeerInvitationResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): InspectPeerInvitationResponse {
+    return new InspectPeerInvitationResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: InspectPeerInvitationResponse | PlainMessage<InspectPeerInvitationResponse> | undefined, b: InspectPeerInvitationResponse | PlainMessage<InspectPeerInvitationResponse> | undefined): boolean {
+    return proto3.util.equals(InspectPeerInvitationResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.PairComputerRequest
+ */
+export class PairComputerRequest extends Message<PairComputerRequest> {
+  /**
+   * @generated from field: string invitation = 1;
+   */
+  invitation = "";
+
+  /**
+   * @generated from field: string confirmed_fingerprint = 2;
+   */
+  confirmedFingerprint = "";
+
+  constructor(data?: PartialMessage<PairComputerRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.PairComputerRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "invitation", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "confirmed_fingerprint", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PairComputerRequest {
+    return new PairComputerRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PairComputerRequest {
+    return new PairComputerRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PairComputerRequest {
+    return new PairComputerRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: PairComputerRequest | PlainMessage<PairComputerRequest> | undefined, b: PairComputerRequest | PlainMessage<PairComputerRequest> | undefined): boolean {
+    return proto3.util.equals(PairComputerRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.PairComputerResponse
+ */
+export class PairComputerResponse extends Message<PairComputerResponse> {
+  /**
+   * @generated from field: rementor.v1.PairedComputer computer = 1;
+   */
+  computer?: PairedComputer;
+
+  constructor(data?: PartialMessage<PairComputerResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.PairComputerResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "computer", kind: "message", T: PairedComputer },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PairComputerResponse {
+    return new PairComputerResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PairComputerResponse {
+    return new PairComputerResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PairComputerResponse {
+    return new PairComputerResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: PairComputerResponse | PlainMessage<PairComputerResponse> | undefined, b: PairComputerResponse | PlainMessage<PairComputerResponse> | undefined): boolean {
+    return proto3.util.equals(PairComputerResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.UnpairComputerRequest
+ */
+export class UnpairComputerRequest extends Message<UnpairComputerRequest> {
+  /**
+   * @generated from field: string fingerprint = 1;
+   */
+  fingerprint = "";
+
+  constructor(data?: PartialMessage<UnpairComputerRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.UnpairComputerRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "fingerprint", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UnpairComputerRequest {
+    return new UnpairComputerRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UnpairComputerRequest {
+    return new UnpairComputerRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UnpairComputerRequest {
+    return new UnpairComputerRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UnpairComputerRequest | PlainMessage<UnpairComputerRequest> | undefined, b: UnpairComputerRequest | PlainMessage<UnpairComputerRequest> | undefined): boolean {
+    return proto3.util.equals(UnpairComputerRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.CheckPeerConnectionRequest
+ */
+export class CheckPeerConnectionRequest extends Message<CheckPeerConnectionRequest> {
+  /**
+   * @generated from field: string fingerprint = 1;
+   */
+  fingerprint = "";
+
+  constructor(data?: PartialMessage<CheckPeerConnectionRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.CheckPeerConnectionRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "fingerprint", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CheckPeerConnectionRequest {
+    return new CheckPeerConnectionRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CheckPeerConnectionRequest {
+    return new CheckPeerConnectionRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CheckPeerConnectionRequest {
+    return new CheckPeerConnectionRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: CheckPeerConnectionRequest | PlainMessage<CheckPeerConnectionRequest> | undefined, b: CheckPeerConnectionRequest | PlainMessage<CheckPeerConnectionRequest> | undefined): boolean {
+    return proto3.util.equals(CheckPeerConnectionRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.CheckPeerConnectionResponse
+ */
+export class CheckPeerConnectionResponse extends Message<CheckPeerConnectionResponse> {
+  constructor(data?: PartialMessage<CheckPeerConnectionResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.CheckPeerConnectionResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CheckPeerConnectionResponse {
+    return new CheckPeerConnectionResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CheckPeerConnectionResponse {
+    return new CheckPeerConnectionResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CheckPeerConnectionResponse {
+    return new CheckPeerConnectionResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: CheckPeerConnectionResponse | PlainMessage<CheckPeerConnectionResponse> | undefined, b: CheckPeerConnectionResponse | PlainMessage<CheckPeerConnectionResponse> | undefined): boolean {
+    return proto3.util.equals(CheckPeerConnectionResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.ConfigurePeerConnectionResponse
+ */
+export class ConfigurePeerConnectionResponse extends Message<ConfigurePeerConnectionResponse> {
+  /**
+   * @generated from field: rementor.v1.GetPeerStateResponse state = 1;
+   */
+  state?: GetPeerStateResponse;
+
+  constructor(data?: PartialMessage<ConfigurePeerConnectionResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.ConfigurePeerConnectionResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "state", kind: "message", T: GetPeerStateResponse },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ConfigurePeerConnectionResponse {
+    return new ConfigurePeerConnectionResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ConfigurePeerConnectionResponse {
+    return new ConfigurePeerConnectionResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ConfigurePeerConnectionResponse {
+    return new ConfigurePeerConnectionResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ConfigurePeerConnectionResponse | PlainMessage<ConfigurePeerConnectionResponse> | undefined, b: ConfigurePeerConnectionResponse | PlainMessage<ConfigurePeerConnectionResponse> | undefined): boolean {
+    return proto3.util.equals(ConfigurePeerConnectionResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.UnpairComputerResponse
+ */
+export class UnpairComputerResponse extends Message<UnpairComputerResponse> {
+  /**
+   * @generated from field: rementor.v1.GetPeerStateResponse state = 1;
+   */
+  state?: GetPeerStateResponse;
+
+  constructor(data?: PartialMessage<UnpairComputerResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.UnpairComputerResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "state", kind: "message", T: GetPeerStateResponse },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UnpairComputerResponse {
+    return new UnpairComputerResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UnpairComputerResponse {
+    return new UnpairComputerResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UnpairComputerResponse {
+    return new UnpairComputerResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UnpairComputerResponse | PlainMessage<UnpairComputerResponse> | undefined, b: UnpairComputerResponse | PlainMessage<UnpairComputerResponse> | undefined): boolean {
+    return proto3.util.equals(UnpairComputerResponse, a, b);
+  }
+}
+
+/**
+ * Peer scope preserves the environment/session boundary across computers.
+ *
+ * @generated from message rementor.v1.PeerWorkspaceScope
+ */
+export class PeerWorkspaceScope extends Message<PeerWorkspaceScope> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  /**
+   * @generated from field: string environment_id = 2;
+   */
+  environmentId = "";
+
+  /**
+   * @generated from field: string session_id = 3;
+   */
+  sessionId = "";
+
+  constructor(data?: PartialMessage<PeerWorkspaceScope>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.PeerWorkspaceScope";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "environment_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "session_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PeerWorkspaceScope {
+    return new PeerWorkspaceScope().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PeerWorkspaceScope {
+    return new PeerWorkspaceScope().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PeerWorkspaceScope {
+    return new PeerWorkspaceScope().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: PeerWorkspaceScope | PlainMessage<PeerWorkspaceScope> | undefined, b: PeerWorkspaceScope | PlainMessage<PeerWorkspaceScope> | undefined): boolean {
+    return proto3.util.equals(PeerWorkspaceScope, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.PeerWorkspaceReference
+ */
+export class PeerWorkspaceReference extends Message<PeerWorkspaceReference> {
+  /**
+   * @generated from field: string owner_fingerprint = 1;
+   */
+  ownerFingerprint = "";
+
+  /**
+   * @generated from field: rementor.v1.PeerWorkspaceScope scope = 2;
+   */
+  scope?: PeerWorkspaceScope;
+
+  /**
+   * @generated from field: uint64 version = 3;
+   */
+  version = protoInt64.zero;
+
+  /**
+   * @generated from field: string digest = 4;
+   */
+  digest = "";
+
+  constructor(data?: PartialMessage<PeerWorkspaceReference>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.PeerWorkspaceReference";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "owner_fingerprint", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "scope", kind: "message", T: PeerWorkspaceScope },
+    { no: 3, name: "version", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
+    { no: 4, name: "digest", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PeerWorkspaceReference {
+    return new PeerWorkspaceReference().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PeerWorkspaceReference {
+    return new PeerWorkspaceReference().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PeerWorkspaceReference {
+    return new PeerWorkspaceReference().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: PeerWorkspaceReference | PlainMessage<PeerWorkspaceReference> | undefined, b: PeerWorkspaceReference | PlainMessage<PeerWorkspaceReference> | undefined): boolean {
+    return proto3.util.equals(PeerWorkspaceReference, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.PeerEndpoint
+ */
+export class PeerEndpoint extends Message<PeerEndpoint> {
+  /**
+   * @generated from field: string owner_fingerprint = 1;
+   */
+  ownerFingerprint = "";
+
+  /**
+   * @generated from field: string workspace_id = 2;
+   */
+  workspaceId = "";
+
+  /**
+   * @generated from field: string application_id = 3;
+   */
+  applicationId = "";
+
+  /**
+   * @generated from field: uint64 version = 4;
+   */
+  version = protoInt64.zero;
+
+  /**
+   * @generated from field: string digest = 5;
+   */
+  digest = "";
+
+  constructor(data?: PartialMessage<PeerEndpoint>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.PeerEndpoint";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "owner_fingerprint", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "application_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "version", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
+    { no: 5, name: "digest", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PeerEndpoint {
+    return new PeerEndpoint().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PeerEndpoint {
+    return new PeerEndpoint().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PeerEndpoint {
+    return new PeerEndpoint().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: PeerEndpoint | PlainMessage<PeerEndpoint> | undefined, b: PeerEndpoint | PlainMessage<PeerEndpoint> | undefined): boolean {
+    return proto3.util.equals(PeerEndpoint, a, b);
+  }
+}
+
+/**
+ * "inherit" permits a pattern-only override. Port always belongs to this computer.
+ *
+ * @generated from message rementor.v1.InheritedRouteSelection
+ */
+export class InheritedRouteSelection extends Message<InheritedRouteSelection> {
+  /**
+   * @generated from field: string mode = 1;
+   */
+  mode = "";
+
+  /**
+   * @generated from field: int32 port = 2;
+   */
+  port = 0;
+
+  /**
+   * @generated from field: string remote_base_url = 3;
+   */
+  remoteBaseUrl = "";
+
+  /**
+   * @generated from field: optional string route_pattern = 4;
+   */
+  routePattern?: string;
+
+  constructor(data?: PartialMessage<InheritedRouteSelection>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.InheritedRouteSelection";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "mode", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "port", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 3, name: "remote_base_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "route_pattern", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): InheritedRouteSelection {
+    return new InheritedRouteSelection().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): InheritedRouteSelection {
+    return new InheritedRouteSelection().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): InheritedRouteSelection {
+    return new InheritedRouteSelection().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: InheritedRouteSelection | PlainMessage<InheritedRouteSelection> | undefined, b: InheritedRouteSelection | PlainMessage<InheritedRouteSelection> | undefined): boolean {
+    return proto3.util.equals(InheritedRouteSelection, a, b);
+  }
+}
+
+/**
+ * Contains user-facing relation metadata, never the raw cached snapshot.
+ *
+ * @generated from message rementor.v1.WorkspaceInheritance
+ */
+export class WorkspaceInheritance extends Message<WorkspaceInheritance> {
+  /**
+   * @generated from field: string source_name = 4;
+   */
+  sourceName = "";
+
+  /**
+   * @generated from field: rementor.v1.PeerWorkspaceReference source = 1;
+   */
+  source?: PeerWorkspaceReference;
+
+  /**
+   * @generated from field: map<string, rementor.v1.InheritedRouteSelection> overrides = 2;
+   */
+  overrides: { [key: string]: InheritedRouteSelection } = {};
+
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_at = 3;
+   */
+  updatedAt?: Timestamp;
+
+  constructor(data?: PartialMessage<WorkspaceInheritance>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.WorkspaceInheritance";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 4, name: "source_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 1, name: "source", kind: "message", T: PeerWorkspaceReference },
+    { no: 2, name: "overrides", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "message", T: InheritedRouteSelection} },
+    { no: 3, name: "updated_at", kind: "message", T: Timestamp },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceInheritance {
+    return new WorkspaceInheritance().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WorkspaceInheritance {
+    return new WorkspaceInheritance().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WorkspaceInheritance {
+    return new WorkspaceInheritance().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WorkspaceInheritance | PlainMessage<WorkspaceInheritance> | undefined, b: WorkspaceInheritance | PlainMessage<WorkspaceInheritance> | undefined): boolean {
+    return proto3.util.equals(WorkspaceInheritance, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.WorkspaceInheritanceStatus
+ */
+export class WorkspaceInheritanceStatus extends Message<WorkspaceInheritanceStatus> {
+  /**
+   * @generated from field: rementor.v1.WorkspaceInheritance inheritance = 1;
+   */
+  inheritance?: WorkspaceInheritance;
+
+  /**
+   * @generated from field: string status = 2;
+   */
+  status = "";
+
+  /**
+   * @generated from field: google.protobuf.Timestamp checked_at = 3;
+   */
+  checkedAt?: Timestamp;
+
+  /**
+   * @generated from field: string error = 4;
+   */
+  error = "";
+
+  /**
+   * @generated from field: uint64 route_version = 5;
+   */
+  routeVersion = protoInt64.zero;
+
+  constructor(data?: PartialMessage<WorkspaceInheritanceStatus>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.WorkspaceInheritanceStatus";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "inheritance", kind: "message", T: WorkspaceInheritance },
+    { no: 2, name: "status", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "checked_at", kind: "message", T: Timestamp },
+    { no: 4, name: "error", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "route_version", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceInheritanceStatus {
+    return new WorkspaceInheritanceStatus().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WorkspaceInheritanceStatus {
+    return new WorkspaceInheritanceStatus().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WorkspaceInheritanceStatus {
+    return new WorkspaceInheritanceStatus().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WorkspaceInheritanceStatus | PlainMessage<WorkspaceInheritanceStatus> | undefined, b: WorkspaceInheritanceStatus | PlainMessage<WorkspaceInheritanceStatus> | undefined): boolean {
+    return proto3.util.equals(WorkspaceInheritanceStatus, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.PeerWorkspaceSummary
+ */
+export class PeerWorkspaceSummary extends Message<PeerWorkspaceSummary> {
+  /**
+   * @generated from field: rementor.v1.PeerWorkspaceScope scope = 1;
+   */
+  scope?: PeerWorkspaceScope;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name = "";
+
+  /**
+   * @generated from field: string type = 3;
+   */
+  type = "";
+
+  /**
+   * @generated from field: uint64 version = 4;
+   */
+  version = protoInt64.zero;
+
+  constructor(data?: PartialMessage<PeerWorkspaceSummary>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.PeerWorkspaceSummary";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "scope", kind: "message", T: PeerWorkspaceScope },
+    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "type", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "version", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PeerWorkspaceSummary {
+    return new PeerWorkspaceSummary().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PeerWorkspaceSummary {
+    return new PeerWorkspaceSummary().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PeerWorkspaceSummary {
+    return new PeerWorkspaceSummary().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: PeerWorkspaceSummary | PlainMessage<PeerWorkspaceSummary> | undefined, b: PeerWorkspaceSummary | PlainMessage<PeerWorkspaceSummary> | undefined): boolean {
+    return proto3.util.equals(PeerWorkspaceSummary, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.ListPeerWorkspacesRequest
+ */
+export class ListPeerWorkspacesRequest extends Message<ListPeerWorkspacesRequest> {
+  /**
+   * @generated from field: string fingerprint = 1;
+   */
+  fingerprint = "";
+
+  constructor(data?: PartialMessage<ListPeerWorkspacesRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.ListPeerWorkspacesRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "fingerprint", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListPeerWorkspacesRequest {
+    return new ListPeerWorkspacesRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListPeerWorkspacesRequest {
+    return new ListPeerWorkspacesRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListPeerWorkspacesRequest {
+    return new ListPeerWorkspacesRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListPeerWorkspacesRequest | PlainMessage<ListPeerWorkspacesRequest> | undefined, b: ListPeerWorkspacesRequest | PlainMessage<ListPeerWorkspacesRequest> | undefined): boolean {
+    return proto3.util.equals(ListPeerWorkspacesRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.ListPeerWorkspacesResponse
+ */
+export class ListPeerWorkspacesResponse extends Message<ListPeerWorkspacesResponse> {
+  /**
+   * @generated from field: repeated rementor.v1.PeerWorkspaceSummary workspaces = 1;
+   */
+  workspaces: PeerWorkspaceSummary[] = [];
+
+  constructor(data?: PartialMessage<ListPeerWorkspacesResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.ListPeerWorkspacesResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspaces", kind: "message", T: PeerWorkspaceSummary, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListPeerWorkspacesResponse {
+    return new ListPeerWorkspacesResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListPeerWorkspacesResponse {
+    return new ListPeerWorkspacesResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListPeerWorkspacesResponse {
+    return new ListPeerWorkspacesResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListPeerWorkspacesResponse | PlainMessage<ListPeerWorkspacesResponse> | undefined, b: ListPeerWorkspacesResponse | PlainMessage<ListPeerWorkspacesResponse> | undefined): boolean {
+    return proto3.util.equals(ListPeerWorkspacesResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.GetWorkspaceInheritanceRequest
+ */
+export class GetWorkspaceInheritanceRequest extends Message<GetWorkspaceInheritanceRequest> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  constructor(data?: PartialMessage<GetWorkspaceInheritanceRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.GetWorkspaceInheritanceRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetWorkspaceInheritanceRequest {
+    return new GetWorkspaceInheritanceRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetWorkspaceInheritanceRequest {
+    return new GetWorkspaceInheritanceRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetWorkspaceInheritanceRequest {
+    return new GetWorkspaceInheritanceRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetWorkspaceInheritanceRequest | PlainMessage<GetWorkspaceInheritanceRequest> | undefined, b: GetWorkspaceInheritanceRequest | PlainMessage<GetWorkspaceInheritanceRequest> | undefined): boolean {
+    return proto3.util.equals(GetWorkspaceInheritanceRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.GetWorkspaceInheritanceResponse
+ */
+export class GetWorkspaceInheritanceResponse extends Message<GetWorkspaceInheritanceResponse> {
+  /**
+   * @generated from field: rementor.v1.WorkspaceInheritanceStatus status = 1;
+   */
+  status?: WorkspaceInheritanceStatus;
+
+  constructor(data?: PartialMessage<GetWorkspaceInheritanceResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.GetWorkspaceInheritanceResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "status", kind: "message", T: WorkspaceInheritanceStatus },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetWorkspaceInheritanceResponse {
+    return new GetWorkspaceInheritanceResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetWorkspaceInheritanceResponse {
+    return new GetWorkspaceInheritanceResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetWorkspaceInheritanceResponse {
+    return new GetWorkspaceInheritanceResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetWorkspaceInheritanceResponse | PlainMessage<GetWorkspaceInheritanceResponse> | undefined, b: GetWorkspaceInheritanceResponse | PlainMessage<GetWorkspaceInheritanceResponse> | undefined): boolean {
+    return proto3.util.equals(GetWorkspaceInheritanceResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.FollowPeerWorkspaceRequest
+ */
+export class FollowPeerWorkspaceRequest extends Message<FollowPeerWorkspaceRequest> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  /**
+   * @generated from field: string fingerprint = 2;
+   */
+  fingerprint = "";
+
+  /**
+   * @generated from field: rementor.v1.PeerWorkspaceScope scope = 3;
+   */
+  scope?: PeerWorkspaceScope;
+
+  /**
+   * @generated from field: uint64 expected_route_version = 4;
+   */
+  expectedRouteVersion = protoInt64.zero;
+
+  /**
+   * @generated from field: string correlation_id = 5;
+   */
+  correlationId = "";
+
+  constructor(data?: PartialMessage<FollowPeerWorkspaceRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.FollowPeerWorkspaceRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "fingerprint", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "scope", kind: "message", T: PeerWorkspaceScope },
+    { no: 4, name: "expected_route_version", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
+    { no: 5, name: "correlation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): FollowPeerWorkspaceRequest {
+    return new FollowPeerWorkspaceRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): FollowPeerWorkspaceRequest {
+    return new FollowPeerWorkspaceRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): FollowPeerWorkspaceRequest {
+    return new FollowPeerWorkspaceRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: FollowPeerWorkspaceRequest | PlainMessage<FollowPeerWorkspaceRequest> | undefined, b: FollowPeerWorkspaceRequest | PlainMessage<FollowPeerWorkspaceRequest> | undefined): boolean {
+    return proto3.util.equals(FollowPeerWorkspaceRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.FollowPeerWorkspaceResponse
+ */
+export class FollowPeerWorkspaceResponse extends Message<FollowPeerWorkspaceResponse> {
+  /**
+   * @generated from field: rementor.v1.Workspace workspace = 1;
+   */
+  workspace?: Workspace;
+
+  /**
+   * @generated from field: rementor.v1.OperationMetadata operation = 2;
+   */
+  operation?: OperationMetadata;
+
+  /**
+   * @generated from field: bool changed = 3;
+   */
+  changed = false;
+
+  /**
+   * @generated from field: rementor.v1.WorkspaceInheritanceStatus status = 4;
+   */
+  status?: WorkspaceInheritanceStatus;
+
+  constructor(data?: PartialMessage<FollowPeerWorkspaceResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.FollowPeerWorkspaceResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace", kind: "message", T: Workspace },
+    { no: 2, name: "operation", kind: "message", T: OperationMetadata },
+    { no: 3, name: "changed", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 4, name: "status", kind: "message", T: WorkspaceInheritanceStatus },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): FollowPeerWorkspaceResponse {
+    return new FollowPeerWorkspaceResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): FollowPeerWorkspaceResponse {
+    return new FollowPeerWorkspaceResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): FollowPeerWorkspaceResponse {
+    return new FollowPeerWorkspaceResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: FollowPeerWorkspaceResponse | PlainMessage<FollowPeerWorkspaceResponse> | undefined, b: FollowPeerWorkspaceResponse | PlainMessage<FollowPeerWorkspaceResponse> | undefined): boolean {
+    return proto3.util.equals(FollowPeerWorkspaceResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.SyncPeerWorkspaceRequest
+ */
+export class SyncPeerWorkspaceRequest extends Message<SyncPeerWorkspaceRequest> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  constructor(data?: PartialMessage<SyncPeerWorkspaceRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.SyncPeerWorkspaceRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SyncPeerWorkspaceRequest {
+    return new SyncPeerWorkspaceRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SyncPeerWorkspaceRequest {
+    return new SyncPeerWorkspaceRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SyncPeerWorkspaceRequest {
+    return new SyncPeerWorkspaceRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: SyncPeerWorkspaceRequest | PlainMessage<SyncPeerWorkspaceRequest> | undefined, b: SyncPeerWorkspaceRequest | PlainMessage<SyncPeerWorkspaceRequest> | undefined): boolean {
+    return proto3.util.equals(SyncPeerWorkspaceRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.SyncPeerWorkspaceResponse
+ */
+export class SyncPeerWorkspaceResponse extends Message<SyncPeerWorkspaceResponse> {
+  /**
+   * @generated from field: rementor.v1.Workspace workspace = 1;
+   */
+  workspace?: Workspace;
+
+  /**
+   * @generated from field: rementor.v1.OperationMetadata operation = 2;
+   */
+  operation?: OperationMetadata;
+
+  /**
+   * @generated from field: bool changed = 3;
+   */
+  changed = false;
+
+  /**
+   * @generated from field: rementor.v1.WorkspaceInheritanceStatus status = 4;
+   */
+  status?: WorkspaceInheritanceStatus;
+
+  constructor(data?: PartialMessage<SyncPeerWorkspaceResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.SyncPeerWorkspaceResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace", kind: "message", T: Workspace },
+    { no: 2, name: "operation", kind: "message", T: OperationMetadata },
+    { no: 3, name: "changed", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 4, name: "status", kind: "message", T: WorkspaceInheritanceStatus },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SyncPeerWorkspaceResponse {
+    return new SyncPeerWorkspaceResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SyncPeerWorkspaceResponse {
+    return new SyncPeerWorkspaceResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SyncPeerWorkspaceResponse {
+    return new SyncPeerWorkspaceResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: SyncPeerWorkspaceResponse | PlainMessage<SyncPeerWorkspaceResponse> | undefined, b: SyncPeerWorkspaceResponse | PlainMessage<SyncPeerWorkspaceResponse> | undefined): boolean {
+    return proto3.util.equals(SyncPeerWorkspaceResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.OverrideInheritedRouteRequest
+ */
+export class OverrideInheritedRouteRequest extends Message<OverrideInheritedRouteRequest> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  /**
+   * @generated from field: string application_id = 2;
+   */
+  applicationId = "";
+
+  /**
+   * Omit selection to reset this binding to its cached parent configuration.
+   *
+   * @generated from field: rementor.v1.InheritedRouteSelection selection = 3;
+   */
+  selection?: InheritedRouteSelection;
+
+  /**
+   * @generated from field: uint64 expected_route_version = 4;
+   */
+  expectedRouteVersion = protoInt64.zero;
+
+  /**
+   * @generated from field: string correlation_id = 5;
+   */
+  correlationId = "";
+
+  constructor(data?: PartialMessage<OverrideInheritedRouteRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.OverrideInheritedRouteRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "application_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "selection", kind: "message", T: InheritedRouteSelection },
+    { no: 4, name: "expected_route_version", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
+    { no: 5, name: "correlation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OverrideInheritedRouteRequest {
+    return new OverrideInheritedRouteRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): OverrideInheritedRouteRequest {
+    return new OverrideInheritedRouteRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): OverrideInheritedRouteRequest {
+    return new OverrideInheritedRouteRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: OverrideInheritedRouteRequest | PlainMessage<OverrideInheritedRouteRequest> | undefined, b: OverrideInheritedRouteRequest | PlainMessage<OverrideInheritedRouteRequest> | undefined): boolean {
+    return proto3.util.equals(OverrideInheritedRouteRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.OverrideInheritedRouteResponse
+ */
+export class OverrideInheritedRouteResponse extends Message<OverrideInheritedRouteResponse> {
+  /**
+   * @generated from field: rementor.v1.Workspace workspace = 1;
+   */
+  workspace?: Workspace;
+
+  /**
+   * @generated from field: rementor.v1.OperationMetadata operation = 2;
+   */
+  operation?: OperationMetadata;
+
+  /**
+   * @generated from field: bool changed = 3;
+   */
+  changed = false;
+
+  /**
+   * @generated from field: rementor.v1.WorkspaceInheritanceStatus status = 4;
+   */
+  status?: WorkspaceInheritanceStatus;
+
+  constructor(data?: PartialMessage<OverrideInheritedRouteResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.OverrideInheritedRouteResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace", kind: "message", T: Workspace },
+    { no: 2, name: "operation", kind: "message", T: OperationMetadata },
+    { no: 3, name: "changed", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 4, name: "status", kind: "message", T: WorkspaceInheritanceStatus },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OverrideInheritedRouteResponse {
+    return new OverrideInheritedRouteResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): OverrideInheritedRouteResponse {
+    return new OverrideInheritedRouteResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): OverrideInheritedRouteResponse {
+    return new OverrideInheritedRouteResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: OverrideInheritedRouteResponse | PlainMessage<OverrideInheritedRouteResponse> | undefined, b: OverrideInheritedRouteResponse | PlainMessage<OverrideInheritedRouteResponse> | undefined): boolean {
+    return proto3.util.equals(OverrideInheritedRouteResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.StopFollowingWorkspaceRequest
+ */
+export class StopFollowingWorkspaceRequest extends Message<StopFollowingWorkspaceRequest> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  /**
+   * @generated from field: uint64 expected_route_version = 2;
+   */
+  expectedRouteVersion = protoInt64.zero;
+
+  /**
+   * @generated from field: string correlation_id = 3;
+   */
+  correlationId = "";
+
+  constructor(data?: PartialMessage<StopFollowingWorkspaceRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.StopFollowingWorkspaceRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "expected_route_version", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
+    { no: 3, name: "correlation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): StopFollowingWorkspaceRequest {
+    return new StopFollowingWorkspaceRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): StopFollowingWorkspaceRequest {
+    return new StopFollowingWorkspaceRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): StopFollowingWorkspaceRequest {
+    return new StopFollowingWorkspaceRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: StopFollowingWorkspaceRequest | PlainMessage<StopFollowingWorkspaceRequest> | undefined, b: StopFollowingWorkspaceRequest | PlainMessage<StopFollowingWorkspaceRequest> | undefined): boolean {
+    return proto3.util.equals(StopFollowingWorkspaceRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.StopFollowingWorkspaceResponse
+ */
+export class StopFollowingWorkspaceResponse extends Message<StopFollowingWorkspaceResponse> {
+  /**
+   * @generated from field: rementor.v1.Workspace workspace = 1;
+   */
+  workspace?: Workspace;
+
+  /**
+   * @generated from field: rementor.v1.OperationMetadata operation = 2;
+   */
+  operation?: OperationMetadata;
+
+  /**
+   * @generated from field: bool changed = 3;
+   */
+  changed = false;
+
+  /**
+   * @generated from field: rementor.v1.WorkspaceInheritanceStatus status = 4;
+   */
+  status?: WorkspaceInheritanceStatus;
+
+  constructor(data?: PartialMessage<StopFollowingWorkspaceResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.StopFollowingWorkspaceResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace", kind: "message", T: Workspace },
+    { no: 2, name: "operation", kind: "message", T: OperationMetadata },
+    { no: 3, name: "changed", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 4, name: "status", kind: "message", T: WorkspaceInheritanceStatus },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): StopFollowingWorkspaceResponse {
+    return new StopFollowingWorkspaceResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): StopFollowingWorkspaceResponse {
+    return new StopFollowingWorkspaceResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): StopFollowingWorkspaceResponse {
+    return new StopFollowingWorkspaceResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: StopFollowingWorkspaceResponse | PlainMessage<StopFollowingWorkspaceResponse> | undefined, b: StopFollowingWorkspaceResponse | PlainMessage<StopFollowingWorkspaceResponse> | undefined): boolean {
+    return proto3.util.equals(StopFollowingWorkspaceResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.ComputerFollowingStatus
+ */
+export class ComputerFollowingStatus extends Message<ComputerFollowingStatus> {
+  /**
+   * @generated from field: uint64 revision = 1;
+   */
+  revision = protoInt64.zero;
+
+  /**
+   * @generated from field: string owner_fingerprint = 2;
+   */
+  ownerFingerprint = "";
+
+  /**
+   * @generated from field: repeated string environment_ids = 3;
+   */
+  environmentIds: string[] = [];
+
+  /**
+   * @generated from field: string status = 4;
+   */
+  status = "";
+
+  /**
+   * @generated from field: string error = 5;
+   */
+  error = "";
+
+  /**
+   * @generated from field: google.protobuf.Timestamp checked_at = 6;
+   */
+  checkedAt?: Timestamp;
+
+  /**
+   * @generated from field: repeated string excluded_environment_ids = 7;
+   */
+  excludedEnvironmentIds: string[] = [];
+
+  constructor(data?: PartialMessage<ComputerFollowingStatus>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.ComputerFollowingStatus";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "revision", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
+    { no: 2, name: "owner_fingerprint", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "environment_ids", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 4, name: "status", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "error", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "checked_at", kind: "message", T: Timestamp },
+    { no: 7, name: "excluded_environment_ids", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ComputerFollowingStatus {
+    return new ComputerFollowingStatus().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ComputerFollowingStatus {
+    return new ComputerFollowingStatus().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ComputerFollowingStatus {
+    return new ComputerFollowingStatus().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ComputerFollowingStatus | PlainMessage<ComputerFollowingStatus> | undefined, b: ComputerFollowingStatus | PlainMessage<ComputerFollowingStatus> | undefined): boolean {
+    return proto3.util.equals(ComputerFollowingStatus, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.GetComputerFollowingRequest
+ */
+export class GetComputerFollowingRequest extends Message<GetComputerFollowingRequest> {
+  constructor(data?: PartialMessage<GetComputerFollowingRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.GetComputerFollowingRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetComputerFollowingRequest {
+    return new GetComputerFollowingRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetComputerFollowingRequest {
+    return new GetComputerFollowingRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetComputerFollowingRequest {
+    return new GetComputerFollowingRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetComputerFollowingRequest | PlainMessage<GetComputerFollowingRequest> | undefined, b: GetComputerFollowingRequest | PlainMessage<GetComputerFollowingRequest> | undefined): boolean {
+    return proto3.util.equals(GetComputerFollowingRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.GetComputerFollowingResponse
+ */
+export class GetComputerFollowingResponse extends Message<GetComputerFollowingResponse> {
+  /**
+   * @generated from field: rementor.v1.ComputerFollowingStatus state = 1;
+   */
+  state?: ComputerFollowingStatus;
+
+  constructor(data?: PartialMessage<GetComputerFollowingResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.GetComputerFollowingResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "state", kind: "message", T: ComputerFollowingStatus },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetComputerFollowingResponse {
+    return new GetComputerFollowingResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetComputerFollowingResponse {
+    return new GetComputerFollowingResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetComputerFollowingResponse {
+    return new GetComputerFollowingResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetComputerFollowingResponse | PlainMessage<GetComputerFollowingResponse> | undefined, b: GetComputerFollowingResponse | PlainMessage<GetComputerFollowingResponse> | undefined): boolean {
+    return proto3.util.equals(GetComputerFollowingResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.FollowComputerRequest
+ */
+export class FollowComputerRequest extends Message<FollowComputerRequest> {
+  /**
+   * @generated from field: string fingerprint = 1;
+   */
+  fingerprint = "";
+
+  /**
+   * @generated from field: uint64 expected_revision = 2;
+   */
+  expectedRevision = protoInt64.zero;
+
+  constructor(data?: PartialMessage<FollowComputerRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.FollowComputerRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "fingerprint", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "expected_revision", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): FollowComputerRequest {
+    return new FollowComputerRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): FollowComputerRequest {
+    return new FollowComputerRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): FollowComputerRequest {
+    return new FollowComputerRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: FollowComputerRequest | PlainMessage<FollowComputerRequest> | undefined, b: FollowComputerRequest | PlainMessage<FollowComputerRequest> | undefined): boolean {
+    return proto3.util.equals(FollowComputerRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.FollowComputerResponse
+ */
+export class FollowComputerResponse extends Message<FollowComputerResponse> {
+  /**
+   * @generated from field: rementor.v1.ComputerFollowingStatus state = 1;
+   */
+  state?: ComputerFollowingStatus;
+
+  constructor(data?: PartialMessage<FollowComputerResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.FollowComputerResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "state", kind: "message", T: ComputerFollowingStatus },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): FollowComputerResponse {
+    return new FollowComputerResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): FollowComputerResponse {
+    return new FollowComputerResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): FollowComputerResponse {
+    return new FollowComputerResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: FollowComputerResponse | PlainMessage<FollowComputerResponse> | undefined, b: FollowComputerResponse | PlainMessage<FollowComputerResponse> | undefined): boolean {
+    return proto3.util.equals(FollowComputerResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.SyncComputerConfigurationRequest
+ */
+export class SyncComputerConfigurationRequest extends Message<SyncComputerConfigurationRequest> {
+  constructor(data?: PartialMessage<SyncComputerConfigurationRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.SyncComputerConfigurationRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SyncComputerConfigurationRequest {
+    return new SyncComputerConfigurationRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SyncComputerConfigurationRequest {
+    return new SyncComputerConfigurationRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SyncComputerConfigurationRequest {
+    return new SyncComputerConfigurationRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: SyncComputerConfigurationRequest | PlainMessage<SyncComputerConfigurationRequest> | undefined, b: SyncComputerConfigurationRequest | PlainMessage<SyncComputerConfigurationRequest> | undefined): boolean {
+    return proto3.util.equals(SyncComputerConfigurationRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.SyncComputerConfigurationResponse
+ */
+export class SyncComputerConfigurationResponse extends Message<SyncComputerConfigurationResponse> {
+  /**
+   * @generated from field: rementor.v1.ComputerFollowingStatus state = 1;
+   */
+  state?: ComputerFollowingStatus;
+
+  constructor(data?: PartialMessage<SyncComputerConfigurationResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.SyncComputerConfigurationResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "state", kind: "message", T: ComputerFollowingStatus },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SyncComputerConfigurationResponse {
+    return new SyncComputerConfigurationResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SyncComputerConfigurationResponse {
+    return new SyncComputerConfigurationResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SyncComputerConfigurationResponse {
+    return new SyncComputerConfigurationResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: SyncComputerConfigurationResponse | PlainMessage<SyncComputerConfigurationResponse> | undefined, b: SyncComputerConfigurationResponse | PlainMessage<SyncComputerConfigurationResponse> | undefined): boolean {
+    return proto3.util.equals(SyncComputerConfigurationResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.StopFollowingComputerRequest
+ */
+export class StopFollowingComputerRequest extends Message<StopFollowingComputerRequest> {
+  /**
+   * @generated from field: uint64 expected_revision = 1;
+   */
+  expectedRevision = protoInt64.zero;
+
+  constructor(data?: PartialMessage<StopFollowingComputerRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.StopFollowingComputerRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "expected_revision", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): StopFollowingComputerRequest {
+    return new StopFollowingComputerRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): StopFollowingComputerRequest {
+    return new StopFollowingComputerRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): StopFollowingComputerRequest {
+    return new StopFollowingComputerRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: StopFollowingComputerRequest | PlainMessage<StopFollowingComputerRequest> | undefined, b: StopFollowingComputerRequest | PlainMessage<StopFollowingComputerRequest> | undefined): boolean {
+    return proto3.util.equals(StopFollowingComputerRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.StopFollowingComputerResponse
+ */
+export class StopFollowingComputerResponse extends Message<StopFollowingComputerResponse> {
+  /**
+   * @generated from field: rementor.v1.ComputerFollowingStatus state = 1;
+   */
+  state?: ComputerFollowingStatus;
+
+  constructor(data?: PartialMessage<StopFollowingComputerResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.StopFollowingComputerResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "state", kind: "message", T: ComputerFollowingStatus },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): StopFollowingComputerResponse {
+    return new StopFollowingComputerResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): StopFollowingComputerResponse {
+    return new StopFollowingComputerResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): StopFollowingComputerResponse {
+    return new StopFollowingComputerResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: StopFollowingComputerResponse | PlainMessage<StopFollowingComputerResponse> | undefined, b: StopFollowingComputerResponse | PlainMessage<StopFollowingComputerResponse> | undefined): boolean {
+    return proto3.util.equals(StopFollowingComputerResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.SetEnvironmentFollowingRequest
+ */
+export class SetEnvironmentFollowingRequest extends Message<SetEnvironmentFollowingRequest> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  /**
+   * @generated from field: bool following = 2;
+   */
+  following = false;
+
+  /**
+   * @generated from field: uint64 expected_revision = 3;
+   */
+  expectedRevision = protoInt64.zero;
+
+  /**
+   * @generated from field: uint64 expected_workspace_version = 4;
+   */
+  expectedWorkspaceVersion = protoInt64.zero;
+
+  constructor(data?: PartialMessage<SetEnvironmentFollowingRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.SetEnvironmentFollowingRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "following", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 3, name: "expected_revision", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
+    { no: 4, name: "expected_workspace_version", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SetEnvironmentFollowingRequest {
+    return new SetEnvironmentFollowingRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SetEnvironmentFollowingRequest {
+    return new SetEnvironmentFollowingRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SetEnvironmentFollowingRequest {
+    return new SetEnvironmentFollowingRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: SetEnvironmentFollowingRequest | PlainMessage<SetEnvironmentFollowingRequest> | undefined, b: SetEnvironmentFollowingRequest | PlainMessage<SetEnvironmentFollowingRequest> | undefined): boolean {
+    return proto3.util.equals(SetEnvironmentFollowingRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message rementor.v1.SetEnvironmentFollowingResponse
+ */
+export class SetEnvironmentFollowingResponse extends Message<SetEnvironmentFollowingResponse> {
+  /**
+   * @generated from field: rementor.v1.ComputerFollowingStatus state = 1;
+   */
+  state?: ComputerFollowingStatus;
+
+  constructor(data?: PartialMessage<SetEnvironmentFollowingResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "rementor.v1.SetEnvironmentFollowingResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "state", kind: "message", T: ComputerFollowingStatus },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SetEnvironmentFollowingResponse {
+    return new SetEnvironmentFollowingResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SetEnvironmentFollowingResponse {
+    return new SetEnvironmentFollowingResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SetEnvironmentFollowingResponse {
+    return new SetEnvironmentFollowingResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: SetEnvironmentFollowingResponse | PlainMessage<SetEnvironmentFollowingResponse> | undefined, b: SetEnvironmentFollowingResponse | PlainMessage<SetEnvironmentFollowingResponse> | undefined): boolean {
+    return proto3.util.equals(SetEnvironmentFollowingResponse, a, b);
   }
 }
 

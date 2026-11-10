@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useWorkspaces } from '@/lib/workspaces'
+import { editFollowedConfiguration } from '@/api/client'
 
 function applicationInputFromApplication(application: ApplicationDTO): ApplicationConfigInput {
   return {
@@ -101,10 +102,9 @@ export function CreateEnvironmentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px]" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>Create environment</DialogTitle>
-          <DialogDescription>Set up the shared routing context that sessions branch from.</DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -128,7 +128,6 @@ export function CreateEnvironmentDialog({
             <div className="space-y-2">
               <Label htmlFor="environment-host">Local hostname</Label>
               <Input id="environment-host" required placeholder="development.localhost" value={localDomain} onChange={(event) => setLocalDomain(event.target.value)} />
-              <p className="text-xs text-muted-foreground">This is the shared browser address for the environment.</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="environment-remote">Default remote URL</Label>
@@ -199,14 +198,14 @@ export function EditEnvironmentDialog({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Environment settings</DialogTitle>
-          <DialogDescription>{workspace.name || workspace.id}</DialogDescription>
+          <DialogDescription>{workspace.name || workspace.id}{workspace.computerFollowed && ' · Source configuration'}</DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-2">
             <Label>Environment ID</Label>
             <Input value={workspace.id} disabled />
           </div>
-          {routing ? <>
+          {routing && <>
             <div className="space-y-2">
               <Label htmlFor="edit-environment-host">Local hostname</Label>
               <Input id="edit-environment-host" required value={localDomain} onChange={(event) => setLocalDomain(event.target.value)} />
@@ -215,7 +214,7 @@ export function EditEnvironmentDialog({
               <Label htmlFor="edit-environment-remote">Default remote URL</Label>
               <Input id="edit-environment-remote" type="url" value={remoteBaseUrl} onChange={(event) => setRemoteBaseUrl(event.target.value)} />
             </div>
-          </> : <p className="text-sm text-muted-foreground">Local-app environments have no shared routing hostname.</p>}
+          </>}
           {error && <DialogError>{error}</DialogError>}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
@@ -245,7 +244,7 @@ function serviceValues(application?: ApplicationDTO): ServiceValues {
     path: application?.publicPath || application?.path || '',
     domain: application?.domain || '',
     remoteBaseUrl: application?.remoteBaseUrl || '',
-    port: application?.port ? String(application.port) : '',
+    port: application?.sourcePort !== undefined ? (application.sourcePort ? String(application.sourcePort) : '') : application?.port ? String(application.port) : '',
     health: application?.health || 'actuator/health',
     upstreamContext: application?.upstreamContext || application?.context || application?.path || '',
   }
@@ -267,12 +266,14 @@ export function ServiceDialog({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const editing = Boolean(application)
+  const [editingVersion, setEditingVersion] = useState<bigint>()
 
   useEffect(() => {
     if (!open) return
     setValues(serviceValues(application || undefined))
+    setEditingVersion(workspace?.route?.version?.value)
     setError('')
-  }, [application, open])
+  }, [application, open, workspace?.id])
 
   if (!workspace) return null
   const set = (field: keyof ServiceValues, value: string) => setValues((current) => ({ ...current, [field]: value }))
@@ -298,11 +299,11 @@ export function ServiceDialog({
         publicPath: workspace.type === 'routing' ? values.path.trim() : original?.publicPath || '',
         domain: values.domain.trim() || undefined,
         remoteBaseUrl: values.remoteBaseUrl.trim() || undefined,
-        port: port || undefined,
+        port: workspace.computerFollowed && application && values.port === '' && application.sourcePort !== 0 ? 0 : port || undefined,
         health: values.health.trim(),
         context: workspace.type === 'routing' ? values.upstreamContext.trim() : original?.context || '',
         upstreamContext: workspace.type === 'routing' ? values.upstreamContext.trim() : original?.upstreamContext || '',
-      })
+      }, editingVersion)
       toast.success(editing ? 'Service updated' : 'Service added')
       onOpenChange(false)
     } catch (requestError) {
@@ -317,7 +318,7 @@ export function ServiceDialog({
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-[560px]">
         <DialogHeader>
           <DialogTitle>{editing ? 'Edit service' : 'Add service'}</DialogTitle>
-          <DialogDescription>{workspace.name || workspace.id} · {workspace.session ? 'This session' : 'General routing'}</DialogDescription>
+          <DialogDescription>{workspace.name || workspace.id} · {workspace.computerFollowed ? 'Source configuration' : workspace.session ? 'This session' : 'General routing'}</DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -344,7 +345,7 @@ export function ServiceDialog({
           </div>}
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="service-port">Local port{workspace.type === 'local-apps' ? '' : ' (optional)'}</Label>
+              <Label htmlFor="service-port">{workspace.computerFollowed ? 'Port on source computer' : 'Local port'}{workspace.type === 'local-apps' ? '' : ' (optional)'}</Label>
               <Input id="service-port" type="number" min="1" max="65535" placeholder="19404" value={values.port} onChange={(event) => set('port', event.target.value)} />
             </div>
             <div className="space-y-2">
@@ -378,16 +379,18 @@ export function RegisterPortDialog({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
-  const { registerSessionApplication, upsertApplication } = useWorkspaces()
+  const { registerSessionApplication, upsertApplication, refreshWorkspace } = useWorkspaces()
   const [port, setPort] = useState('')
+  const [editingVersion, setEditingVersion] = useState<bigint>()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
     if (!open) return
-    setPort(application?.port ? String(application.port) : '')
+    setPort(application?.sourcePort !== undefined ? (application.sourcePort ? String(application.sourcePort) : '') : application?.port ? String(application.port) : '')
+    setEditingVersion(workspace?.route?.version?.value)
     setError('')
-  }, [application, open])
+  }, [application, open, workspace?.id])
 
   if (!workspace || !application) return null
   const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -401,8 +404,12 @@ export function RegisterPortDialog({
     setError('')
     try {
       if (workspace.session) await registerSessionApplication(workspace.id, { id: application.appId || application.id, port: parsed })
-      else await upsertApplication(workspace.id, { ...applicationInputFromApplication(application), port: parsed })
-      toast.success('Local port registered')
+      else if (workspace.computerFollowed) {
+        await editFollowedConfiguration({ workspaceId: workspace.id, expectedVersion: editingVersion, action: 'register-port', applicationId: application.appId || application.id, registrationPort: parsed })
+        await refreshWorkspace(workspace.id)
+      }
+      else await upsertApplication(workspace.id, { ...applicationInputFromApplication(application), port: parsed }, workspace.route?.version?.value)
+      toast.success(workspace.computerFollowed ? 'Source port registered' : 'Local port registered')
       onOpenChange(false)
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Could not register the port.')
@@ -415,12 +422,12 @@ export function RegisterPortDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[460px]">
         <DialogHeader>
-          <DialogTitle>{application.port ? 'Edit local port' : 'Register local port'}</DialogTitle>
+          <DialogTitle>{workspace.computerFollowed ? 'Register source port' : application.port ? 'Edit local port' : 'Register local port'}</DialogTitle>
           <DialogDescription>{application.name} · {workspace.name || workspace.id}</DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="registered-port">Local port</Label>
+            <Label htmlFor="registered-port">{workspace.computerFollowed ? 'Port on source computer' : 'Local port'}</Label>
             <Input id="registered-port" autoFocus required type="number" min="1" max="65535" placeholder="19404" value={port} onChange={(event) => { setPort(event.target.value); setError('') }} />
           </div>
           {error && <DialogError>{error}</DialogError>}
@@ -477,7 +484,7 @@ export function RoutePatternDialog({
       <DialogContent className="sm:max-w-[460px]">
         <DialogHeader>
           <DialogTitle>Route pattern</DialogTitle>
-          <DialogDescription>Override the browser-facing path for {application.name}.</DialogDescription>
+          <DialogDescription>{application.name}</DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-2">
@@ -545,7 +552,7 @@ export function CreateSessionDialog({
       <DialogContent className="sm:max-w-[460px]">
         <DialogHeader>
           <DialogTitle>Create session</DialogTitle>
-          <DialogDescription>Creates a separate routing branch under {environment.name || environment.id}.</DialogDescription>
+          <DialogDescription>{environment.name || environment.id}</DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-2">
@@ -613,7 +620,7 @@ export function BaselineDialog({
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-[540px]">
         <DialogHeader>
           <DialogTitle>Review remote baseline</DialogTitle>
-          <DialogDescription>Compare {workspace.name || workspace.id} with the environment it branched from. Local ports and route selections remain intact.</DialogDescription>
+          <DialogDescription>{workspace.name || workspace.id}{workspace.computerFollowed && ' · Source configuration'}</DialogDescription>
         </DialogHeader>
         {loading && <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" />Loading baseline changes…</div>}
         {preview && <div className="space-y-4">

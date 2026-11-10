@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -21,6 +22,7 @@ import (
 	"github.com/thiagojdb/rementor/internal/config"
 	"github.com/thiagojdb/rementor/internal/gen/rementor/v1/rementorv1connect"
 	"github.com/thiagojdb/rementor/internal/nginx"
+	"github.com/thiagojdb/rementor/internal/peers"
 	"github.com/thiagojdb/rementor/internal/rpc"
 	"github.com/thiagojdb/rementor/internal/services"
 	"github.com/thiagojdb/rementor/internal/systemd"
@@ -153,9 +155,52 @@ func main() {
 					return fmt.Errorf("failed to generate CSRF token: %w", err)
 				}
 
+				hostname := os.Getenv("REMENTOR_COMPUTER_NAME")
+				if hostname == "" {
+					hostname, _ = os.Hostname()
+				}
+				peerManager, err := peers.Open(filepath.Join(config.GetDataDir(), "peers"), hostname)
+				if err != nil {
+					return fmt.Errorf("initialize peer identity: %w", err)
+				}
+				peerManager.SetWorkspaceSource(registry)
+				if err := registry.SetPeerWorkspaceClient(peerManager.State().Fingerprint, peerManager); err != nil {
+					peerManager.Close()
+					return fmt.Errorf("restore peer inheritance: %w", err)
+				}
+				peerManager.SetManagementPort(port)
+				gatewayPort, err := peers.GatewayPort(port, os.Getenv("REMENTOR_PEER_GATEWAY_PORT"))
+				if err != nil {
+					peerManager.Close()
+					return fmt.Errorf("peer gateway port: %w", err)
+				}
+				protectedPorts := []int{gatewayPort, 80, 443}
+				for _, raw := range strings.Split(os.Getenv("REMENTOR_NGINX_LISTEN_PORTS"), ",") {
+					if nginxPort, err := strconv.Atoi(strings.TrimSpace(raw)); err == nil {
+						protectedPorts = append(protectedPorts, nginxPort)
+					}
+				}
+				peerManager.ProtectLocalPorts(protectedPorts...)
+				peerManager.Restore()
+				gatewayListener, err := net.Listen("tcp", net.JoinHostPort("127.0.0.1", strconv.Itoa(gatewayPort)))
+				if err != nil {
+					peerManager.Close()
+					return fmt.Errorf("listen on peer gateway: %w", err)
+				}
+				gateway := &http.Server{Handler: peerManager.Gateway(), ReadHeaderTimeout: 5 * time.Second, IdleTimeout: 30 * time.Second, MaxHeaderBytes: 8192}
+				go func() {
+					if err := gateway.Serve(gatewayListener); err != nil && err != http.ErrServerClosed {
+						log.Printf("Peer gateway stopped: %v", err)
+						cancel()
+					}
+				}()
+				go func() { <-ctx.Done(); peerManager.Close(); _ = gateway.Close() }()
+				go registry.RunPeerSynchronization(ctx, 5*time.Second)
+				controlPlane := rpc.NewControlPlaneService(registry)
+				controlPlane.SetPeerManager(peerManager)
 				// Typed Connect RPC API generated from proto/rementor/v1/rementor.proto.
 				rpcPath, rpcHandler := rementorv1connect.NewControlPlaneServiceHandler(
-					rpc.NewControlPlaneService(registry),
+					controlPlane,
 					connect.WithInterceptors(rpc.NewCSRFGuard(csrfToken)),
 				)
 				e.Any("/rpc"+rpcPath+"*", echo.WrapHandler(http.StripPrefix("/rpc", rpcHandler)))

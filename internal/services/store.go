@@ -73,3 +73,16 @@ func (configWorkspaceStore) UpdateRouteOperation(operation models.RouteOperation
 func (configWorkspaceStore) LoadRouteOperations() ([]models.RouteOperationJournal, error) {
 	return config.LoadRouteOperations()
 }
+
+// Following and its full environment projection commit in one SQLite transaction.
+type ComputerFollowingStore interface {
+	LoadComputerFollowing() (models.ComputerFollowing, error)
+	SaveComputerFollowing([]*models.Workspace, models.ComputerFollowing, uint64) error
+}
+
+func (configWorkspaceStore) LoadComputerFollowing() (models.ComputerFollowing, error) {
+	return config.LoadComputerFollowing()
+}
+func (configWorkspaceStore) SaveComputerFollowing(workspaces []*models.Workspace, state models.ComputerFollowing, expected uint64) error {
+	return config.SaveComputerFollowing(workspaces, state, expected)
+}

@@ -248,10 +248,60 @@ internal/services/       Registry, health checks, and routing transactions
 internal/nginx/          nginx renderer, validation, and atomic reload
 internal/config/         SQLite persistence and migrations
 internal/cli/            CLI and MCP control surfaces
-web/frontend/            React application and generated TypeScript client
+web/frontend/            React/shadcn application and generated TypeScript client
 examples/mock-stack/     Sanitized local/remote service simulation
 examples/docker/         Rootless nginx demo runtime
 ```
+
+The Configuration page (`/configuration`) pairs Rementor computers:
+
+1. On the computer you want to add, choose **Invite computer**.
+2. On this computer, choose **Connect to computer**, paste the code,
+   compare the fingerprint with the other computer, and confirm pairing.
+3. Use **Check connection** to verify access, or **Disconnect** to revoke local trust.
+
+Inviting or confirming a pairing enables the private connection automatically.
+Rementor prefers Tailscale, then a private network address. **Connection settings**
+lets you change the address or port; allow the selected port through your firewall
+if your private network requires it.
+
+You can also generate an invitation on the inviting computer from the terminal:
+
+```bash
+rementorctl peer invite
+# For a custom management port:
+rementorctl --server http://localhost:9400 peer invite
+```
+
+The command prints the invitation to stdout and its fingerprint and expiry to
+stderr. Paste it into **Connect to computer** on the other computer and compare
+fingerprints. `--json` returns all three fields together. This command also enables
+the private connection when needed, using the running instance's existing identity.
+
+Invitations expire after five minutes and work once. Peer connections use pinned
+certificates and TLS client authentication; the management API stays on localhost.
+See [the pairing security model](SECURITY.md#computer-pairing).
+
+The route-plan API and [fleet inspector](examples/fleet/README.md) remain
+experimental. The nginx gateway can forward declared peer endpoints through the
+authenticated owner, including WebSockets. The backend persists live inheritance,
+cached snapshots and whole-computer following. UI, CLI and MCP controls select
+a source computer and edit its route selections; pairing authorizes the connection.
+
+The saved fleet topology has separate review and save commands:
+
+```bash
+rementorctl fleet show
+rementorctl fleet review --file topology.json --expected-revision 0
+rementorctl fleet save --file topology.json --expected-revision 0 --review-token <reviewToken>
+```
+
+Edit the `configuration.topology` object returned by `fleet show`. Review returns
+before/after selections and a token bound to that exact topology and revision.
+Changing the file, another writer saving, or restarting the daemon requires a new
+review. MCP exposes `rementor.fleet_show`, `rementor.fleet_review`, and
+`rementor.fleet_save`; revisions are decimal strings. This topology stores intent;
+the workspace inheritance controls change active proxy routes.
 
 ## MCP compatibility
 
@@ -436,3 +486,68 @@ payload diffing is not implemented.
 ## License
 
 [MIT](LICENSE)
+
+### Following a paired computer
+
+In Configuration, select a paired computer under **Follow a computer**, then
+**Follow all environments**. Its environments appear automatically, including
+later additions and removals, together with their source routing sessions.
+Previously imported sessions retain their receiving IDs. Extra local environments
+and independently created local sessions retain their own configuration and
+pinned baselines. Source session registrations keep their source computer as the
+target; they never become local ports on the follower. A source session that
+conflicts with a local session's hostname stops synchronization with an error.
+
+Toggles, **Local all**, **Remote all**, and **Edit source route** change the source
+configuration. Every computer following that source receives the change. The
+editor names the source, and no local route override is created. Environment
+settings, service add/edit/delete, port registration, and environment deletion
+are also available while following and change the source computer. Registration
+ports belong to that computer. Concurrent edits are
+checked against the source version; conflicts require a refresh and review.
+Source outages preserve the validated cached routes but prevent source edits.
+Target health is shown separately from configuration sync status.
+
+Turn off an environment’s following switch in Configuration or on its dashboard
+to keep its current setup and its mirrored sessions and edit them locally. Other environments continue
+following. The choice persists across restarts and source removal or readdition.
+Peer endpoints keep their owning computer; opting out does not start those
+services locally. Unchanged owner registrations remain usable after source route
+selection changes; changed registrations require a new configuration.
+Turning the switch back on reads the source’s current authenticated configuration
+and replaces local settings after confirmation. Concurrent local edits reject
+the operation instead of being overwritten.
+
+**Stop following** restores the environments saved before following and retains
+extra local environments and environments you stopped following individually.
+Close independent local sessions under source-only environments before
+removing those environments or stopping following.
+
+```sh
+rementorctl computer-following status
+rementorctl computer-following follow --peer <fingerprint> --expected-revision <revision>
+rementorctl computer-following sync
+rementorctl computer-following exclude --workspace dev --expected-revision <revision> --expected-workspace-version <version>
+rementorctl computer-following include --workspace dev --expected-revision <revision> --expected-workspace-version <version>
+rementorctl computer-following stop --expected-revision <revision>
+```
+
+MCP exposes `rementor.computer_status`, `_follow`, `_sync`, `_exclude`, `_include`, and `_stop`.
+`expected_revision` is an unsigned decimal string from status. Legacy
+`inheritance` operations remain available for existing per-workspace relationships;
+whole-computer environments reject local overrides and per-workspace detach.
+
+Transitive endpoint forwarding currently requires direct pairing with the
+endpoint's owning computer. Cycles are rejected when present in the received
+lineage; concurrent reciprocal changes on different computers are detected on
+subsequent synchronization, without a distributed coordinator. Public URL
+publishing is deferred to its separate branch.
+
+### Deferred public URL publishing
+
+Public URLs for devices without Rementor are maintained separately on
+`feature/deferred-tailnet-publishing`. This build provides pairing, followed
+configurations, sessions and private forwarding between computers running
+Rementor. Tailscale remains usable as their private transport, without a
+publishing node, DNS server or CA setup. Existing publishing settings remain
+stored for that later release; they are inactive in this build.

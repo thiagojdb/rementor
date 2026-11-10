@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/thiagojdb/rementor/internal/config"
+	"github.com/thiagojdb/rementor/internal/fleet"
 	"github.com/thiagojdb/rementor/internal/models"
 	"github.com/thiagojdb/rementor/internal/validation"
 )
@@ -34,6 +35,10 @@ type Registry struct {
 	healthStreams       map[uint64]healthStream
 	healthStreamsMu     sync.RWMutex
 	nextHealthStream    uint64
+	healthProbeMu       sync.Mutex
+	healthProbes        map[string]bool
+	healthForeground    chan struct{}
+	healthBackground    chan struct{}
 	lastFullCheck       time.Time
 	nextRouteVersion    uint64
 	routingStateMu      sync.RWMutex
@@ -44,6 +49,12 @@ type Registry struct {
 	effectiveStatus     map[string]string
 	idempotencyMu       sync.Mutex
 	routeIdempotency    map[string]routeApplyRecord
+	fleetMu             sync.RWMutex
+	fleetClient         PeerWorkspaceClient
+	computerFollowing   models.ComputerFollowing
+	computerCheck       ComputerFollowingCheck
+	fleetOwner          string
+	fleetChecks         map[string]InheritanceStatus
 }
 
 type routeApplyRecord struct {
@@ -163,6 +174,16 @@ func (r *Registry) Load() error {
 		}
 	}
 
+	if store, ok := r.workspaceStore().(ComputerFollowingStore); ok {
+		state, err := store.LoadComputerFollowing()
+		if err != nil {
+			return err
+		}
+		if err := validateComputerFollowingState(state, workspaces); err != nil {
+			return err
+		}
+		r.computerFollowing = state
+	}
 	r.workspacesMu.Lock()
 	r.workspaces = workspaces
 	r.workspacesMu.Unlock()
@@ -226,80 +247,7 @@ func (r *Registry) Load() error {
 
 // warmHealth performs initial health checks for active workspaces
 func (r *Registry) warmHealth() {
-	// Only warm health for workspaces with subscribers initially
-	wssToCheck := r.GetActiveWorkspaces()
-
-	var allApps int
-	wsNames := make([]string, 0, len(wssToCheck))
-	for _, ws := range wssToCheck {
-		allApps += len(ws.Applications)
-		wsNames = append(wsNames, ws.WorkspaceID)
-	}
-
-	// If no subscribers yet, we'll skip warming and let the periodic checker handle it
-	if allApps == 0 {
-		log.Println("[Health Warm] No active subscribers yet, skipping initial health warm")
-		return
-	}
-
-	log.Printf("[Health Warm] Starting health check for workspaces: %v (total: %d applications)", wsNames, allApps)
-
-	// Increased stagger to reduce network congestion: 1 second between checks
-	staggerDelay := 1 * time.Second
-	startTime := time.Now()
-
-	for _, ws := range wssToCheck {
-		log.Printf("[Health Warm] Processing workspace '%s' (%d applications)", ws.WorkspaceID, len(ws.Applications))
-		for _, app := range ws.Applications {
-			time.Sleep(staggerDelay)
-
-			go func(w *models.Workspace, a *models.Application) {
-				// local-apps have no remote concept — only check local health
-				isLocalApps := w.IsLocalApps()
-				remoteBase := ""
-				if !isLocalApps {
-					remoteBase = a.GetRemoteBaseUrl(w)
-				}
-				remoteURL := ""
-				if remoteBase != "" {
-					remoteURL = a.RemoteHealthURL(remoteBase)
-				}
-				log.Printf("[Health Warm] Checking application '%s/%s' (local: %s, remote: %s)",
-					w.WorkspaceID, a.ID, a.HealthURL(), remoteURL)
-				oldLocalOk := a.Runtime.GetHealthOk()
-				oldRemoteOk := a.Runtime.GetRemoteOk()
-
-				healthOk := CheckHealth(a.HealthURL())
-				var remoteOk bool
-				if remoteBase != "" {
-					remoteOk = CheckHealth(a.RemoteHealthURL(remoteBase))
-				}
-
-				log.Printf("[Health Warm] Application '%s/%s' health status - Local: %v, Remote: %v",
-					w.WorkspaceID, a.ID, healthOk, remoteOk)
-
-				now := time.Now()
-				a.Runtime.UpdateBothStatuses(healthOk, &now, remoteOk, &now)
-
-				// Only send updates when there are changes
-				if oldLocalOk != healthOk || oldRemoteOk != remoteOk {
-					update := models.HealthUpdate{
-						WsID:          w.WorkspaceID,
-						AppName:       a.ID,
-						LocalOk:       healthOk,
-						RemoteOk:      remoteOk,
-						LocalChecked:  now,
-						RemoteChecked: now,
-					}
-					r.publishHealth(update)
-				}
-			}(ws, app)
-		}
-	}
-
-	elapsed := time.Since(startTime)
-	log.Printf("[Health Warm] Completed health check for workspaces: %v (total: %d applications, took: %v)",
-		wsNames, allApps, elapsed)
+	r.scheduleHealthChecks(r.GetActiveWorkspaces(), true)
 }
 
 // StartHealthChecker starts the periodic health checker
@@ -330,95 +278,23 @@ func (r *Registry) StartHealthChecker(ctx context.Context) {
 func (r *Registry) refreshAllHealth() {
 	// Determine which workspaces to check
 	var wssToCheck []*models.Workspace
-	checkType := "active"
 
 	activeWss := r.GetActiveWorkspaces()
 	if len(activeWss) > 0 {
 		// Someone is viewing - check only their workspaces
 		wssToCheck = activeWss
-		checkType = "active"
 	} else if r.ShouldRunFullCheck() {
 		// No one viewing - do full check every 5 minutes to keep data fresh
 		r.workspacesMu.RLock()
 		wssToCheck = make([]*models.Workspace, len(r.workspaces))
 		copy(wssToCheck, r.workspaces)
 		r.workspacesMu.RUnlock()
-		checkType = "full (periodic)"
 	} else {
 		// No one viewing and not time for full check - skip entirely
 		return
 	}
 
-	// Count applications to check and collect workspace names
-	var totalApps int
-	wsNames := make([]string, 0, len(wssToCheck))
-	for _, ws := range wssToCheck {
-		totalApps += len(ws.Applications)
-		wsNames = append(wsNames, ws.WorkspaceID)
-	}
-
-	if totalApps == 0 {
-		log.Printf("[Health Check] No applications to check (type: %s)", checkType)
-		return
-	}
-
-	log.Printf("[Health Check] Starting %s health check loop for workspaces: %v (total: %d applications)", checkType, wsNames, totalApps)
-
-	// Increased stagger to reduce network congestion: 500ms between checks
-	staggerDelay := 500 * time.Millisecond
-	startTime := time.Now()
-
-	for _, ws := range wssToCheck {
-		log.Printf("[Health Check] Processing workspace '%s' (%d applications)", ws.WorkspaceID, len(ws.Applications))
-		for _, app := range ws.Applications {
-			time.Sleep(staggerDelay)
-
-			go func(w *models.Workspace, a *models.Application) {
-				// local-apps have no remote concept — only check local health
-				isLocalApps := w.IsLocalApps()
-				remoteBase := ""
-				if !isLocalApps {
-					remoteBase = a.GetRemoteBaseUrl(w)
-				}
-				remoteURL := ""
-				if remoteBase != "" {
-					remoteURL = a.RemoteHealthURL(remoteBase)
-				}
-				log.Printf("[Health Check] Checking application '%s/%s' (local: %s, remote: %s)",
-					w.WorkspaceID, a.ID, a.HealthURL(), remoteURL)
-				oldLocalOk := a.Runtime.GetHealthOk()
-				oldRemoteOk := a.Runtime.GetRemoteOk()
-
-				newLocalOk := CheckHealth(a.HealthURL())
-				var newRemoteOk bool
-				if remoteBase != "" {
-					newRemoteOk = CheckHealth(a.RemoteHealthURL(remoteBase))
-				}
-
-				log.Printf("[Health Check] Application '%s/%s' health status - Local: %v, Remote: %v",
-					w.WorkspaceID, a.ID, newLocalOk, newRemoteOk)
-
-				if oldLocalOk != newLocalOk || oldRemoteOk != newRemoteOk {
-					update := models.HealthUpdate{
-						WsID:          w.WorkspaceID,
-						AppName:       a.ID,
-						LocalOk:       newLocalOk,
-						RemoteOk:      newRemoteOk,
-						LocalChecked:  time.Now(),
-						RemoteChecked: time.Now(),
-					}
-					r.publishHealth(update)
-				}
-
-				now := time.Now()
-				a.Runtime.UpdateBothStatuses(newLocalOk, &now, newRemoteOk, &now)
-			}(ws, app)
-		}
-	}
-
-	elapsed := time.Since(startTime)
-	log.Printf("[Health Check] Completed %s health check loop for workspaces: %v (total: %d applications, took: %v)",
-		checkType, wsNames, totalApps, elapsed)
+	r.scheduleHealthChecks(wssToCheck, len(activeWss) > 0)
 }
 
 // GetWorkspaces returns detached, projected runtime views. Callers may treat
@@ -576,6 +452,9 @@ func (r *Registry) PlanRouteWithOptions(wsID, application, desiredMode string, r
 // while holding the same mutation lock used by legacy operations, so a plan
 // cannot become stale between its version check and proxy reload.
 func (r *Registry) ApplyRoutePlan(wsID string, plan RoutePlan, expectedVersion uint64, idempotencyKey, correlationID string) (RouteApplyResult, error) {
+	if r.IsComputerFollowed(wsID) {
+		return RouteApplyResult{}, fmt.Errorf("use source route editing for this followed environment")
+	}
 	if strings.TrimSpace(plan.WorkspaceID) == "" {
 		plan.WorkspaceID = wsID
 	}
@@ -602,6 +481,9 @@ func (r *Registry) ApplyRoutePlan(wsID string, plan RoutePlan, expectedVersion u
 
 	r.mutationMu.Lock()
 	defer r.mutationMu.Unlock()
+	if r.IsComputerFollowed(wsID) {
+		return RouteApplyResult{}, fmt.Errorf("use source route editing for this followed environment")
+	}
 	// Idempotency lookup is deliberately inside the mutation critical section.
 	// Looking up a key before taking this lock permits two concurrent callers
 	// to both pass the check and reload nginx twice.
@@ -695,6 +577,10 @@ func (r *Registry) ApplyRoutePlan(wsID string, plan RoutePlan, expectedVersion u
 			pattern := normalizeRequestPath(*plan.RoutePattern)
 			candidateApp.RoutePattern = &pattern
 		}
+	}
+	recordInheritedSelection(candidateWS, candidateApp)
+	if plan.RoutePattern != nil {
+		recordInheritedPattern(candidateWS, candidateApp)
 	}
 	candidateWS.SetDefaults()
 	operation := r.beginOperation("route-apply", correlationID)
@@ -974,6 +860,9 @@ func (r *Registry) RegisterApplicationAlias(wsID, appRef, alias string) (*models
 
 // RegisterApplicationAliasWithMetadata is the contract-aware alias mutation.
 func (r *Registry) RegisterApplicationAliasWithMetadata(wsID, appRef, alias, correlationID string) (*models.Application, *models.OperationMetadata, error) {
+	if r.IsComputerFollowed(wsID) {
+		return nil, nil, fmt.Errorf("edit application aliases on the source computer")
+	}
 	rawAlias := alias
 	alias = models.NormalizeIdentityToken(alias)
 	if alias == "" {
@@ -985,6 +874,9 @@ func (r *Registry) RegisterApplicationAliasWithMetadata(wsID, appRef, alias, cor
 	var result *models.Application
 	var operation *models.OperationMetadata
 	_, err := r.mutate(false, func(candidate *[]*models.Workspace) error {
+		if r.IsComputerFollowed(wsID) {
+			return fmt.Errorf("configuration changed; reload the followed environment")
+		}
 		_, app, err := findApp(*candidate, wsID, appRef)
 		if err != nil {
 			return err
@@ -1005,6 +897,9 @@ func (r *Registry) RegisterApplicationAliasWithMetadata(wsID, appRef, alias, cor
 		}
 		operation = r.beginOperation("upsert", correlationID)
 		for _, workspace := range *candidate {
+			if workspace.Inheritance != nil {
+				continue
+			}
 			for _, binding := range workspace.Applications {
 				if binding.CanonicalAppID() != canonical {
 					continue
@@ -1226,16 +1121,40 @@ func (r *Registry) ToggleApp(wsID, appName string) (*models.Application, error) 
 // ToggleAppWithMetadata toggles an application and records a monotonic route
 // version plus operation/correlation IDs on the workspace and application.
 func (r *Registry) ToggleAppWithMetadata(wsID, appName, correlationID string) (*models.Application, *models.OperationMetadata, error) {
+	if r.IsComputerFollowed(wsID) {
+		ws := r.GetWorkspaceView(wsID)
+		_, app, err := findApp([]*models.Workspace{ws}, wsID, appName)
+		if err != nil {
+			return nil, nil, err
+		}
+		mode := models.RouteModeLocal
+		if app.Active {
+			mode = models.RouteModeRemote
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+		if err := r.EditFollowedRoute(ctx, wsID, app.ID, ws.Route.RouteVersion, fleet.ConfigurationEdit{Mode: mode}); err != nil {
+			return nil, nil, err
+		}
+		current := r.GetWorkspaceView(wsID)
+		_, result, err := findApp([]*models.Workspace{current}, wsID, app.ID)
+		return result, current.LastOperation, err
+	}
+
 	var result *models.Application
 	var workspace *models.Workspace
 	var operation *models.OperationMetadata
 	_, err := r.mutate(true, func(candidate *[]*models.Workspace) error {
+		if r.IsComputerFollowed(wsID) {
+			return fmt.Errorf("configuration changed; reload the followed environment")
+		}
 		ws, app, err := findApp(*candidate, wsID, appName)
 		if err != nil {
 			return err
 		}
 		if !ws.IsLocalApps() {
 			app.Active = !app.Active
+			recordInheritedSelection(ws, app)
 		}
 		operation = r.beginOperation("toggle", correlationID)
 		r.applyOperation(ws, app, operation)
@@ -1264,9 +1183,15 @@ func (r *Registry) ToggleAllToRemote(wsID string) (*ToggleResult, error) {
 }
 
 func (r *Registry) ToggleAllToRemoteWithMetadata(wsID, correlationID string) (*ToggleResult, *models.OperationMetadata, error) {
+	if r.IsComputerFollowed(wsID) {
+		return r.toggleFollowedApplications(wsID, models.RouteModeRemote)
+	}
 	result := &ToggleResult{}
 	var operation *models.OperationMetadata
 	_, err := r.mutate(true, func(candidate *[]*models.Workspace) error {
+		if r.IsComputerFollowed(wsID) {
+			return fmt.Errorf("configuration changed; reload the followed environment")
+		}
 		ws := findWorkspace(*candidate, wsID)
 		if ws == nil {
 			return fmt.Errorf("workspace not found: %s", wsID)
@@ -1275,6 +1200,7 @@ func (r *Registry) ToggleAllToRemoteWithMetadata(wsID, correlationID string) (*T
 			for _, app := range ws.Applications {
 				if app.Active && app.HasLocal() {
 					app.Active = false
+					recordInheritedSelection(ws, app)
 					result.SuccessCount++
 				}
 			}
@@ -1300,9 +1226,15 @@ func (r *Registry) ToggleAllToLocal(wsID string) (*ToggleResult, error) {
 }
 
 func (r *Registry) ToggleAllToLocalWithMetadata(wsID, correlationID string) (*ToggleResult, *models.OperationMetadata, error) {
+	if r.IsComputerFollowed(wsID) {
+		return r.toggleFollowedApplications(wsID, models.RouteModeLocal)
+	}
 	result := &ToggleResult{}
 	var operation *models.OperationMetadata
 	_, err := r.mutate(true, func(candidate *[]*models.Workspace) error {
+		if r.IsComputerFollowed(wsID) {
+			return fmt.Errorf("configuration changed; reload the followed environment")
+		}
 		ws := findWorkspace(*candidate, wsID)
 		if ws == nil {
 			return fmt.Errorf("workspace not found: %s", wsID)
@@ -1311,6 +1243,7 @@ func (r *Registry) ToggleAllToLocalWithMetadata(wsID, correlationID string) (*To
 			for _, app := range ws.Applications {
 				if !app.Active && app.HasLocal() {
 					app.Active = true
+					recordInheritedSelection(ws, app)
 					result.SuccessCount++
 				}
 			}
@@ -1377,6 +1310,9 @@ func (r *Registry) UpdateWorkspaceApplicationsAtVersion(wsID string, apps []mode
 		}
 		if expected != nil && workspace.Route.RouteVersion != *expected {
 			return fmt.Errorf("workspace changed while editing; reload and try again")
+		}
+		if workspace.Inheritance != nil {
+			return fmt.Errorf("edit route definitions on the source computer")
 		}
 		workspace.Applications = applicationsFromConfigs(workspace, apps)
 		if !workspace.IsLocalApps() {
@@ -1454,8 +1390,14 @@ func (r *Registry) DeleteWorkspace(wsID string) error {
 }
 
 func (r *Registry) DeleteWorkspaceWithMetadata(wsID, correlationID string) (*models.OperationMetadata, error) {
+	if r.IsComputerFollowed(wsID) {
+		return nil, fmt.Errorf("delete this environment on its source computer")
+	}
 	var operation *models.OperationMetadata
 	_, err := r.mutate(true, func(candidate *[]*models.Workspace) error {
+		if r.IsComputerFollowed(wsID) {
+			return fmt.Errorf("configuration changed; reload the followed environment")
+		}
 		for _, child := range *candidate {
 			if child.Session != nil && child.Session.EnvironmentID == wsID {
 				return fmt.Errorf("close routing sessions before deleting environment %q", wsID)
@@ -1487,14 +1429,37 @@ func (r *Registry) UpdateRoutePattern(wsID, appName string, pattern *string) (*m
 }
 
 func (r *Registry) UpdateRoutePatternWithMetadata(wsID, appName string, pattern *string, correlationID string) (*models.Application, *models.OperationMetadata, error) {
+	if r.IsComputerFollowed(wsID) {
+		ws := r.GetWorkspaceView(wsID)
+		_, app, err := findApp([]*models.Workspace{ws}, wsID, appName)
+		if err != nil {
+			return nil, nil, err
+		}
+		value := ""
+		if pattern != nil {
+			value = *pattern
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+		if err := r.EditFollowedRoute(ctx, wsID, app.ID, ws.Route.RouteVersion, fleet.ConfigurationEdit{RoutePattern: &value}); err != nil {
+			return nil, nil, err
+		}
+		current := r.GetWorkspaceView(wsID)
+		_, result, err := findApp([]*models.Workspace{current}, wsID, app.ID)
+		return result, current.LastOperation, err
+	}
 	var result *models.Application
 	var operation *models.OperationMetadata
 	_, err := r.mutate(true, func(candidate *[]*models.Workspace) error {
+		if r.IsComputerFollowed(wsID) {
+			return fmt.Errorf("configuration changed; reload the followed environment")
+		}
 		ws, app, err := findApp(*candidate, wsID, appName)
 		if err != nil {
 			return err
 		}
 		app.RoutePattern = cloneStringPtr(pattern)
+		recordInheritedPattern(ws, app)
 		operation = r.beginOperation("update-pattern", correlationID)
 		r.applyOperation(ws, app, operation)
 		result = app
@@ -1554,13 +1519,7 @@ func (r *Registry) checkApplicationHealth(app *models.Application, workspace *mo
 	if app == nil || workspace == nil {
 		return
 	}
-	localOK := CheckHealth(app.HealthURL())
-	remoteOK := false
-	if remoteBase := app.GetRemoteBaseUrl(workspace); remoteBase != "" {
-		remoteOK = CheckHealth(app.RemoteHealthURL(remoteBase))
-	}
-	now := time.Now()
-	app.Runtime.UpdateBothStatuses(localOK, &now, remoteOK, &now)
+	r.refreshApplicationHealth(workspace, app)
 }
 
 func findWorkspace(workspaces []*models.Workspace, wsID string) *models.Workspace {
@@ -1582,6 +1541,9 @@ func validateWorkspaces(workspaces []*models.Workspace) error {
 			return fmt.Errorf("workspace %q is duplicated", workspace.WorkspaceID)
 		}
 		seen[workspace.WorkspaceID] = struct{}{}
+		if err := fleet.ValidateInheritance("", peerScope(workspace), workspace.Inheritance); err != nil {
+			return fmt.Errorf("workspace %q inheritance: %w", workspace.WorkspaceID, err)
+		}
 		if err := validation.Identifier("workspace ID", workspace.WorkspaceID); err != nil {
 			return err
 		}
@@ -1666,6 +1628,7 @@ func applicationsFromConfigs(workspace *models.Workspace, configs []models.Appli
 		config.NormalizeRouteMetadata()
 		app := &models.Application{
 			ID: canonical, AppID: canonical, ServiceID: serviceID, Repository: config.Repository, Aliases: append([]string(nil), config.Aliases...), Name: config.Name, Path: config.Path, PublicPath: config.PublicPath, Domain: config.Domain,
+			PeerEndpoint:  config.PeerEndpoint.Clone(),
 			RemoteBaseUrl: config.RemoteBaseUrl, Context: config.Context, UpstreamContext: config.UpstreamContext, FrontendRoot: config.FrontendRoot, FrontendRootSource: config.FrontendRootSource, Health: config.Health,
 			LegacyPublicPath: config.LegacyPublicPath, LegacyUpstreamContext: config.LegacyUpstreamContext,
 			Port: config.Port, Active: config.Active, RoutePattern: cloneStringPtr(config.RoutePattern),
@@ -1702,6 +1665,7 @@ func cloneWorkspaces(workspaces []*models.Workspace) []*models.Workspace {
 
 func cloneWorkspace(source *models.Workspace) *models.Workspace {
 	clone := &models.Workspace{
+		Inheritance:   source.Inheritance.Clone(),
 		WorkspaceID:   source.WorkspaceID,
 		Session:       cloneSession(source.Session),
 		Type:          source.Type,
@@ -1717,7 +1681,7 @@ func cloneWorkspace(source *models.Workspace) *models.Workspace {
 	}
 	for _, sourceApp := range source.Applications {
 		app := &models.Application{
-			ID: sourceApp.ID, AppID: sourceApp.CanonicalAppID(), ServiceID: sourceApp.ServiceID, Repository: sourceApp.Repository, Aliases: append([]string(nil), sourceApp.Aliases...), Name: sourceApp.Name, Path: sourceApp.Path, PublicPath: sourceApp.PublicPath, Domain: sourceApp.Domain,
+			PeerEndpoint: sourceApp.PeerEndpoint.Clone(), ID: sourceApp.ID, AppID: sourceApp.CanonicalAppID(), ServiceID: sourceApp.ServiceID, Repository: sourceApp.Repository, Aliases: append([]string(nil), sourceApp.Aliases...), Name: sourceApp.Name, Path: sourceApp.Path, PublicPath: sourceApp.PublicPath, Domain: sourceApp.Domain,
 			RemoteBaseUrl: sourceApp.RemoteBaseUrl, Context: sourceApp.Context, UpstreamContext: sourceApp.UpstreamContext, FrontendRoot: sourceApp.FrontendRoot, FrontendRootSource: sourceApp.FrontendRootSource, Health: sourceApp.Health,
 			LegacyPublicPath: sourceApp.LegacyPublicPath, LegacyUpstreamContext: sourceApp.LegacyUpstreamContext,
 			Port: sourceApp.Port, Active: sourceApp.Active, RoutePattern: cloneStringPtr(sourceApp.RoutePattern),
@@ -1764,7 +1728,7 @@ func applicationConfigs(apps []*models.Application) []models.ApplicationConfig {
 	result := make([]models.ApplicationConfig, 0, len(apps))
 	for _, app := range apps {
 		result = append(result, models.ApplicationConfig{
-			ID: app.ID, AppID: app.CanonicalAppID(), ServiceID: app.ServiceID, Repository: app.Repository, Aliases: app.NormalizedAliases(), Name: app.Name, Path: app.Path, PublicPath: app.PublicPath, Domain: app.Domain,
+			PeerEndpoint: app.PeerEndpoint.Clone(), ID: app.ID, AppID: app.CanonicalAppID(), ServiceID: app.ServiceID, Repository: app.Repository, Aliases: app.NormalizedAliases(), Name: app.Name, Path: app.Path, PublicPath: app.PublicPath, Domain: app.Domain,
 			RemoteBaseUrl: app.RemoteBaseUrl, Port: app.Port, Health: app.Health,
 			Active: app.Active, RoutePattern: app.RoutePattern, Context: app.Context, UpstreamContext: app.UpstreamContext,
 			FrontendRoot: app.FrontendRoot, FrontendRootSource: app.FrontendRootSource,
@@ -1986,6 +1950,15 @@ func (r *Registry) reconcileRouteJournal() error {
 		}
 		current := findWorkspace(workspaces, operation.WorkspaceID)
 		matchesCandidate := current != nil && current.Route.RouteVersion == operation.RouteVersion
+		if operation.WorkspaceID == "@computer" {
+			var revision uint64
+			if err := json.Unmarshal(operation.Result, &revision); err != nil {
+				return err
+			}
+			r.workspacesMu.RLock()
+			matchesCandidate = r.computerFollowing.Revision >= revision
+			r.workspacesMu.RUnlock()
+		}
 		operation.UpdatedAt = time.Now().UTC()
 		if matchesCandidate {
 			operation.Status = "committed"

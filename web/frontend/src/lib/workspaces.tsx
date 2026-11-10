@@ -1,5 +1,5 @@
 import { Code, ConnectError } from '@connectrpc/connect'
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import * as api from '@/api/client'
 import type { ApplicationConfigInput, ApplicationDTO, CreateWorkspaceRequest, UpdateWorkspaceRequest, WorkspaceDTO } from '@/api/types'
 
@@ -13,17 +13,17 @@ interface WorkspaceStore {
   refreshWorkspace: (id: string) => Promise<WorkspaceDTO>
   createWorkspace: (request: CreateWorkspaceRequest) => Promise<WorkspaceDTO>
   updateWorkspace: (id: string, request: UpdateWorkspaceRequest) => Promise<WorkspaceDTO>
-  deleteWorkspace: (id: string) => Promise<void>
-  upsertApplication: (workspaceId: string, application: ApplicationConfigInput) => Promise<WorkspaceDTO>
+  deleteWorkspace: (id: string, expectedVersion?: bigint) => Promise<void>
+  upsertApplication: (workspaceId: string, application: ApplicationConfigInput, expectedVersion?: bigint) => Promise<WorkspaceDTO>
   registerSessionApplication: (workspaceId: string, application: { id: string; port: number }) => Promise<WorkspaceDTO>
-  deleteApplication: (workspaceId: string, applicationId: string) => Promise<WorkspaceDTO>
+  deleteApplication: (workspaceId: string, applicationId: string, expectedVersion?: bigint) => Promise<WorkspaceDTO>
   updateRoutePattern: (workspaceId: string, applicationId: string, pattern: string) => Promise<WorkspaceDTO>
   toggleApplication: (workspaceId: string, applicationId: string) => Promise<WorkspaceDTO>
   toggleAll: (workspaceId: string, target: 'local' | 'remote') => Promise<WorkspaceDTO>
   syncRouting: (workspaceId: string) => Promise<WorkspaceDTO>
   createRoutingSession: (environmentId: string, name: string) => Promise<WorkspaceDTO>
   refreshRoutingSession: (id: string, previewToken?: string, apply?: boolean) => Promise<SessionRefresh>
-  updateHealth: (workspaceId: string, applicationRef: string, localOk: boolean, remoteOk: boolean) => void
+  updateHealth: (workspaceId: string, applicationRef: string, localOk: boolean | undefined, remoteOk: boolean | undefined) => void
 }
 
 const WorkspaceContext = createContext<WorkspaceStore | null>(null)
@@ -66,6 +66,27 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => { void reload() }, [reload])
 
+  const followingRevision = useRef<bigint | undefined>(undefined)
+  useEffect(() => {
+    let cancelled = false
+    let running = false
+    const refresh = async () => {
+      if (running) return
+      running = true
+      try {
+        const { state } = await api.getComputerFollowing()
+        if (state && state.revision !== followingRevision.current) {
+          const updated = await api.listWorkspaces()
+          if (!cancelled) { setWorkspaces(updated); followingRevision.current = state.revision }
+        }
+      } catch { /* Existing configuration remains visible while disconnected. */ }
+      finally { running = false }
+    }
+    void refresh()
+    const timer = setInterval(() => void refresh(), 5000)
+    return () => { cancelled = true; clearInterval(timer) }
+  }, [])
+
   const refreshWorkspace = useCallback(async (id: string) => {
     const workspace = await api.getWorkspace(id)
     replaceWorkspace(workspace)
@@ -79,30 +100,42 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, [replaceWorkspace])
 
   const updateWorkspace = useCallback(async (id: string, request: UpdateWorkspaceRequest) => {
-    const workspace = await api.updateWorkspace(id, request)
+    const current = workspaces.find((item) => item.id === id)
+    const workspace = current?.computerFollowed
+      ? (await api.editFollowedConfiguration({ workspaceId: id, expectedVersion: request.expectedVersion ?? current.route?.version?.value, action: 'update-routing', routing: { mode: current.routing?.mode || 'path-based', localDomain: request.localDomain, defaultRemoteBaseUrl: request.defaultRemoteBaseUrl } })).workspace as WorkspaceDTO
+      : await api.updateWorkspace(id, request)
     replaceWorkspace(workspace)
     return workspace
-  }, [replaceWorkspace])
+  }, [replaceWorkspace, workspaces])
 
-  const deleteWorkspace = useCallback(async (id: string) => {
-    await api.deleteWorkspace(id)
-    setWorkspaces((current) => current.filter((workspace) => workspace.id !== id && workspace.session?.environmentId !== id))
-  }, [])
+  const deleteWorkspace = useCallback(async (id: string, expectedVersion?: bigint) => {
+    const current = workspaces.find((item) => item.id === id)
+    if (expectedVersion !== undefined && current?.route?.version?.value !== expectedVersion) throw new Error('Environment changed; reload and try again.')
+    if (current?.computerFollowed) await api.editFollowedConfiguration({ workspaceId: id, expectedVersion: expectedVersion ?? current.route?.version?.value, action: 'delete-environment' })
+    else await api.deleteWorkspace(id)
+    await reload()
+  }, [workspaces, reload])
 
-  const upsertApplication = useCallback(async (workspaceId: string, application: ApplicationConfigInput) => {
-    await api.upsertApplication(workspaceId, application)
+  const upsertApplication = useCallback(async (workspaceId: string, application: ApplicationConfigInput, expectedVersion?: bigint) => {
+    const current = workspaces.find((item) => item.id === workspaceId)
+    if (expectedVersion !== undefined && current?.route?.version?.value !== expectedVersion) throw new Error('Environment changed; reload and try again.')
+    if (current?.computerFollowed) await api.editFollowedConfiguration({ workspaceId, expectedVersion: expectedVersion ?? current.route?.version?.value, action: 'upsert-application', applicationId: application.appId || application.id, application: { ...application, port: 0 }, registrationPort: application.port })
+    else await api.upsertApplication(workspaceId, application)
     return refreshWorkspace(workspaceId)
-  }, [refreshWorkspace])
+  }, [refreshWorkspace, workspaces])
 
   const registerSessionApplication = useCallback(async (workspaceId: string, application: { id: string; port: number }) => {
     await api.registerSessionApplication(workspaceId, application)
     return refreshWorkspace(workspaceId)
   }, [refreshWorkspace])
 
-  const deleteApplication = useCallback(async (workspaceId: string, applicationId: string) => {
-    await api.deleteApplication(workspaceId, applicationId)
+  const deleteApplication = useCallback(async (workspaceId: string, applicationId: string, expectedVersion?: bigint) => {
+    const current = workspaces.find((item) => item.id === workspaceId)
+    if (expectedVersion !== undefined && current?.route?.version?.value !== expectedVersion) throw new Error('Environment changed; reload and try again.')
+    if (current?.computerFollowed) await api.editFollowedConfiguration({ workspaceId, applicationId, expectedVersion: expectedVersion ?? current.route?.version?.value, action: 'delete-application' })
+    else await api.deleteApplication(workspaceId, applicationId)
     return refreshWorkspace(workspaceId)
-  }, [refreshWorkspace])
+  }, [refreshWorkspace, workspaces])
 
   const updateRoutePattern = useCallback(async (workspaceId: string, applicationId: string, pattern: string) => {
     await api.updateRoutePattern(workspaceId, applicationId, { pattern })
@@ -137,13 +170,13 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     return result
   }, [replaceWorkspace])
 
-  const updateHealth = useCallback((workspaceId: string, applicationRef: string, localOk: boolean, remoteOk: boolean) => {
+  const updateHealth = useCallback((workspaceId: string, applicationRef: string, localOk: boolean | undefined, remoteOk: boolean | undefined) => {
     setWorkspaces((current) => current.map((workspace) => {
       if (workspace.id !== workspaceId) return workspace
       return {
         ...workspace,
         applications: workspace.applications.map((application) => matchesApplication(application, applicationRef)
-          ? { ...application, healthStatus: localOk ? 'healthy' : 'unhealthy', remoteStatus: remoteOk ? 'healthy' : 'unhealthy' }
+          ? { ...application, healthStatus: localOk === undefined ? application.healthStatus : localOk ? 'healthy' : 'unhealthy', remoteStatus: remoteOk === undefined ? application.remoteStatus : remoteOk ? 'healthy' : 'unhealthy' }
           : application),
       }
     }))
@@ -184,7 +217,7 @@ export function useWorkspaces(): WorkspaceStore {
 }
 
 export function useWorkspaceHealth(workspaceId: string | undefined) {
-  const { updateHealth } = useWorkspaces()
+  const { updateHealth, refreshWorkspace } = useWorkspaces()
 
   useEffect(() => {
     if (!workspaceId) return
@@ -197,13 +230,15 @@ export function useWorkspaceHealth(workspaceId: string | undefined) {
           if (controller.signal.aborted) return
           retryDelay = 1000
           if (update.workspaceId && update.applicationName) {
-            updateHealth(update.workspaceId, update.applicationName, update.localOk ?? false, update.remoteOk ?? false)
+            updateHealth(update.workspaceId, update.applicationName, update.localCheckedAt ? update.localOk : undefined, update.remoteCheckedAt ? update.remoteOk : undefined)
           }
         }
       } catch (requestError) {
         if (controller.signal.aborted || ConnectError.from(requestError).code === Code.Canceled) return
       }
       if (!controller.signal.aborted) {
+        await refreshWorkspace(workspaceId).catch(() => {})
+        if (controller.signal.aborted) return
         retryTimer = setTimeout(() => { void watch() }, retryDelay)
         retryDelay = Math.min(retryDelay * 2, 30000)
       }
@@ -213,5 +248,5 @@ export function useWorkspaceHealth(workspaceId: string | undefined) {
       controller.abort()
       clearTimeout(retryTimer)
     }
-  }, [workspaceId, updateHealth])
+  }, [workspaceId, updateHealth, refreshWorkspace])
 }

@@ -13,17 +13,22 @@ import (
 	rementorv1 "github.com/thiagojdb/rementor/internal/gen/rementor/v1"
 	"github.com/thiagojdb/rementor/internal/gen/rementor/v1/rementorv1connect"
 	"github.com/thiagojdb/rementor/internal/models"
+	"github.com/thiagojdb/rementor/internal/peers"
 	"github.com/thiagojdb/rementor/internal/services"
 	"github.com/thiagojdb/rementor/internal/validation"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type ControlPlaneService struct {
-	registry *services.Registry
+	registry       *services.Registry
+	peers          *peers.Manager
+	fleetReviewKey [32]byte
 }
 
 func NewControlPlaneService(registry *services.Registry) *ControlPlaneService {
-	return &ControlPlaneService{registry: registry}
+	s := &ControlPlaneService{registry: registry}
+	initializeFleetReviewKey(s)
+	return s
 }
 
 var _ rementorv1connect.ControlPlaneServiceHandler = (*ControlPlaneService)(nil)
@@ -31,8 +36,9 @@ var _ rementorv1connect.ControlPlaneServiceHandler = (*ControlPlaneService)(nil)
 func (s *ControlPlaneService) ListWorkspaces(ctx context.Context, req *connect.Request[rementorv1.ListWorkspacesRequest]) (*connect.Response[rementorv1.ListWorkspacesResponse], error) {
 	workspaces := s.registry.GetWorkspaces()
 	out := make([]*rementorv1.Workspace, 0, len(workspaces))
+	sourcePorts := s.registry.SourceRegistrationPorts()
 	for _, ws := range workspaces {
-		out = append(out, toProtoWorkspace(ws))
+		out = append(out, s.workspaceProtoWithSourcePorts(ws, sourcePorts))
 	}
 	return connect.NewResponse(&rementorv1.ListWorkspacesResponse{Workspaces: out}), nil
 }
@@ -45,7 +51,7 @@ func (s *ControlPlaneService) GetWorkspace(ctx context.Context, req *connect.Req
 	if ws == nil {
 		return nil, newRPCError(connect.CodeNotFound, fmt.Errorf("workspace not found"))
 	}
-	return connect.NewResponse(&rementorv1.GetWorkspaceResponse{Workspace: toProtoWorkspace(ws)}), nil
+	return connect.NewResponse(&rementorv1.GetWorkspaceResponse{Workspace: s.workspaceProto(ws)}), nil
 }
 
 func (s *ControlPlaneService) CreateWorkspace(ctx context.Context, req *connect.Request[rementorv1.CreateWorkspaceRequest]) (*connect.Response[rementorv1.CreateWorkspaceResponse], error) {
@@ -100,7 +106,7 @@ func (s *ControlPlaneService) CreateWorkspace(ctx context.Context, req *connect.
 		return nil, newRPCError(connect.CodeInternal, fmt.Errorf("failed to create workspace: %w", err))
 	}
 
-	return connect.NewResponse(&rementorv1.CreateWorkspaceResponse{Workspace: toProtoWorkspace(ws), Operation: toProtoOperation(operation), Warnings: metadataWarningsToProto(metadataWarnings)}), nil
+	return connect.NewResponse(&rementorv1.CreateWorkspaceResponse{Workspace: s.workspaceProto(ws), Operation: toProtoOperation(operation), Warnings: metadataWarningsToProto(metadataWarnings)}), nil
 }
 
 func (s *ControlPlaneService) UpdateWorkspace(ctx context.Context, req *connect.Request[rementorv1.UpdateWorkspaceRequest]) (*connect.Response[rementorv1.UpdateWorkspaceResponse], error) {
@@ -124,7 +130,7 @@ func (s *ControlPlaneService) UpdateWorkspace(ctx context.Context, req *connect.
 		log.Printf("Error updating workspace %s applications: %v", wsID, err)
 		return nil, newRPCError(connect.CodeInternal, fmt.Errorf("failed to update workspace: %w", err))
 	}
-	return connect.NewResponse(&rementorv1.UpdateWorkspaceResponse{Workspace: toProtoWorkspace(s.registry.GetWorkspaceView(wsID)), Operation: toProtoOperation(operation), Warnings: metadataWarningsToProto(metadataWarnings)}), nil
+	return connect.NewResponse(&rementorv1.UpdateWorkspaceResponse{Workspace: s.workspaceProto(s.registry.GetWorkspaceView(wsID)), Operation: toProtoOperation(operation), Warnings: metadataWarningsToProto(metadataWarnings)}), nil
 }
 
 func (s *ControlPlaneService) DeleteWorkspace(ctx context.Context, req *connect.Request[rementorv1.DeleteWorkspaceRequest]) (*connect.Response[rementorv1.DeleteWorkspaceResponse], error) {
@@ -401,6 +407,30 @@ func (s *ControlPlaneService) WatchHealth(ctx context.Context, req *connect.Requ
 	if err := stream.Send(&rementorv1.WatchHealthResponse{Type: "connected"}); err != nil {
 		return err
 	}
+	// Reconnecting clients need the existing checked state even when it has
+	// not changed since their previous subscription.
+	for _, workspace := range s.registry.GetWorkspaces() {
+		if wsID != "" && workspace.WorkspaceID != wsID {
+			continue
+		}
+		for _, app := range workspace.Applications {
+			local, remote := app.Runtime.GetHealthLast(), app.Runtime.GetRemoteLast()
+			if local == nil && remote == nil {
+				continue
+			}
+			update := models.HealthUpdate{WsID: workspace.WorkspaceID, AppName: app.ID, LocalOk: app.Runtime.GetHealthOk(), RemoteOk: app.Runtime.GetRemoteOk()}
+			if local != nil {
+				update.LocalChecked = *local
+			}
+			if remote != nil {
+				update.RemoteChecked = *remote
+			}
+			if err := stream.Send(toProtoHealthUpdate(update, workspace)); err != nil {
+				return err
+			}
+		}
+	}
+	s.registry.RefreshWorkspaceHealth(wsID)
 	for {
 		select {
 		case update := <-updateChan:
@@ -478,8 +508,9 @@ func toProtoWorkspace(ws *models.Workspace) *rementorv1.Workspace {
 	}
 	return &rementorv1.Workspace{
 		Id:           ws.WorkspaceID,
+		Inheritance:  inheritanceProto(ws.Inheritance),
 		Session:      sessionToProto(ws.Session),
-		BrowserUrl:   services.PublicOrigin(ws.GetLocalDomain()) + "/",
+		BrowserUrl:   services.PublicOrigin(services.WorkspaceBrowserHost(ws)) + "/",
 		Type:         ws.GetType(),
 		Name:         name,
 		Color:        color,
@@ -546,6 +577,7 @@ func toProtoApplicationInWorkspace(ws *models.Workspace, app *models.Application
 	return &rementorv1.Application{
 		Id:                 app.ID,
 		SharedWith:         app.SharedWith,
+		PeerEndpoint:       peerEndpointProto(app.PeerEndpoint),
 		AppId:              app.CanonicalAppID(),
 		ServiceId:          app.ServiceID,
 		Repository:         app.Repository,
@@ -673,10 +705,14 @@ func toProtoHealthUpdate(update models.HealthUpdate, workspace *models.Workspace
 		ApplicationName: update.AppName,
 		LocalOk:         update.LocalOk,
 		RemoteOk:        update.RemoteOk,
-		LocalChecked:    update.LocalChecked.Format(time.RFC3339),
-		RemoteChecked:   update.RemoteChecked.Format(time.RFC3339),
-		LocalCheckedAt:  timestamppb.New(update.LocalChecked),
-		RemoteCheckedAt: timestamppb.New(update.RemoteChecked),
+	}
+	if !update.LocalChecked.IsZero() {
+		response.LocalChecked = update.LocalChecked.Format(time.RFC3339)
+		response.LocalCheckedAt = timestamppb.New(update.LocalChecked)
+	}
+	if !update.RemoteChecked.IsZero() {
+		response.RemoteChecked = update.RemoteChecked.Format(time.RFC3339)
+		response.RemoteCheckedAt = timestamppb.New(update.RemoteChecked)
 	}
 	if workspace != nil {
 		response.Environment = &rementorv1.WorkspaceEnvironmentRef{WorkspaceId: workspace.WorkspaceID, Environment: workspace.EnvironmentID(), SessionId: workspace.SessionID(), LegacyId: workspace.WorkspaceID}

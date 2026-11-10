@@ -116,7 +116,7 @@ func (r *Registry) ResolveBrowserURL(workspaceID, applicationRef string) (Browse
 	}
 
 	mode := appMode(ws, app)
-	if mode == "local" && app.Port == 0 {
+	if mode == "local" && !app.HasLocal() {
 		// Match the normalized route builder: a local route without a local
 		// listener is effectively remote/fallback, while its public URL stays
 		// unchanged.
@@ -216,6 +216,35 @@ func operationCorrelation(operation *models.OperationMetadata) string {
 		return ""
 	}
 	return operation.CorrelationID
+}
+
+// WorkspaceBrowserHost selects the unique application mounted at the root.
+// A workspace's routing hostname may serve only API paths. Keep a session's
+// frontend binding (and its prefix) rather than sending users to that API host.
+// Selection is independent of target health, so an offline app remains explicit.
+func WorkspaceBrowserHost(ws *models.Workspace) string {
+	if ws == nil {
+		return ""
+	}
+	fallback := normalizeHost(ws.GetLocalDomain())
+	root := ""
+	for _, app := range ws.Applications {
+		if browserPublicPath(ws, app) != "/" {
+			continue
+		}
+		host := browserPublicHost(ws, app)
+		if host == "" {
+			continue
+		}
+		if root != "" && root != host {
+			return fallback
+		}
+		root = host
+	}
+	if root != "" {
+		return root
+	}
+	return fallback
 }
 
 func browserPublicHost(ws *models.Workspace, app *models.Application) string {

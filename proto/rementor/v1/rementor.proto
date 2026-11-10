@@ -7,6 +7,30 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/thiagojdb/rementor/internal/gen/rementor/v1;rementorv1";
 
 service ControlPlaneService {
+  rpc GetComputerFollowing(GetComputerFollowingRequest) returns (GetComputerFollowingResponse);
+  rpc FollowComputer(FollowComputerRequest) returns (FollowComputerResponse);
+  rpc SyncComputerConfiguration(SyncComputerConfigurationRequest) returns (SyncComputerConfigurationResponse);
+  rpc StopFollowingComputer(StopFollowingComputerRequest) returns (StopFollowingComputerResponse);
+  rpc SetEnvironmentFollowing(SetEnvironmentFollowingRequest) returns (SetEnvironmentFollowingResponse);
+  rpc EditFollowedConfiguration(EditFollowedConfigurationRequest) returns (EditFollowedConfigurationResponse);
+
+  rpc GetPeerState(GetPeerStateRequest) returns (GetPeerStateResponse);
+  rpc ConfigurePeerConnection(ConfigurePeerConnectionRequest) returns (ConfigurePeerConnectionResponse);
+  rpc CreatePeerInvitation(CreatePeerInvitationRequest) returns (CreatePeerInvitationResponse);
+  rpc CancelPeerInvitation(CancelPeerInvitationRequest) returns (CancelPeerInvitationResponse);
+  rpc InspectPeerInvitation(InspectPeerInvitationRequest) returns (InspectPeerInvitationResponse);
+  rpc PairComputer(PairComputerRequest) returns (PairComputerResponse);
+  rpc UnpairComputer(UnpairComputerRequest) returns (UnpairComputerResponse);
+  rpc CheckPeerConnection(CheckPeerConnectionRequest) returns (CheckPeerConnectionResponse);
+  rpc ListPeerWorkspaces(ListPeerWorkspacesRequest) returns (ListPeerWorkspacesResponse);
+  rpc GetWorkspaceInheritance(GetWorkspaceInheritanceRequest) returns (GetWorkspaceInheritanceResponse);
+  rpc FollowPeerWorkspace(FollowPeerWorkspaceRequest) returns (FollowPeerWorkspaceResponse);
+  rpc SyncPeerWorkspace(SyncPeerWorkspaceRequest) returns (SyncPeerWorkspaceResponse);
+  rpc OverrideInheritedRoute(OverrideInheritedRouteRequest) returns (OverrideInheritedRouteResponse);
+  rpc StopFollowingWorkspace(StopFollowingWorkspaceRequest) returns (StopFollowingWorkspaceResponse);
+  rpc GetFleetConfiguration(GetFleetConfigurationRequest) returns (GetFleetConfigurationResponse);
+  rpc ReviewFleetConfiguration(ReviewFleetConfigurationRequest) returns (ReviewFleetConfigurationResponse);
+  rpc SaveFleetConfiguration(SaveFleetConfigurationRequest) returns (SaveFleetConfigurationResponse);
   rpc CreateRoutingSession(CreateRoutingSessionRequest) returns (CreateRoutingSessionResponse);
   rpc RefreshRoutingSession(RefreshRoutingSessionRequest) returns (RefreshRoutingSessionResponse);
   rpc ListWorkspaces(ListWorkspacesRequest) returns (ListWorkspacesResponse);
@@ -149,6 +173,8 @@ message StructuredError {
 }
 
 message Application {
+  optional int32 source_port = 41;
+  PeerEndpoint peer_endpoint = 25;
   repeated string shared_with = 40;
   string id = 1;
   string name = 2;
@@ -177,6 +203,8 @@ message Application {
 }
 
 message Workspace {
+  bool computer_followed = 12;
+  WorkspaceInheritance inheritance = 11;
   string browser_url = 10;
   RoutingSession session = 9;
   string id = 1;
@@ -193,6 +221,20 @@ message Routing {
   string mode = 1;
   string local_domain = 2;
   string default_remote_base_url = 3;
+}
+
+message EditFollowedConfigurationRequest {
+  string workspace_id = 1;
+  uint64 expected_version = 2;
+  string action = 3;
+  string application_id = 4;
+  ApplicationConfigInput application = 5;
+  Routing routing = 6;
+  optional int32 registration_port = 7;
+}
+
+message EditFollowedConfigurationResponse {
+  Workspace workspace = 1;
 }
 
 message ApplicationConfigInput {
@@ -701,3 +743,253 @@ message RefreshRoutingSessionResponse {
   repeated string conflicts = 3;
   string preview_token = 4;
 }
+
+// Fleet configuration is saved routing intent. It does not enroll peers or
+// alter existing workspace/session proxy routing.
+message FleetTopology {
+  int32 version = 1;
+  repeated FleetNode nodes = 2;
+  repeated FleetOrigin origins = 3;
+  repeated FleetTarget targets = 4;
+  repeated FleetRoute routes = 5;
+  repeated FleetInstance instances = 6;
+  string shared_instance = 7;
+  string local_instance = 8;
+}
+message FleetNode {
+  string id = 1;
+  string gateway_url = 2;
+}
+message FleetOrigin {
+  string id = 1;
+  string url = 2;
+}
+message FleetTarget {
+  string id = 1;
+  string kind = 2;
+  string url = 3;
+  string node_id = 4;
+  string route_id = 5;
+}
+message FleetRoute {
+  string id = 1;
+  string origin_id = 2;
+  string path = 3;
+  string match = 4;
+  string app_id = 5;
+  string service_id = 6;
+  string target_id = 7;
+}
+message FleetInstance {
+  string id = 1;
+  string node_id = 2;
+  string inherit = 3;
+  map<string, string> overrides = 4;
+}
+message FleetRouteSelection {
+  string instance_id = 1;
+  string route_id = 2;
+  string selection_source = 3;
+  string source_instance = 4;
+  repeated string instance_chain = 5;
+  string selected_target_id = 6;
+  FleetTarget endpoint = 7;
+  repeated string route_chain = 8;
+}
+message FleetConfiguration {
+  uint64 revision = 1;
+  FleetTopology topology = 2;
+}
+message GetFleetConfigurationRequest {}
+message GetFleetConfigurationResponse {
+  FleetConfiguration configuration = 1;
+}
+message ReviewFleetConfigurationRequest {
+  uint64 expected_revision = 1;
+  FleetTopology topology = 2;
+}
+message ReviewFleetConfigurationResponse {
+  string review_token = 1;
+  repeated FleetRouteSelection before = 2;
+  repeated FleetRouteSelection after = 3;
+  repeated string warnings = 4;
+}
+message SaveFleetConfigurationRequest {
+  uint64 expected_revision = 1;
+  FleetTopology topology = 2;
+  string review_token = 3;
+}
+message SaveFleetConfigurationResponse {
+  FleetConfiguration configuration = 1;
+}
+
+// Peer enrollment is separate from the loopback management control plane.
+message PairedComputer {
+  string fingerprint = 1;
+  string name = 2;
+  string url = 3;
+}
+message GetPeerStateRequest {}
+message GetPeerStateResponse {
+  string name = 1;
+  string fingerprint = 2;
+  string listen_address = 3;
+  string url = 4;
+  bool active = 5;
+  string listener_error = 6;
+  repeated PairedComputer computers = 7;
+  repeated string private_addresses = 8;
+}
+message ConfigurePeerConnectionRequest {
+  // Empty disables incoming connections and cancels invitations.
+  string listen_address = 1;
+  string url = 2;
+}
+message CreatePeerInvitationRequest {}
+message CreatePeerInvitationResponse {
+  string invitation = 1;
+  string fingerprint = 2;
+  google.protobuf.Timestamp expires_at = 3;
+}
+message CancelPeerInvitationRequest {}
+message CancelPeerInvitationResponse {}
+message InspectPeerInvitationRequest { string invitation = 1; }
+message InspectPeerInvitationResponse {
+  string name = 1;
+  string url = 2;
+  string fingerprint = 3;
+  google.protobuf.Timestamp expires_at = 4;
+}
+message PairComputerRequest {
+  string invitation = 1;
+  string confirmed_fingerprint = 2;
+}
+message PairComputerResponse { PairedComputer computer = 1; }
+message UnpairComputerRequest { string fingerprint = 1; }
+message CheckPeerConnectionRequest { string fingerprint = 1; }
+message CheckPeerConnectionResponse {}
+
+message ConfigurePeerConnectionResponse { GetPeerStateResponse state = 1; }
+message UnpairComputerResponse { GetPeerStateResponse state = 1; }
+
+
+// Peer scope preserves the environment/session boundary across computers.
+message PeerWorkspaceScope {
+  string workspace_id = 1;
+  string environment_id = 2;
+  string session_id = 3;
+}
+message PeerWorkspaceReference {
+  string owner_fingerprint = 1;
+  PeerWorkspaceScope scope = 2;
+  uint64 version = 3;
+  string digest = 4;
+}
+message PeerEndpoint {
+  string owner_fingerprint = 1;
+  string workspace_id = 2;
+  string application_id = 3;
+  uint64 version = 4;
+  string digest = 5;
+}
+// "inherit" permits a pattern-only override. Port always belongs to this computer.
+message InheritedRouteSelection {
+  string mode = 1;
+  int32 port = 2;
+  string remote_base_url = 3;
+  optional string route_pattern = 4;
+}
+// Contains user-facing relation metadata, never the raw cached snapshot.
+message WorkspaceInheritance {
+  string source_name = 4;
+  PeerWorkspaceReference source = 1;
+  map<string, InheritedRouteSelection> overrides = 2;
+  google.protobuf.Timestamp updated_at = 3;
+}
+message WorkspaceInheritanceStatus {
+  WorkspaceInheritance inheritance = 1;
+  string status = 2;
+  google.protobuf.Timestamp checked_at = 3;
+  string error = 4;
+  uint64 route_version = 5;
+}
+message PeerWorkspaceSummary {
+  PeerWorkspaceScope scope = 1;
+  string name = 2;
+  string type = 3;
+  uint64 version = 4;
+}
+message ListPeerWorkspacesRequest { string fingerprint = 1; }
+message ListPeerWorkspacesResponse { repeated PeerWorkspaceSummary workspaces = 1; }
+message GetWorkspaceInheritanceRequest { string workspace_id = 1; }
+message GetWorkspaceInheritanceResponse { WorkspaceInheritanceStatus status = 1; }
+message FollowPeerWorkspaceRequest {
+  string workspace_id = 1;
+  string fingerprint = 2;
+  PeerWorkspaceScope scope = 3;
+  uint64 expected_route_version = 4;
+  string correlation_id = 5;
+}
+message FollowPeerWorkspaceResponse {
+  Workspace workspace = 1;
+  OperationMetadata operation = 2;
+  bool changed = 3;
+  WorkspaceInheritanceStatus status = 4;
+}
+message SyncPeerWorkspaceRequest { string workspace_id = 1; }
+message SyncPeerWorkspaceResponse {
+  Workspace workspace = 1;
+  OperationMetadata operation = 2;
+  bool changed = 3;
+  WorkspaceInheritanceStatus status = 4;
+}
+message OverrideInheritedRouteRequest {
+  string workspace_id = 1;
+  string application_id = 2;
+  // Omit selection to reset this binding to its cached parent configuration.
+  InheritedRouteSelection selection = 3;
+  uint64 expected_route_version = 4;
+  string correlation_id = 5;
+}
+message OverrideInheritedRouteResponse {
+  Workspace workspace = 1;
+  OperationMetadata operation = 2;
+  bool changed = 3;
+  WorkspaceInheritanceStatus status = 4;
+}
+message StopFollowingWorkspaceRequest {
+  string workspace_id = 1;
+  uint64 expected_route_version = 2;
+  string correlation_id = 3;
+}
+message StopFollowingWorkspaceResponse {
+  Workspace workspace = 1;
+  OperationMetadata operation = 2;
+  bool changed = 3;
+  WorkspaceInheritanceStatus status = 4;
+}
+
+message ComputerFollowingStatus {
+  uint64 revision = 1;
+  string owner_fingerprint = 2;
+  repeated string environment_ids = 3;
+  string status = 4;
+  string error = 5;
+  google.protobuf.Timestamp checked_at = 6;
+  repeated string excluded_environment_ids = 7;
+}
+message GetComputerFollowingRequest {}
+message GetComputerFollowingResponse { ComputerFollowingStatus state = 1; }
+message FollowComputerRequest { string fingerprint = 1; uint64 expected_revision = 2; }
+message FollowComputerResponse { ComputerFollowingStatus state = 1; }
+message SyncComputerConfigurationRequest {}
+message SyncComputerConfigurationResponse { ComputerFollowingStatus state = 1; }
+message StopFollowingComputerRequest { uint64 expected_revision = 1; }
+message StopFollowingComputerResponse { ComputerFollowingStatus state = 1; }
+message SetEnvironmentFollowingRequest {
+  string workspace_id = 1;
+  bool following = 2;
+  uint64 expected_revision = 3;
+  uint64 expected_workspace_version = 4;
+}
+message SetEnvironmentFollowingResponse { ComputerFollowingStatus state = 1; }

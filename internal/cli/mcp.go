@@ -448,6 +448,12 @@ func (s *mcpServer) handleToolCall(raw json.RawMessage) (any, error) {
 		scoped.SessionID = value
 	}
 	s = &mcpServer{client: scoped, serverURL: s.serverURL}
+	if strings.HasPrefix(params.Name, "rementor.computer_") {
+		return s.toolComputerFollowing(params.Name, params.Arguments)
+	}
+	if strings.HasPrefix(params.Name, "rementor.inheritance_") {
+		return s.toolInheritance(params.Name, params.Arguments)
+	}
 	if strings.HasPrefix(params.Name, "rementor.session_") {
 		return s.toolSession(params.Name, params.Arguments)
 	}
@@ -456,6 +462,8 @@ func (s *mcpServer) handleToolCall(raw json.RawMessage) (any, error) {
 	}
 
 	switch params.Name {
+	case "rementor.fleet_show", "rementor.fleet_review", "rementor.fleet_save":
+		return s.toolFleet(params.Name, params.Arguments)
 	case "rementor.status":
 		return s.toolStatus()
 	case "rementor.workspaces":
@@ -933,7 +941,7 @@ func (s *mcpServer) toggleApp(workspaceID, appID string) (mcpToggleResult, error
 }
 
 func mcpToolList() []map[string]any {
-	return []map[string]any{
+	return append(append(append(computerFollowingTools(), fleetTools()...), inheritanceTools()...), []map[string]any{
 		toolSchema("rementor.session_create", "Create a persistent isolated routing session with remote baseline routes.", objectSchema(map[string]any{"workspace": map[string]any{"type": "string"}, "name": map[string]any{"type": "string"}}, []string{"workspace", "name"})),
 		toolSchema("rementor.session_list", "List routing sessions, optionally filtered by environment.", objectSchema(map[string]any{"workspace": map[string]any{"type": "string"}}, nil)),
 		toolSchema("rementor.session_inspect", "Inspect a routing session and its registrations.", objectSchema(map[string]any{"id": map[string]any{"type": "string"}}, []string{"id"})),
@@ -973,7 +981,7 @@ func mcpToolList() []map[string]any {
 		toolSchema("rementor.route_pattern_set", "Set or clear the route pattern for an application. Omit pattern or pass empty string to clear.", objectSchema(map[string]any{
 			"workspace": map[string]any{"type": "string"}, "app": map[string]any{"type": "string"}, "pattern": map[string]any{"type": "string"},
 		}, []string{"workspace", "app"})),
-	}
+	}...)
 }
 
 func toolSchema(name, description string, inputSchema map[string]any) map[string]any {

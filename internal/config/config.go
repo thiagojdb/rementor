@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/thiagojdb/rementor/internal/fleet"
 	"github.com/thiagojdb/rementor/internal/models"
 	"github.com/thiagojdb/rementor/internal/validation"
 	_ "modernc.org/sqlite"
@@ -236,7 +237,7 @@ func SaveState(workspaces []*models.Workspace) error {
 	defer stmt.Close()
 	workspaceStmt, err := tx.Prepare(`
 		UPDATE workspaces
-		SET route_version = ?, operation_id = ?, correlation_id = ?, operation_kind = ?, operation_created_at = ?, operation_completed_at = ?
+		SET route_version = ?, operation_id = ?, correlation_id = ?, operation_kind = ?, operation_created_at = ?, operation_completed_at = ?, inheritance_json = ?
 		WHERE id = ?
 	`)
 	if err != nil {
@@ -245,7 +246,18 @@ func SaveState(workspaces []*models.Workspace) error {
 	defer workspaceStmt.Close()
 
 	for _, ws := range workspaces {
-		if _, err := workspaceStmt.Exec(ws.Route.RouteVersion, ws.Route.OperationID, operationCorrelation(ws.LastOperation), operationKind(ws.LastOperation), operationCreatedAt(ws.LastOperation), operationCompletedAt(ws.LastOperation), ws.WorkspaceID); err != nil {
+		inheritanceJSON := ""
+		if ws.Inheritance != nil {
+			if err := fleet.ValidateInheritance("", fleet.Scope{}, ws.Inheritance); err != nil {
+				return err
+			}
+			data, err := json.Marshal(ws.Inheritance)
+			if err != nil {
+				return err
+			}
+			inheritanceJSON = string(data)
+		}
+		if _, err := workspaceStmt.Exec(ws.Route.RouteVersion, ws.Route.OperationID, operationCorrelation(ws.LastOperation), operationKind(ws.LastOperation), operationCreatedAt(ws.LastOperation), operationCompletedAt(ws.LastOperation), inheritanceJSON, ws.WorkspaceID); err != nil {
 			return fmt.Errorf("failed to save workspace state for %s: %w", ws.WorkspaceID, err)
 		}
 		for _, app := range ws.Applications {
@@ -384,6 +396,10 @@ func LoadRouteOperations() ([]models.RouteOperationJournal, error) {
 // ReplaceWorkspaces atomically replaces the durable workspace projection.
 // Callers construct and validate the complete desired state before invoking it.
 func ReplaceWorkspaces(workspaces []*models.Workspace) error {
+	return replaceWorkspaces(workspaces, nil, 0)
+}
+
+func replaceWorkspaces(workspaces []*models.Workspace, following *models.ComputerFollowing, expected uint64) error {
 	for _, workspace := range workspaces {
 		if workspace == nil {
 			return fmt.Errorf("workspace is required")
@@ -409,6 +425,11 @@ func ReplaceWorkspaces(workspaces []*models.Workspace) error {
 	}
 	for order, workspace := range workspaces {
 		if err := insertWorkspaceConfigTx(tx, workspaceConfigFromWorkspace(workspace), order); err != nil {
+			return err
+		}
+	}
+	if following != nil {
+		if err := saveComputerFollowingTx(tx, following, expected); err != nil {
 			return err
 		}
 	}
@@ -542,6 +563,9 @@ func UpdateWorkspaceApplications(wsID string, apps []models.ApplicationConfig, l
 }
 
 func validateWorkspaceConfig(ws models.WorkspaceConfig) error {
+	if err := fleet.ValidateInheritance("", fleet.Scope{}, ws.Inheritance); err != nil {
+		return fmt.Errorf("workspace %q inheritance: %w", ws.ID, err)
+	}
 	workspaceType := ws.Type
 	if workspaceType == "" {
 		workspaceType = models.WorkspaceTypeRouting
@@ -654,6 +678,11 @@ func readyDB() (*sql.DB, error) {
 
 func initDB(db *sql.DB) error {
 	stmts := []string{
+		`CREATE TABLE IF NOT EXISTS fleet_configuration (
+			id INTEGER PRIMARY KEY CHECK (id = 1),
+			revision INTEGER NOT NULL,
+			topology_json TEXT NOT NULL
+		)`,
 		`CREATE TABLE IF NOT EXISTS app_config (
 			id INTEGER PRIMARY KEY CHECK (id = 1),
 			nginx_conf_dir TEXT NOT NULL DEFAULT '',
@@ -678,6 +707,7 @@ func initDB(db *sql.DB) error {
 			operation_created_at TEXT,
 			operation_completed_at TEXT
 		)`,
+		`CREATE TABLE IF NOT EXISTS computer_following (id INTEGER PRIMARY KEY CHECK(id=1), revision INTEGER NOT NULL, state_json TEXT NOT NULL)`,
 		`CREATE TABLE IF NOT EXISTS applications (
 			workspace_id TEXT NOT NULL,
 			id TEXT NOT NULL,
@@ -758,12 +788,14 @@ func initDB(db *sql.DB) error {
 		def    string
 	}{
 		{"workspaces", "session_json", "TEXT NOT NULL DEFAULT ''"},
+		{"workspaces", "inheritance_json", "TEXT NOT NULL DEFAULT ''"},
 		{"workspaces", "route_version", "INTEGER NOT NULL DEFAULT 0"},
 		{"workspaces", "operation_id", "TEXT NOT NULL DEFAULT ''"},
 		{"workspaces", "correlation_id", "TEXT NOT NULL DEFAULT ''"},
 		{"workspaces", "operation_kind", "TEXT NOT NULL DEFAULT ''"},
 		{"workspaces", "operation_created_at", "TEXT"},
 		{"workspaces", "operation_completed_at", "TEXT"},
+		{"applications", "peer_endpoint_json", "TEXT NOT NULL DEFAULT ''"},
 		{"applications", "route_version", "INTEGER NOT NULL DEFAULT 0"},
 		{"applications", "operation_id", "TEXT NOT NULL DEFAULT ''"},
 		{"applications", "correlation_id", "TEXT NOT NULL DEFAULT ''"},
@@ -915,7 +947,7 @@ func normalizeConfig(cfg AppConfig) (AppConfig, bool) {
 
 func loadWorkspacesFromDB(db *sql.DB) ([]*models.Workspace, error) {
 	rows, err := db.Query(`
-		SELECT id, type, name, color, routing_mode, local_domain, default_remote_base_url, route_version, operation_id, correlation_id, operation_kind, operation_created_at, operation_completed_at, session_json
+		SELECT id, type, name, color, routing_mode, local_domain, default_remote_base_url, route_version, operation_id, correlation_id, operation_kind, operation_created_at, operation_completed_at, session_json, inheritance_json
 		FROM workspaces
 		ORDER BY sort_order, id
 	`)
@@ -928,15 +960,24 @@ func loadWorkspacesFromDB(db *sql.DB) ([]*models.Workspace, error) {
 	for rows.Next() {
 		var ws models.WorkspaceConfig
 		var sessionJSON string
+		var inheritanceJSON string
 		var routeVersion int64
 		var operationID, correlationID, operationKind string
 		var operationCreatedAt, operationCompletedAt sql.NullString
-		if err := rows.Scan(&ws.ID, &ws.Type, &ws.Name, &ws.Color, &ws.Routing.Mode, &ws.Routing.LocalDomain, &ws.Routing.DefaultRemoteBaseURL, &routeVersion, &operationID, &correlationID, &operationKind, &operationCreatedAt, &operationCompletedAt, &sessionJSON); err != nil {
+		if err := rows.Scan(&ws.ID, &ws.Type, &ws.Name, &ws.Color, &ws.Routing.Mode, &ws.Routing.LocalDomain, &ws.Routing.DefaultRemoteBaseURL, &routeVersion, &operationID, &correlationID, &operationKind, &operationCreatedAt, &operationCompletedAt, &sessionJSON, &inheritanceJSON); err != nil {
 			return nil, fmt.Errorf("failed to scan sqlite workspace: %w", err)
 		}
 		if sessionJSON != "" {
 			if err := json.Unmarshal([]byte(sessionJSON), &ws.Session); err != nil {
 				return nil, fmt.Errorf("load session %s: %w", ws.ID, err)
+			}
+		}
+		if inheritanceJSON != "" {
+			if err := json.Unmarshal([]byte(inheritanceJSON), &ws.Inheritance); err != nil {
+				return nil, fmt.Errorf("load inheritance %s: %w", ws.ID, err)
+			}
+			if err := fleet.ValidateInheritance("", fleet.Scope{}, ws.Inheritance); err != nil {
+				return nil, fmt.Errorf("load inheritance %s: %w", ws.ID, err)
 			}
 		}
 		ws.Route.RouteVersion = uint64(routeVersion)
@@ -969,7 +1010,7 @@ func loadApplicationConfigs(db *sql.DB, wsID string) ([]models.ApplicationConfig
 			a.public_path, a.upstream_context, a.frontend_root, a.frontend_root_source, a.legacy_public_path, a.legacy_upstream_context, a.strip_origin,
 			a.route_override,
 			COALESCE(i.app_id, a.id), COALESCE(i.service_id, a.id), COALESCE(i.repository, ''),
-			a.route_version, a.operation_id, a.correlation_id, a.operation_kind, a.operation_created_at, a.operation_completed_at
+			a.route_version, a.operation_id, a.correlation_id, a.operation_kind, a.operation_created_at, a.operation_completed_at, a.peer_endpoint_json
 		FROM applications a
 		LEFT JOIN application_identities i ON i.app_id = a.id
 		WHERE a.workspace_id = ?
@@ -983,6 +1024,7 @@ func loadApplicationConfigs(db *sql.DB, wsID string) ([]models.ApplicationConfig
 	var apps []models.ApplicationConfig
 	for rows.Next() {
 		var app models.ApplicationConfig
+		var peerEndpointJSON string
 		var active int
 		var legacyPublicPath, legacyUpstreamContext, routeOverride int
 		var routePattern sql.NullString
@@ -992,9 +1034,14 @@ func loadApplicationConfigs(db *sql.DB, wsID string) ([]models.ApplicationConfig
 		if err := rows.Scan(
 			&app.ID, &app.Name, &app.Path, &app.Domain, &app.RemoteBaseUrl, &app.Port, &app.Health, &active,
 			&routePattern, &app.Context, &app.PublicPath, &app.UpstreamContext, &app.FrontendRoot, &app.FrontendRootSource, &legacyPublicPath, &legacyUpstreamContext, &app.StripOrigin, &routeOverride, &app.AppID, &app.ServiceID, &app.Repository,
-			&routeVersion, &operationID, &correlationID, &operationKind, &operationCreatedAt, &operationCompletedAt,
+			&routeVersion, &operationID, &correlationID, &operationKind, &operationCreatedAt, &operationCompletedAt, &peerEndpointJSON,
 		); err != nil {
 			return nil, fmt.Errorf("failed to scan sqlite application: %w", err)
+		}
+		if peerEndpointJSON != "" {
+			if err := json.Unmarshal([]byte(peerEndpointJSON), &app.PeerEndpoint); err != nil {
+				return nil, fmt.Errorf("load peer endpoint %s/%s: %w", wsID, app.ID, err)
+			}
 		}
 		app.Active = active != 0
 		app.RouteOverride = routeOverride != 0
@@ -1057,6 +1104,7 @@ func workspacesFromConfigs(configs []models.WorkspaceConfig) []*models.Workspace
 		}
 
 		ws := &models.Workspace{
+			Inheritance:   wsConfig.Inheritance.Clone(),
 			WorkspaceID:   wsConfig.ID,
 			Session:       wsConfig.Session,
 			Type:          wsConfig.Type,
@@ -1077,6 +1125,7 @@ func workspacesFromConfigs(configs []models.WorkspaceConfig) []*models.Workspace
 
 func workspaceConfigFromWorkspace(workspace *models.Workspace) models.WorkspaceConfig {
 	config := models.WorkspaceConfig{
+		Inheritance:   workspace.Inheritance.Clone(),
 		ID:            workspace.WorkspaceID,
 		Session:       workspace.Session,
 		Type:          workspace.GetType(),
@@ -1093,7 +1142,7 @@ func workspaceConfigFromWorkspace(workspace *models.Workspace) models.WorkspaceC
 	}
 	for _, app := range workspace.Applications {
 		config.Applications = append(config.Applications, models.ApplicationConfig{
-			ID: app.ID, AppID: app.CanonicalAppID(), ServiceID: app.ServiceID, Repository: app.Repository, Aliases: app.NormalizedAliases(), Name: app.Name, Path: app.Path, Domain: app.Domain,
+			PeerEndpoint: app.PeerEndpoint.Clone(), ID: app.ID, AppID: app.CanonicalAppID(), ServiceID: app.ServiceID, Repository: app.Repository, Aliases: app.NormalizedAliases(), Name: app.Name, Path: app.Path, Domain: app.Domain,
 			PublicPath: app.PublicRoutePath(), RemoteBaseUrl: app.RemoteBaseUrl, Port: app.Port, Health: app.Health,
 			Active: app.Active, RoutePattern: app.RoutePattern, Context: app.Context, UpstreamContext: app.BackendContextPath(),
 			FrontendRoot: app.FrontendRoot, FrontendRootSource: app.FrontendRootSource,
@@ -1121,6 +1170,7 @@ func convertAppConfigs(configs []models.ApplicationConfig) []*models.Application
 		path := appConfig.PublicRoutePath()
 
 		app := &models.Application{
+			PeerEndpoint:       appConfig.PeerEndpoint.Clone(),
 			ID:                 canonical,
 			AppID:              canonical,
 			ServiceID:          serviceID,
@@ -1175,6 +1225,14 @@ func insertWorkspaceConfigTx(tx *sql.Tx, ws models.WorkspaceConfig, order int) e
 		ws.Type = models.WorkspaceTypeRouting
 	}
 	sessionJSON := ""
+	inheritanceJSON := ""
+	if ws.Inheritance != nil {
+		data, err := json.Marshal(ws.Inheritance)
+		if err != nil {
+			return err
+		}
+		inheritanceJSON = string(data)
+	}
 	if ws.Session != nil {
 		data, err := json.Marshal(ws.Session)
 		if err != nil {
@@ -1185,10 +1243,10 @@ func insertWorkspaceConfigTx(tx *sql.Tx, ws models.WorkspaceConfig, order int) e
 	_, err := tx.Exec(`
 		INSERT INTO workspaces (
 			id, type, name, color, routing_mode, local_domain, default_remote_base_url, sort_order,
-			route_version, operation_id, correlation_id, operation_kind, operation_created_at, operation_completed_at, session_json
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			route_version, operation_id, correlation_id, operation_kind, operation_created_at, operation_completed_at, session_json, inheritance_json
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`, ws.ID, ws.Type, ws.Name, ws.Color, ws.Routing.Mode, ws.Routing.LocalDomain, ws.Routing.DefaultRemoteBaseURL, order,
-		ws.Route.RouteVersion, ws.Route.OperationID, operationCorrelation(ws.LastOperation), operationKind(ws.LastOperation), operationCreatedAt(ws.LastOperation), operationCompletedAt(ws.LastOperation), sessionJSON)
+		ws.Route.RouteVersion, ws.Route.OperationID, operationCorrelation(ws.LastOperation), operationKind(ws.LastOperation), operationCreatedAt(ws.LastOperation), operationCompletedAt(ws.LastOperation), sessionJSON, inheritanceJSON)
 	if err != nil {
 		return fmt.Errorf("failed to insert workspace %q: %w", ws.ID, err)
 	}
@@ -1226,6 +1284,14 @@ func insertApplicationConfig(tx *sql.Tx, wsID string, app models.ApplicationConf
 	// path/context-only registrations on their historical ingress route after
 	// a restart while still exposing the explicit fields to new clients.
 	app.NormalizeRouteMetadata()
+	peerEndpointJSON := ""
+	if app.PeerEndpoint != nil {
+		data, err := json.Marshal(app.PeerEndpoint)
+		if err != nil {
+			return err
+		}
+		peerEndpointJSON = string(data)
+	}
 	appID := models.NormalizeIdentityToken(app.CanonicalAppID())
 	if appID == "" {
 		return fmt.Errorf("application %s/%s: canonical app ID is required", wsID, app.ID)
@@ -1243,11 +1309,11 @@ func insertApplicationConfig(tx *sql.Tx, wsID string, app models.ApplicationConf
 		INSERT INTO applications (
 			workspace_id, id, name, path, domain, remote_base_url, port, health, active, route_pattern, context,
 			public_path, upstream_context, frontend_root, frontend_root_source,
-			legacy_public_path, legacy_upstream_context, strip_origin, route_override, sort_order, route_version, operation_id, correlation_id, operation_kind, operation_created_at, operation_completed_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			legacy_public_path, legacy_upstream_context, strip_origin, route_override, sort_order, route_version, operation_id, correlation_id, operation_kind, operation_created_at, operation_completed_at, peer_endpoint_json
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`, wsID, appID, app.Name, app.Path, app.Domain, app.RemoteBaseUrl, app.Port, health, boolInt(app.Active),
 		ptrValue(app.RoutePattern), app.Context, app.PublicRoutePath(), app.BackendContextPath(), app.FrontendRoot, app.FrontendRootSource, boolInt(app.LegacyPublicPath), boolInt(app.LegacyUpstreamContext), boolInt(app.StripOrigin), boolInt(app.RouteOverride), order, app.Route.RouteVersion, app.Route.OperationID,
-		operationCorrelation(app.LastOperation), operationKind(app.LastOperation), operationCreatedAt(app.LastOperation), operationCompletedAt(app.LastOperation))
+		operationCorrelation(app.LastOperation), operationKind(app.LastOperation), operationCreatedAt(app.LastOperation), operationCompletedAt(app.LastOperation), peerEndpointJSON)
 	if err != nil {
 		return fmt.Errorf("failed to insert application %s/%s: %w", wsID, appID, err)
 	}

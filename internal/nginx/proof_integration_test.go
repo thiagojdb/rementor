@@ -80,7 +80,13 @@ func TestGeneratedProxyProofHeadersAcrossModesAndErrors(t *testing.T) {
 			ID: id, AppID: id, ServiceID: id, Path: "/" + id, Context: "/" + id, RemoteBaseUrl: upstream.URL,
 		})
 	}
-	conf, err := RenderConfig([]*models.Workspace{workspace}, "rementor.localhost")
+	// One unavailable saved environment must not prevent applying the others.
+	unavailable := &models.Workspace{
+		WorkspaceID: "unavailable", Type: models.WorkspaceTypeRouting,
+		RoutingConfig: &models.RoutingConfig{LocalDomain: "unavailable.localhost", DefaultRemoteBaseURL: "https://unavailable.rementor.invalid"},
+	}
+	workspaces := []*models.Workspace{workspace, unavailable}
+	conf, err := RenderConfig(workspaces, "rementor.localhost")
 	if err != nil {
 		t.Fatalf("render config: %v", err)
 	}
@@ -94,6 +100,9 @@ func TestGeneratedProxyProofHeadersAcrossModesAndErrors(t *testing.T) {
 	main := fmt.Sprintf("pid %s;\nerror_log %s;\nevents {}\nhttp {\n    access_log off;\n    underscores_in_headers on;\n    include %s;\n}\n", filepath.Join(dir, "nginx.pid"), filepath.Join(dir, "error.log"), routesPath)
 	if err := os.WriteFile(mainPath, []byte(main), 0o644); err != nil {
 		t.Fatalf("write main config: %v", err)
+	}
+	if out, err := exec.Command(nginxPath, "-p", dir, "-c", mainPath, "-t").CombinedOutput(); err != nil {
+		t.Fatalf("unavailable environment prevented configuration load: %v\n%s", err, out)
 	}
 
 	cmd := exec.Command(nginxPath, "-p", dir, "-c", mainPath, "-g", "daemon off;")
@@ -193,7 +202,7 @@ func TestGeneratedProxyProofHeadersAcrossModesAndErrors(t *testing.T) {
 	}
 	workspace.Applications[0].Active = false
 	workspace.Route = models.RouteState{RouteVersion: 8, OperationID: "op-8"}
-	if err := provider.ApplyRouting([]*models.Workspace{workspace}); err != nil {
+	if err := provider.ApplyRouting(workspaces); err != nil {
 		t.Fatal(err)
 	}
 	assertResponse("/orders", "orders-api", "orders", "remote")
@@ -203,7 +212,7 @@ func TestGeneratedProxyProofHeadersAcrossModesAndErrors(t *testing.T) {
 		t.Fatalf("successful apply served stale version %q", got)
 	}
 	// Reapplying identical bytes must not retire the only serving generation.
-	if err := provider.ApplyRouting([]*models.Workspace{workspace}); err != nil {
+	if err := provider.ApplyRouting(workspaces); err != nil {
 		t.Fatal(err)
 	}
 	assertResponse("/orders", "orders-api", "orders", "remote")

@@ -262,7 +262,8 @@ func (ar *AppRuntime) UpdateBothStatuses(healthOk bool, healthLast *time.Time, r
 
 // Application represents an application in a workspace
 type Application struct {
-	SharedWith []string `json:"sharedWith,omitempty"`
+	PeerEndpoint *PeerEndpoint `json:"peerEndpoint,omitempty"`
+	SharedWith   []string      `json:"sharedWith,omitempty"`
 	// ID is retained as the wire-compatible canonical application identifier.
 	// AppID is the explicit identity field used by new callers; both values are
 	// kept in sync when configurations are loaded or registered.
@@ -402,9 +403,7 @@ func (a *Application) RouteStateFor(workspace *Workspace) RouteState {
 	state.EffectiveMode = RouteModeUnknown
 	state.LocalTarget = ""
 	state.RemoteTarget = ""
-	if a.Port > 0 {
-		state.LocalTarget = fmt.Sprintf("%s://%s:%d", ProtocolHTTP, Localhost, a.Port)
-	}
+	state.LocalTarget = a.LocalTarget()
 	if workspace != nil && !workspace.IsLocalApps() {
 		state.RemoteTarget = a.GetRemoteBaseUrl(workspace)
 	}
@@ -501,17 +500,32 @@ func (a *Application) InitializeRuntime() {
 
 // HasLocal checks if the application has a local port configured
 func (a *Application) HasLocal() bool {
-	return a.Port > 0
+	return a.Port > 0 || a.PeerEndpoint != nil
+}
+
+// LocalTarget keeps node ownership visible instead of representing another
+// computer's endpoint as a URL in this computer's loopback namespace.
+func (a *Application) LocalTarget() string {
+	if a.PeerEndpoint != nil {
+		return fmt.Sprintf("peer://%s/%s/%s", a.PeerEndpoint.OwnerFingerprint, a.PeerEndpoint.WorkspaceID, a.PeerEndpoint.ApplicationID)
+	}
+	if a.Port > 0 {
+		return fmt.Sprintf("%s://%s:%d", ProtocolHTTP, Localhost, a.Port)
+	}
+	return ""
 }
 
 // HealthURL returns the local health check URL
 func (a *Application) HealthURL() string {
-	return fmt.Sprintf("%s://%s:%d%s/%s", ProtocolHTTP, Localhost, a.Port, a.BackendContextPath(), a.Health)
+	if a.PeerEndpoint != nil {
+		return ""
+	}
+	return fmt.Sprintf("%s://%s:%d%s/%s", ProtocolHTTP, Localhost, a.Port, strings.TrimRight(a.BackendContextPath(), "/"), strings.TrimLeft(a.Health, "/"))
 }
 
 // LocalHealthURL returns the local health check URL (path-based)
 func (a *Application) LocalHealthURL() string {
-	return fmt.Sprintf("%s://%s:%d%s/%s", ProtocolHTTP, Localhost, a.Port, a.BackendContextPath(), a.Health)
+	return a.HealthURL()
 }
 
 // RemoteHealthURL returns the remote health check URL (path-based)
@@ -556,15 +570,16 @@ func (w *Workspace) SessionID() string {
 }
 
 type Workspace struct {
-	Session       *RoutingSession    `json:"session,omitempty"`
-	WorkspaceID   string             `json:"workspaceId"`
-	Type          string             `json:"type,omitempty"`
-	Name          *string            `json:"name,omitempty"`
-	Color         *string            `json:"color,omitempty"`
-	RoutingConfig *RoutingConfig     `json:"routingConfig,omitempty"`
-	Applications  []*Application     `json:"applications"`
-	Route         RouteState         `json:"route"`
-	LastOperation *OperationMetadata `json:"lastOperation,omitempty"`
+	Inheritance   *WorkspaceInheritance `json:"inheritance,omitempty"`
+	Session       *RoutingSession       `json:"session,omitempty"`
+	WorkspaceID   string                `json:"workspaceId"`
+	Type          string                `json:"type,omitempty"`
+	Name          *string               `json:"name,omitempty"`
+	Color         *string               `json:"color,omitempty"`
+	RoutingConfig *RoutingConfig        `json:"routingConfig,omitempty"`
+	Applications  []*Application        `json:"applications"`
+	Route         RouteState            `json:"route"`
+	LastOperation *OperationMetadata    `json:"lastOperation,omitempty"`
 }
 
 // IsLocalApps returns true if this workspace is of type local-apps
@@ -659,21 +674,22 @@ type HealthUpdate struct {
 
 // ApplicationConfig represents a persisted application definition.
 type ApplicationConfig struct {
-	ID            string   `json:"id"`
-	AppID         string   `json:"appId,omitempty"`
-	ServiceID     string   `json:"serviceId,omitempty"`
-	Repository    string   `json:"repository,omitempty"`
-	Aliases       []string `json:"aliases,omitempty"`
-	Name          string   `json:"name,omitempty"`
-	Path          string   `json:"path"` // legacy public path
-	PublicPath    string   `json:"publicPath,omitempty"`
-	Domain        string   `json:"domain,omitempty"`
-	RemoteBaseUrl string   `json:"remoteBaseUrl,omitempty"` // Per-app remote base URL override
-	Port          int      `json:"port"`
-	Health        string   `json:"health,omitempty"`
-	Active        bool     `json:"active"`
-	RoutePattern  *string  `json:"routePattern,omitempty"`
-	RouteOverride bool     `json:"routeOverride,omitempty"`
+	PeerEndpoint  *PeerEndpoint `json:"peerEndpoint,omitempty"`
+	ID            string        `json:"id"`
+	AppID         string        `json:"appId,omitempty"`
+	ServiceID     string        `json:"serviceId,omitempty"`
+	Repository    string        `json:"repository,omitempty"`
+	Aliases       []string      `json:"aliases,omitempty"`
+	Name          string        `json:"name,omitempty"`
+	Path          string        `json:"path"` // legacy public path
+	PublicPath    string        `json:"publicPath,omitempty"`
+	Domain        string        `json:"domain,omitempty"`
+	RemoteBaseUrl string        `json:"remoteBaseUrl,omitempty"` // Per-app remote base URL override
+	Port          int           `json:"port"`
+	Health        string        `json:"health,omitempty"`
+	Active        bool          `json:"active"`
+	RoutePattern  *string       `json:"routePattern,omitempty"`
+	RouteOverride bool          `json:"routeOverride,omitempty"`
 	// RouteOverrideSet distinguishes an omitted update from an explicit false.
 	RouteOverrideSet      bool               `json:"-"`
 	Context               string             `json:"context,omitempty"` // legacy upstream context
@@ -773,13 +789,14 @@ func (a ApplicationConfig) NormalizedAliases() []string {
 
 // WorkspaceConfig represents a persisted workspace definition.
 type WorkspaceConfig struct {
-	Session       *RoutingSession     `json:"session,omitempty"`
-	ID            string              `json:"id"`
-	Type          string              `json:"type,omitempty"`
-	Name          string              `json:"name,omitempty"`
-	Color         string              `json:"color,omitempty"`
-	Routing       RoutingConfig       `json:"routing"`
-	Applications  []ApplicationConfig `json:"applications"`
-	Route         RouteState          `json:"route,omitempty"`
-	LastOperation *OperationMetadata  `json:"lastOperation,omitempty"`
+	Inheritance   *WorkspaceInheritance `json:"inheritance,omitempty"`
+	Session       *RoutingSession       `json:"session,omitempty"`
+	ID            string                `json:"id"`
+	Type          string                `json:"type,omitempty"`
+	Name          string                `json:"name,omitempty"`
+	Color         string                `json:"color,omitempty"`
+	Routing       RoutingConfig         `json:"routing"`
+	Applications  []ApplicationConfig   `json:"applications"`
+	Route         RouteState            `json:"route,omitempty"`
+	LastOperation *OperationMetadata    `json:"lastOperation,omitempty"`
 }

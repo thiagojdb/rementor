@@ -3,6 +3,7 @@ import { RouteMode } from '../gen/rementor/v1/rementor_pb'
 import type {
   Application,
   RoutingSession,
+  WorkspaceInheritance,
   BrowserURLResolution,
   CanonicalApplicationRef,
   GetRoutePatternResponse,
@@ -66,6 +67,8 @@ export interface RoutingDTO {
 }
 
 export interface WorkspaceDTO {
+  computerFollowed?: boolean
+  inheritance?: PlainMessage<WorkspaceInheritance>
   browserUrl?: string
   session?: PlainMessage<RoutingSession>
   id: string
