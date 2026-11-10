@@ -125,6 +125,10 @@ class ProofError(Exception):
     pass
 
 
+def scratch_root():
+    return Path(os.environ.get('TMPDIR') or Path.home()/'.cache'/'ai-tmp').resolve()
+
+
 class Gateway:
     def __init__(self, label, specification):
         self.label = label
@@ -134,7 +138,7 @@ class Gateway:
             raise ProofError('Gateway must be HOST:SOCKET (HOST is local or an SSH profile)') from error
         if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9.-]*', self.host):
             raise ProofError('Invalid SSH profile')
-        if not self.socket.startswith('/home/thiago/.cache/ai-tmp/') or '..' in Path(self.socket).parts:
+        if not Path(self.socket).is_absolute() or not Path(self.socket).parent.is_relative_to(scratch_root()) or '..' in Path(self.socket).parts:
             raise ProofError('Proof sockets must be inside the task scratch directory')
         self.backend = None
         self.baseline = None
@@ -309,8 +313,8 @@ def await_gateway(host, url, expected_gateway, expected_identity, timeout, webso
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--gateway-a', required=True, help='local:/home/thiago/.cache/ai-tmp/TASK/tailscaled.sock')
-    parser.add_argument('--gateway-b', required=True, help='brutus-raw:/home/thiago/.cache/ai-tmp/TASK/tailscaled.sock')
+    parser.add_argument('--gateway-a', required=True, help='local:/path/to/task/tailscaled.sock')
+    parser.add_argument('--gateway-b', required=True, help='brutus-raw:/path/to/task/tailscaled.sock')
     parser.add_argument('--service', default='rementor-proof', help='Existing internal Service name, without svc:')
     parser.add_argument('--run', action='store_true', help='Advertise test endpoints, drain each gateway and simulate an outage')
     parser.add_argument('--timeout', type=int, default=45, help='Seconds allowed for service convergence')
@@ -334,8 +338,10 @@ def main():
         hostname = service_hostname(args.service)
         print(json.dumps({'preflight':'passed','hostname':hostname,'physicalGateways':2,'taggedIdentities':2}), flush=True)
         return
-    os.environ.update(TMPDIR='/home/thiago/.cache/ai-tmp', TMP='/home/thiago/.cache/ai-tmp', TEMP='/home/thiago/.cache/ai-tmp')
-    scratch = Path(tempfile.mkdtemp(prefix='rementor-services-proof-', dir='/home/thiago/.cache/ai-tmp'))
+    root = scratch_root()
+    root.mkdir(parents=True, exist_ok=True)
+    os.environ.update(TMPDIR=str(root), TMP=str(root), TEMP=str(root))
+    scratch = Path(tempfile.mkdtemp(prefix='rementor-services-proof-', dir=root))
     identities = {host: identity(host) for host in ['local', gateways[1].host]}
     results = {'movement':[],'passed':False}
     failure = None

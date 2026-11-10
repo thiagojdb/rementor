@@ -16,7 +16,8 @@ ROOT = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location('services_proof', ROOT/'test-tailscale-services.py')
 proof = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(proof)
-SCRATCH = '/home/thiago/.cache/ai-tmp'
+SCRATCH = str(proof.scratch_root())
+Path(SCRATCH).mkdir(parents=True, exist_ok=True)
 os.environ.update(TMPDIR=SCRATCH, TMP=SCRATCH, TEMP=SCRATCH)
 
 
@@ -28,6 +29,14 @@ class HarnessTests(unittest.TestCase):
         self.gateway = proof.Gateway('a', 'local:'+str(self.root/'tailscaled.sock'))
         self.gateway.baseline = {}
         self.addCleanup(self.gateway.cleanup, 'svc:rementor-proof')
+
+    def test_gateway_uses_the_configured_scratch_directory(self):
+        alternate = self.root/'runner-temp'
+        with patch.dict(os.environ, {'TMPDIR':str(alternate)}):
+            proof.Gateway('a', 'local:'+str(alternate/'task'/'tailscaled.sock'))
+            for socket in [self.root/'outside.sock', alternate/'..'/'escape.sock']:
+                with self.assertRaises(proof.ProofError):
+                    proof.Gateway('a', 'local:'+str(socket))
 
     def test_backend_shutdown_is_acknowledged_and_port_closes(self):
         port = self.gateway.start_backend()
