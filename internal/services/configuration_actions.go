@@ -16,6 +16,10 @@ func (r *Registry) SourceRegistrationPorts() map[string]map[string]int {
 	r.workspacesMu.RLock()
 	raw := r.computerFollowing.Snapshot
 	managed := map[string]bool{}
+	sessionIDs := map[string]string{}
+	for source, local := range r.computerFollowing.SessionIDs {
+		sessionIDs[source] = local
+	}
 	for id := range r.computerFollowing.Originals {
 		managed[id] = true
 	}
@@ -26,8 +30,15 @@ func (r *Registry) SourceRegistrationPorts() map[string]map[string]int {
 		return nil
 	}
 	result := map[string]map[string]int{}
-	for _, env := range snapshot.Environments {
+	entries := append([]fleet.ConfigurationEnvironment(nil), snapshot.Environments...)
+	for _, session := range snapshot.Sessions {
+		entries = append(entries, session.ConfigurationEnvironment)
+	}
+	for _, env := range entries {
 		id := env.Snapshot.Intent.Scope.WorkspaceID
+		if env.Snapshot.Intent.Scope.SessionID != "" {
+			id = sessionIDs[id]
+		}
 		if !managed[id] {
 			continue
 		}
@@ -112,7 +123,7 @@ func (r *Registry) deletePeerEnvironment(ctx context.Context, edit fleet.Configu
 		if ws.Route.RouteVersion != edit.ExpectedVersion {
 			return fleet.ErrConfigurationConflict
 		}
-		if ws.Session != nil || ws.Inheritance != nil || r.IsComputerFollowed(ws.WorkspaceID) {
+		if ws.Inheritance != nil || r.IsComputerFollowed(ws.WorkspaceID) {
 			return errors.New("configuration changed; reload the environment")
 		}
 		for _, child := range *candidate {

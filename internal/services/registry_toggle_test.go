@@ -79,6 +79,8 @@ func (s *fakeWorkspaceStore) WorkspaceFromConfig(ws models.WorkspaceConfig) *mod
 	name := ws.Name
 	color := ws.Color
 	out := &models.Workspace{
+		Session:      cloneSession(ws.Session),
+		Inheritance:  ws.Inheritance.Clone(),
 		WorkspaceID:  ws.ID,
 		Type:         ws.Type,
 		Name:         &name,

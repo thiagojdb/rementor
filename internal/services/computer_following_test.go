@@ -29,8 +29,9 @@ func TestComputerFollowingMirrorsAllEnvironmentsAndPreservesLocalExtras(t *testi
 		return ws
 	}
 	source.workspaces = []*models.Workspace{makeEnvironment("dev", 9101), makeEnvironment("qa", 9102)}
-	// A source session is never attached or mirrored onto the receiving computer.
-	source.workspaces = append(source.workspaces, &models.Workspace{WorkspaceID: "source-session", Session: &models.RoutingSession{EnvironmentID: "dev"}, Type: models.WorkspaceTypeRouting, RoutingConfig: &models.RoutingConfig{LocalDomain: "source-session.dev.localhost", DefaultRemoteBaseURL: "https://example.com"}})
+	// Source sessions follow with the environment; independent receiver sessions
+	// retain their own baseline and registrations.
+	source.workspaces = append(source.workspaces, &models.Workspace{WorkspaceID: "source-session", Session: &models.RoutingSession{EnvironmentID: "dev", BaselineRemoteURL: "https://example.com"}, Type: models.WorkspaceTypeRouting, RoutingConfig: &models.RoutingConfig{LocalDomain: "source-session.dev.localhost", DefaultRemoteBaseURL: "https://example.com"}})
 	owner.SetWorkspaceSource(source)
 	prior := makeEnvironment("dev", 9201)
 	extra := makeEnvironment("extra", 9202)
@@ -41,8 +42,8 @@ func TestComputerFollowingMirrorsAllEnvironmentsAndPreservesLocalExtras(t *testi
 	if err := r.FollowComputer(context.Background(), owner.State().Fingerprint, 0); err != nil {
 		t.Fatal(err)
 	}
-	if len(r.GetWorkspaces()) != 3 || r.GetWorkspaceView("qa") == nil || r.GetWorkspaceView("source-session") != nil {
-		t.Fatal("following did not mirror the complete environment set without sessions")
+	if len(r.GetWorkspaces()) != 4 || r.GetWorkspaceView("qa") == nil || r.GetWorkspaceView("source-session") == nil {
+		t.Fatal("following did not mirror environments and their sessions")
 	}
 	dev := r.GetWorkspaceView("dev")
 	if dev.Applications[0].Port != 0 || dev.Applications[0].PeerEndpoint == nil || len(dev.Inheritance.Overrides) != 0 {
@@ -429,8 +430,10 @@ func TestOptedOutPeerEndpointSurvivesSourceSelectionChangesButPinsRegistration(t
 		t.Fatalf("retained endpoint unavailable after source toggle: %d %s", response.Code, response.Body.String())
 	}
 	// A different registration must not be adopted by a local environment.
-	source.workspaces[0].Applications[0].Port = port + 1
-	source.workspaces[0].Route.RouteVersion++
+	nextPort := port + 1
+	if err := source.EditPeerConfiguration(ctx, fleet.ConfigurationEdit{WorkspaceID: "dev", ApplicationID: "orders", ExpectedVersion: source.GetWorkspaceView("dev").Route.RouteVersion, Action: "register-port", RegistrationPort: &nextPort}); err != nil {
+		t.Fatal(err)
+	}
 	if err := r.SyncComputerConfiguration(ctx); err != nil {
 		t.Fatal(err)
 	}

@@ -53,11 +53,10 @@ An environment can stop following, keeping its current setup for local edits.
 _Avoid_: Client device, routing profile
 
 **Followed configuration**:
-The complete set of environments followed from another instance, excluding its
-routing sessions. Source edits propagate to followers; additional local
-environments remain independent. Individually excluded environments also remain
-local across synchronization and restart. Resuming replaces their local settings
-with the current source configuration.
+The environments and their routing sessions followed from another instance.
+Source edits propagate to followers; independent local environments and sessions
+keep their own configuration and pinned baselines, including when an environment
+stops following.
 _Avoid_: Session attachment, per-service receiver override
 
 **Inherited environment**:

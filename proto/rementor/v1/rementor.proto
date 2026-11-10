@@ -7,27 +7,13 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/thiagojdb/rementor/internal/gen/rementor/v1;rementorv1";
 
 service ControlPlaneService {
-  rpc GetTailscaleSharing(GetTailscaleSharingRequest) returns (GetTailscaleSharingResponse);
-  rpc SetTailscaleSharing(SetTailscaleSharingRequest) returns (SetTailscaleSharingResponse);
-  rpc PrepareTailscaleSharing(PrepareTailscaleSharingRequest) returns (PrepareTailscaleSharingResponse);
   rpc GetComputerFollowing(GetComputerFollowingRequest) returns (GetComputerFollowingResponse);
   rpc FollowComputer(FollowComputerRequest) returns (FollowComputerResponse);
   rpc SyncComputerConfiguration(SyncComputerConfigurationRequest) returns (SyncComputerConfigurationResponse);
   rpc StopFollowingComputer(StopFollowingComputerRequest) returns (StopFollowingComputerResponse);
   rpc SetEnvironmentFollowing(SetEnvironmentFollowingRequest) returns (SetEnvironmentFollowingResponse);
   rpc EditFollowedConfiguration(EditFollowedConfigurationRequest) returns (EditFollowedConfigurationResponse);
-  rpc GetRoutingWorkspaces(GetRoutingWorkspacesRequest) returns (GetRoutingWorkspacesResponse);
-  rpc GetSharedIngress(GetSharedIngressRequest) returns (GetSharedIngressResponse);
-  rpc CreateSharedIngress(CreateSharedIngressRequest) returns (CreateSharedIngressResponse);
-  rpc SaveSharedIngress(SaveSharedIngressRequest) returns (SaveSharedIngressResponse);
-  rpc JoinSharedIngress(JoinSharedIngressRequest) returns (JoinSharedIngressResponse);
-  rpc TransferSharedIngress(TransferSharedIngressRequest) returns (TransferSharedIngressResponse);
-  rpc RecoverSharedIngress(RecoverSharedIngressRequest) returns (RecoverSharedIngressResponse);
-  rpc CancelSharedIngress(CancelSharedIngressRequest) returns (CancelSharedIngressResponse);
-  rpc SyncSharedIngress(SyncSharedIngressRequest) returns (SyncSharedIngressResponse);
 
-  rpc GetPublicAccess(GetPublicAccessRequest) returns (GetPublicAccessResponse);
-  rpc SavePublicAccess(SavePublicAccessRequest) returns (SavePublicAccessResponse);
   rpc GetPeerState(GetPeerStateRequest) returns (GetPeerStateResponse);
   rpc ConfigurePeerConnection(ConfigurePeerConnectionRequest) returns (ConfigurePeerConnectionResponse);
   rpc CreatePeerInvitation(CreatePeerInvitationRequest) returns (CreatePeerInvitationResponse);
@@ -76,95 +62,6 @@ service ControlPlaneService {
   rpc SyncRoute(SyncRouteRequest) returns (SyncRouteResponse);
 
   rpc WatchHealth(WatchHealthRequest) returns (stream WatchHealthResponse);
-}
-
-message PublicOrigin {
-  string id = 1;
-  string url = 2;
-}
-
-message TailscalePublication {
-  string origin_id = 1;
-  string service_name = 2;
-  string url = 3;
-  string status = 4;
-  string message = 5;
-}
-message TailscaleSharingState {
-  uint64 revision = 1;
-  bool enabled = 2;
-  string gateway_name = 3;
-  string dns_suffix = 4;
-  string setup_message = 5;
-  bool automatic_creation = 6;
-  repeated TailscalePublication publications = 7;
-  string error = 8;
-}
-message GetTailscaleSharingRequest {}
-message GetTailscaleSharingResponse { TailscaleSharingState state = 1; }
-message SetTailscaleSharingRequest {
-  bool enabled = 1;
-  uint64 expected_revision = 2;
-}
-message SetTailscaleSharingResponse { TailscaleSharingState state = 1; }
-message PrepareTailscaleSharingRequest { string workspace_id = 1; }
-message PrepareTailscaleSharingResponse { PublicAccessDocument document = 1; }
-message PublicOriginBinding {
-  string workspace_id = 1;
-  string origin_id = 2;
-  string local_host = 3;
-}
-message PublicDeviceSelection {
-  string node_id = 1;
-  string workspace_id = 2;
-}
-message PublicAccessDocument {
-  uint32 schema_version = 1;
-  repeated PublicOrigin origins = 2;
-  repeated PublicOriginBinding bindings = 3;
-  repeated PublicDeviceSelection devices = 4;
-  string shared_workspace_id = 5;
-  repeated uint64 allowed_user_ids = 6;
-}
-message PublicAccessConfiguration {
-  uint64 revision = 1;
-  PublicAccessDocument document = 2;
-}
-message PublicIngressState {
-  string listen_address = 1;
-  string nginx_address = 2;
-  bool active = 3;
-  string error = 4;
-}
-message PublicAccessDevice {
-  string node_id = 1;
-  uint64 user_id = 2;
-  string name = 3;
-  string dns_name = 4;
-  repeated string addresses = 5;
-  bool online = 6;
-  bool tagged = 7;
-  bool self = 8;
-}
-message PublicWorkspaceHosts {
-  string name = 3;
-  string workspace_id = 1;
-  repeated string local_hosts = 2;
-}
-message GetPublicAccessRequest {}
-message GetPublicAccessResponse {
-  PublicAccessConfiguration configuration = 1;
-  PublicIngressState ingress = 2;
-  repeated PublicAccessDevice devices = 3;
-  string device_error = 4;
-  repeated PublicWorkspaceHosts workspaces = 5;
-}
-message SavePublicAccessRequest {
-  PublicAccessDocument document = 1;
-  uint64 expected_revision = 2;
-}
-message SavePublicAccessResponse {
-  PublicAccessConfiguration configuration = 1;
 }
 
 // RouteMode describes the desired or effective destination for a route. The
@@ -1071,72 +968,6 @@ message StopFollowingWorkspaceResponse {
   bool changed = 3;
   WorkspaceInheritanceStatus status = 4;
 }
-
-message SharedIngressRecord {
-  uint32 schema_version = 1;
-  string group_id = 2;
-  uint64 version = 3;
-  uint64 epoch = 4;
-  string owner_fingerprint = 5;
-  string routing_owner_fingerprint = 6;
-  repeated string gateways = 7;
-  PublicAccessDocument policy = 8;
-  string previous_owner_fingerprint = 9;
-  string predecessor_digest = 10;
-  string digest = 11;
-}
-message SharedIngressPending {
-  SharedIngressRecord before = 1;
-  SharedIngressRecord next = 2;
-  bool outgoing = 3;
-  bool committed = 4;
-}
-message SharedIngressState {
-  uint64 revision = 1;
-  SharedIngressRecord record = 2;
-  SharedIngressPending pending = 3;
-  string self_fingerprint = 4;
-}
-message SharedIngressConfiguration {
-  PublicAccessDocument policy = 1;
-  string routing_owner_fingerprint = 2;
-  repeated string gateways = 3;
-}
-message GetSharedIngressRequest {}
-message CreateSharedIngressRequest {
-  SharedIngressConfiguration configuration = 1;
-  uint64 expected_revision = 2;
-}
-message SaveSharedIngressRequest {
-  SharedIngressConfiguration configuration = 1;
-  uint64 expected_version = 2;
-}
-message JoinSharedIngressRequest {
-  string owner_fingerprint = 1;
-  uint64 expected_revision = 2;
-}
-message TransferSharedIngressRequest {
-  string destination_fingerprint = 1;
-  uint64 expected_version = 2;
-}
-message RecoverSharedIngressRequest { uint64 expected_revision = 1; }
-message CancelSharedIngressRequest { uint64 expected_revision = 1; }
-message SyncSharedIngressRequest {}
-message GetSharedIngressResponse { SharedIngressState state = 1; }
-message CreateSharedIngressResponse { SharedIngressState state = 1; }
-message SaveSharedIngressResponse { SharedIngressState state = 1; }
-message JoinSharedIngressResponse { SharedIngressState state = 1; }
-message TransferSharedIngressResponse { SharedIngressState state = 1; }
-message RecoverSharedIngressResponse { SharedIngressState state = 1; }
-message CancelSharedIngressResponse { SharedIngressState state = 1; }
-message SyncSharedIngressResponse { SharedIngressState state = 1; }
-
-message GetRoutingWorkspacesRequest { string routing_owner_fingerprint = 1; }
-message GetRoutingWorkspacesResponse {
-  string routing_owner_fingerprint = 1;
-  repeated PublicWorkspaceHosts workspaces = 2;
-}
-
 
 message ComputerFollowingStatus {
   uint64 revision = 1;

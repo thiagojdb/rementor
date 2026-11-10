@@ -32,7 +32,6 @@ import (
 	"time"
 
 	"github.com/thiagojdb/rementor/internal/fleet"
-	"github.com/thiagojdb/rementor/internal/shared"
 )
 
 const invitationTTL = 5 * time.Minute
@@ -85,8 +84,6 @@ type Manager struct {
 	listenerError   string
 	generation      uint64
 	workspaceSource fleet.WorkspaceSource
-	sharedAuthority *shared.Authority
-	sharedIngress   SharedIngress
 	forwards        map[uint64]activeForward
 	forwardSequence uint64
 	managementPort  int
@@ -283,7 +280,7 @@ func (m *Manager) configureLocked(listen, advertised string) error {
 	if err != nil {
 		return fmt.Errorf("start peer listener: %w", err)
 	}
-	server := &http.Server{Handler: http.HandlerFunc(m.handle), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 10 * time.Second, IdleTimeout: 30 * time.Second, MaxHeaderBytes: 8192}
+	server := &http.Server{Handler: http.HandlerFunc(m.handle), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 10 * time.Second, IdleTimeout: 30 * time.Second, MaxHeaderBytes: 32768}
 	secure := tls.NewListener(listener, &tls.Config{Certificates: []tls.Certificate{m.identity}, MinVersion: tls.VersionTLS13, ClientAuth: tls.RequireAnyClientCert})
 	if err = m.persist(next); err != nil {
 		_ = listener.Close()
@@ -565,18 +562,6 @@ func (m *Manager) handle(w http.ResponseWriter, r *http.Request) {
 	m.mu.Unlock()
 	if !trusted || !active {
 		http.Error(w, "computer is not paired", http.StatusForbidden)
-		return
-	}
-	if r.URL.Path == publicWorkspaceCatalogPath {
-		m.handlePublicWorkspaceCatalog(w, r, id, own.Fingerprint)
-		return
-	}
-	if strings.HasPrefix(r.URL.Path, sharedForwardPrefix+"/") {
-		m.handleSharedForward(w, r, id)
-		return
-	}
-	if r.URL.Path == sharedPrefix || strings.HasPrefix(r.URL.Path, sharedPrefix+"/") {
-		m.handleShared(w, r, id)
 		return
 	}
 	if strings.HasPrefix(r.URL.Path, forwardPrefix+"/") {

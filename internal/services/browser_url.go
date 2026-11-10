@@ -188,7 +188,7 @@ func (r *Registry) ResolveBrowserURL(workspaceID, applicationRef string) (Browse
 	return BrowserURLResolution{
 		WorkspaceID: ws.WorkspaceID, Environment: ws.EnvironmentID(), ApplicationRef: applicationRef,
 		CanonicalAppID: app.CanonicalAppID(), ServiceID: app.ServiceID, Repository: app.Repository,
-		PublicHost: host, PublicPath: path, URL: r.PublicOriginForHost(ws.WorkspaceID, host) + path, BrowserURL: r.PublicOriginForHost(ws.WorkspaceID, host) + path,
+		PublicHost: host, PublicPath: path, URL: PublicOrigin(host) + path, BrowserURL: PublicOrigin(host) + path,
 		Target: resolvedRoute.Target, LocalTarget: resolvedRoute.LocalTarget, RemoteTarget: resolvedRoute.RemoteTarget,
 		DesiredMode: resolvedRoute.DesiredMode, EffectiveMode: resolvedRoute.EffectiveMode,
 		RouteVersion: version, OperationID: state.OperationID,
@@ -216,6 +216,35 @@ func operationCorrelation(operation *models.OperationMetadata) string {
 		return ""
 	}
 	return operation.CorrelationID
+}
+
+// WorkspaceBrowserHost selects the unique application mounted at the root.
+// A workspace's routing hostname may serve only API paths. Keep a session's
+// frontend binding (and its prefix) rather than sending users to that API host.
+// Selection is independent of target health, so an offline app remains explicit.
+func WorkspaceBrowserHost(ws *models.Workspace) string {
+	if ws == nil {
+		return ""
+	}
+	fallback := normalizeHost(ws.GetLocalDomain())
+	root := ""
+	for _, app := range ws.Applications {
+		if browserPublicPath(ws, app) != "/" {
+			continue
+		}
+		host := browserPublicHost(ws, app)
+		if host == "" {
+			continue
+		}
+		if root != "" && root != host {
+			return fallback
+		}
+		root = host
+	}
+	if root != "" {
+		return root
+	}
+	return fallback
 }
 
 func browserPublicHost(ws *models.Workspace, app *models.Application) string {

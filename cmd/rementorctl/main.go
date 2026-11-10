@@ -80,12 +80,6 @@ func main() {
 		cli.NginxCmd(rest)
 	case "route":
 		cli.RouteCmd(client, jsonOutput, rest)
-	case "shared-ingress":
-		cli.SharedIngressCmd(client, rest)
-	case "access":
-		cli.AccessCmd(client, rest)
-	case "tailscale-sharing":
-		cli.TailscaleSharingCmd(client, rest)
 	case "fleet":
 		cli.FleetCmd(client, rest)
 	case "computer-following":
@@ -118,20 +112,6 @@ Global options (can be placed before or after the command):
   --session <id>   isolated routing session (default: $REMENTOR_SESSION)
 
 Commands:
-  tailscale-sharing show
-  tailscale-sharing prepare --workspace <environment-or-session>
-  tailscale-sharing on|off --expected-revision <revision>
-  shared-ingress show
-  shared-ingress workspaces [--routing-computer <fingerprint>]
-  shared-ingress create --file <config.json> --expected-revision <revision>
-  shared-ingress save --file <config.json> --expected-version <version>
-  shared-ingress join --owner <fingerprint> --expected-revision <revision>
-  shared-ingress transfer --destination <fingerprint> --expected-version <version>
-  shared-ingress recover|cancel --expected-revision <revision>
-  shared-ingress sync
-  access show
-  access save --file <document.json> --expected-revision <revision>
-  access clear --expected-revision <revision>
   session create <name> --workspace <environment>
   session list [--workspace <environment>]
   session inspect|close <session-id>

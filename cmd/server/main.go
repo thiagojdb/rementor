@@ -8,11 +8,9 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
-	"slices"
 	"strconv"
 	"strings"
 	"syscall"
@@ -21,17 +19,13 @@ import (
 	"connectrpc.com/connect"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/thiagojdb/rementor/internal/access"
 	"github.com/thiagojdb/rementor/internal/config"
 	"github.com/thiagojdb/rementor/internal/gen/rementor/v1/rementorv1connect"
-	"github.com/thiagojdb/rementor/internal/ingress"
 	"github.com/thiagojdb/rementor/internal/nginx"
 	"github.com/thiagojdb/rementor/internal/peers"
 	"github.com/thiagojdb/rementor/internal/rpc"
 	"github.com/thiagojdb/rementor/internal/services"
-	"github.com/thiagojdb/rementor/internal/shared"
 	"github.com/thiagojdb/rementor/internal/systemd"
-	"github.com/thiagojdb/rementor/internal/tailshare"
 )
 
 const (
@@ -170,15 +164,6 @@ func main() {
 					return fmt.Errorf("initialize peer identity: %w", err)
 				}
 				peerManager.SetWorkspaceSource(registry)
-				sharedStore, err := config.NewSharedIngressStore()
-				if err != nil {
-					return fmt.Errorf("open shared ingress store: %w", err)
-				}
-				sharedAuthority, err := shared.Open(peerManager.State().Fingerprint, sharedStore)
-				if err != nil {
-					return fmt.Errorf("restore shared ingress ownership: %w", err)
-				}
-				peerManager.SetSharedAuthority(sharedAuthority)
 				if err := registry.SetPeerWorkspaceClient(peerManager.State().Fingerprint, peerManager); err != nil {
 					peerManager.Close()
 					return fmt.Errorf("restore peer inheritance: %w", err)
@@ -213,100 +198,6 @@ func main() {
 				go registry.RunPeerSynchronization(ctx, 5*time.Second)
 				controlPlane := rpc.NewControlPlaneService(registry)
 				controlPlane.SetPeerManager(peerManager)
-				controlPlane.SetSharedIngress(sharedAuthority)
-				publicPort, publicPortError := ingress.PublicPort(port, os.Getenv("REMENTOR_PUBLIC_INGRESS_PORT"))
-				publicListen := net.JoinHostPort("127.0.0.1", strconv.Itoa(publicPort))
-				if publicPortError != nil || publicPort == gatewayPort {
-					publicListen = "" // Publication remains unavailable; local routing still works.
-				}
-				protectedPorts = append(protectedPorts, publicPort)
-				peerManager.ProtectLocalPorts(protectedPorts...)
-				nginxAddress := os.Getenv("REMENTOR_PUBLIC_NGINX_ADDRESS")
-				if nginxAddress == "" {
-					nginxPorts := strings.Split(os.Getenv("REMENTOR_NGINX_LISTEN_PORTS"), ",")
-					if len(nginxPorts) == 1 {
-						nginxPort := strings.TrimSpace(nginxPorts[0])
-						if nginxPort == "" {
-							nginxPort = "80"
-						}
-						nginxAddress = "http://127.0.0.1:" + nginxPort
-					}
-				}
-				if parsed, err := url.Parse(nginxAddress); err == nil {
-					nginxPort, _ := strconv.Atoi(parsed.Port())
-					protectedPorts = append(protectedPorts, nginxPort)
-					peerManager.ProtectLocalPorts(protectedPorts...)
-					if nginxPort == port || nginxPort == gatewayPort || nginxPort == publicPort {
-						nginxAddress = ""
-					}
-				}
-				gatewaySocket := os.Getenv("REMENTOR_TAILSCALE_GATEWAY_SOCKET")
-				if gatewaySocket == "" {
-					gatewaySocket = os.Getenv("REMENTOR_TAILSCALE_SOCKET")
-				}
-				identity := ingress.NewTailscaleIdentityResolver(gatewaySocket)
-				deviceCatalog := ingress.NewTailscaleIdentityResolver(os.Getenv("REMENTOR_TAILSCALE_SOCKET"))
-				publicRuntime := ingress.NewRuntime(registry, identity, publicListen, nginxAddress, peerManager.IsProtectedLocalPort)
-				publicRuntime.ConfigureShared(sharedAuthority, peerManager)
-				if err := publicRuntime.Start(); err != nil {
-					log.Printf("Public data plane unavailable: %v", err)
-				}
-				controlPlane.SetPublicIngress(publicRuntime, deviceCatalog)
-				publisherProvider := tailshare.NewTailscale(gatewaySocket, os.Getenv("REMENTOR_TAILSCALE_API_TOKEN"))
-				publisherProvider.ApplicationPath = func(manifest access.Manifest, origin tailshare.Origin) string {
-					ws := registry.GetWorkspaceView(manifest.WorkspaceID)
-					if ws == nil {
-						return "/"
-					}
-					host := manifest.RoutingHosts[origin.ID]
-					path := ""
-					for _, route := range services.NormalizedRoutes(ws) {
-						if route.PublicHost == host && route.CanonicalAppID != "" {
-							candidate := strings.TrimSuffix(route.Pattern, "/*")
-							if candidate == "" {
-								candidate = "/"
-							}
-							if path == "" || len(candidate) < len(path) {
-								path = candidate
-							}
-						}
-					}
-					if path == "" {
-						path = "/"
-					}
-					return path
-				}
-				publisher, err := tailshare.New(config.TailscaleSharingStore{}, publisherProvider, func() access.Configuration {
-					state := sharedAuthority.State()
-					if state.Record != nil && slices.Contains(state.Record.Gateways, peerManager.State().Fingerprint) {
-						return access.Configuration{Revision: state.Record.Version, Document: state.Record.Policy.Clone()}
-					}
-					if state.Record != nil {
-						return access.Configuration{Document: access.Empty()}
-					}
-					return registry.PublicAccessConfiguration()
-				})
-				if err != nil {
-					return fmt.Errorf("restore Tailscale sharing: %w", err)
-				}
-				controlPlane.SetTailscalePublisher(publisher)
-				publisher.Target = func() string { return "http://" + publicRuntime.State().ListenAddress }
-				publisher.SharedOwner = func() string {
-					state := sharedAuthority.State()
-					if state.Record != nil && slices.Contains(state.Record.Gateways, peerManager.State().Fingerprint) {
-						return state.Record.GroupID
-					}
-					return ""
-				}
-				go publisher.Run(ctx)
-				go func() {
-					<-ctx.Done()
-					publicRuntime.Close()
-					identity.Close()
-					deviceCatalog.Close()
-					publisherProvider.Close()
-				}()
-
 				// Typed Connect RPC API generated from proto/rementor/v1/rementor.proto.
 				rpcPath, rpcHandler := rementorv1connect.NewControlPlaneServiceHandler(
 					controlPlane,

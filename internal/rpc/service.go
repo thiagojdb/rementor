@@ -12,24 +12,17 @@ import (
 	"connectrpc.com/connect"
 	rementorv1 "github.com/thiagojdb/rementor/internal/gen/rementor/v1"
 	"github.com/thiagojdb/rementor/internal/gen/rementor/v1/rementorv1connect"
-	"github.com/thiagojdb/rementor/internal/ingress"
 	"github.com/thiagojdb/rementor/internal/models"
 	"github.com/thiagojdb/rementor/internal/peers"
 	"github.com/thiagojdb/rementor/internal/services"
-	"github.com/thiagojdb/rementor/internal/shared"
-	"github.com/thiagojdb/rementor/internal/tailshare"
 	"github.com/thiagojdb/rementor/internal/validation"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type ControlPlaneService struct {
-	registry         *services.Registry
-	sharedIngress    *shared.Authority
-	peers            *peers.Manager
-	publicIngress    *ingress.Runtime
-	publicDevices    publicDeviceCatalog
-	tailscaleSharing *tailshare.Manager
-	fleetReviewKey   [32]byte
+	registry       *services.Registry
+	peers          *peers.Manager
+	fleetReviewKey [32]byte
 }
 
 func NewControlPlaneService(registry *services.Registry) *ControlPlaneService {
@@ -517,7 +510,7 @@ func toProtoWorkspace(ws *models.Workspace) *rementorv1.Workspace {
 		Id:           ws.WorkspaceID,
 		Inheritance:  inheritanceProto(ws.Inheritance),
 		Session:      sessionToProto(ws.Session),
-		BrowserUrl:   services.PublicOrigin(ws.GetLocalDomain()) + "/",
+		BrowserUrl:   services.PublicOrigin(services.WorkspaceBrowserHost(ws)) + "/",
 		Type:         ws.GetType(),
 		Name:         name,
 		Color:        color,

@@ -11,9 +11,6 @@ import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
 import { ComputerFollowingSettings } from '@/components/computer-following'
-import { PublicAccessSettings } from '@/components/public-access'
-import { TailscaleSharingSettings } from '@/components/tailscale-sharing'
-import { SharedIngressSettings } from '@/components/shared-ingress'
 
 const selectClass = 'h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
 const message = (error: unknown) => error instanceof Error ? error.message : 'Request failed'
@@ -149,9 +146,6 @@ export function FleetConfiguration() {
         <div className="overflow-x-auto rounded-lg border"><Table><TableHeader><TableRow><TableHead className="pl-4">Computer</TableHead><TableHead>Connection</TableHead><TableHead><span className="sr-only">Actions</span></TableHead></TableRow></TableHeader><TableBody>{state.computers.map((peer) => <TableRow key={peer.fingerprint}><TableCell className="min-w-48 pl-4"><p className="font-medium">{peer.name}</p><p className="mt-1 break-all font-mono text-xs text-muted-foreground">{peer.url}</p><details className="mt-2 text-xs"><summary className="cursor-pointer text-muted-foreground">Identity</summary><div className="mt-2"><Identity value={peer.fingerprint} /></div></details></TableCell><TableCell className="min-w-40"><Badge variant={checks[peer.fingerprint]?.ok === false ? 'destructive' : 'secondary'}>{checks[peer.fingerprint]?.ok === false ? 'Unreachable' : 'Paired'}</Badge>{checks[peer.fingerprint] && <p className="mt-2 max-w-xs break-words text-xs text-muted-foreground">{checks[peer.fingerprint].text}</p>}</TableCell><TableCell><div className="flex flex-wrap justify-end gap-2"><Button variant="outline" size="sm" disabled={Boolean(busy)} onClick={() => void check(peer)}>{busy === peer.fingerprint && <Loader2 className="animate-spin" />}Check connection</Button><Button variant="ghost" size="sm" disabled={Boolean(busy)} onClick={() => setDisconnect(peer)}>Disconnect</Button></div></TableCell></TableRow>)}{!state.computers.length && <TableRow><TableCell colSpan={3} className="h-24 text-center text-muted-foreground">No paired computers.</TableCell></TableRow>}</TableBody></Table></div>
       </section>
       <ComputerFollowingSettings peers={state.computers} />
-      <TailscaleSharingSettings />
-      <PublicAccessSettings />
-      {state && <SharedIngressSettings peers={state} />}
       {settingsOpen && <ConnectionSettings state={state} onClose={() => setSettingsOpen(false)} onSave={setState} />}
       {pairingMode && !settingsOpen && <PairingDialog mode={pairingMode} state={state} onClose={() => setPairingMode(undefined)} initialInvitation={pairingMode === 'invite' ? generatedInvitation : undefined} onPaired={refresh} />}
       <Dialog open={Boolean(disconnect)} onOpenChange={(open) => { if (!open && !busy) setDisconnect(undefined) }}><DialogContent><DialogHeader><DialogTitle>Disconnect {disconnect?.name}?</DialogTitle><DialogDescription>Pair again with a new invitation to reconnect.</DialogDescription></DialogHeader>{error && <p role="alert" className="text-sm text-destructive">{error}</p>}<DialogFooter><Button variant="outline" disabled={Boolean(busy)} onClick={() => setDisconnect(undefined)}>Cancel</Button><Button variant="destructive" disabled={Boolean(busy)} onClick={() => void remove()}>Disconnect</Button></DialogFooter></DialogContent></Dialog>

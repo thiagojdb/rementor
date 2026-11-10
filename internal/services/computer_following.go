@@ -30,6 +30,10 @@ type ComputerFollowingCheck struct {
 func cloneFollowing(state models.ComputerFollowing) models.ComputerFollowing {
 	out := state
 	out.Snapshot = append(json.RawMessage(nil), state.Snapshot...)
+	out.SessionIDs = map[string]string{}
+	for source, local := range state.SessionIDs {
+		out.SessionIDs[source] = local
+	}
 	out.Excluded = map[string]bool{}
 	for id, excluded := range state.Excluded {
 		out.Excluded[id] = excluded
@@ -84,10 +88,8 @@ func (r *Registry) ExportPeerConfiguration() (fleet.ConfigurationSnapshot, error
 		parents = append(parents, cache.Parents...)
 	}
 	environments := []fleet.ConfigurationEnvironment{}
+	sessions := []fleet.ConfigurationSession{}
 	for _, ws := range workspaces {
-		if ws.Session != nil {
-			continue
-		}
 		intent, err := peerIntent(ws)
 		if err != nil {
 			return fleet.ConfigurationSnapshot{}, err
@@ -100,9 +102,16 @@ func (r *Registry) ExportPeerConfiguration() (fleet.ConfigurationSnapshot, error
 		if ws.Color != nil {
 			color = *ws.Color
 		}
-		environments = append(environments, fleet.ConfigurationEnvironment{Snapshot: snapshot, Color: color})
+		entry := fleet.ConfigurationEnvironment{Snapshot: snapshot, Color: color}
+		if ws.Session != nil {
+			metadata := cloneSession(ws.Session)
+			metadata.HostPrefix = routingSessionHostPrefix(ws)
+			sessions = append(sessions, fleet.ConfigurationSession{ConfigurationEnvironment: entry, Session: *metadata})
+		} else {
+			environments = append(environments, entry)
+		}
 	}
-	return fleet.NewConfiguration(owner, parents, environments)
+	return fleet.NewConfiguration(owner, parents, environments, sessions...)
 }
 func (r *Registry) configurationClient() (string, PeerConfigurationClient, error) {
 	owner, client, err := r.peerWorkspaceClient()
@@ -215,8 +224,14 @@ func (r *Registry) computerConfigurationCandidate(ctx context.Context, owner, pe
 		}
 	}
 	managed := map[string]bool{}
+	sessionIDs := map[string]bool{}
+	for _, id := range state.SessionIDs {
+		sessionIDs[id] = true
+	}
 	for id := range state.Originals {
-		managed[id] = true
+		if !sessionIDs[id] {
+			managed[id] = true
+		}
 	}
 	nextManaged := map[string]bool{}
 	for _, environment := range snapshot.Environments {
@@ -240,7 +255,7 @@ func (r *Registry) computerConfigurationCandidate(ctx context.Context, owner, pe
 				next = append(next, cloneWorkspace(original))
 			} else {
 				for _, local := range previous {
-					if local.Session != nil && local.Session.EnvironmentID == ws.WorkspaceID {
+					if local.Session != nil && local.Session.EnvironmentID == ws.WorkspaceID && !sessionIDs[local.WorkspaceID] {
 						return nil, state, fmt.Errorf("source removed environment %s with a local session; close or move that session first", ws.WorkspaceID)
 					}
 				}
@@ -273,6 +288,10 @@ func (r *Registry) computerConfigurationCandidate(ctx context.Context, owner, pe
 			return nil, state, err
 		}
 		next = append(next, workspace)
+	}
+	next, err := r.projectComputerSessions(owner, peer, snapshot, previous, next, &state)
+	if err != nil {
+		return nil, state, err
 	}
 	state.OwnerFingerprint = peer
 	state.Snapshot, _ = json.Marshal(snapshot)
@@ -335,16 +354,23 @@ func (r *Registry) refreshUnchangedPeerBindings(ws *models.Workspace, old, curre
 }
 
 func (r *Registry) projectComputerEnvironment(owner string, environment fleet.ConfigurationEnvironment, prior *models.Workspace, managed bool) (*models.Workspace, error) {
+	return r.projectComputerWorkspace(owner, environment, environment.Snapshot.Intent.Scope.WorkspaceID, nil, prior, managed)
+}
+
+func (r *Registry) projectComputerWorkspace(owner string, environment fleet.ConfigurationEnvironment, id string, session *models.RoutingSession, prior *models.Workspace, managed bool) (*models.Workspace, error) {
 	source := environment.Snapshot
-	id := source.Intent.Scope.WorkspaceID
-	base := models.WorkspaceConfig{ID: id, Name: source.Intent.Name, Color: environment.Color, Type: source.Intent.Type, Routing: source.Intent.Routing, Applications: models.CloneApplicationConfigs(source.Intent.Applications)}
+	base := models.WorkspaceConfig{ID: id, Name: source.Intent.Name, Color: environment.Color, Type: source.Intent.Type, Routing: source.Intent.Routing, Applications: models.CloneApplicationConfigs(source.Intent.Applications), Session: cloneSession(session)}
+	localScope := fleet.Scope{WorkspaceID: id, EnvironmentID: id}
+	if session != nil {
+		localScope.EnvironmentID, localScope.SessionID = session.EnvironmentID, id
+	}
 	if managed && prior != nil {
 		base.Inheritance = prior.Inheritance.Clone()
 		base.Inheritance.Overrides = map[string]models.RouteSelection{}
 		base.Inheritance.OriginalRouting = source.Intent.Routing
 		base.Inheritance.OriginalApplications = models.CloneApplicationConfigs(source.Intent.Applications)
 	}
-	projection, err := fleet.ProjectInheritance(owner, fleet.Scope{WorkspaceID: id, EnvironmentID: id}, base, source, time.Now())
+	projection, err := fleet.ProjectInheritance(owner, localScope, base, source, time.Now())
 	if err != nil {
 		return nil, err
 	}
@@ -454,16 +480,12 @@ func (r *Registry) StopFollowingComputer(expected uint64) error {
 		if state.OwnerFingerprint == "" {
 			return previous, state, nil
 		}
-		cache, err := cachedConfiguration(state)
-		if err != nil {
+		if _, err := cachedConfiguration(state); err != nil {
 			return nil, state, err
 		}
 		managed := map[string]bool{}
-		for _, environment := range cache.Environments {
-			id := environment.Snapshot.Intent.Scope.WorkspaceID
-			if !state.Excluded[id] {
-				managed[id] = true
-			}
+		for id := range state.Originals {
+			managed[id] = true
 		}
 		next := []*models.Workspace{}
 		for _, ws := range previous {
@@ -475,7 +497,7 @@ func (r *Registry) StopFollowingComputer(expected uint64) error {
 				next = append(next, cloneWorkspace(original))
 			} else {
 				for _, local := range previous {
-					if local.Session != nil && local.Session.EnvironmentID == ws.WorkspaceID {
+					if local.Session != nil && local.Session.EnvironmentID == ws.WorkspaceID && !managed[local.WorkspaceID] {
 						return nil, state, fmt.Errorf("close local sessions in %s before stopping following", ws.WorkspaceID)
 					}
 				}
@@ -565,6 +587,18 @@ func (r *Registry) SetEnvironmentFollowing(ctx context.Context, id string, follo
 				}
 				state.Excluded[id] = true
 				delete(state.Originals, id)
+				// Detach source sessions with the environment. Their peer endpoints
+				// and pinned baselines remain intact, as do independent local sessions.
+				for _, localID := range state.SessionIDs {
+					if _, managed := state.Originals[localID]; !managed {
+						continue
+					}
+					child := findWorkspace(next, localID)
+					if child != nil && child.Session != nil && child.Session.EnvironmentID == id {
+						child.Inheritance = nil
+						delete(state.Originals, localID)
+					}
+				}
 			}
 			found := false
 			for i, ws := range next {
@@ -648,9 +682,6 @@ func (r *Registry) EditPeerConfigurationWithTrust(ctx context.Context, edit flee
 	ws := r.GetWorkspaceView(edit.WorkspaceID)
 	if ws == nil {
 		return fleet.ErrWorkspaceNotFound
-	}
-	if ws.Session != nil {
-		return errors.New("computer configuration edits cannot target a routing session")
 	}
 	if ws.Route.RouteVersion != edit.ExpectedVersion {
 		return fleet.ErrConfigurationConflict
@@ -753,7 +784,7 @@ func (r *Registry) toggleFollowedApplications(id, mode string) (*ToggleResult, *
 
 func validateComputerFollowingState(state models.ComputerFollowing, workspaces []*models.Workspace) error {
 	if state.OwnerFingerprint == "" {
-		if len(state.Snapshot) != 0 || len(state.Originals) != 0 || len(state.Excluded) != 0 {
+		if len(state.Snapshot) != 0 || len(state.Originals) != 0 || len(state.Excluded) != 0 || len(state.SessionIDs) != 0 {
 			return errors.New("invalid detached computer following state")
 		}
 		return nil
@@ -782,6 +813,11 @@ func validateComputerFollowingState(state models.ComputerFollowing, workspaces [
 			managedCount++
 		}
 	}
+	for _, session := range snapshot.Sessions {
+		if !state.Excluded[session.Session.EnvironmentID] {
+			managedCount++
+		}
+	}
 	if len(state.Originals) != managedCount {
 		return errors.New("computer following membership does not match cache")
 	}
@@ -798,6 +834,28 @@ func validateComputerFollowingState(state models.ComputerFollowing, workspaces [
 		ws := findWorkspace(workspaces, id)
 		if ws == nil || ws.Session != nil || ws.Inheritance == nil || ws.Inheritance.Source.OwnerFingerprint != state.OwnerFingerprint || ws.Inheritance.Source.Scope != source.Intent.Scope || ws.Inheritance.Source.Version != source.Version || ws.Inheritance.Source.Digest != source.Digest || len(ws.Inheritance.Overrides) != 0 {
 			return errors.New("stored environment does not match followed computer configuration")
+		}
+	}
+	seen := map[string]bool{}
+	for source, local := range state.SessionIDs {
+		if validation.Identifier("source session", source) != nil || validation.Identifier("local session", local) != nil || seen[local] {
+			return errors.New("invalid followed session identity")
+		}
+		seen[local] = true
+	}
+	for _, session := range snapshot.Sessions {
+		if state.Excluded[session.Session.EnvironmentID] {
+			continue
+		}
+		source := session.Snapshot
+		id := state.SessionIDs[source.Intent.Scope.WorkspaceID]
+		original, exists := state.Originals[id]
+		if id == "" || !exists || (original != nil && (original.WorkspaceID != id || original.Session == nil)) {
+			return errors.New("invalid saved original session")
+		}
+		ws := findWorkspace(workspaces, id)
+		if ws == nil || !reflect.DeepEqual(ws.Session, &session.Session) || ws.Inheritance == nil || ws.Inheritance.Source != fleet.SnapshotReference(source) || len(ws.Inheritance.Overrides) != 0 {
+			return errors.New("stored session does not match followed computer configuration")
 		}
 	}
 	return nil

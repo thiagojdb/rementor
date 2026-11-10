@@ -229,1182 +229,6 @@ func (ErrorCode) EnumDescriptor() ([]byte, []int) {
 	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{2}
 }
 
-type PublicOrigin struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Url           string                 `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *PublicOrigin) Reset() {
-	*x = PublicOrigin{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *PublicOrigin) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PublicOrigin) ProtoMessage() {}
-
-func (x *PublicOrigin) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PublicOrigin.ProtoReflect.Descriptor instead.
-func (*PublicOrigin) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *PublicOrigin) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *PublicOrigin) GetUrl() string {
-	if x != nil {
-		return x.Url
-	}
-	return ""
-}
-
-type TailscalePublication struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	OriginId      string                 `protobuf:"bytes,1,opt,name=origin_id,json=originId,proto3" json:"origin_id,omitempty"`
-	ServiceName   string                 `protobuf:"bytes,2,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"`
-	Url           string                 `protobuf:"bytes,3,opt,name=url,proto3" json:"url,omitempty"`
-	Status        string                 `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"`
-	Message       string                 `protobuf:"bytes,5,opt,name=message,proto3" json:"message,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *TailscalePublication) Reset() {
-	*x = TailscalePublication{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *TailscalePublication) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*TailscalePublication) ProtoMessage() {}
-
-func (x *TailscalePublication) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use TailscalePublication.ProtoReflect.Descriptor instead.
-func (*TailscalePublication) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *TailscalePublication) GetOriginId() string {
-	if x != nil {
-		return x.OriginId
-	}
-	return ""
-}
-
-func (x *TailscalePublication) GetServiceName() string {
-	if x != nil {
-		return x.ServiceName
-	}
-	return ""
-}
-
-func (x *TailscalePublication) GetUrl() string {
-	if x != nil {
-		return x.Url
-	}
-	return ""
-}
-
-func (x *TailscalePublication) GetStatus() string {
-	if x != nil {
-		return x.Status
-	}
-	return ""
-}
-
-func (x *TailscalePublication) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
-type TailscaleSharingState struct {
-	state             protoimpl.MessageState  `protogen:"open.v1"`
-	Revision          uint64                  `protobuf:"varint,1,opt,name=revision,proto3" json:"revision,omitempty"`
-	Enabled           bool                    `protobuf:"varint,2,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	GatewayName       string                  `protobuf:"bytes,3,opt,name=gateway_name,json=gatewayName,proto3" json:"gateway_name,omitempty"`
-	DnsSuffix         string                  `protobuf:"bytes,4,opt,name=dns_suffix,json=dnsSuffix,proto3" json:"dns_suffix,omitempty"`
-	SetupMessage      string                  `protobuf:"bytes,5,opt,name=setup_message,json=setupMessage,proto3" json:"setup_message,omitempty"`
-	AutomaticCreation bool                    `protobuf:"varint,6,opt,name=automatic_creation,json=automaticCreation,proto3" json:"automatic_creation,omitempty"`
-	Publications      []*TailscalePublication `protobuf:"bytes,7,rep,name=publications,proto3" json:"publications,omitempty"`
-	Error             string                  `protobuf:"bytes,8,opt,name=error,proto3" json:"error,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
-}
-
-func (x *TailscaleSharingState) Reset() {
-	*x = TailscaleSharingState{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *TailscaleSharingState) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*TailscaleSharingState) ProtoMessage() {}
-
-func (x *TailscaleSharingState) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use TailscaleSharingState.ProtoReflect.Descriptor instead.
-func (*TailscaleSharingState) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *TailscaleSharingState) GetRevision() uint64 {
-	if x != nil {
-		return x.Revision
-	}
-	return 0
-}
-
-func (x *TailscaleSharingState) GetEnabled() bool {
-	if x != nil {
-		return x.Enabled
-	}
-	return false
-}
-
-func (x *TailscaleSharingState) GetGatewayName() string {
-	if x != nil {
-		return x.GatewayName
-	}
-	return ""
-}
-
-func (x *TailscaleSharingState) GetDnsSuffix() string {
-	if x != nil {
-		return x.DnsSuffix
-	}
-	return ""
-}
-
-func (x *TailscaleSharingState) GetSetupMessage() string {
-	if x != nil {
-		return x.SetupMessage
-	}
-	return ""
-}
-
-func (x *TailscaleSharingState) GetAutomaticCreation() bool {
-	if x != nil {
-		return x.AutomaticCreation
-	}
-	return false
-}
-
-func (x *TailscaleSharingState) GetPublications() []*TailscalePublication {
-	if x != nil {
-		return x.Publications
-	}
-	return nil
-}
-
-func (x *TailscaleSharingState) GetError() string {
-	if x != nil {
-		return x.Error
-	}
-	return ""
-}
-
-type GetTailscaleSharingRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetTailscaleSharingRequest) Reset() {
-	*x = GetTailscaleSharingRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetTailscaleSharingRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetTailscaleSharingRequest) ProtoMessage() {}
-
-func (x *GetTailscaleSharingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetTailscaleSharingRequest.ProtoReflect.Descriptor instead.
-func (*GetTailscaleSharingRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{3}
-}
-
-type GetTailscaleSharingResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	State         *TailscaleSharingState `protobuf:"bytes,1,opt,name=state,proto3" json:"state,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetTailscaleSharingResponse) Reset() {
-	*x = GetTailscaleSharingResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetTailscaleSharingResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetTailscaleSharingResponse) ProtoMessage() {}
-
-func (x *GetTailscaleSharingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetTailscaleSharingResponse.ProtoReflect.Descriptor instead.
-func (*GetTailscaleSharingResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *GetTailscaleSharingResponse) GetState() *TailscaleSharingState {
-	if x != nil {
-		return x.State
-	}
-	return nil
-}
-
-type SetTailscaleSharingRequest struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	Enabled          bool                   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	ExpectedRevision uint64                 `protobuf:"varint,2,opt,name=expected_revision,json=expectedRevision,proto3" json:"expected_revision,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
-}
-
-func (x *SetTailscaleSharingRequest) Reset() {
-	*x = SetTailscaleSharingRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SetTailscaleSharingRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SetTailscaleSharingRequest) ProtoMessage() {}
-
-func (x *SetTailscaleSharingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[5]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SetTailscaleSharingRequest.ProtoReflect.Descriptor instead.
-func (*SetTailscaleSharingRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *SetTailscaleSharingRequest) GetEnabled() bool {
-	if x != nil {
-		return x.Enabled
-	}
-	return false
-}
-
-func (x *SetTailscaleSharingRequest) GetExpectedRevision() uint64 {
-	if x != nil {
-		return x.ExpectedRevision
-	}
-	return 0
-}
-
-type SetTailscaleSharingResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	State         *TailscaleSharingState `protobuf:"bytes,1,opt,name=state,proto3" json:"state,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SetTailscaleSharingResponse) Reset() {
-	*x = SetTailscaleSharingResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[6]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SetTailscaleSharingResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SetTailscaleSharingResponse) ProtoMessage() {}
-
-func (x *SetTailscaleSharingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[6]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SetTailscaleSharingResponse.ProtoReflect.Descriptor instead.
-func (*SetTailscaleSharingResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *SetTailscaleSharingResponse) GetState() *TailscaleSharingState {
-	if x != nil {
-		return x.State
-	}
-	return nil
-}
-
-type PrepareTailscaleSharingRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	WorkspaceId   string                 `protobuf:"bytes,1,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *PrepareTailscaleSharingRequest) Reset() {
-	*x = PrepareTailscaleSharingRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[7]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *PrepareTailscaleSharingRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PrepareTailscaleSharingRequest) ProtoMessage() {}
-
-func (x *PrepareTailscaleSharingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[7]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PrepareTailscaleSharingRequest.ProtoReflect.Descriptor instead.
-func (*PrepareTailscaleSharingRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{7}
-}
-
-func (x *PrepareTailscaleSharingRequest) GetWorkspaceId() string {
-	if x != nil {
-		return x.WorkspaceId
-	}
-	return ""
-}
-
-type PrepareTailscaleSharingResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Document      *PublicAccessDocument  `protobuf:"bytes,1,opt,name=document,proto3" json:"document,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *PrepareTailscaleSharingResponse) Reset() {
-	*x = PrepareTailscaleSharingResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[8]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *PrepareTailscaleSharingResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PrepareTailscaleSharingResponse) ProtoMessage() {}
-
-func (x *PrepareTailscaleSharingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[8]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PrepareTailscaleSharingResponse.ProtoReflect.Descriptor instead.
-func (*PrepareTailscaleSharingResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{8}
-}
-
-func (x *PrepareTailscaleSharingResponse) GetDocument() *PublicAccessDocument {
-	if x != nil {
-		return x.Document
-	}
-	return nil
-}
-
-type PublicOriginBinding struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	WorkspaceId   string                 `protobuf:"bytes,1,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
-	OriginId      string                 `protobuf:"bytes,2,opt,name=origin_id,json=originId,proto3" json:"origin_id,omitempty"`
-	LocalHost     string                 `protobuf:"bytes,3,opt,name=local_host,json=localHost,proto3" json:"local_host,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *PublicOriginBinding) Reset() {
-	*x = PublicOriginBinding{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[9]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *PublicOriginBinding) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PublicOriginBinding) ProtoMessage() {}
-
-func (x *PublicOriginBinding) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[9]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PublicOriginBinding.ProtoReflect.Descriptor instead.
-func (*PublicOriginBinding) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{9}
-}
-
-func (x *PublicOriginBinding) GetWorkspaceId() string {
-	if x != nil {
-		return x.WorkspaceId
-	}
-	return ""
-}
-
-func (x *PublicOriginBinding) GetOriginId() string {
-	if x != nil {
-		return x.OriginId
-	}
-	return ""
-}
-
-func (x *PublicOriginBinding) GetLocalHost() string {
-	if x != nil {
-		return x.LocalHost
-	}
-	return ""
-}
-
-type PublicDeviceSelection struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	NodeId        string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
-	WorkspaceId   string                 `protobuf:"bytes,2,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *PublicDeviceSelection) Reset() {
-	*x = PublicDeviceSelection{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[10]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *PublicDeviceSelection) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PublicDeviceSelection) ProtoMessage() {}
-
-func (x *PublicDeviceSelection) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[10]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PublicDeviceSelection.ProtoReflect.Descriptor instead.
-func (*PublicDeviceSelection) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{10}
-}
-
-func (x *PublicDeviceSelection) GetNodeId() string {
-	if x != nil {
-		return x.NodeId
-	}
-	return ""
-}
-
-func (x *PublicDeviceSelection) GetWorkspaceId() string {
-	if x != nil {
-		return x.WorkspaceId
-	}
-	return ""
-}
-
-type PublicAccessDocument struct {
-	state             protoimpl.MessageState   `protogen:"open.v1"`
-	SchemaVersion     uint32                   `protobuf:"varint,1,opt,name=schema_version,json=schemaVersion,proto3" json:"schema_version,omitempty"`
-	Origins           []*PublicOrigin          `protobuf:"bytes,2,rep,name=origins,proto3" json:"origins,omitempty"`
-	Bindings          []*PublicOriginBinding   `protobuf:"bytes,3,rep,name=bindings,proto3" json:"bindings,omitempty"`
-	Devices           []*PublicDeviceSelection `protobuf:"bytes,4,rep,name=devices,proto3" json:"devices,omitempty"`
-	SharedWorkspaceId string                   `protobuf:"bytes,5,opt,name=shared_workspace_id,json=sharedWorkspaceId,proto3" json:"shared_workspace_id,omitempty"`
-	AllowedUserIds    []uint64                 `protobuf:"varint,6,rep,packed,name=allowed_user_ids,json=allowedUserIds,proto3" json:"allowed_user_ids,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
-}
-
-func (x *PublicAccessDocument) Reset() {
-	*x = PublicAccessDocument{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[11]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *PublicAccessDocument) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PublicAccessDocument) ProtoMessage() {}
-
-func (x *PublicAccessDocument) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[11]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PublicAccessDocument.ProtoReflect.Descriptor instead.
-func (*PublicAccessDocument) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{11}
-}
-
-func (x *PublicAccessDocument) GetSchemaVersion() uint32 {
-	if x != nil {
-		return x.SchemaVersion
-	}
-	return 0
-}
-
-func (x *PublicAccessDocument) GetOrigins() []*PublicOrigin {
-	if x != nil {
-		return x.Origins
-	}
-	return nil
-}
-
-func (x *PublicAccessDocument) GetBindings() []*PublicOriginBinding {
-	if x != nil {
-		return x.Bindings
-	}
-	return nil
-}
-
-func (x *PublicAccessDocument) GetDevices() []*PublicDeviceSelection {
-	if x != nil {
-		return x.Devices
-	}
-	return nil
-}
-
-func (x *PublicAccessDocument) GetSharedWorkspaceId() string {
-	if x != nil {
-		return x.SharedWorkspaceId
-	}
-	return ""
-}
-
-func (x *PublicAccessDocument) GetAllowedUserIds() []uint64 {
-	if x != nil {
-		return x.AllowedUserIds
-	}
-	return nil
-}
-
-type PublicAccessConfiguration struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Revision      uint64                 `protobuf:"varint,1,opt,name=revision,proto3" json:"revision,omitempty"`
-	Document      *PublicAccessDocument  `protobuf:"bytes,2,opt,name=document,proto3" json:"document,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *PublicAccessConfiguration) Reset() {
-	*x = PublicAccessConfiguration{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[12]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *PublicAccessConfiguration) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PublicAccessConfiguration) ProtoMessage() {}
-
-func (x *PublicAccessConfiguration) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[12]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PublicAccessConfiguration.ProtoReflect.Descriptor instead.
-func (*PublicAccessConfiguration) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{12}
-}
-
-func (x *PublicAccessConfiguration) GetRevision() uint64 {
-	if x != nil {
-		return x.Revision
-	}
-	return 0
-}
-
-func (x *PublicAccessConfiguration) GetDocument() *PublicAccessDocument {
-	if x != nil {
-		return x.Document
-	}
-	return nil
-}
-
-type PublicIngressState struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ListenAddress string                 `protobuf:"bytes,1,opt,name=listen_address,json=listenAddress,proto3" json:"listen_address,omitempty"`
-	NginxAddress  string                 `protobuf:"bytes,2,opt,name=nginx_address,json=nginxAddress,proto3" json:"nginx_address,omitempty"`
-	Active        bool                   `protobuf:"varint,3,opt,name=active,proto3" json:"active,omitempty"`
-	Error         string                 `protobuf:"bytes,4,opt,name=error,proto3" json:"error,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *PublicIngressState) Reset() {
-	*x = PublicIngressState{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[13]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *PublicIngressState) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PublicIngressState) ProtoMessage() {}
-
-func (x *PublicIngressState) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[13]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PublicIngressState.ProtoReflect.Descriptor instead.
-func (*PublicIngressState) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{13}
-}
-
-func (x *PublicIngressState) GetListenAddress() string {
-	if x != nil {
-		return x.ListenAddress
-	}
-	return ""
-}
-
-func (x *PublicIngressState) GetNginxAddress() string {
-	if x != nil {
-		return x.NginxAddress
-	}
-	return ""
-}
-
-func (x *PublicIngressState) GetActive() bool {
-	if x != nil {
-		return x.Active
-	}
-	return false
-}
-
-func (x *PublicIngressState) GetError() string {
-	if x != nil {
-		return x.Error
-	}
-	return ""
-}
-
-type PublicAccessDevice struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	NodeId        string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
-	UserId        uint64                 `protobuf:"varint,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	DnsName       string                 `protobuf:"bytes,4,opt,name=dns_name,json=dnsName,proto3" json:"dns_name,omitempty"`
-	Addresses     []string               `protobuf:"bytes,5,rep,name=addresses,proto3" json:"addresses,omitempty"`
-	Online        bool                   `protobuf:"varint,6,opt,name=online,proto3" json:"online,omitempty"`
-	Tagged        bool                   `protobuf:"varint,7,opt,name=tagged,proto3" json:"tagged,omitempty"`
-	Self          bool                   `protobuf:"varint,8,opt,name=self,proto3" json:"self,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *PublicAccessDevice) Reset() {
-	*x = PublicAccessDevice{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[14]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *PublicAccessDevice) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PublicAccessDevice) ProtoMessage() {}
-
-func (x *PublicAccessDevice) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[14]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PublicAccessDevice.ProtoReflect.Descriptor instead.
-func (*PublicAccessDevice) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{14}
-}
-
-func (x *PublicAccessDevice) GetNodeId() string {
-	if x != nil {
-		return x.NodeId
-	}
-	return ""
-}
-
-func (x *PublicAccessDevice) GetUserId() uint64 {
-	if x != nil {
-		return x.UserId
-	}
-	return 0
-}
-
-func (x *PublicAccessDevice) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *PublicAccessDevice) GetDnsName() string {
-	if x != nil {
-		return x.DnsName
-	}
-	return ""
-}
-
-func (x *PublicAccessDevice) GetAddresses() []string {
-	if x != nil {
-		return x.Addresses
-	}
-	return nil
-}
-
-func (x *PublicAccessDevice) GetOnline() bool {
-	if x != nil {
-		return x.Online
-	}
-	return false
-}
-
-func (x *PublicAccessDevice) GetTagged() bool {
-	if x != nil {
-		return x.Tagged
-	}
-	return false
-}
-
-func (x *PublicAccessDevice) GetSelf() bool {
-	if x != nil {
-		return x.Self
-	}
-	return false
-}
-
-type PublicWorkspaceHosts struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	WorkspaceId   string                 `protobuf:"bytes,1,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
-	LocalHosts    []string               `protobuf:"bytes,2,rep,name=local_hosts,json=localHosts,proto3" json:"local_hosts,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *PublicWorkspaceHosts) Reset() {
-	*x = PublicWorkspaceHosts{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[15]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *PublicWorkspaceHosts) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PublicWorkspaceHosts) ProtoMessage() {}
-
-func (x *PublicWorkspaceHosts) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[15]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PublicWorkspaceHosts.ProtoReflect.Descriptor instead.
-func (*PublicWorkspaceHosts) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{15}
-}
-
-func (x *PublicWorkspaceHosts) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *PublicWorkspaceHosts) GetWorkspaceId() string {
-	if x != nil {
-		return x.WorkspaceId
-	}
-	return ""
-}
-
-func (x *PublicWorkspaceHosts) GetLocalHosts() []string {
-	if x != nil {
-		return x.LocalHosts
-	}
-	return nil
-}
-
-type GetPublicAccessRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetPublicAccessRequest) Reset() {
-	*x = GetPublicAccessRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[16]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetPublicAccessRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetPublicAccessRequest) ProtoMessage() {}
-
-func (x *GetPublicAccessRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[16]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetPublicAccessRequest.ProtoReflect.Descriptor instead.
-func (*GetPublicAccessRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{16}
-}
-
-type GetPublicAccessResponse struct {
-	state         protoimpl.MessageState     `protogen:"open.v1"`
-	Configuration *PublicAccessConfiguration `protobuf:"bytes,1,opt,name=configuration,proto3" json:"configuration,omitempty"`
-	Ingress       *PublicIngressState        `protobuf:"bytes,2,opt,name=ingress,proto3" json:"ingress,omitempty"`
-	Devices       []*PublicAccessDevice      `protobuf:"bytes,3,rep,name=devices,proto3" json:"devices,omitempty"`
-	DeviceError   string                     `protobuf:"bytes,4,opt,name=device_error,json=deviceError,proto3" json:"device_error,omitempty"`
-	Workspaces    []*PublicWorkspaceHosts    `protobuf:"bytes,5,rep,name=workspaces,proto3" json:"workspaces,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetPublicAccessResponse) Reset() {
-	*x = GetPublicAccessResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[17]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetPublicAccessResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetPublicAccessResponse) ProtoMessage() {}
-
-func (x *GetPublicAccessResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[17]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetPublicAccessResponse.ProtoReflect.Descriptor instead.
-func (*GetPublicAccessResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{17}
-}
-
-func (x *GetPublicAccessResponse) GetConfiguration() *PublicAccessConfiguration {
-	if x != nil {
-		return x.Configuration
-	}
-	return nil
-}
-
-func (x *GetPublicAccessResponse) GetIngress() *PublicIngressState {
-	if x != nil {
-		return x.Ingress
-	}
-	return nil
-}
-
-func (x *GetPublicAccessResponse) GetDevices() []*PublicAccessDevice {
-	if x != nil {
-		return x.Devices
-	}
-	return nil
-}
-
-func (x *GetPublicAccessResponse) GetDeviceError() string {
-	if x != nil {
-		return x.DeviceError
-	}
-	return ""
-}
-
-func (x *GetPublicAccessResponse) GetWorkspaces() []*PublicWorkspaceHosts {
-	if x != nil {
-		return x.Workspaces
-	}
-	return nil
-}
-
-type SavePublicAccessRequest struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	Document         *PublicAccessDocument  `protobuf:"bytes,1,opt,name=document,proto3" json:"document,omitempty"`
-	ExpectedRevision uint64                 `protobuf:"varint,2,opt,name=expected_revision,json=expectedRevision,proto3" json:"expected_revision,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
-}
-
-func (x *SavePublicAccessRequest) Reset() {
-	*x = SavePublicAccessRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[18]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SavePublicAccessRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SavePublicAccessRequest) ProtoMessage() {}
-
-func (x *SavePublicAccessRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[18]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SavePublicAccessRequest.ProtoReflect.Descriptor instead.
-func (*SavePublicAccessRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{18}
-}
-
-func (x *SavePublicAccessRequest) GetDocument() *PublicAccessDocument {
-	if x != nil {
-		return x.Document
-	}
-	return nil
-}
-
-func (x *SavePublicAccessRequest) GetExpectedRevision() uint64 {
-	if x != nil {
-		return x.ExpectedRevision
-	}
-	return 0
-}
-
-type SavePublicAccessResponse struct {
-	state         protoimpl.MessageState     `protogen:"open.v1"`
-	Configuration *PublicAccessConfiguration `protobuf:"bytes,1,opt,name=configuration,proto3" json:"configuration,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SavePublicAccessResponse) Reset() {
-	*x = SavePublicAccessResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[19]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SavePublicAccessResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SavePublicAccessResponse) ProtoMessage() {}
-
-func (x *SavePublicAccessResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[19]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SavePublicAccessResponse.ProtoReflect.Descriptor instead.
-func (*SavePublicAccessResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{19}
-}
-
-func (x *SavePublicAccessResponse) GetConfiguration() *PublicAccessConfiguration {
-	if x != nil {
-		return x.Configuration
-	}
-	return nil
-}
-
 // CanonicalApplicationRef is the identity portion of an application. The
 // legacy_id field is populated only when a response is serving an old
 // workspace/application identifier; app_id remains the canonical key.
@@ -1421,7 +245,7 @@ type CanonicalApplicationRef struct {
 
 func (x *CanonicalApplicationRef) Reset() {
 	*x = CanonicalApplicationRef{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[20]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1433,7 +257,7 @@ func (x *CanonicalApplicationRef) String() string {
 func (*CanonicalApplicationRef) ProtoMessage() {}
 
 func (x *CanonicalApplicationRef) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[20]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1446,7 +270,7 @@ func (x *CanonicalApplicationRef) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CanonicalApplicationRef.ProtoReflect.Descriptor instead.
 func (*CanonicalApplicationRef) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{20}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *CanonicalApplicationRef) GetAppId() string {
@@ -1498,7 +322,7 @@ type WorkspaceEnvironmentRef struct {
 
 func (x *WorkspaceEnvironmentRef) Reset() {
 	*x = WorkspaceEnvironmentRef{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[21]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1510,7 +334,7 @@ func (x *WorkspaceEnvironmentRef) String() string {
 func (*WorkspaceEnvironmentRef) ProtoMessage() {}
 
 func (x *WorkspaceEnvironmentRef) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[21]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1523,7 +347,7 @@ func (x *WorkspaceEnvironmentRef) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WorkspaceEnvironmentRef.ProtoReflect.Descriptor instead.
 func (*WorkspaceEnvironmentRef) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{21}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *WorkspaceEnvironmentRef) GetSessionId() string {
@@ -1563,7 +387,7 @@ type RouteVersion struct {
 
 func (x *RouteVersion) Reset() {
 	*x = RouteVersion{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[22]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1575,7 +399,7 @@ func (x *RouteVersion) String() string {
 func (*RouteVersion) ProtoMessage() {}
 
 func (x *RouteVersion) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[22]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1588,7 +412,7 @@ func (x *RouteVersion) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RouteVersion.ProtoReflect.Descriptor instead.
 func (*RouteVersion) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{22}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *RouteVersion) GetValue() uint64 {
@@ -1621,7 +445,7 @@ type RouteState struct {
 
 func (x *RouteState) Reset() {
 	*x = RouteState{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[23]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1633,7 +457,7 @@ func (x *RouteState) String() string {
 func (*RouteState) ProtoMessage() {}
 
 func (x *RouteState) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[23]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1646,7 +470,7 @@ func (x *RouteState) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RouteState.ProtoReflect.Descriptor instead.
 func (*RouteState) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{23}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *RouteState) GetDesiredMode() RouteMode {
@@ -1743,7 +567,7 @@ type OperationMetadata struct {
 
 func (x *OperationMetadata) Reset() {
 	*x = OperationMetadata{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[24]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1755,7 +579,7 @@ func (x *OperationMetadata) String() string {
 func (*OperationMetadata) ProtoMessage() {}
 
 func (x *OperationMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[24]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1768,7 +592,7 @@ func (x *OperationMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OperationMetadata.ProtoReflect.Descriptor instead.
 func (*OperationMetadata) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{24}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *OperationMetadata) GetOperationId() string {
@@ -1826,7 +650,7 @@ type StructuredError struct {
 
 func (x *StructuredError) Reset() {
 	*x = StructuredError{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[25]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1838,7 +662,7 @@ func (x *StructuredError) String() string {
 func (*StructuredError) ProtoMessage() {}
 
 func (x *StructuredError) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[25]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1851,7 +675,7 @@ func (x *StructuredError) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StructuredError.ProtoReflect.Descriptor instead.
 func (*StructuredError) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{25}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *StructuredError) GetCode() ErrorCode {
@@ -1910,7 +734,7 @@ type Application struct {
 
 func (x *Application) Reset() {
 	*x = Application{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[26]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1922,7 +746,7 @@ func (x *Application) String() string {
 func (*Application) ProtoMessage() {}
 
 func (x *Application) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[26]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1935,7 +759,7 @@ func (x *Application) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Application.ProtoReflect.Descriptor instead.
 func (*Application) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{26}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Application) GetSourcePort() int32 {
@@ -2147,7 +971,7 @@ type Workspace struct {
 
 func (x *Workspace) Reset() {
 	*x = Workspace{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[27]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2159,7 +983,7 @@ func (x *Workspace) String() string {
 func (*Workspace) ProtoMessage() {}
 
 func (x *Workspace) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[27]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2172,7 +996,7 @@ func (x *Workspace) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Workspace.ProtoReflect.Descriptor instead.
 func (*Workspace) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{27}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *Workspace) GetComputerFollowed() bool {
@@ -2270,7 +1094,7 @@ type Routing struct {
 
 func (x *Routing) Reset() {
 	*x = Routing{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[28]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2282,7 +1106,7 @@ func (x *Routing) String() string {
 func (*Routing) ProtoMessage() {}
 
 func (x *Routing) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[28]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2295,7 +1119,7 @@ func (x *Routing) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Routing.ProtoReflect.Descriptor instead.
 func (*Routing) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{28}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *Routing) GetMode() string {
@@ -2334,7 +1158,7 @@ type EditFollowedConfigurationRequest struct {
 
 func (x *EditFollowedConfigurationRequest) Reset() {
 	*x = EditFollowedConfigurationRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[29]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2346,7 +1170,7 @@ func (x *EditFollowedConfigurationRequest) String() string {
 func (*EditFollowedConfigurationRequest) ProtoMessage() {}
 
 func (x *EditFollowedConfigurationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[29]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2359,7 +1183,7 @@ func (x *EditFollowedConfigurationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EditFollowedConfigurationRequest.ProtoReflect.Descriptor instead.
 func (*EditFollowedConfigurationRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{29}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *EditFollowedConfigurationRequest) GetWorkspaceId() string {
@@ -2420,7 +1244,7 @@ type EditFollowedConfigurationResponse struct {
 
 func (x *EditFollowedConfigurationResponse) Reset() {
 	*x = EditFollowedConfigurationResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[30]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2432,7 +1256,7 @@ func (x *EditFollowedConfigurationResponse) String() string {
 func (*EditFollowedConfigurationResponse) ProtoMessage() {}
 
 func (x *EditFollowedConfigurationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[30]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2445,7 +1269,7 @@ func (x *EditFollowedConfigurationResponse) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use EditFollowedConfigurationResponse.ProtoReflect.Descriptor instead.
 func (*EditFollowedConfigurationResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{30}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *EditFollowedConfigurationResponse) GetWorkspace() *Workspace {
@@ -2480,7 +1304,7 @@ type ApplicationConfigInput struct {
 
 func (x *ApplicationConfigInput) Reset() {
 	*x = ApplicationConfigInput{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[31]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2492,7 +1316,7 @@ func (x *ApplicationConfigInput) String() string {
 func (*ApplicationConfigInput) ProtoMessage() {}
 
 func (x *ApplicationConfigInput) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[31]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2505,7 +1329,7 @@ func (x *ApplicationConfigInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ApplicationConfigInput.ProtoReflect.Descriptor instead.
 func (*ApplicationConfigInput) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{31}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ApplicationConfigInput) GetId() string {
@@ -2635,7 +1459,7 @@ type ListWorkspacesRequest struct {
 
 func (x *ListWorkspacesRequest) Reset() {
 	*x = ListWorkspacesRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[32]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2647,7 +1471,7 @@ func (x *ListWorkspacesRequest) String() string {
 func (*ListWorkspacesRequest) ProtoMessage() {}
 
 func (x *ListWorkspacesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[32]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2660,7 +1484,7 @@ func (x *ListWorkspacesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListWorkspacesRequest.ProtoReflect.Descriptor instead.
 func (*ListWorkspacesRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{32}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{12}
 }
 
 type ListWorkspacesResponse struct {
@@ -2672,7 +1496,7 @@ type ListWorkspacesResponse struct {
 
 func (x *ListWorkspacesResponse) Reset() {
 	*x = ListWorkspacesResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[33]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2684,7 +1508,7 @@ func (x *ListWorkspacesResponse) String() string {
 func (*ListWorkspacesResponse) ProtoMessage() {}
 
 func (x *ListWorkspacesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[33]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2697,7 +1521,7 @@ func (x *ListWorkspacesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListWorkspacesResponse.ProtoReflect.Descriptor instead.
 func (*ListWorkspacesResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{33}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ListWorkspacesResponse) GetWorkspaces() []*Workspace {
@@ -2717,7 +1541,7 @@ type GetWorkspaceRequest struct {
 
 func (x *GetWorkspaceRequest) Reset() {
 	*x = GetWorkspaceRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[34]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2729,7 +1553,7 @@ func (x *GetWorkspaceRequest) String() string {
 func (*GetWorkspaceRequest) ProtoMessage() {}
 
 func (x *GetWorkspaceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[34]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2742,7 +1566,7 @@ func (x *GetWorkspaceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetWorkspaceRequest.ProtoReflect.Descriptor instead.
 func (*GetWorkspaceRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{34}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GetWorkspaceRequest) GetWorkspaceId() string {
@@ -2768,7 +1592,7 @@ type GetWorkspaceResponse struct {
 
 func (x *GetWorkspaceResponse) Reset() {
 	*x = GetWorkspaceResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[35]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2780,7 +1604,7 @@ func (x *GetWorkspaceResponse) String() string {
 func (*GetWorkspaceResponse) ProtoMessage() {}
 
 func (x *GetWorkspaceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[35]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2793,7 +1617,7 @@ func (x *GetWorkspaceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetWorkspaceResponse.ProtoReflect.Descriptor instead.
 func (*GetWorkspaceResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{35}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *GetWorkspaceResponse) GetWorkspace() *Workspace {
@@ -2820,7 +1644,7 @@ type CreateWorkspaceRequest struct {
 
 func (x *CreateWorkspaceRequest) Reset() {
 	*x = CreateWorkspaceRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[36]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2832,7 +1656,7 @@ func (x *CreateWorkspaceRequest) String() string {
 func (*CreateWorkspaceRequest) ProtoMessage() {}
 
 func (x *CreateWorkspaceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[36]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2845,7 +1669,7 @@ func (x *CreateWorkspaceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateWorkspaceRequest.ProtoReflect.Descriptor instead.
 func (*CreateWorkspaceRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{36}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *CreateWorkspaceRequest) GetId() string {
@@ -2922,7 +1746,7 @@ type CreateWorkspaceResponse struct {
 
 func (x *CreateWorkspaceResponse) Reset() {
 	*x = CreateWorkspaceResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[37]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2934,7 +1758,7 @@ func (x *CreateWorkspaceResponse) String() string {
 func (*CreateWorkspaceResponse) ProtoMessage() {}
 
 func (x *CreateWorkspaceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[37]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2947,7 +1771,7 @@ func (x *CreateWorkspaceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateWorkspaceResponse.ProtoReflect.Descriptor instead.
 func (*CreateWorkspaceResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{37}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *CreateWorkspaceResponse) GetWorkspace() *Workspace {
@@ -2987,7 +1811,7 @@ type UpdateWorkspaceRequest struct {
 
 func (x *UpdateWorkspaceRequest) Reset() {
 	*x = UpdateWorkspaceRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[38]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2999,7 +1823,7 @@ func (x *UpdateWorkspaceRequest) String() string {
 func (*UpdateWorkspaceRequest) ProtoMessage() {}
 
 func (x *UpdateWorkspaceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[38]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3012,7 +1836,7 @@ func (x *UpdateWorkspaceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateWorkspaceRequest.ProtoReflect.Descriptor instead.
 func (*UpdateWorkspaceRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{38}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *UpdateWorkspaceRequest) GetExpectedVersion() uint64 {
@@ -3082,7 +1906,7 @@ type UpdateWorkspaceResponse struct {
 
 func (x *UpdateWorkspaceResponse) Reset() {
 	*x = UpdateWorkspaceResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[39]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3094,7 +1918,7 @@ func (x *UpdateWorkspaceResponse) String() string {
 func (*UpdateWorkspaceResponse) ProtoMessage() {}
 
 func (x *UpdateWorkspaceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[39]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3107,7 +1931,7 @@ func (x *UpdateWorkspaceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateWorkspaceResponse.ProtoReflect.Descriptor instead.
 func (*UpdateWorkspaceResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{39}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *UpdateWorkspaceResponse) GetWorkspace() *Workspace {
@@ -3142,7 +1966,7 @@ type DeleteWorkspaceRequest struct {
 
 func (x *DeleteWorkspaceRequest) Reset() {
 	*x = DeleteWorkspaceRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[40]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3154,7 +1978,7 @@ func (x *DeleteWorkspaceRequest) String() string {
 func (*DeleteWorkspaceRequest) ProtoMessage() {}
 
 func (x *DeleteWorkspaceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[40]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3167,7 +1991,7 @@ func (x *DeleteWorkspaceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteWorkspaceRequest.ProtoReflect.Descriptor instead.
 func (*DeleteWorkspaceRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{40}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *DeleteWorkspaceRequest) GetWorkspaceId() string {
@@ -3200,7 +2024,7 @@ type DeleteWorkspaceResponse struct {
 
 func (x *DeleteWorkspaceResponse) Reset() {
 	*x = DeleteWorkspaceResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[41]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3212,7 +2036,7 @@ func (x *DeleteWorkspaceResponse) String() string {
 func (*DeleteWorkspaceResponse) ProtoMessage() {}
 
 func (x *DeleteWorkspaceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[41]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3225,7 +2049,7 @@ func (x *DeleteWorkspaceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteWorkspaceResponse.ProtoReflect.Descriptor instead.
 func (*DeleteWorkspaceResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{41}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *DeleteWorkspaceResponse) GetOperation() *OperationMetadata {
@@ -3245,7 +2069,7 @@ type ListApplicationsRequest struct {
 
 func (x *ListApplicationsRequest) Reset() {
 	*x = ListApplicationsRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[42]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3257,7 +2081,7 @@ func (x *ListApplicationsRequest) String() string {
 func (*ListApplicationsRequest) ProtoMessage() {}
 
 func (x *ListApplicationsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[42]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3270,7 +2094,7 @@ func (x *ListApplicationsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListApplicationsRequest.ProtoReflect.Descriptor instead.
 func (*ListApplicationsRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{42}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *ListApplicationsRequest) GetWorkspaceId() string {
@@ -3296,7 +2120,7 @@ type ListApplicationsResponse struct {
 
 func (x *ListApplicationsResponse) Reset() {
 	*x = ListApplicationsResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[43]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3308,7 +2132,7 @@ func (x *ListApplicationsResponse) String() string {
 func (*ListApplicationsResponse) ProtoMessage() {}
 
 func (x *ListApplicationsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[43]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3321,7 +2145,7 @@ func (x *ListApplicationsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListApplicationsResponse.ProtoReflect.Descriptor instead.
 func (*ListApplicationsResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{43}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *ListApplicationsResponse) GetApplications() []*Application {
@@ -3342,7 +2166,7 @@ type GetApplicationRequest struct {
 
 func (x *GetApplicationRequest) Reset() {
 	*x = GetApplicationRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[44]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3354,7 +2178,7 @@ func (x *GetApplicationRequest) String() string {
 func (*GetApplicationRequest) ProtoMessage() {}
 
 func (x *GetApplicationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[44]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3367,7 +2191,7 @@ func (x *GetApplicationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetApplicationRequest.ProtoReflect.Descriptor instead.
 func (*GetApplicationRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{44}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *GetApplicationRequest) GetWorkspaceId() string {
@@ -3400,7 +2224,7 @@ type GetApplicationResponse struct {
 
 func (x *GetApplicationResponse) Reset() {
 	*x = GetApplicationResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[45]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3412,7 +2236,7 @@ func (x *GetApplicationResponse) String() string {
 func (*GetApplicationResponse) ProtoMessage() {}
 
 func (x *GetApplicationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[45]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3425,7 +2249,7 @@ func (x *GetApplicationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetApplicationResponse.ProtoReflect.Descriptor instead.
 func (*GetApplicationResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{45}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *GetApplicationResponse) GetApplication() *Application {
@@ -3446,7 +2270,7 @@ type ResolveApplicationRequest struct {
 
 func (x *ResolveApplicationRequest) Reset() {
 	*x = ResolveApplicationRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[46]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3458,7 +2282,7 @@ func (x *ResolveApplicationRequest) String() string {
 func (*ResolveApplicationRequest) ProtoMessage() {}
 
 func (x *ResolveApplicationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[46]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3471,7 +2295,7 @@ func (x *ResolveApplicationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveApplicationRequest.ProtoReflect.Descriptor instead.
 func (*ResolveApplicationRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{46}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *ResolveApplicationRequest) GetWorkspaceId() string {
@@ -3504,7 +2328,7 @@ type ResolveApplicationResponse struct {
 
 func (x *ResolveApplicationResponse) Reset() {
 	*x = ResolveApplicationResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[47]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3516,7 +2340,7 @@ func (x *ResolveApplicationResponse) String() string {
 func (*ResolveApplicationResponse) ProtoMessage() {}
 
 func (x *ResolveApplicationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[47]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3529,7 +2353,7 @@ func (x *ResolveApplicationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveApplicationResponse.ProtoReflect.Descriptor instead.
 func (*ResolveApplicationResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{47}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *ResolveApplicationResponse) GetApplication() *Application {
@@ -3551,7 +2375,7 @@ type ResolveBrowserURLRequest struct {
 
 func (x *ResolveBrowserURLRequest) Reset() {
 	*x = ResolveBrowserURLRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[48]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3563,7 +2387,7 @@ func (x *ResolveBrowserURLRequest) String() string {
 func (*ResolveBrowserURLRequest) ProtoMessage() {}
 
 func (x *ResolveBrowserURLRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[48]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3576,7 +2400,7 @@ func (x *ResolveBrowserURLRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveBrowserURLRequest.ProtoReflect.Descriptor instead.
 func (*ResolveBrowserURLRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{48}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *ResolveBrowserURLRequest) GetWorkspaceId() string {
@@ -3643,7 +2467,7 @@ type BrowserURLResolution struct {
 
 func (x *BrowserURLResolution) Reset() {
 	*x = BrowserURLResolution{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[49]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3655,7 +2479,7 @@ func (x *BrowserURLResolution) String() string {
 func (*BrowserURLResolution) ProtoMessage() {}
 
 func (x *BrowserURLResolution) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[49]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3668,7 +2492,7 @@ func (x *BrowserURLResolution) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BrowserURLResolution.ProtoReflect.Descriptor instead.
 func (*BrowserURLResolution) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{49}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *BrowserURLResolution) GetWorkspaceId() string {
@@ -3848,7 +2672,7 @@ type ResolveBrowserURLResponse struct {
 
 func (x *ResolveBrowserURLResponse) Reset() {
 	*x = ResolveBrowserURLResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[50]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3860,7 +2684,7 @@ func (x *ResolveBrowserURLResponse) String() string {
 func (*ResolveBrowserURLResponse) ProtoMessage() {}
 
 func (x *ResolveBrowserURLResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[50]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3873,7 +2697,7 @@ func (x *ResolveBrowserURLResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveBrowserURLResponse.ProtoReflect.Descriptor instead.
 func (*ResolveBrowserURLResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{50}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *ResolveBrowserURLResponse) GetResolution() *BrowserURLResolution {
@@ -3896,7 +2720,7 @@ type RegisterApplicationAliasRequest struct {
 
 func (x *RegisterApplicationAliasRequest) Reset() {
 	*x = RegisterApplicationAliasRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[51]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3908,7 +2732,7 @@ func (x *RegisterApplicationAliasRequest) String() string {
 func (*RegisterApplicationAliasRequest) ProtoMessage() {}
 
 func (x *RegisterApplicationAliasRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[51]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3921,7 +2745,7 @@ func (x *RegisterApplicationAliasRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterApplicationAliasRequest.ProtoReflect.Descriptor instead.
 func (*RegisterApplicationAliasRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{51}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *RegisterApplicationAliasRequest) GetWorkspaceId() string {
@@ -3969,7 +2793,7 @@ type RegisterApplicationAliasResponse struct {
 
 func (x *RegisterApplicationAliasResponse) Reset() {
 	*x = RegisterApplicationAliasResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[52]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3981,7 +2805,7 @@ func (x *RegisterApplicationAliasResponse) String() string {
 func (*RegisterApplicationAliasResponse) ProtoMessage() {}
 
 func (x *RegisterApplicationAliasResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[52]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3994,7 +2818,7 @@ func (x *RegisterApplicationAliasResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterApplicationAliasResponse.ProtoReflect.Descriptor instead.
 func (*RegisterApplicationAliasResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{52}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *RegisterApplicationAliasResponse) GetApplication() *Application {
@@ -4024,7 +2848,7 @@ type UpsertApplicationRequest struct {
 
 func (x *UpsertApplicationRequest) Reset() {
 	*x = UpsertApplicationRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[53]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4036,7 +2860,7 @@ func (x *UpsertApplicationRequest) String() string {
 func (*UpsertApplicationRequest) ProtoMessage() {}
 
 func (x *UpsertApplicationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[53]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4049,7 +2873,7 @@ func (x *UpsertApplicationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpsertApplicationRequest.ProtoReflect.Descriptor instead.
 func (*UpsertApplicationRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{53}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *UpsertApplicationRequest) GetWorkspaceId() string {
@@ -4099,7 +2923,7 @@ type UpsertApplicationResponse struct {
 
 func (x *UpsertApplicationResponse) Reset() {
 	*x = UpsertApplicationResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[54]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4111,7 +2935,7 @@ func (x *UpsertApplicationResponse) String() string {
 func (*UpsertApplicationResponse) ProtoMessage() {}
 
 func (x *UpsertApplicationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[54]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4124,7 +2948,7 @@ func (x *UpsertApplicationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpsertApplicationResponse.ProtoReflect.Descriptor instead.
 func (*UpsertApplicationResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{54}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *UpsertApplicationResponse) GetApplication() *Application {
@@ -4167,7 +2991,7 @@ type DeleteApplicationRequest struct {
 
 func (x *DeleteApplicationRequest) Reset() {
 	*x = DeleteApplicationRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[55]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4179,7 +3003,7 @@ func (x *DeleteApplicationRequest) String() string {
 func (*DeleteApplicationRequest) ProtoMessage() {}
 
 func (x *DeleteApplicationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[55]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4192,7 +3016,7 @@ func (x *DeleteApplicationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteApplicationRequest.ProtoReflect.Descriptor instead.
 func (*DeleteApplicationRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{55}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *DeleteApplicationRequest) GetWorkspaceId() string {
@@ -4232,7 +3056,7 @@ type DeleteApplicationResponse struct {
 
 func (x *DeleteApplicationResponse) Reset() {
 	*x = DeleteApplicationResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[56]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4244,7 +3068,7 @@ func (x *DeleteApplicationResponse) String() string {
 func (*DeleteApplicationResponse) ProtoMessage() {}
 
 func (x *DeleteApplicationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[56]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4257,7 +3081,7 @@ func (x *DeleteApplicationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteApplicationResponse.ProtoReflect.Descriptor instead.
 func (*DeleteApplicationResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{56}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *DeleteApplicationResponse) GetOperation() *OperationMetadata {
@@ -4279,7 +3103,7 @@ type ToggleApplicationRequest struct {
 
 func (x *ToggleApplicationRequest) Reset() {
 	*x = ToggleApplicationRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[57]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4291,7 +3115,7 @@ func (x *ToggleApplicationRequest) String() string {
 func (*ToggleApplicationRequest) ProtoMessage() {}
 
 func (x *ToggleApplicationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[57]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4304,7 +3128,7 @@ func (x *ToggleApplicationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ToggleApplicationRequest.ProtoReflect.Descriptor instead.
 func (*ToggleApplicationRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{57}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *ToggleApplicationRequest) GetWorkspaceId() string {
@@ -4345,7 +3169,7 @@ type ToggleApplicationResponse struct {
 
 func (x *ToggleApplicationResponse) Reset() {
 	*x = ToggleApplicationResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[58]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4357,7 +3181,7 @@ func (x *ToggleApplicationResponse) String() string {
 func (*ToggleApplicationResponse) ProtoMessage() {}
 
 func (x *ToggleApplicationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[58]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4370,7 +3194,7 @@ func (x *ToggleApplicationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ToggleApplicationResponse.ProtoReflect.Descriptor instead.
 func (*ToggleApplicationResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{58}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *ToggleApplicationResponse) GetApplication() *Application {
@@ -4398,7 +3222,7 @@ type ToggleAllToRemoteRequest struct {
 
 func (x *ToggleAllToRemoteRequest) Reset() {
 	*x = ToggleAllToRemoteRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[59]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4410,7 +3234,7 @@ func (x *ToggleAllToRemoteRequest) String() string {
 func (*ToggleAllToRemoteRequest) ProtoMessage() {}
 
 func (x *ToggleAllToRemoteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[59]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4423,7 +3247,7 @@ func (x *ToggleAllToRemoteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ToggleAllToRemoteRequest.ProtoReflect.Descriptor instead.
 func (*ToggleAllToRemoteRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{59}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *ToggleAllToRemoteRequest) GetWorkspaceId() string {
@@ -4458,7 +3282,7 @@ type ToggleAllToRemoteResponse struct {
 
 func (x *ToggleAllToRemoteResponse) Reset() {
 	*x = ToggleAllToRemoteResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[60]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4470,7 +3294,7 @@ func (x *ToggleAllToRemoteResponse) String() string {
 func (*ToggleAllToRemoteResponse) ProtoMessage() {}
 
 func (x *ToggleAllToRemoteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[60]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4483,7 +3307,7 @@ func (x *ToggleAllToRemoteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ToggleAllToRemoteResponse.ProtoReflect.Descriptor instead.
 func (*ToggleAllToRemoteResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{60}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *ToggleAllToRemoteResponse) GetSuccessCount() int32 {
@@ -4518,7 +3342,7 @@ type ToggleAllToLocalRequest struct {
 
 func (x *ToggleAllToLocalRequest) Reset() {
 	*x = ToggleAllToLocalRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[61]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4530,7 +3354,7 @@ func (x *ToggleAllToLocalRequest) String() string {
 func (*ToggleAllToLocalRequest) ProtoMessage() {}
 
 func (x *ToggleAllToLocalRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[61]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4543,7 +3367,7 @@ func (x *ToggleAllToLocalRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ToggleAllToLocalRequest.ProtoReflect.Descriptor instead.
 func (*ToggleAllToLocalRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{61}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *ToggleAllToLocalRequest) GetWorkspaceId() string {
@@ -4578,7 +3402,7 @@ type ToggleAllToLocalResponse struct {
 
 func (x *ToggleAllToLocalResponse) Reset() {
 	*x = ToggleAllToLocalResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[62]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4590,7 +3414,7 @@ func (x *ToggleAllToLocalResponse) String() string {
 func (*ToggleAllToLocalResponse) ProtoMessage() {}
 
 func (x *ToggleAllToLocalResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[62]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4603,7 +3427,7 @@ func (x *ToggleAllToLocalResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ToggleAllToLocalResponse.ProtoReflect.Descriptor instead.
 func (*ToggleAllToLocalResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{62}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *ToggleAllToLocalResponse) GetSuccessCount() int32 {
@@ -4638,7 +3462,7 @@ type SyncWorkspaceRoutingRequest struct {
 
 func (x *SyncWorkspaceRoutingRequest) Reset() {
 	*x = SyncWorkspaceRoutingRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[63]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4650,7 +3474,7 @@ func (x *SyncWorkspaceRoutingRequest) String() string {
 func (*SyncWorkspaceRoutingRequest) ProtoMessage() {}
 
 func (x *SyncWorkspaceRoutingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[63]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4663,7 +3487,7 @@ func (x *SyncWorkspaceRoutingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SyncWorkspaceRoutingRequest.ProtoReflect.Descriptor instead.
 func (*SyncWorkspaceRoutingRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{63}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *SyncWorkspaceRoutingRequest) GetWorkspaceId() string {
@@ -4697,7 +3521,7 @@ type SyncWorkspaceRoutingResponse struct {
 
 func (x *SyncWorkspaceRoutingResponse) Reset() {
 	*x = SyncWorkspaceRoutingResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[64]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4709,7 +3533,7 @@ func (x *SyncWorkspaceRoutingResponse) String() string {
 func (*SyncWorkspaceRoutingResponse) ProtoMessage() {}
 
 func (x *SyncWorkspaceRoutingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[64]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4722,7 +3546,7 @@ func (x *SyncWorkspaceRoutingResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SyncWorkspaceRoutingResponse.ProtoReflect.Descriptor instead.
 func (*SyncWorkspaceRoutingResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{64}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *SyncWorkspaceRoutingResponse) GetStatus() string {
@@ -4750,7 +3574,7 @@ type GetRoutePatternRequest struct {
 
 func (x *GetRoutePatternRequest) Reset() {
 	*x = GetRoutePatternRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[65]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4762,7 +3586,7 @@ func (x *GetRoutePatternRequest) String() string {
 func (*GetRoutePatternRequest) ProtoMessage() {}
 
 func (x *GetRoutePatternRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[65]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4775,7 +3599,7 @@ func (x *GetRoutePatternRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRoutePatternRequest.ProtoReflect.Descriptor instead.
 func (*GetRoutePatternRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{65}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *GetRoutePatternRequest) GetWorkspaceId() string {
@@ -4808,7 +3632,7 @@ type GetRoutePatternResponse struct {
 
 func (x *GetRoutePatternResponse) Reset() {
 	*x = GetRoutePatternResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[66]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4820,7 +3644,7 @@ func (x *GetRoutePatternResponse) String() string {
 func (*GetRoutePatternResponse) ProtoMessage() {}
 
 func (x *GetRoutePatternResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[66]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4833,7 +3657,7 @@ func (x *GetRoutePatternResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRoutePatternResponse.ProtoReflect.Descriptor instead.
 func (*GetRoutePatternResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{66}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *GetRoutePatternResponse) GetPattern() string {
@@ -4856,7 +3680,7 @@ type UpdateRoutePatternRequest struct {
 
 func (x *UpdateRoutePatternRequest) Reset() {
 	*x = UpdateRoutePatternRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[67]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4868,7 +3692,7 @@ func (x *UpdateRoutePatternRequest) String() string {
 func (*UpdateRoutePatternRequest) ProtoMessage() {}
 
 func (x *UpdateRoutePatternRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[67]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4881,7 +3705,7 @@ func (x *UpdateRoutePatternRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateRoutePatternRequest.ProtoReflect.Descriptor instead.
 func (*UpdateRoutePatternRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{67}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *UpdateRoutePatternRequest) GetWorkspaceId() string {
@@ -4929,7 +3753,7 @@ type UpdateRoutePatternResponse struct {
 
 func (x *UpdateRoutePatternResponse) Reset() {
 	*x = UpdateRoutePatternResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[68]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4941,7 +3765,7 @@ func (x *UpdateRoutePatternResponse) String() string {
 func (*UpdateRoutePatternResponse) ProtoMessage() {}
 
 func (x *UpdateRoutePatternResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[68]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4954,7 +3778,7 @@ func (x *UpdateRoutePatternResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateRoutePatternResponse.ProtoReflect.Descriptor instead.
 func (*UpdateRoutePatternResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{68}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *UpdateRoutePatternResponse) GetApplication() *Application {
@@ -5005,7 +3829,7 @@ type NormalizedRoute struct {
 
 func (x *NormalizedRoute) Reset() {
 	*x = NormalizedRoute{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[69]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5017,7 +3841,7 @@ func (x *NormalizedRoute) String() string {
 func (*NormalizedRoute) ProtoMessage() {}
 
 func (x *NormalizedRoute) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[69]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5030,7 +3854,7 @@ func (x *NormalizedRoute) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NormalizedRoute.ProtoReflect.Descriptor instead.
 func (*NormalizedRoute) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{69}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *NormalizedRoute) GetWorkspaceId() string {
@@ -5207,7 +4031,7 @@ type RouteWarning struct {
 
 func (x *RouteWarning) Reset() {
 	*x = RouteWarning{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[70]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5219,7 +4043,7 @@ func (x *RouteWarning) String() string {
 func (*RouteWarning) ProtoMessage() {}
 
 func (x *RouteWarning) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[70]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5232,7 +4056,7 @@ func (x *RouteWarning) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RouteWarning.ProtoReflect.Descriptor instead.
 func (*RouteWarning) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{70}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *RouteWarning) GetCode() string {
@@ -5301,7 +4125,7 @@ type RouteConflict struct {
 
 func (x *RouteConflict) Reset() {
 	*x = RouteConflict{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[71]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5313,7 +4137,7 @@ func (x *RouteConflict) String() string {
 func (*RouteConflict) ProtoMessage() {}
 
 func (x *RouteConflict) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[71]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5326,7 +4150,7 @@ func (x *RouteConflict) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RouteConflict.ProtoReflect.Descriptor instead.
 func (*RouteConflict) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{71}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *RouteConflict) GetWorkspaceId() string {
@@ -5501,7 +4325,7 @@ type RouteChange struct {
 
 func (x *RouteChange) Reset() {
 	*x = RouteChange{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[72]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5513,7 +4337,7 @@ func (x *RouteChange) String() string {
 func (*RouteChange) ProtoMessage() {}
 
 func (x *RouteChange) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[72]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5526,7 +4350,7 @@ func (x *RouteChange) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RouteChange.ProtoReflect.Descriptor instead.
 func (*RouteChange) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{72}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *RouteChange) GetApplicationId() string {
@@ -5572,7 +4396,7 @@ type RoutePlan struct {
 
 func (x *RoutePlan) Reset() {
 	*x = RoutePlan{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[73]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5584,7 +4408,7 @@ func (x *RoutePlan) String() string {
 func (*RoutePlan) ProtoMessage() {}
 
 func (x *RoutePlan) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[73]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5597,7 +4421,7 @@ func (x *RoutePlan) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoutePlan.ProtoReflect.Descriptor instead.
 func (*RoutePlan) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{73}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *RoutePlan) GetWorkspaceId() string {
@@ -5717,7 +4541,7 @@ type RouteResolution struct {
 
 func (x *RouteResolution) Reset() {
 	*x = RouteResolution{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[74]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5729,7 +4553,7 @@ func (x *RouteResolution) String() string {
 func (*RouteResolution) ProtoMessage() {}
 
 func (x *RouteResolution) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[74]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5742,7 +4566,7 @@ func (x *RouteResolution) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RouteResolution.ProtoReflect.Descriptor instead.
 func (*RouteResolution) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{74}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *RouteResolution) GetWorkspaceId() string {
@@ -5832,7 +4656,7 @@ type GetRouteRequest struct {
 
 func (x *GetRouteRequest) Reset() {
 	*x = GetRouteRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[75]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5844,7 +4668,7 @@ func (x *GetRouteRequest) String() string {
 func (*GetRouteRequest) ProtoMessage() {}
 
 func (x *GetRouteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[75]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5857,7 +4681,7 @@ func (x *GetRouteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRouteRequest.ProtoReflect.Descriptor instead.
 func (*GetRouteRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{75}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *GetRouteRequest) GetWorkspaceId() string {
@@ -5888,7 +4712,7 @@ type GetRouteResponse struct {
 
 func (x *GetRouteResponse) Reset() {
 	*x = GetRouteResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[76]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5900,7 +4724,7 @@ func (x *GetRouteResponse) String() string {
 func (*GetRouteResponse) ProtoMessage() {}
 
 func (x *GetRouteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[76]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5913,7 +4737,7 @@ func (x *GetRouteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRouteResponse.ProtoReflect.Descriptor instead.
 func (*GetRouteResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{76}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{56}
 }
 
 func (x *GetRouteResponse) GetWorkspaceId() string {
@@ -5968,7 +4792,7 @@ type GetRouteConflictsRequest struct {
 
 func (x *GetRouteConflictsRequest) Reset() {
 	*x = GetRouteConflictsRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[77]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5980,7 +4804,7 @@ func (x *GetRouteConflictsRequest) String() string {
 func (*GetRouteConflictsRequest) ProtoMessage() {}
 
 func (x *GetRouteConflictsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[77]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5993,7 +4817,7 @@ func (x *GetRouteConflictsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRouteConflictsRequest.ProtoReflect.Descriptor instead.
 func (*GetRouteConflictsRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{77}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *GetRouteConflictsRequest) GetWorkspaceId() string {
@@ -6023,7 +4847,7 @@ type GetRouteConflictsResponse struct {
 
 func (x *GetRouteConflictsResponse) Reset() {
 	*x = GetRouteConflictsResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[78]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6035,7 +4859,7 @@ func (x *GetRouteConflictsResponse) String() string {
 func (*GetRouteConflictsResponse) ProtoMessage() {}
 
 func (x *GetRouteConflictsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[78]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6048,7 +4872,7 @@ func (x *GetRouteConflictsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRouteConflictsResponse.ProtoReflect.Descriptor instead.
 func (*GetRouteConflictsResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{78}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *GetRouteConflictsResponse) GetWorkspaceId() string {
@@ -6098,7 +4922,7 @@ type ResolveRouteRequest struct {
 
 func (x *ResolveRouteRequest) Reset() {
 	*x = ResolveRouteRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[79]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6110,7 +4934,7 @@ func (x *ResolveRouteRequest) String() string {
 func (*ResolveRouteRequest) ProtoMessage() {}
 
 func (x *ResolveRouteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[79]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6123,7 +4947,7 @@ func (x *ResolveRouteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveRouteRequest.ProtoReflect.Descriptor instead.
 func (*ResolveRouteRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{79}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{59}
 }
 
 func (x *ResolveRouteRequest) GetWorkspaceId() string {
@@ -6163,7 +4987,7 @@ type ResolveRouteResponse struct {
 
 func (x *ResolveRouteResponse) Reset() {
 	*x = ResolveRouteResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[80]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[60]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6175,7 +4999,7 @@ func (x *ResolveRouteResponse) String() string {
 func (*ResolveRouteResponse) ProtoMessage() {}
 
 func (x *ResolveRouteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[80]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[60]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6188,7 +5012,7 @@ func (x *ResolveRouteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveRouteResponse.ProtoReflect.Descriptor instead.
 func (*ResolveRouteResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{80}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *ResolveRouteResponse) GetResolution() *RouteResolution {
@@ -6215,7 +5039,7 @@ type PlanRouteRequest struct {
 
 func (x *PlanRouteRequest) Reset() {
 	*x = PlanRouteRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[81]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[61]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6227,7 +5051,7 @@ func (x *PlanRouteRequest) String() string {
 func (*PlanRouteRequest) ProtoMessage() {}
 
 func (x *PlanRouteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[81]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[61]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6240,7 +5064,7 @@ func (x *PlanRouteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlanRouteRequest.ProtoReflect.Descriptor instead.
 func (*PlanRouteRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{81}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{61}
 }
 
 func (x *PlanRouteRequest) GetWorkspaceId() string {
@@ -6315,7 +5139,7 @@ type PlanRouteResponse struct {
 
 func (x *PlanRouteResponse) Reset() {
 	*x = PlanRouteResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[82]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[62]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6327,7 +5151,7 @@ func (x *PlanRouteResponse) String() string {
 func (*PlanRouteResponse) ProtoMessage() {}
 
 func (x *PlanRouteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[82]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[62]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6340,7 +5164,7 @@ func (x *PlanRouteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlanRouteResponse.ProtoReflect.Descriptor instead.
 func (*PlanRouteResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{82}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{62}
 }
 
 func (x *PlanRouteResponse) GetPlan() *RoutePlan {
@@ -6369,7 +5193,7 @@ type ApplyRouteRequest struct {
 
 func (x *ApplyRouteRequest) Reset() {
 	*x = ApplyRouteRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[83]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[63]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6381,7 +5205,7 @@ func (x *ApplyRouteRequest) String() string {
 func (*ApplyRouteRequest) ProtoMessage() {}
 
 func (x *ApplyRouteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[83]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[63]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6394,7 +5218,7 @@ func (x *ApplyRouteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ApplyRouteRequest.ProtoReflect.Descriptor instead.
 func (*ApplyRouteRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{83}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{63}
 }
 
 func (x *ApplyRouteRequest) GetWorkspaceId() string {
@@ -6491,7 +5315,7 @@ type ApplyRouteResponse struct {
 
 func (x *ApplyRouteResponse) Reset() {
 	*x = ApplyRouteResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[84]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[64]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6503,7 +5327,7 @@ func (x *ApplyRouteResponse) String() string {
 func (*ApplyRouteResponse) ProtoMessage() {}
 
 func (x *ApplyRouteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[84]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[64]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6516,7 +5340,7 @@ func (x *ApplyRouteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ApplyRouteResponse.ProtoReflect.Descriptor instead.
 func (*ApplyRouteResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{84}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{64}
 }
 
 func (x *ApplyRouteResponse) GetChanged() bool {
@@ -6594,7 +5418,7 @@ type SyncRouteRequest struct {
 
 func (x *SyncRouteRequest) Reset() {
 	*x = SyncRouteRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[85]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[65]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6606,7 +5430,7 @@ func (x *SyncRouteRequest) String() string {
 func (*SyncRouteRequest) ProtoMessage() {}
 
 func (x *SyncRouteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[85]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[65]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6619,7 +5443,7 @@ func (x *SyncRouteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SyncRouteRequest.ProtoReflect.Descriptor instead.
 func (*SyncRouteRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{85}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{65}
 }
 
 func (x *SyncRouteRequest) GetWorkspaceId() string {
@@ -6669,7 +5493,7 @@ type SyncRouteResponse struct {
 
 func (x *SyncRouteResponse) Reset() {
 	*x = SyncRouteResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[86]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[66]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6681,7 +5505,7 @@ func (x *SyncRouteResponse) String() string {
 func (*SyncRouteResponse) ProtoMessage() {}
 
 func (x *SyncRouteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[86]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[66]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6694,7 +5518,7 @@ func (x *SyncRouteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SyncRouteResponse.ProtoReflect.Descriptor instead.
 func (*SyncRouteResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{86}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{66}
 }
 
 func (x *SyncRouteResponse) GetWorkspaceId() string {
@@ -6784,7 +5608,7 @@ type WatchHealthRequest struct {
 
 func (x *WatchHealthRequest) Reset() {
 	*x = WatchHealthRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[87]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[67]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6796,7 +5620,7 @@ func (x *WatchHealthRequest) String() string {
 func (*WatchHealthRequest) ProtoMessage() {}
 
 func (x *WatchHealthRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[87]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[67]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6809,7 +5633,7 @@ func (x *WatchHealthRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WatchHealthRequest.ProtoReflect.Descriptor instead.
 func (*WatchHealthRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{87}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{67}
 }
 
 func (x *WatchHealthRequest) GetWorkspaceId() string {
@@ -6845,7 +5669,7 @@ type WatchHealthResponse struct {
 
 func (x *WatchHealthResponse) Reset() {
 	*x = WatchHealthResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[88]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[68]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6857,7 +5681,7 @@ func (x *WatchHealthResponse) String() string {
 func (*WatchHealthResponse) ProtoMessage() {}
 
 func (x *WatchHealthResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[88]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[68]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6870,7 +5694,7 @@ func (x *WatchHealthResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WatchHealthResponse.ProtoReflect.Descriptor instead.
 func (*WatchHealthResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{88}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{68}
 }
 
 func (x *WatchHealthResponse) GetType() string {
@@ -6962,7 +5786,7 @@ type RoutingSession struct {
 
 func (x *RoutingSession) Reset() {
 	*x = RoutingSession{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[89]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[69]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6974,7 +5798,7 @@ func (x *RoutingSession) String() string {
 func (*RoutingSession) ProtoMessage() {}
 
 func (x *RoutingSession) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[89]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[69]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6987,7 +5811,7 @@ func (x *RoutingSession) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoutingSession.ProtoReflect.Descriptor instead.
 func (*RoutingSession) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{89}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{69}
 }
 
 func (x *RoutingSession) GetEnvironmentId() string {
@@ -7022,7 +5846,7 @@ type CreateRoutingSessionRequest struct {
 
 func (x *CreateRoutingSessionRequest) Reset() {
 	*x = CreateRoutingSessionRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[90]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[70]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7034,7 +5858,7 @@ func (x *CreateRoutingSessionRequest) String() string {
 func (*CreateRoutingSessionRequest) ProtoMessage() {}
 
 func (x *CreateRoutingSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[90]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[70]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7047,7 +5871,7 @@ func (x *CreateRoutingSessionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateRoutingSessionRequest.ProtoReflect.Descriptor instead.
 func (*CreateRoutingSessionRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{90}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{70}
 }
 
 func (x *CreateRoutingSessionRequest) GetEnvironmentId() string {
@@ -7080,7 +5904,7 @@ type CreateRoutingSessionResponse struct {
 
 func (x *CreateRoutingSessionResponse) Reset() {
 	*x = CreateRoutingSessionResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[91]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[71]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7092,7 +5916,7 @@ func (x *CreateRoutingSessionResponse) String() string {
 func (*CreateRoutingSessionResponse) ProtoMessage() {}
 
 func (x *CreateRoutingSessionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[91]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[71]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7105,7 +5929,7 @@ func (x *CreateRoutingSessionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateRoutingSessionResponse.ProtoReflect.Descriptor instead.
 func (*CreateRoutingSessionResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{91}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{71}
 }
 
 func (x *CreateRoutingSessionResponse) GetWorkspace() *Workspace {
@@ -7127,7 +5951,7 @@ type RefreshRoutingSessionRequest struct {
 
 func (x *RefreshRoutingSessionRequest) Reset() {
 	*x = RefreshRoutingSessionRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[92]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[72]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7139,7 +5963,7 @@ func (x *RefreshRoutingSessionRequest) String() string {
 func (*RefreshRoutingSessionRequest) ProtoMessage() {}
 
 func (x *RefreshRoutingSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[92]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[72]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7152,7 +5976,7 @@ func (x *RefreshRoutingSessionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RefreshRoutingSessionRequest.ProtoReflect.Descriptor instead.
 func (*RefreshRoutingSessionRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{92}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{72}
 }
 
 func (x *RefreshRoutingSessionRequest) GetId() string {
@@ -7195,7 +6019,7 @@ type RefreshRoutingSessionResponse struct {
 
 func (x *RefreshRoutingSessionResponse) Reset() {
 	*x = RefreshRoutingSessionResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[93]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[73]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7207,7 +6031,7 @@ func (x *RefreshRoutingSessionResponse) String() string {
 func (*RefreshRoutingSessionResponse) ProtoMessage() {}
 
 func (x *RefreshRoutingSessionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[93]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[73]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7220,7 +6044,7 @@ func (x *RefreshRoutingSessionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RefreshRoutingSessionResponse.ProtoReflect.Descriptor instead.
 func (*RefreshRoutingSessionResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{93}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{73}
 }
 
 func (x *RefreshRoutingSessionResponse) GetWorkspace() *Workspace {
@@ -7269,7 +6093,7 @@ type FleetTopology struct {
 
 func (x *FleetTopology) Reset() {
 	*x = FleetTopology{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[94]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[74]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7281,7 +6105,7 @@ func (x *FleetTopology) String() string {
 func (*FleetTopology) ProtoMessage() {}
 
 func (x *FleetTopology) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[94]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[74]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7294,7 +6118,7 @@ func (x *FleetTopology) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FleetTopology.ProtoReflect.Descriptor instead.
 func (*FleetTopology) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{94}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{74}
 }
 
 func (x *FleetTopology) GetVersion() int32 {
@@ -7363,7 +6187,7 @@ type FleetNode struct {
 
 func (x *FleetNode) Reset() {
 	*x = FleetNode{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[95]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[75]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7375,7 +6199,7 @@ func (x *FleetNode) String() string {
 func (*FleetNode) ProtoMessage() {}
 
 func (x *FleetNode) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[95]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[75]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7388,7 +6212,7 @@ func (x *FleetNode) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FleetNode.ProtoReflect.Descriptor instead.
 func (*FleetNode) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{95}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{75}
 }
 
 func (x *FleetNode) GetId() string {
@@ -7415,7 +6239,7 @@ type FleetOrigin struct {
 
 func (x *FleetOrigin) Reset() {
 	*x = FleetOrigin{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[96]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[76]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7427,7 +6251,7 @@ func (x *FleetOrigin) String() string {
 func (*FleetOrigin) ProtoMessage() {}
 
 func (x *FleetOrigin) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[96]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[76]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7440,7 +6264,7 @@ func (x *FleetOrigin) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FleetOrigin.ProtoReflect.Descriptor instead.
 func (*FleetOrigin) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{96}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{76}
 }
 
 func (x *FleetOrigin) GetId() string {
@@ -7470,7 +6294,7 @@ type FleetTarget struct {
 
 func (x *FleetTarget) Reset() {
 	*x = FleetTarget{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[97]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[77]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7482,7 +6306,7 @@ func (x *FleetTarget) String() string {
 func (*FleetTarget) ProtoMessage() {}
 
 func (x *FleetTarget) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[97]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[77]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7495,7 +6319,7 @@ func (x *FleetTarget) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FleetTarget.ProtoReflect.Descriptor instead.
 func (*FleetTarget) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{97}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{77}
 }
 
 func (x *FleetTarget) GetId() string {
@@ -7548,7 +6372,7 @@ type FleetRoute struct {
 
 func (x *FleetRoute) Reset() {
 	*x = FleetRoute{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[98]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[78]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7560,7 +6384,7 @@ func (x *FleetRoute) String() string {
 func (*FleetRoute) ProtoMessage() {}
 
 func (x *FleetRoute) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[98]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[78]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7573,7 +6397,7 @@ func (x *FleetRoute) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FleetRoute.ProtoReflect.Descriptor instead.
 func (*FleetRoute) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{98}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{78}
 }
 
 func (x *FleetRoute) GetId() string {
@@ -7637,7 +6461,7 @@ type FleetInstance struct {
 
 func (x *FleetInstance) Reset() {
 	*x = FleetInstance{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[99]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[79]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7649,7 +6473,7 @@ func (x *FleetInstance) String() string {
 func (*FleetInstance) ProtoMessage() {}
 
 func (x *FleetInstance) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[99]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[79]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7662,7 +6486,7 @@ func (x *FleetInstance) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FleetInstance.ProtoReflect.Descriptor instead.
 func (*FleetInstance) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{99}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{79}
 }
 
 func (x *FleetInstance) GetId() string {
@@ -7709,7 +6533,7 @@ type FleetRouteSelection struct {
 
 func (x *FleetRouteSelection) Reset() {
 	*x = FleetRouteSelection{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[100]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[80]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7721,7 +6545,7 @@ func (x *FleetRouteSelection) String() string {
 func (*FleetRouteSelection) ProtoMessage() {}
 
 func (x *FleetRouteSelection) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[100]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[80]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7734,7 +6558,7 @@ func (x *FleetRouteSelection) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FleetRouteSelection.ProtoReflect.Descriptor instead.
 func (*FleetRouteSelection) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{100}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{80}
 }
 
 func (x *FleetRouteSelection) GetInstanceId() string {
@@ -7803,7 +6627,7 @@ type FleetConfiguration struct {
 
 func (x *FleetConfiguration) Reset() {
 	*x = FleetConfiguration{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[101]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[81]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7815,7 +6639,7 @@ func (x *FleetConfiguration) String() string {
 func (*FleetConfiguration) ProtoMessage() {}
 
 func (x *FleetConfiguration) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[101]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[81]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7828,7 +6652,7 @@ func (x *FleetConfiguration) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FleetConfiguration.ProtoReflect.Descriptor instead.
 func (*FleetConfiguration) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{101}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{81}
 }
 
 func (x *FleetConfiguration) GetRevision() uint64 {
@@ -7853,7 +6677,7 @@ type GetFleetConfigurationRequest struct {
 
 func (x *GetFleetConfigurationRequest) Reset() {
 	*x = GetFleetConfigurationRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[102]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[82]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7865,7 +6689,7 @@ func (x *GetFleetConfigurationRequest) String() string {
 func (*GetFleetConfigurationRequest) ProtoMessage() {}
 
 func (x *GetFleetConfigurationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[102]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[82]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7878,7 +6702,7 @@ func (x *GetFleetConfigurationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetFleetConfigurationRequest.ProtoReflect.Descriptor instead.
 func (*GetFleetConfigurationRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{102}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{82}
 }
 
 type GetFleetConfigurationResponse struct {
@@ -7890,7 +6714,7 @@ type GetFleetConfigurationResponse struct {
 
 func (x *GetFleetConfigurationResponse) Reset() {
 	*x = GetFleetConfigurationResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[103]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[83]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7902,7 +6726,7 @@ func (x *GetFleetConfigurationResponse) String() string {
 func (*GetFleetConfigurationResponse) ProtoMessage() {}
 
 func (x *GetFleetConfigurationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[103]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[83]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7915,7 +6739,7 @@ func (x *GetFleetConfigurationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetFleetConfigurationResponse.ProtoReflect.Descriptor instead.
 func (*GetFleetConfigurationResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{103}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{83}
 }
 
 func (x *GetFleetConfigurationResponse) GetConfiguration() *FleetConfiguration {
@@ -7935,7 +6759,7 @@ type ReviewFleetConfigurationRequest struct {
 
 func (x *ReviewFleetConfigurationRequest) Reset() {
 	*x = ReviewFleetConfigurationRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[104]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[84]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7947,7 +6771,7 @@ func (x *ReviewFleetConfigurationRequest) String() string {
 func (*ReviewFleetConfigurationRequest) ProtoMessage() {}
 
 func (x *ReviewFleetConfigurationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[104]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[84]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7960,7 +6784,7 @@ func (x *ReviewFleetConfigurationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReviewFleetConfigurationRequest.ProtoReflect.Descriptor instead.
 func (*ReviewFleetConfigurationRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{104}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{84}
 }
 
 func (x *ReviewFleetConfigurationRequest) GetExpectedRevision() uint64 {
@@ -7989,7 +6813,7 @@ type ReviewFleetConfigurationResponse struct {
 
 func (x *ReviewFleetConfigurationResponse) Reset() {
 	*x = ReviewFleetConfigurationResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[105]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[85]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8001,7 +6825,7 @@ func (x *ReviewFleetConfigurationResponse) String() string {
 func (*ReviewFleetConfigurationResponse) ProtoMessage() {}
 
 func (x *ReviewFleetConfigurationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[105]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[85]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8014,7 +6838,7 @@ func (x *ReviewFleetConfigurationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReviewFleetConfigurationResponse.ProtoReflect.Descriptor instead.
 func (*ReviewFleetConfigurationResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{105}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{85}
 }
 
 func (x *ReviewFleetConfigurationResponse) GetReviewToken() string {
@@ -8056,7 +6880,7 @@ type SaveFleetConfigurationRequest struct {
 
 func (x *SaveFleetConfigurationRequest) Reset() {
 	*x = SaveFleetConfigurationRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[106]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[86]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8068,7 +6892,7 @@ func (x *SaveFleetConfigurationRequest) String() string {
 func (*SaveFleetConfigurationRequest) ProtoMessage() {}
 
 func (x *SaveFleetConfigurationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[106]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[86]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8081,7 +6905,7 @@ func (x *SaveFleetConfigurationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SaveFleetConfigurationRequest.ProtoReflect.Descriptor instead.
 func (*SaveFleetConfigurationRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{106}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{86}
 }
 
 func (x *SaveFleetConfigurationRequest) GetExpectedRevision() uint64 {
@@ -8114,7 +6938,7 @@ type SaveFleetConfigurationResponse struct {
 
 func (x *SaveFleetConfigurationResponse) Reset() {
 	*x = SaveFleetConfigurationResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[107]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[87]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8126,7 +6950,7 @@ func (x *SaveFleetConfigurationResponse) String() string {
 func (*SaveFleetConfigurationResponse) ProtoMessage() {}
 
 func (x *SaveFleetConfigurationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[107]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[87]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8139,7 +6963,7 @@ func (x *SaveFleetConfigurationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SaveFleetConfigurationResponse.ProtoReflect.Descriptor instead.
 func (*SaveFleetConfigurationResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{107}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{87}
 }
 
 func (x *SaveFleetConfigurationResponse) GetConfiguration() *FleetConfiguration {
@@ -8161,7 +6985,7 @@ type PairedComputer struct {
 
 func (x *PairedComputer) Reset() {
 	*x = PairedComputer{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[108]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[88]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8173,7 +6997,7 @@ func (x *PairedComputer) String() string {
 func (*PairedComputer) ProtoMessage() {}
 
 func (x *PairedComputer) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[108]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[88]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8186,7 +7010,7 @@ func (x *PairedComputer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PairedComputer.ProtoReflect.Descriptor instead.
 func (*PairedComputer) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{108}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{88}
 }
 
 func (x *PairedComputer) GetFingerprint() string {
@@ -8218,7 +7042,7 @@ type GetPeerStateRequest struct {
 
 func (x *GetPeerStateRequest) Reset() {
 	*x = GetPeerStateRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[109]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[89]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8230,7 +7054,7 @@ func (x *GetPeerStateRequest) String() string {
 func (*GetPeerStateRequest) ProtoMessage() {}
 
 func (x *GetPeerStateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[109]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[89]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8243,7 +7067,7 @@ func (x *GetPeerStateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPeerStateRequest.ProtoReflect.Descriptor instead.
 func (*GetPeerStateRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{109}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{89}
 }
 
 type GetPeerStateResponse struct {
@@ -8262,7 +7086,7 @@ type GetPeerStateResponse struct {
 
 func (x *GetPeerStateResponse) Reset() {
 	*x = GetPeerStateResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[110]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[90]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8274,7 +7098,7 @@ func (x *GetPeerStateResponse) String() string {
 func (*GetPeerStateResponse) ProtoMessage() {}
 
 func (x *GetPeerStateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[110]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[90]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8287,7 +7111,7 @@ func (x *GetPeerStateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPeerStateResponse.ProtoReflect.Descriptor instead.
 func (*GetPeerStateResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{110}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{90}
 }
 
 func (x *GetPeerStateResponse) GetName() string {
@@ -8357,7 +7181,7 @@ type ConfigurePeerConnectionRequest struct {
 
 func (x *ConfigurePeerConnectionRequest) Reset() {
 	*x = ConfigurePeerConnectionRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[111]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[91]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8369,7 +7193,7 @@ func (x *ConfigurePeerConnectionRequest) String() string {
 func (*ConfigurePeerConnectionRequest) ProtoMessage() {}
 
 func (x *ConfigurePeerConnectionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[111]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[91]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8382,7 +7206,7 @@ func (x *ConfigurePeerConnectionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConfigurePeerConnectionRequest.ProtoReflect.Descriptor instead.
 func (*ConfigurePeerConnectionRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{111}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{91}
 }
 
 func (x *ConfigurePeerConnectionRequest) GetListenAddress() string {
@@ -8407,7 +7231,7 @@ type CreatePeerInvitationRequest struct {
 
 func (x *CreatePeerInvitationRequest) Reset() {
 	*x = CreatePeerInvitationRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[112]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[92]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8419,7 +7243,7 @@ func (x *CreatePeerInvitationRequest) String() string {
 func (*CreatePeerInvitationRequest) ProtoMessage() {}
 
 func (x *CreatePeerInvitationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[112]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[92]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8432,7 +7256,7 @@ func (x *CreatePeerInvitationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreatePeerInvitationRequest.ProtoReflect.Descriptor instead.
 func (*CreatePeerInvitationRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{112}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{92}
 }
 
 type CreatePeerInvitationResponse struct {
@@ -8446,7 +7270,7 @@ type CreatePeerInvitationResponse struct {
 
 func (x *CreatePeerInvitationResponse) Reset() {
 	*x = CreatePeerInvitationResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[113]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[93]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8458,7 +7282,7 @@ func (x *CreatePeerInvitationResponse) String() string {
 func (*CreatePeerInvitationResponse) ProtoMessage() {}
 
 func (x *CreatePeerInvitationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[113]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[93]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8471,7 +7295,7 @@ func (x *CreatePeerInvitationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreatePeerInvitationResponse.ProtoReflect.Descriptor instead.
 func (*CreatePeerInvitationResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{113}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{93}
 }
 
 func (x *CreatePeerInvitationResponse) GetInvitation() string {
@@ -8503,7 +7327,7 @@ type CancelPeerInvitationRequest struct {
 
 func (x *CancelPeerInvitationRequest) Reset() {
 	*x = CancelPeerInvitationRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[114]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[94]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8515,7 +7339,7 @@ func (x *CancelPeerInvitationRequest) String() string {
 func (*CancelPeerInvitationRequest) ProtoMessage() {}
 
 func (x *CancelPeerInvitationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[114]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[94]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8528,7 +7352,7 @@ func (x *CancelPeerInvitationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelPeerInvitationRequest.ProtoReflect.Descriptor instead.
 func (*CancelPeerInvitationRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{114}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{94}
 }
 
 type CancelPeerInvitationResponse struct {
@@ -8539,7 +7363,7 @@ type CancelPeerInvitationResponse struct {
 
 func (x *CancelPeerInvitationResponse) Reset() {
 	*x = CancelPeerInvitationResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[115]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[95]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8551,7 +7375,7 @@ func (x *CancelPeerInvitationResponse) String() string {
 func (*CancelPeerInvitationResponse) ProtoMessage() {}
 
 func (x *CancelPeerInvitationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[115]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[95]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8564,7 +7388,7 @@ func (x *CancelPeerInvitationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelPeerInvitationResponse.ProtoReflect.Descriptor instead.
 func (*CancelPeerInvitationResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{115}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{95}
 }
 
 type InspectPeerInvitationRequest struct {
@@ -8576,7 +7400,7 @@ type InspectPeerInvitationRequest struct {
 
 func (x *InspectPeerInvitationRequest) Reset() {
 	*x = InspectPeerInvitationRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[116]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[96]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8588,7 +7412,7 @@ func (x *InspectPeerInvitationRequest) String() string {
 func (*InspectPeerInvitationRequest) ProtoMessage() {}
 
 func (x *InspectPeerInvitationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[116]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[96]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8601,7 +7425,7 @@ func (x *InspectPeerInvitationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InspectPeerInvitationRequest.ProtoReflect.Descriptor instead.
 func (*InspectPeerInvitationRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{116}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{96}
 }
 
 func (x *InspectPeerInvitationRequest) GetInvitation() string {
@@ -8623,7 +7447,7 @@ type InspectPeerInvitationResponse struct {
 
 func (x *InspectPeerInvitationResponse) Reset() {
 	*x = InspectPeerInvitationResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[117]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[97]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8635,7 +7459,7 @@ func (x *InspectPeerInvitationResponse) String() string {
 func (*InspectPeerInvitationResponse) ProtoMessage() {}
 
 func (x *InspectPeerInvitationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[117]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[97]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8648,7 +7472,7 @@ func (x *InspectPeerInvitationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InspectPeerInvitationResponse.ProtoReflect.Descriptor instead.
 func (*InspectPeerInvitationResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{117}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{97}
 }
 
 func (x *InspectPeerInvitationResponse) GetName() string {
@@ -8689,7 +7513,7 @@ type PairComputerRequest struct {
 
 func (x *PairComputerRequest) Reset() {
 	*x = PairComputerRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[118]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[98]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8701,7 +7525,7 @@ func (x *PairComputerRequest) String() string {
 func (*PairComputerRequest) ProtoMessage() {}
 
 func (x *PairComputerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[118]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[98]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8714,7 +7538,7 @@ func (x *PairComputerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PairComputerRequest.ProtoReflect.Descriptor instead.
 func (*PairComputerRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{118}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{98}
 }
 
 func (x *PairComputerRequest) GetInvitation() string {
@@ -8740,7 +7564,7 @@ type PairComputerResponse struct {
 
 func (x *PairComputerResponse) Reset() {
 	*x = PairComputerResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[119]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[99]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8752,7 +7576,7 @@ func (x *PairComputerResponse) String() string {
 func (*PairComputerResponse) ProtoMessage() {}
 
 func (x *PairComputerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[119]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[99]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8765,7 +7589,7 @@ func (x *PairComputerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PairComputerResponse.ProtoReflect.Descriptor instead.
 func (*PairComputerResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{119}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{99}
 }
 
 func (x *PairComputerResponse) GetComputer() *PairedComputer {
@@ -8784,7 +7608,7 @@ type UnpairComputerRequest struct {
 
 func (x *UnpairComputerRequest) Reset() {
 	*x = UnpairComputerRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[120]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[100]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8796,7 +7620,7 @@ func (x *UnpairComputerRequest) String() string {
 func (*UnpairComputerRequest) ProtoMessage() {}
 
 func (x *UnpairComputerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[120]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[100]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8809,7 +7633,7 @@ func (x *UnpairComputerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnpairComputerRequest.ProtoReflect.Descriptor instead.
 func (*UnpairComputerRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{120}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{100}
 }
 
 func (x *UnpairComputerRequest) GetFingerprint() string {
@@ -8828,7 +7652,7 @@ type CheckPeerConnectionRequest struct {
 
 func (x *CheckPeerConnectionRequest) Reset() {
 	*x = CheckPeerConnectionRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[121]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[101]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8840,7 +7664,7 @@ func (x *CheckPeerConnectionRequest) String() string {
 func (*CheckPeerConnectionRequest) ProtoMessage() {}
 
 func (x *CheckPeerConnectionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[121]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[101]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8853,7 +7677,7 @@ func (x *CheckPeerConnectionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CheckPeerConnectionRequest.ProtoReflect.Descriptor instead.
 func (*CheckPeerConnectionRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{121}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{101}
 }
 
 func (x *CheckPeerConnectionRequest) GetFingerprint() string {
@@ -8871,7 +7695,7 @@ type CheckPeerConnectionResponse struct {
 
 func (x *CheckPeerConnectionResponse) Reset() {
 	*x = CheckPeerConnectionResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[122]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[102]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8883,7 +7707,7 @@ func (x *CheckPeerConnectionResponse) String() string {
 func (*CheckPeerConnectionResponse) ProtoMessage() {}
 
 func (x *CheckPeerConnectionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[122]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[102]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8896,7 +7720,7 @@ func (x *CheckPeerConnectionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CheckPeerConnectionResponse.ProtoReflect.Descriptor instead.
 func (*CheckPeerConnectionResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{122}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{102}
 }
 
 type ConfigurePeerConnectionResponse struct {
@@ -8908,7 +7732,7 @@ type ConfigurePeerConnectionResponse struct {
 
 func (x *ConfigurePeerConnectionResponse) Reset() {
 	*x = ConfigurePeerConnectionResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[123]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[103]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8920,7 +7744,7 @@ func (x *ConfigurePeerConnectionResponse) String() string {
 func (*ConfigurePeerConnectionResponse) ProtoMessage() {}
 
 func (x *ConfigurePeerConnectionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[123]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[103]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8933,7 +7757,7 @@ func (x *ConfigurePeerConnectionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConfigurePeerConnectionResponse.ProtoReflect.Descriptor instead.
 func (*ConfigurePeerConnectionResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{123}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{103}
 }
 
 func (x *ConfigurePeerConnectionResponse) GetState() *GetPeerStateResponse {
@@ -8952,7 +7776,7 @@ type UnpairComputerResponse struct {
 
 func (x *UnpairComputerResponse) Reset() {
 	*x = UnpairComputerResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[124]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[104]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8964,7 +7788,7 @@ func (x *UnpairComputerResponse) String() string {
 func (*UnpairComputerResponse) ProtoMessage() {}
 
 func (x *UnpairComputerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[124]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[104]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8977,7 +7801,7 @@ func (x *UnpairComputerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnpairComputerResponse.ProtoReflect.Descriptor instead.
 func (*UnpairComputerResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{124}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{104}
 }
 
 func (x *UnpairComputerResponse) GetState() *GetPeerStateResponse {
@@ -8999,7 +7823,7 @@ type PeerWorkspaceScope struct {
 
 func (x *PeerWorkspaceScope) Reset() {
 	*x = PeerWorkspaceScope{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[125]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[105]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9011,7 +7835,7 @@ func (x *PeerWorkspaceScope) String() string {
 func (*PeerWorkspaceScope) ProtoMessage() {}
 
 func (x *PeerWorkspaceScope) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[125]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[105]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9024,7 +7848,7 @@ func (x *PeerWorkspaceScope) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PeerWorkspaceScope.ProtoReflect.Descriptor instead.
 func (*PeerWorkspaceScope) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{125}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{105}
 }
 
 func (x *PeerWorkspaceScope) GetWorkspaceId() string {
@@ -9060,7 +7884,7 @@ type PeerWorkspaceReference struct {
 
 func (x *PeerWorkspaceReference) Reset() {
 	*x = PeerWorkspaceReference{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[126]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[106]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9072,7 +7896,7 @@ func (x *PeerWorkspaceReference) String() string {
 func (*PeerWorkspaceReference) ProtoMessage() {}
 
 func (x *PeerWorkspaceReference) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[126]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[106]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9085,7 +7909,7 @@ func (x *PeerWorkspaceReference) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PeerWorkspaceReference.ProtoReflect.Descriptor instead.
 func (*PeerWorkspaceReference) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{126}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{106}
 }
 
 func (x *PeerWorkspaceReference) GetOwnerFingerprint() string {
@@ -9129,7 +7953,7 @@ type PeerEndpoint struct {
 
 func (x *PeerEndpoint) Reset() {
 	*x = PeerEndpoint{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[127]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[107]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9141,7 +7965,7 @@ func (x *PeerEndpoint) String() string {
 func (*PeerEndpoint) ProtoMessage() {}
 
 func (x *PeerEndpoint) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[127]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[107]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9154,7 +7978,7 @@ func (x *PeerEndpoint) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PeerEndpoint.ProtoReflect.Descriptor instead.
 func (*PeerEndpoint) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{127}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{107}
 }
 
 func (x *PeerEndpoint) GetOwnerFingerprint() string {
@@ -9205,7 +8029,7 @@ type InheritedRouteSelection struct {
 
 func (x *InheritedRouteSelection) Reset() {
 	*x = InheritedRouteSelection{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[128]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[108]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9217,7 +8041,7 @@ func (x *InheritedRouteSelection) String() string {
 func (*InheritedRouteSelection) ProtoMessage() {}
 
 func (x *InheritedRouteSelection) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[128]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[108]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9230,7 +8054,7 @@ func (x *InheritedRouteSelection) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InheritedRouteSelection.ProtoReflect.Descriptor instead.
 func (*InheritedRouteSelection) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{128}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{108}
 }
 
 func (x *InheritedRouteSelection) GetMode() string {
@@ -9274,7 +8098,7 @@ type WorkspaceInheritance struct {
 
 func (x *WorkspaceInheritance) Reset() {
 	*x = WorkspaceInheritance{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[129]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[109]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9286,7 +8110,7 @@ func (x *WorkspaceInheritance) String() string {
 func (*WorkspaceInheritance) ProtoMessage() {}
 
 func (x *WorkspaceInheritance) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[129]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[109]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9299,7 +8123,7 @@ func (x *WorkspaceInheritance) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WorkspaceInheritance.ProtoReflect.Descriptor instead.
 func (*WorkspaceInheritance) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{129}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{109}
 }
 
 func (x *WorkspaceInheritance) GetSourceName() string {
@@ -9343,7 +8167,7 @@ type WorkspaceInheritanceStatus struct {
 
 func (x *WorkspaceInheritanceStatus) Reset() {
 	*x = WorkspaceInheritanceStatus{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[130]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[110]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9355,7 +8179,7 @@ func (x *WorkspaceInheritanceStatus) String() string {
 func (*WorkspaceInheritanceStatus) ProtoMessage() {}
 
 func (x *WorkspaceInheritanceStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[130]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[110]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9368,7 +8192,7 @@ func (x *WorkspaceInheritanceStatus) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WorkspaceInheritanceStatus.ProtoReflect.Descriptor instead.
 func (*WorkspaceInheritanceStatus) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{130}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{110}
 }
 
 func (x *WorkspaceInheritanceStatus) GetInheritance() *WorkspaceInheritance {
@@ -9418,7 +8242,7 @@ type PeerWorkspaceSummary struct {
 
 func (x *PeerWorkspaceSummary) Reset() {
 	*x = PeerWorkspaceSummary{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[131]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[111]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9430,7 +8254,7 @@ func (x *PeerWorkspaceSummary) String() string {
 func (*PeerWorkspaceSummary) ProtoMessage() {}
 
 func (x *PeerWorkspaceSummary) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[131]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[111]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9443,7 +8267,7 @@ func (x *PeerWorkspaceSummary) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PeerWorkspaceSummary.ProtoReflect.Descriptor instead.
 func (*PeerWorkspaceSummary) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{131}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{111}
 }
 
 func (x *PeerWorkspaceSummary) GetScope() *PeerWorkspaceScope {
@@ -9483,7 +8307,7 @@ type ListPeerWorkspacesRequest struct {
 
 func (x *ListPeerWorkspacesRequest) Reset() {
 	*x = ListPeerWorkspacesRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[132]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[112]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9495,7 +8319,7 @@ func (x *ListPeerWorkspacesRequest) String() string {
 func (*ListPeerWorkspacesRequest) ProtoMessage() {}
 
 func (x *ListPeerWorkspacesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[132]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[112]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9508,7 +8332,7 @@ func (x *ListPeerWorkspacesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPeerWorkspacesRequest.ProtoReflect.Descriptor instead.
 func (*ListPeerWorkspacesRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{132}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{112}
 }
 
 func (x *ListPeerWorkspacesRequest) GetFingerprint() string {
@@ -9527,7 +8351,7 @@ type ListPeerWorkspacesResponse struct {
 
 func (x *ListPeerWorkspacesResponse) Reset() {
 	*x = ListPeerWorkspacesResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[133]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[113]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9539,7 +8363,7 @@ func (x *ListPeerWorkspacesResponse) String() string {
 func (*ListPeerWorkspacesResponse) ProtoMessage() {}
 
 func (x *ListPeerWorkspacesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[133]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[113]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9552,7 +8376,7 @@ func (x *ListPeerWorkspacesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPeerWorkspacesResponse.ProtoReflect.Descriptor instead.
 func (*ListPeerWorkspacesResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{133}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{113}
 }
 
 func (x *ListPeerWorkspacesResponse) GetWorkspaces() []*PeerWorkspaceSummary {
@@ -9571,7 +8395,7 @@ type GetWorkspaceInheritanceRequest struct {
 
 func (x *GetWorkspaceInheritanceRequest) Reset() {
 	*x = GetWorkspaceInheritanceRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[134]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[114]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9583,7 +8407,7 @@ func (x *GetWorkspaceInheritanceRequest) String() string {
 func (*GetWorkspaceInheritanceRequest) ProtoMessage() {}
 
 func (x *GetWorkspaceInheritanceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[134]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[114]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9596,7 +8420,7 @@ func (x *GetWorkspaceInheritanceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetWorkspaceInheritanceRequest.ProtoReflect.Descriptor instead.
 func (*GetWorkspaceInheritanceRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{134}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{114}
 }
 
 func (x *GetWorkspaceInheritanceRequest) GetWorkspaceId() string {
@@ -9615,7 +8439,7 @@ type GetWorkspaceInheritanceResponse struct {
 
 func (x *GetWorkspaceInheritanceResponse) Reset() {
 	*x = GetWorkspaceInheritanceResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[135]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[115]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9627,7 +8451,7 @@ func (x *GetWorkspaceInheritanceResponse) String() string {
 func (*GetWorkspaceInheritanceResponse) ProtoMessage() {}
 
 func (x *GetWorkspaceInheritanceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[135]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[115]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9640,7 +8464,7 @@ func (x *GetWorkspaceInheritanceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetWorkspaceInheritanceResponse.ProtoReflect.Descriptor instead.
 func (*GetWorkspaceInheritanceResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{135}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{115}
 }
 
 func (x *GetWorkspaceInheritanceResponse) GetStatus() *WorkspaceInheritanceStatus {
@@ -9663,7 +8487,7 @@ type FollowPeerWorkspaceRequest struct {
 
 func (x *FollowPeerWorkspaceRequest) Reset() {
 	*x = FollowPeerWorkspaceRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[136]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[116]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9675,7 +8499,7 @@ func (x *FollowPeerWorkspaceRequest) String() string {
 func (*FollowPeerWorkspaceRequest) ProtoMessage() {}
 
 func (x *FollowPeerWorkspaceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[136]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[116]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9688,7 +8512,7 @@ func (x *FollowPeerWorkspaceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FollowPeerWorkspaceRequest.ProtoReflect.Descriptor instead.
 func (*FollowPeerWorkspaceRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{136}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{116}
 }
 
 func (x *FollowPeerWorkspaceRequest) GetWorkspaceId() string {
@@ -9738,7 +8562,7 @@ type FollowPeerWorkspaceResponse struct {
 
 func (x *FollowPeerWorkspaceResponse) Reset() {
 	*x = FollowPeerWorkspaceResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[137]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[117]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9750,7 +8574,7 @@ func (x *FollowPeerWorkspaceResponse) String() string {
 func (*FollowPeerWorkspaceResponse) ProtoMessage() {}
 
 func (x *FollowPeerWorkspaceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[137]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[117]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9763,7 +8587,7 @@ func (x *FollowPeerWorkspaceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FollowPeerWorkspaceResponse.ProtoReflect.Descriptor instead.
 func (*FollowPeerWorkspaceResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{137}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{117}
 }
 
 func (x *FollowPeerWorkspaceResponse) GetWorkspace() *Workspace {
@@ -9803,7 +8627,7 @@ type SyncPeerWorkspaceRequest struct {
 
 func (x *SyncPeerWorkspaceRequest) Reset() {
 	*x = SyncPeerWorkspaceRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[138]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[118]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9815,7 +8639,7 @@ func (x *SyncPeerWorkspaceRequest) String() string {
 func (*SyncPeerWorkspaceRequest) ProtoMessage() {}
 
 func (x *SyncPeerWorkspaceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[138]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[118]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9828,7 +8652,7 @@ func (x *SyncPeerWorkspaceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SyncPeerWorkspaceRequest.ProtoReflect.Descriptor instead.
 func (*SyncPeerWorkspaceRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{138}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{118}
 }
 
 func (x *SyncPeerWorkspaceRequest) GetWorkspaceId() string {
@@ -9850,7 +8674,7 @@ type SyncPeerWorkspaceResponse struct {
 
 func (x *SyncPeerWorkspaceResponse) Reset() {
 	*x = SyncPeerWorkspaceResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[139]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[119]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9862,7 +8686,7 @@ func (x *SyncPeerWorkspaceResponse) String() string {
 func (*SyncPeerWorkspaceResponse) ProtoMessage() {}
 
 func (x *SyncPeerWorkspaceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[139]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[119]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9875,7 +8699,7 @@ func (x *SyncPeerWorkspaceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SyncPeerWorkspaceResponse.ProtoReflect.Descriptor instead.
 func (*SyncPeerWorkspaceResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{139}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{119}
 }
 
 func (x *SyncPeerWorkspaceResponse) GetWorkspace() *Workspace {
@@ -9920,7 +8744,7 @@ type OverrideInheritedRouteRequest struct {
 
 func (x *OverrideInheritedRouteRequest) Reset() {
 	*x = OverrideInheritedRouteRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[140]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[120]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9932,7 +8756,7 @@ func (x *OverrideInheritedRouteRequest) String() string {
 func (*OverrideInheritedRouteRequest) ProtoMessage() {}
 
 func (x *OverrideInheritedRouteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[140]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[120]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9945,7 +8769,7 @@ func (x *OverrideInheritedRouteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OverrideInheritedRouteRequest.ProtoReflect.Descriptor instead.
 func (*OverrideInheritedRouteRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{140}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{120}
 }
 
 func (x *OverrideInheritedRouteRequest) GetWorkspaceId() string {
@@ -9995,7 +8819,7 @@ type OverrideInheritedRouteResponse struct {
 
 func (x *OverrideInheritedRouteResponse) Reset() {
 	*x = OverrideInheritedRouteResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[141]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[121]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10007,7 +8831,7 @@ func (x *OverrideInheritedRouteResponse) String() string {
 func (*OverrideInheritedRouteResponse) ProtoMessage() {}
 
 func (x *OverrideInheritedRouteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[141]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[121]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10020,7 +8844,7 @@ func (x *OverrideInheritedRouteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OverrideInheritedRouteResponse.ProtoReflect.Descriptor instead.
 func (*OverrideInheritedRouteResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{141}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{121}
 }
 
 func (x *OverrideInheritedRouteResponse) GetWorkspace() *Workspace {
@@ -10062,7 +8886,7 @@ type StopFollowingWorkspaceRequest struct {
 
 func (x *StopFollowingWorkspaceRequest) Reset() {
 	*x = StopFollowingWorkspaceRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[142]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[122]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10074,7 +8898,7 @@ func (x *StopFollowingWorkspaceRequest) String() string {
 func (*StopFollowingWorkspaceRequest) ProtoMessage() {}
 
 func (x *StopFollowingWorkspaceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[142]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[122]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10087,7 +8911,7 @@ func (x *StopFollowingWorkspaceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopFollowingWorkspaceRequest.ProtoReflect.Descriptor instead.
 func (*StopFollowingWorkspaceRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{142}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{122}
 }
 
 func (x *StopFollowingWorkspaceRequest) GetWorkspaceId() string {
@@ -10123,7 +8947,7 @@ type StopFollowingWorkspaceResponse struct {
 
 func (x *StopFollowingWorkspaceResponse) Reset() {
 	*x = StopFollowingWorkspaceResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[143]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[123]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10135,7 +8959,7 @@ func (x *StopFollowingWorkspaceResponse) String() string {
 func (*StopFollowingWorkspaceResponse) ProtoMessage() {}
 
 func (x *StopFollowingWorkspaceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[143]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[123]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10148,7 +8972,7 @@ func (x *StopFollowingWorkspaceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopFollowingWorkspaceResponse.ProtoReflect.Descriptor instead.
 func (*StopFollowingWorkspaceResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{143}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{123}
 }
 
 func (x *StopFollowingWorkspaceResponse) GetWorkspace() *Workspace {
@@ -10179,1142 +9003,6 @@ func (x *StopFollowingWorkspaceResponse) GetStatus() *WorkspaceInheritanceStatus
 	return nil
 }
 
-type SharedIngressRecord struct {
-	state                    protoimpl.MessageState `protogen:"open.v1"`
-	SchemaVersion            uint32                 `protobuf:"varint,1,opt,name=schema_version,json=schemaVersion,proto3" json:"schema_version,omitempty"`
-	GroupId                  string                 `protobuf:"bytes,2,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
-	Version                  uint64                 `protobuf:"varint,3,opt,name=version,proto3" json:"version,omitempty"`
-	Epoch                    uint64                 `protobuf:"varint,4,opt,name=epoch,proto3" json:"epoch,omitempty"`
-	OwnerFingerprint         string                 `protobuf:"bytes,5,opt,name=owner_fingerprint,json=ownerFingerprint,proto3" json:"owner_fingerprint,omitempty"`
-	RoutingOwnerFingerprint  string                 `protobuf:"bytes,6,opt,name=routing_owner_fingerprint,json=routingOwnerFingerprint,proto3" json:"routing_owner_fingerprint,omitempty"`
-	Gateways                 []string               `protobuf:"bytes,7,rep,name=gateways,proto3" json:"gateways,omitempty"`
-	Policy                   *PublicAccessDocument  `protobuf:"bytes,8,opt,name=policy,proto3" json:"policy,omitempty"`
-	PreviousOwnerFingerprint string                 `protobuf:"bytes,9,opt,name=previous_owner_fingerprint,json=previousOwnerFingerprint,proto3" json:"previous_owner_fingerprint,omitempty"`
-	PredecessorDigest        string                 `protobuf:"bytes,10,opt,name=predecessor_digest,json=predecessorDigest,proto3" json:"predecessor_digest,omitempty"`
-	Digest                   string                 `protobuf:"bytes,11,opt,name=digest,proto3" json:"digest,omitempty"`
-	unknownFields            protoimpl.UnknownFields
-	sizeCache                protoimpl.SizeCache
-}
-
-func (x *SharedIngressRecord) Reset() {
-	*x = SharedIngressRecord{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[144]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SharedIngressRecord) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SharedIngressRecord) ProtoMessage() {}
-
-func (x *SharedIngressRecord) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[144]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SharedIngressRecord.ProtoReflect.Descriptor instead.
-func (*SharedIngressRecord) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{144}
-}
-
-func (x *SharedIngressRecord) GetSchemaVersion() uint32 {
-	if x != nil {
-		return x.SchemaVersion
-	}
-	return 0
-}
-
-func (x *SharedIngressRecord) GetGroupId() string {
-	if x != nil {
-		return x.GroupId
-	}
-	return ""
-}
-
-func (x *SharedIngressRecord) GetVersion() uint64 {
-	if x != nil {
-		return x.Version
-	}
-	return 0
-}
-
-func (x *SharedIngressRecord) GetEpoch() uint64 {
-	if x != nil {
-		return x.Epoch
-	}
-	return 0
-}
-
-func (x *SharedIngressRecord) GetOwnerFingerprint() string {
-	if x != nil {
-		return x.OwnerFingerprint
-	}
-	return ""
-}
-
-func (x *SharedIngressRecord) GetRoutingOwnerFingerprint() string {
-	if x != nil {
-		return x.RoutingOwnerFingerprint
-	}
-	return ""
-}
-
-func (x *SharedIngressRecord) GetGateways() []string {
-	if x != nil {
-		return x.Gateways
-	}
-	return nil
-}
-
-func (x *SharedIngressRecord) GetPolicy() *PublicAccessDocument {
-	if x != nil {
-		return x.Policy
-	}
-	return nil
-}
-
-func (x *SharedIngressRecord) GetPreviousOwnerFingerprint() string {
-	if x != nil {
-		return x.PreviousOwnerFingerprint
-	}
-	return ""
-}
-
-func (x *SharedIngressRecord) GetPredecessorDigest() string {
-	if x != nil {
-		return x.PredecessorDigest
-	}
-	return ""
-}
-
-func (x *SharedIngressRecord) GetDigest() string {
-	if x != nil {
-		return x.Digest
-	}
-	return ""
-}
-
-type SharedIngressPending struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Before        *SharedIngressRecord   `protobuf:"bytes,1,opt,name=before,proto3" json:"before,omitempty"`
-	Next          *SharedIngressRecord   `protobuf:"bytes,2,opt,name=next,proto3" json:"next,omitempty"`
-	Outgoing      bool                   `protobuf:"varint,3,opt,name=outgoing,proto3" json:"outgoing,omitempty"`
-	Committed     bool                   `protobuf:"varint,4,opt,name=committed,proto3" json:"committed,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SharedIngressPending) Reset() {
-	*x = SharedIngressPending{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[145]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SharedIngressPending) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SharedIngressPending) ProtoMessage() {}
-
-func (x *SharedIngressPending) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[145]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SharedIngressPending.ProtoReflect.Descriptor instead.
-func (*SharedIngressPending) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{145}
-}
-
-func (x *SharedIngressPending) GetBefore() *SharedIngressRecord {
-	if x != nil {
-		return x.Before
-	}
-	return nil
-}
-
-func (x *SharedIngressPending) GetNext() *SharedIngressRecord {
-	if x != nil {
-		return x.Next
-	}
-	return nil
-}
-
-func (x *SharedIngressPending) GetOutgoing() bool {
-	if x != nil {
-		return x.Outgoing
-	}
-	return false
-}
-
-func (x *SharedIngressPending) GetCommitted() bool {
-	if x != nil {
-		return x.Committed
-	}
-	return false
-}
-
-type SharedIngressState struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	Revision        uint64                 `protobuf:"varint,1,opt,name=revision,proto3" json:"revision,omitempty"`
-	Record          *SharedIngressRecord   `protobuf:"bytes,2,opt,name=record,proto3" json:"record,omitempty"`
-	Pending         *SharedIngressPending  `protobuf:"bytes,3,opt,name=pending,proto3" json:"pending,omitempty"`
-	SelfFingerprint string                 `protobuf:"bytes,4,opt,name=self_fingerprint,json=selfFingerprint,proto3" json:"self_fingerprint,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
-}
-
-func (x *SharedIngressState) Reset() {
-	*x = SharedIngressState{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[146]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SharedIngressState) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SharedIngressState) ProtoMessage() {}
-
-func (x *SharedIngressState) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[146]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SharedIngressState.ProtoReflect.Descriptor instead.
-func (*SharedIngressState) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{146}
-}
-
-func (x *SharedIngressState) GetRevision() uint64 {
-	if x != nil {
-		return x.Revision
-	}
-	return 0
-}
-
-func (x *SharedIngressState) GetRecord() *SharedIngressRecord {
-	if x != nil {
-		return x.Record
-	}
-	return nil
-}
-
-func (x *SharedIngressState) GetPending() *SharedIngressPending {
-	if x != nil {
-		return x.Pending
-	}
-	return nil
-}
-
-func (x *SharedIngressState) GetSelfFingerprint() string {
-	if x != nil {
-		return x.SelfFingerprint
-	}
-	return ""
-}
-
-type SharedIngressConfiguration struct {
-	state                   protoimpl.MessageState `protogen:"open.v1"`
-	Policy                  *PublicAccessDocument  `protobuf:"bytes,1,opt,name=policy,proto3" json:"policy,omitempty"`
-	RoutingOwnerFingerprint string                 `protobuf:"bytes,2,opt,name=routing_owner_fingerprint,json=routingOwnerFingerprint,proto3" json:"routing_owner_fingerprint,omitempty"`
-	Gateways                []string               `protobuf:"bytes,3,rep,name=gateways,proto3" json:"gateways,omitempty"`
-	unknownFields           protoimpl.UnknownFields
-	sizeCache               protoimpl.SizeCache
-}
-
-func (x *SharedIngressConfiguration) Reset() {
-	*x = SharedIngressConfiguration{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[147]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SharedIngressConfiguration) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SharedIngressConfiguration) ProtoMessage() {}
-
-func (x *SharedIngressConfiguration) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[147]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SharedIngressConfiguration.ProtoReflect.Descriptor instead.
-func (*SharedIngressConfiguration) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{147}
-}
-
-func (x *SharedIngressConfiguration) GetPolicy() *PublicAccessDocument {
-	if x != nil {
-		return x.Policy
-	}
-	return nil
-}
-
-func (x *SharedIngressConfiguration) GetRoutingOwnerFingerprint() string {
-	if x != nil {
-		return x.RoutingOwnerFingerprint
-	}
-	return ""
-}
-
-func (x *SharedIngressConfiguration) GetGateways() []string {
-	if x != nil {
-		return x.Gateways
-	}
-	return nil
-}
-
-type GetSharedIngressRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetSharedIngressRequest) Reset() {
-	*x = GetSharedIngressRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[148]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetSharedIngressRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetSharedIngressRequest) ProtoMessage() {}
-
-func (x *GetSharedIngressRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[148]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetSharedIngressRequest.ProtoReflect.Descriptor instead.
-func (*GetSharedIngressRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{148}
-}
-
-type CreateSharedIngressRequest struct {
-	state            protoimpl.MessageState      `protogen:"open.v1"`
-	Configuration    *SharedIngressConfiguration `protobuf:"bytes,1,opt,name=configuration,proto3" json:"configuration,omitempty"`
-	ExpectedRevision uint64                      `protobuf:"varint,2,opt,name=expected_revision,json=expectedRevision,proto3" json:"expected_revision,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
-}
-
-func (x *CreateSharedIngressRequest) Reset() {
-	*x = CreateSharedIngressRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[149]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CreateSharedIngressRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CreateSharedIngressRequest) ProtoMessage() {}
-
-func (x *CreateSharedIngressRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[149]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CreateSharedIngressRequest.ProtoReflect.Descriptor instead.
-func (*CreateSharedIngressRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{149}
-}
-
-func (x *CreateSharedIngressRequest) GetConfiguration() *SharedIngressConfiguration {
-	if x != nil {
-		return x.Configuration
-	}
-	return nil
-}
-
-func (x *CreateSharedIngressRequest) GetExpectedRevision() uint64 {
-	if x != nil {
-		return x.ExpectedRevision
-	}
-	return 0
-}
-
-type SaveSharedIngressRequest struct {
-	state           protoimpl.MessageState      `protogen:"open.v1"`
-	Configuration   *SharedIngressConfiguration `protobuf:"bytes,1,opt,name=configuration,proto3" json:"configuration,omitempty"`
-	ExpectedVersion uint64                      `protobuf:"varint,2,opt,name=expected_version,json=expectedVersion,proto3" json:"expected_version,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
-}
-
-func (x *SaveSharedIngressRequest) Reset() {
-	*x = SaveSharedIngressRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[150]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SaveSharedIngressRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SaveSharedIngressRequest) ProtoMessage() {}
-
-func (x *SaveSharedIngressRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[150]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SaveSharedIngressRequest.ProtoReflect.Descriptor instead.
-func (*SaveSharedIngressRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{150}
-}
-
-func (x *SaveSharedIngressRequest) GetConfiguration() *SharedIngressConfiguration {
-	if x != nil {
-		return x.Configuration
-	}
-	return nil
-}
-
-func (x *SaveSharedIngressRequest) GetExpectedVersion() uint64 {
-	if x != nil {
-		return x.ExpectedVersion
-	}
-	return 0
-}
-
-type JoinSharedIngressRequest struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	OwnerFingerprint string                 `protobuf:"bytes,1,opt,name=owner_fingerprint,json=ownerFingerprint,proto3" json:"owner_fingerprint,omitempty"`
-	ExpectedRevision uint64                 `protobuf:"varint,2,opt,name=expected_revision,json=expectedRevision,proto3" json:"expected_revision,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
-}
-
-func (x *JoinSharedIngressRequest) Reset() {
-	*x = JoinSharedIngressRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[151]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *JoinSharedIngressRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*JoinSharedIngressRequest) ProtoMessage() {}
-
-func (x *JoinSharedIngressRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[151]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use JoinSharedIngressRequest.ProtoReflect.Descriptor instead.
-func (*JoinSharedIngressRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{151}
-}
-
-func (x *JoinSharedIngressRequest) GetOwnerFingerprint() string {
-	if x != nil {
-		return x.OwnerFingerprint
-	}
-	return ""
-}
-
-func (x *JoinSharedIngressRequest) GetExpectedRevision() uint64 {
-	if x != nil {
-		return x.ExpectedRevision
-	}
-	return 0
-}
-
-type TransferSharedIngressRequest struct {
-	state                  protoimpl.MessageState `protogen:"open.v1"`
-	DestinationFingerprint string                 `protobuf:"bytes,1,opt,name=destination_fingerprint,json=destinationFingerprint,proto3" json:"destination_fingerprint,omitempty"`
-	ExpectedVersion        uint64                 `protobuf:"varint,2,opt,name=expected_version,json=expectedVersion,proto3" json:"expected_version,omitempty"`
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
-}
-
-func (x *TransferSharedIngressRequest) Reset() {
-	*x = TransferSharedIngressRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[152]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *TransferSharedIngressRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*TransferSharedIngressRequest) ProtoMessage() {}
-
-func (x *TransferSharedIngressRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[152]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use TransferSharedIngressRequest.ProtoReflect.Descriptor instead.
-func (*TransferSharedIngressRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{152}
-}
-
-func (x *TransferSharedIngressRequest) GetDestinationFingerprint() string {
-	if x != nil {
-		return x.DestinationFingerprint
-	}
-	return ""
-}
-
-func (x *TransferSharedIngressRequest) GetExpectedVersion() uint64 {
-	if x != nil {
-		return x.ExpectedVersion
-	}
-	return 0
-}
-
-type RecoverSharedIngressRequest struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	ExpectedRevision uint64                 `protobuf:"varint,1,opt,name=expected_revision,json=expectedRevision,proto3" json:"expected_revision,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
-}
-
-func (x *RecoverSharedIngressRequest) Reset() {
-	*x = RecoverSharedIngressRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[153]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RecoverSharedIngressRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RecoverSharedIngressRequest) ProtoMessage() {}
-
-func (x *RecoverSharedIngressRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[153]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RecoverSharedIngressRequest.ProtoReflect.Descriptor instead.
-func (*RecoverSharedIngressRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{153}
-}
-
-func (x *RecoverSharedIngressRequest) GetExpectedRevision() uint64 {
-	if x != nil {
-		return x.ExpectedRevision
-	}
-	return 0
-}
-
-type CancelSharedIngressRequest struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	ExpectedRevision uint64                 `protobuf:"varint,1,opt,name=expected_revision,json=expectedRevision,proto3" json:"expected_revision,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
-}
-
-func (x *CancelSharedIngressRequest) Reset() {
-	*x = CancelSharedIngressRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[154]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CancelSharedIngressRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CancelSharedIngressRequest) ProtoMessage() {}
-
-func (x *CancelSharedIngressRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[154]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CancelSharedIngressRequest.ProtoReflect.Descriptor instead.
-func (*CancelSharedIngressRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{154}
-}
-
-func (x *CancelSharedIngressRequest) GetExpectedRevision() uint64 {
-	if x != nil {
-		return x.ExpectedRevision
-	}
-	return 0
-}
-
-type SyncSharedIngressRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SyncSharedIngressRequest) Reset() {
-	*x = SyncSharedIngressRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[155]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SyncSharedIngressRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SyncSharedIngressRequest) ProtoMessage() {}
-
-func (x *SyncSharedIngressRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[155]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SyncSharedIngressRequest.ProtoReflect.Descriptor instead.
-func (*SyncSharedIngressRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{155}
-}
-
-type GetSharedIngressResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	State         *SharedIngressState    `protobuf:"bytes,1,opt,name=state,proto3" json:"state,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetSharedIngressResponse) Reset() {
-	*x = GetSharedIngressResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[156]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetSharedIngressResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetSharedIngressResponse) ProtoMessage() {}
-
-func (x *GetSharedIngressResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[156]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetSharedIngressResponse.ProtoReflect.Descriptor instead.
-func (*GetSharedIngressResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{156}
-}
-
-func (x *GetSharedIngressResponse) GetState() *SharedIngressState {
-	if x != nil {
-		return x.State
-	}
-	return nil
-}
-
-type CreateSharedIngressResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	State         *SharedIngressState    `protobuf:"bytes,1,opt,name=state,proto3" json:"state,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CreateSharedIngressResponse) Reset() {
-	*x = CreateSharedIngressResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[157]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CreateSharedIngressResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CreateSharedIngressResponse) ProtoMessage() {}
-
-func (x *CreateSharedIngressResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[157]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CreateSharedIngressResponse.ProtoReflect.Descriptor instead.
-func (*CreateSharedIngressResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{157}
-}
-
-func (x *CreateSharedIngressResponse) GetState() *SharedIngressState {
-	if x != nil {
-		return x.State
-	}
-	return nil
-}
-
-type SaveSharedIngressResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	State         *SharedIngressState    `protobuf:"bytes,1,opt,name=state,proto3" json:"state,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SaveSharedIngressResponse) Reset() {
-	*x = SaveSharedIngressResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[158]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SaveSharedIngressResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SaveSharedIngressResponse) ProtoMessage() {}
-
-func (x *SaveSharedIngressResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[158]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SaveSharedIngressResponse.ProtoReflect.Descriptor instead.
-func (*SaveSharedIngressResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{158}
-}
-
-func (x *SaveSharedIngressResponse) GetState() *SharedIngressState {
-	if x != nil {
-		return x.State
-	}
-	return nil
-}
-
-type JoinSharedIngressResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	State         *SharedIngressState    `protobuf:"bytes,1,opt,name=state,proto3" json:"state,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *JoinSharedIngressResponse) Reset() {
-	*x = JoinSharedIngressResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[159]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *JoinSharedIngressResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*JoinSharedIngressResponse) ProtoMessage() {}
-
-func (x *JoinSharedIngressResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[159]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use JoinSharedIngressResponse.ProtoReflect.Descriptor instead.
-func (*JoinSharedIngressResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{159}
-}
-
-func (x *JoinSharedIngressResponse) GetState() *SharedIngressState {
-	if x != nil {
-		return x.State
-	}
-	return nil
-}
-
-type TransferSharedIngressResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	State         *SharedIngressState    `protobuf:"bytes,1,opt,name=state,proto3" json:"state,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *TransferSharedIngressResponse) Reset() {
-	*x = TransferSharedIngressResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[160]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *TransferSharedIngressResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*TransferSharedIngressResponse) ProtoMessage() {}
-
-func (x *TransferSharedIngressResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[160]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use TransferSharedIngressResponse.ProtoReflect.Descriptor instead.
-func (*TransferSharedIngressResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{160}
-}
-
-func (x *TransferSharedIngressResponse) GetState() *SharedIngressState {
-	if x != nil {
-		return x.State
-	}
-	return nil
-}
-
-type RecoverSharedIngressResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	State         *SharedIngressState    `protobuf:"bytes,1,opt,name=state,proto3" json:"state,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RecoverSharedIngressResponse) Reset() {
-	*x = RecoverSharedIngressResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[161]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RecoverSharedIngressResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RecoverSharedIngressResponse) ProtoMessage() {}
-
-func (x *RecoverSharedIngressResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[161]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RecoverSharedIngressResponse.ProtoReflect.Descriptor instead.
-func (*RecoverSharedIngressResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{161}
-}
-
-func (x *RecoverSharedIngressResponse) GetState() *SharedIngressState {
-	if x != nil {
-		return x.State
-	}
-	return nil
-}
-
-type CancelSharedIngressResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	State         *SharedIngressState    `protobuf:"bytes,1,opt,name=state,proto3" json:"state,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CancelSharedIngressResponse) Reset() {
-	*x = CancelSharedIngressResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[162]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CancelSharedIngressResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CancelSharedIngressResponse) ProtoMessage() {}
-
-func (x *CancelSharedIngressResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[162]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CancelSharedIngressResponse.ProtoReflect.Descriptor instead.
-func (*CancelSharedIngressResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{162}
-}
-
-func (x *CancelSharedIngressResponse) GetState() *SharedIngressState {
-	if x != nil {
-		return x.State
-	}
-	return nil
-}
-
-type SyncSharedIngressResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	State         *SharedIngressState    `protobuf:"bytes,1,opt,name=state,proto3" json:"state,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SyncSharedIngressResponse) Reset() {
-	*x = SyncSharedIngressResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[163]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SyncSharedIngressResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SyncSharedIngressResponse) ProtoMessage() {}
-
-func (x *SyncSharedIngressResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[163]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SyncSharedIngressResponse.ProtoReflect.Descriptor instead.
-func (*SyncSharedIngressResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{163}
-}
-
-func (x *SyncSharedIngressResponse) GetState() *SharedIngressState {
-	if x != nil {
-		return x.State
-	}
-	return nil
-}
-
-type GetRoutingWorkspacesRequest struct {
-	state                   protoimpl.MessageState `protogen:"open.v1"`
-	RoutingOwnerFingerprint string                 `protobuf:"bytes,1,opt,name=routing_owner_fingerprint,json=routingOwnerFingerprint,proto3" json:"routing_owner_fingerprint,omitempty"`
-	unknownFields           protoimpl.UnknownFields
-	sizeCache               protoimpl.SizeCache
-}
-
-func (x *GetRoutingWorkspacesRequest) Reset() {
-	*x = GetRoutingWorkspacesRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[164]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetRoutingWorkspacesRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetRoutingWorkspacesRequest) ProtoMessage() {}
-
-func (x *GetRoutingWorkspacesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[164]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetRoutingWorkspacesRequest.ProtoReflect.Descriptor instead.
-func (*GetRoutingWorkspacesRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{164}
-}
-
-func (x *GetRoutingWorkspacesRequest) GetRoutingOwnerFingerprint() string {
-	if x != nil {
-		return x.RoutingOwnerFingerprint
-	}
-	return ""
-}
-
-type GetRoutingWorkspacesResponse struct {
-	state                   protoimpl.MessageState  `protogen:"open.v1"`
-	RoutingOwnerFingerprint string                  `protobuf:"bytes,1,opt,name=routing_owner_fingerprint,json=routingOwnerFingerprint,proto3" json:"routing_owner_fingerprint,omitempty"`
-	Workspaces              []*PublicWorkspaceHosts `protobuf:"bytes,2,rep,name=workspaces,proto3" json:"workspaces,omitempty"`
-	unknownFields           protoimpl.UnknownFields
-	sizeCache               protoimpl.SizeCache
-}
-
-func (x *GetRoutingWorkspacesResponse) Reset() {
-	*x = GetRoutingWorkspacesResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[165]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetRoutingWorkspacesResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetRoutingWorkspacesResponse) ProtoMessage() {}
-
-func (x *GetRoutingWorkspacesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[165]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetRoutingWorkspacesResponse.ProtoReflect.Descriptor instead.
-func (*GetRoutingWorkspacesResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{165}
-}
-
-func (x *GetRoutingWorkspacesResponse) GetRoutingOwnerFingerprint() string {
-	if x != nil {
-		return x.RoutingOwnerFingerprint
-	}
-	return ""
-}
-
-func (x *GetRoutingWorkspacesResponse) GetWorkspaces() []*PublicWorkspaceHosts {
-	if x != nil {
-		return x.Workspaces
-	}
-	return nil
-}
-
 type ComputerFollowingStatus struct {
 	state                  protoimpl.MessageState `protogen:"open.v1"`
 	Revision               uint64                 `protobuf:"varint,1,opt,name=revision,proto3" json:"revision,omitempty"`
@@ -11330,7 +9018,7 @@ type ComputerFollowingStatus struct {
 
 func (x *ComputerFollowingStatus) Reset() {
 	*x = ComputerFollowingStatus{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[166]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[124]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11342,7 +9030,7 @@ func (x *ComputerFollowingStatus) String() string {
 func (*ComputerFollowingStatus) ProtoMessage() {}
 
 func (x *ComputerFollowingStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[166]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[124]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11355,7 +9043,7 @@ func (x *ComputerFollowingStatus) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ComputerFollowingStatus.ProtoReflect.Descriptor instead.
 func (*ComputerFollowingStatus) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{166}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{124}
 }
 
 func (x *ComputerFollowingStatus) GetRevision() uint64 {
@@ -11415,7 +9103,7 @@ type GetComputerFollowingRequest struct {
 
 func (x *GetComputerFollowingRequest) Reset() {
 	*x = GetComputerFollowingRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[167]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[125]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11427,7 +9115,7 @@ func (x *GetComputerFollowingRequest) String() string {
 func (*GetComputerFollowingRequest) ProtoMessage() {}
 
 func (x *GetComputerFollowingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[167]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[125]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11440,7 +9128,7 @@ func (x *GetComputerFollowingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetComputerFollowingRequest.ProtoReflect.Descriptor instead.
 func (*GetComputerFollowingRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{167}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{125}
 }
 
 type GetComputerFollowingResponse struct {
@@ -11452,7 +9140,7 @@ type GetComputerFollowingResponse struct {
 
 func (x *GetComputerFollowingResponse) Reset() {
 	*x = GetComputerFollowingResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[168]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[126]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11464,7 +9152,7 @@ func (x *GetComputerFollowingResponse) String() string {
 func (*GetComputerFollowingResponse) ProtoMessage() {}
 
 func (x *GetComputerFollowingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[168]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[126]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11477,7 +9165,7 @@ func (x *GetComputerFollowingResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetComputerFollowingResponse.ProtoReflect.Descriptor instead.
 func (*GetComputerFollowingResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{168}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{126}
 }
 
 func (x *GetComputerFollowingResponse) GetState() *ComputerFollowingStatus {
@@ -11497,7 +9185,7 @@ type FollowComputerRequest struct {
 
 func (x *FollowComputerRequest) Reset() {
 	*x = FollowComputerRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[169]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[127]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11509,7 +9197,7 @@ func (x *FollowComputerRequest) String() string {
 func (*FollowComputerRequest) ProtoMessage() {}
 
 func (x *FollowComputerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[169]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[127]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11522,7 +9210,7 @@ func (x *FollowComputerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FollowComputerRequest.ProtoReflect.Descriptor instead.
 func (*FollowComputerRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{169}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{127}
 }
 
 func (x *FollowComputerRequest) GetFingerprint() string {
@@ -11548,7 +9236,7 @@ type FollowComputerResponse struct {
 
 func (x *FollowComputerResponse) Reset() {
 	*x = FollowComputerResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[170]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[128]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11560,7 +9248,7 @@ func (x *FollowComputerResponse) String() string {
 func (*FollowComputerResponse) ProtoMessage() {}
 
 func (x *FollowComputerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[170]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[128]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11573,7 +9261,7 @@ func (x *FollowComputerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FollowComputerResponse.ProtoReflect.Descriptor instead.
 func (*FollowComputerResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{170}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{128}
 }
 
 func (x *FollowComputerResponse) GetState() *ComputerFollowingStatus {
@@ -11591,7 +9279,7 @@ type SyncComputerConfigurationRequest struct {
 
 func (x *SyncComputerConfigurationRequest) Reset() {
 	*x = SyncComputerConfigurationRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[171]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[129]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11603,7 +9291,7 @@ func (x *SyncComputerConfigurationRequest) String() string {
 func (*SyncComputerConfigurationRequest) ProtoMessage() {}
 
 func (x *SyncComputerConfigurationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[171]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[129]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11616,7 +9304,7 @@ func (x *SyncComputerConfigurationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SyncComputerConfigurationRequest.ProtoReflect.Descriptor instead.
 func (*SyncComputerConfigurationRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{171}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{129}
 }
 
 type SyncComputerConfigurationResponse struct {
@@ -11628,7 +9316,7 @@ type SyncComputerConfigurationResponse struct {
 
 func (x *SyncComputerConfigurationResponse) Reset() {
 	*x = SyncComputerConfigurationResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[172]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[130]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11640,7 +9328,7 @@ func (x *SyncComputerConfigurationResponse) String() string {
 func (*SyncComputerConfigurationResponse) ProtoMessage() {}
 
 func (x *SyncComputerConfigurationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[172]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[130]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11653,7 +9341,7 @@ func (x *SyncComputerConfigurationResponse) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use SyncComputerConfigurationResponse.ProtoReflect.Descriptor instead.
 func (*SyncComputerConfigurationResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{172}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{130}
 }
 
 func (x *SyncComputerConfigurationResponse) GetState() *ComputerFollowingStatus {
@@ -11672,7 +9360,7 @@ type StopFollowingComputerRequest struct {
 
 func (x *StopFollowingComputerRequest) Reset() {
 	*x = StopFollowingComputerRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[173]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[131]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11684,7 +9372,7 @@ func (x *StopFollowingComputerRequest) String() string {
 func (*StopFollowingComputerRequest) ProtoMessage() {}
 
 func (x *StopFollowingComputerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[173]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[131]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11697,7 +9385,7 @@ func (x *StopFollowingComputerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopFollowingComputerRequest.ProtoReflect.Descriptor instead.
 func (*StopFollowingComputerRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{173}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{131}
 }
 
 func (x *StopFollowingComputerRequest) GetExpectedRevision() uint64 {
@@ -11716,7 +9404,7 @@ type StopFollowingComputerResponse struct {
 
 func (x *StopFollowingComputerResponse) Reset() {
 	*x = StopFollowingComputerResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[174]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[132]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11728,7 +9416,7 @@ func (x *StopFollowingComputerResponse) String() string {
 func (*StopFollowingComputerResponse) ProtoMessage() {}
 
 func (x *StopFollowingComputerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[174]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[132]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11741,7 +9429,7 @@ func (x *StopFollowingComputerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopFollowingComputerResponse.ProtoReflect.Descriptor instead.
 func (*StopFollowingComputerResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{174}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{132}
 }
 
 func (x *StopFollowingComputerResponse) GetState() *ComputerFollowingStatus {
@@ -11763,7 +9451,7 @@ type SetEnvironmentFollowingRequest struct {
 
 func (x *SetEnvironmentFollowingRequest) Reset() {
 	*x = SetEnvironmentFollowingRequest{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[175]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[133]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11775,7 +9463,7 @@ func (x *SetEnvironmentFollowingRequest) String() string {
 func (*SetEnvironmentFollowingRequest) ProtoMessage() {}
 
 func (x *SetEnvironmentFollowingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[175]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[133]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11788,7 +9476,7 @@ func (x *SetEnvironmentFollowingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetEnvironmentFollowingRequest.ProtoReflect.Descriptor instead.
 func (*SetEnvironmentFollowingRequest) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{175}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{133}
 }
 
 func (x *SetEnvironmentFollowingRequest) GetWorkspaceId() string {
@@ -11828,7 +9516,7 @@ type SetEnvironmentFollowingResponse struct {
 
 func (x *SetEnvironmentFollowingResponse) Reset() {
 	*x = SetEnvironmentFollowingResponse{}
-	mi := &file_rementor_v1_rementor_proto_msgTypes[176]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[134]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11840,7 +9528,7 @@ func (x *SetEnvironmentFollowingResponse) String() string {
 func (*SetEnvironmentFollowingResponse) ProtoMessage() {}
 
 func (x *SetEnvironmentFollowingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_rementor_v1_rementor_proto_msgTypes[176]
+	mi := &file_rementor_v1_rementor_proto_msgTypes[134]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11853,7 +9541,7 @@ func (x *SetEnvironmentFollowingResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetEnvironmentFollowingResponse.ProtoReflect.Descriptor instead.
 func (*SetEnvironmentFollowingResponse) Descriptor() ([]byte, []int) {
-	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{176}
+	return file_rementor_v1_rementor_proto_rawDescGZIP(), []int{134}
 }
 
 func (x *SetEnvironmentFollowingResponse) GetState() *ComputerFollowingStatus {
@@ -11867,89 +9555,7 @@ var File_rementor_v1_rementor_proto protoreflect.FileDescriptor
 
 const file_rementor_v1_rementor_proto_rawDesc = "" +
 	"\n" +
-	"\x1arementor/v1/rementor.proto\x12\vrementor.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"0\n" +
-	"\fPublicOrigin\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x10\n" +
-	"\x03url\x18\x02 \x01(\tR\x03url\"\x9a\x01\n" +
-	"\x14TailscalePublication\x12\x1b\n" +
-	"\torigin_id\x18\x01 \x01(\tR\boriginId\x12!\n" +
-	"\fservice_name\x18\x02 \x01(\tR\vserviceName\x12\x10\n" +
-	"\x03url\x18\x03 \x01(\tR\x03url\x12\x16\n" +
-	"\x06status\x18\x04 \x01(\tR\x06status\x12\x18\n" +
-	"\amessage\x18\x05 \x01(\tR\amessage\"\xc0\x02\n" +
-	"\x15TailscaleSharingState\x12\x1a\n" +
-	"\brevision\x18\x01 \x01(\x04R\brevision\x12\x18\n" +
-	"\aenabled\x18\x02 \x01(\bR\aenabled\x12!\n" +
-	"\fgateway_name\x18\x03 \x01(\tR\vgatewayName\x12\x1d\n" +
-	"\n" +
-	"dns_suffix\x18\x04 \x01(\tR\tdnsSuffix\x12#\n" +
-	"\rsetup_message\x18\x05 \x01(\tR\fsetupMessage\x12-\n" +
-	"\x12automatic_creation\x18\x06 \x01(\bR\x11automaticCreation\x12E\n" +
-	"\fpublications\x18\a \x03(\v2!.rementor.v1.TailscalePublicationR\fpublications\x12\x14\n" +
-	"\x05error\x18\b \x01(\tR\x05error\"\x1c\n" +
-	"\x1aGetTailscaleSharingRequest\"W\n" +
-	"\x1bGetTailscaleSharingResponse\x128\n" +
-	"\x05state\x18\x01 \x01(\v2\".rementor.v1.TailscaleSharingStateR\x05state\"c\n" +
-	"\x1aSetTailscaleSharingRequest\x12\x18\n" +
-	"\aenabled\x18\x01 \x01(\bR\aenabled\x12+\n" +
-	"\x11expected_revision\x18\x02 \x01(\x04R\x10expectedRevision\"W\n" +
-	"\x1bSetTailscaleSharingResponse\x128\n" +
-	"\x05state\x18\x01 \x01(\v2\".rementor.v1.TailscaleSharingStateR\x05state\"C\n" +
-	"\x1ePrepareTailscaleSharingRequest\x12!\n" +
-	"\fworkspace_id\x18\x01 \x01(\tR\vworkspaceId\"`\n" +
-	"\x1fPrepareTailscaleSharingResponse\x12=\n" +
-	"\bdocument\x18\x01 \x01(\v2!.rementor.v1.PublicAccessDocumentR\bdocument\"t\n" +
-	"\x13PublicOriginBinding\x12!\n" +
-	"\fworkspace_id\x18\x01 \x01(\tR\vworkspaceId\x12\x1b\n" +
-	"\torigin_id\x18\x02 \x01(\tR\boriginId\x12\x1d\n" +
-	"\n" +
-	"local_host\x18\x03 \x01(\tR\tlocalHost\"S\n" +
-	"\x15PublicDeviceSelection\x12\x17\n" +
-	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12!\n" +
-	"\fworkspace_id\x18\x02 \x01(\tR\vworkspaceId\"\xc8\x02\n" +
-	"\x14PublicAccessDocument\x12%\n" +
-	"\x0eschema_version\x18\x01 \x01(\rR\rschemaVersion\x123\n" +
-	"\aorigins\x18\x02 \x03(\v2\x19.rementor.v1.PublicOriginR\aorigins\x12<\n" +
-	"\bbindings\x18\x03 \x03(\v2 .rementor.v1.PublicOriginBindingR\bbindings\x12<\n" +
-	"\adevices\x18\x04 \x03(\v2\".rementor.v1.PublicDeviceSelectionR\adevices\x12.\n" +
-	"\x13shared_workspace_id\x18\x05 \x01(\tR\x11sharedWorkspaceId\x12(\n" +
-	"\x10allowed_user_ids\x18\x06 \x03(\x04R\x0eallowedUserIds\"v\n" +
-	"\x19PublicAccessConfiguration\x12\x1a\n" +
-	"\brevision\x18\x01 \x01(\x04R\brevision\x12=\n" +
-	"\bdocument\x18\x02 \x01(\v2!.rementor.v1.PublicAccessDocumentR\bdocument\"\x8e\x01\n" +
-	"\x12PublicIngressState\x12%\n" +
-	"\x0elisten_address\x18\x01 \x01(\tR\rlistenAddress\x12#\n" +
-	"\rnginx_address\x18\x02 \x01(\tR\fnginxAddress\x12\x16\n" +
-	"\x06active\x18\x03 \x01(\bR\x06active\x12\x14\n" +
-	"\x05error\x18\x04 \x01(\tR\x05error\"\xd7\x01\n" +
-	"\x12PublicAccessDevice\x12\x17\n" +
-	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\x04R\x06userId\x12\x12\n" +
-	"\x04name\x18\x03 \x01(\tR\x04name\x12\x19\n" +
-	"\bdns_name\x18\x04 \x01(\tR\adnsName\x12\x1c\n" +
-	"\taddresses\x18\x05 \x03(\tR\taddresses\x12\x16\n" +
-	"\x06online\x18\x06 \x01(\bR\x06online\x12\x16\n" +
-	"\x06tagged\x18\a \x01(\bR\x06tagged\x12\x12\n" +
-	"\x04self\x18\b \x01(\bR\x04self\"n\n" +
-	"\x14PublicWorkspaceHosts\x12\x12\n" +
-	"\x04name\x18\x03 \x01(\tR\x04name\x12!\n" +
-	"\fworkspace_id\x18\x01 \x01(\tR\vworkspaceId\x12\x1f\n" +
-	"\vlocal_hosts\x18\x02 \x03(\tR\n" +
-	"localHosts\"\x18\n" +
-	"\x16GetPublicAccessRequest\"\xc3\x02\n" +
-	"\x17GetPublicAccessResponse\x12L\n" +
-	"\rconfiguration\x18\x01 \x01(\v2&.rementor.v1.PublicAccessConfigurationR\rconfiguration\x129\n" +
-	"\aingress\x18\x02 \x01(\v2\x1f.rementor.v1.PublicIngressStateR\aingress\x129\n" +
-	"\adevices\x18\x03 \x03(\v2\x1f.rementor.v1.PublicAccessDeviceR\adevices\x12!\n" +
-	"\fdevice_error\x18\x04 \x01(\tR\vdeviceError\x12A\n" +
-	"\n" +
-	"workspaces\x18\x05 \x03(\v2!.rementor.v1.PublicWorkspaceHostsR\n" +
-	"workspaces\"\x85\x01\n" +
-	"\x17SavePublicAccessRequest\x12=\n" +
-	"\bdocument\x18\x01 \x01(\v2!.rementor.v1.PublicAccessDocumentR\bdocument\x12+\n" +
-	"\x11expected_revision\x18\x02 \x01(\x04R\x10expectedRevision\"h\n" +
-	"\x18SavePublicAccessResponse\x12L\n" +
-	"\rconfiguration\x18\x01 \x01(\v2&.rementor.v1.PublicAccessConfigurationR\rconfiguration\"\xa6\x01\n" +
+	"\x1arementor/v1/rementor.proto\x12\vrementor.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa6\x01\n" +
 	"\x17CanonicalApplicationRef\x12\x15\n" +
 	"\x06app_id\x18\x01 \x01(\tR\x05appId\x12\x1d\n" +
 	"\n" +
@@ -12729,75 +10335,7 @@ const file_rementor_v1_rementor_proto_rawDesc = "" +
 	"\tworkspace\x18\x01 \x01(\v2\x16.rementor.v1.WorkspaceR\tworkspace\x12<\n" +
 	"\toperation\x18\x02 \x01(\v2\x1e.rementor.v1.OperationMetadataR\toperation\x12\x18\n" +
 	"\achanged\x18\x03 \x01(\bR\achanged\x12?\n" +
-	"\x06status\x18\x04 \x01(\v2'.rementor.v1.WorkspaceInheritanceStatusR\x06status\"\xcc\x03\n" +
-	"\x13SharedIngressRecord\x12%\n" +
-	"\x0eschema_version\x18\x01 \x01(\rR\rschemaVersion\x12\x19\n" +
-	"\bgroup_id\x18\x02 \x01(\tR\agroupId\x12\x18\n" +
-	"\aversion\x18\x03 \x01(\x04R\aversion\x12\x14\n" +
-	"\x05epoch\x18\x04 \x01(\x04R\x05epoch\x12+\n" +
-	"\x11owner_fingerprint\x18\x05 \x01(\tR\x10ownerFingerprint\x12:\n" +
-	"\x19routing_owner_fingerprint\x18\x06 \x01(\tR\x17routingOwnerFingerprint\x12\x1a\n" +
-	"\bgateways\x18\a \x03(\tR\bgateways\x129\n" +
-	"\x06policy\x18\b \x01(\v2!.rementor.v1.PublicAccessDocumentR\x06policy\x12<\n" +
-	"\x1aprevious_owner_fingerprint\x18\t \x01(\tR\x18previousOwnerFingerprint\x12-\n" +
-	"\x12predecessor_digest\x18\n" +
-	" \x01(\tR\x11predecessorDigest\x12\x16\n" +
-	"\x06digest\x18\v \x01(\tR\x06digest\"\xc0\x01\n" +
-	"\x14SharedIngressPending\x128\n" +
-	"\x06before\x18\x01 \x01(\v2 .rementor.v1.SharedIngressRecordR\x06before\x124\n" +
-	"\x04next\x18\x02 \x01(\v2 .rementor.v1.SharedIngressRecordR\x04next\x12\x1a\n" +
-	"\boutgoing\x18\x03 \x01(\bR\boutgoing\x12\x1c\n" +
-	"\tcommitted\x18\x04 \x01(\bR\tcommitted\"\xd2\x01\n" +
-	"\x12SharedIngressState\x12\x1a\n" +
-	"\brevision\x18\x01 \x01(\x04R\brevision\x128\n" +
-	"\x06record\x18\x02 \x01(\v2 .rementor.v1.SharedIngressRecordR\x06record\x12;\n" +
-	"\apending\x18\x03 \x01(\v2!.rementor.v1.SharedIngressPendingR\apending\x12)\n" +
-	"\x10self_fingerprint\x18\x04 \x01(\tR\x0fselfFingerprint\"\xaf\x01\n" +
-	"\x1aSharedIngressConfiguration\x129\n" +
-	"\x06policy\x18\x01 \x01(\v2!.rementor.v1.PublicAccessDocumentR\x06policy\x12:\n" +
-	"\x19routing_owner_fingerprint\x18\x02 \x01(\tR\x17routingOwnerFingerprint\x12\x1a\n" +
-	"\bgateways\x18\x03 \x03(\tR\bgateways\"\x19\n" +
-	"\x17GetSharedIngressRequest\"\x98\x01\n" +
-	"\x1aCreateSharedIngressRequest\x12M\n" +
-	"\rconfiguration\x18\x01 \x01(\v2'.rementor.v1.SharedIngressConfigurationR\rconfiguration\x12+\n" +
-	"\x11expected_revision\x18\x02 \x01(\x04R\x10expectedRevision\"\x94\x01\n" +
-	"\x18SaveSharedIngressRequest\x12M\n" +
-	"\rconfiguration\x18\x01 \x01(\v2'.rementor.v1.SharedIngressConfigurationR\rconfiguration\x12)\n" +
-	"\x10expected_version\x18\x02 \x01(\x04R\x0fexpectedVersion\"t\n" +
-	"\x18JoinSharedIngressRequest\x12+\n" +
-	"\x11owner_fingerprint\x18\x01 \x01(\tR\x10ownerFingerprint\x12+\n" +
-	"\x11expected_revision\x18\x02 \x01(\x04R\x10expectedRevision\"\x82\x01\n" +
-	"\x1cTransferSharedIngressRequest\x127\n" +
-	"\x17destination_fingerprint\x18\x01 \x01(\tR\x16destinationFingerprint\x12)\n" +
-	"\x10expected_version\x18\x02 \x01(\x04R\x0fexpectedVersion\"J\n" +
-	"\x1bRecoverSharedIngressRequest\x12+\n" +
-	"\x11expected_revision\x18\x01 \x01(\x04R\x10expectedRevision\"I\n" +
-	"\x1aCancelSharedIngressRequest\x12+\n" +
-	"\x11expected_revision\x18\x01 \x01(\x04R\x10expectedRevision\"\x1a\n" +
-	"\x18SyncSharedIngressRequest\"Q\n" +
-	"\x18GetSharedIngressResponse\x125\n" +
-	"\x05state\x18\x01 \x01(\v2\x1f.rementor.v1.SharedIngressStateR\x05state\"T\n" +
-	"\x1bCreateSharedIngressResponse\x125\n" +
-	"\x05state\x18\x01 \x01(\v2\x1f.rementor.v1.SharedIngressStateR\x05state\"R\n" +
-	"\x19SaveSharedIngressResponse\x125\n" +
-	"\x05state\x18\x01 \x01(\v2\x1f.rementor.v1.SharedIngressStateR\x05state\"R\n" +
-	"\x19JoinSharedIngressResponse\x125\n" +
-	"\x05state\x18\x01 \x01(\v2\x1f.rementor.v1.SharedIngressStateR\x05state\"V\n" +
-	"\x1dTransferSharedIngressResponse\x125\n" +
-	"\x05state\x18\x01 \x01(\v2\x1f.rementor.v1.SharedIngressStateR\x05state\"U\n" +
-	"\x1cRecoverSharedIngressResponse\x125\n" +
-	"\x05state\x18\x01 \x01(\v2\x1f.rementor.v1.SharedIngressStateR\x05state\"T\n" +
-	"\x1bCancelSharedIngressResponse\x125\n" +
-	"\x05state\x18\x01 \x01(\v2\x1f.rementor.v1.SharedIngressStateR\x05state\"R\n" +
-	"\x19SyncSharedIngressResponse\x125\n" +
-	"\x05state\x18\x01 \x01(\v2\x1f.rementor.v1.SharedIngressStateR\x05state\"Y\n" +
-	"\x1bGetRoutingWorkspacesRequest\x12:\n" +
-	"\x19routing_owner_fingerprint\x18\x01 \x01(\tR\x17routingOwnerFingerprint\"\x9d\x01\n" +
-	"\x1cGetRoutingWorkspacesResponse\x12:\n" +
-	"\x19routing_owner_fingerprint\x18\x01 \x01(\tR\x17routingOwnerFingerprint\x12A\n" +
-	"\n" +
-	"workspaces\x18\x02 \x03(\v2!.rementor.v1.PublicWorkspaceHostsR\n" +
-	"workspaces\"\xae\x02\n" +
+	"\x06status\x18\x04 \x01(\v2'.rementor.v1.WorkspaceInheritanceStatusR\x06status\"\xae\x02\n" +
 	"\x17ComputerFollowingStatus\x12\x1a\n" +
 	"\brevision\x18\x01 \x01(\x04R\brevision\x12+\n" +
 	"\x11owner_fingerprint\x18\x02 \x01(\tR\x10ownerFingerprint\x12'\n" +
@@ -12856,28 +10394,14 @@ const file_rementor_v1_rementor_proto_rawDesc = "" +
 	"\x1aERROR_CODE_UNAUTHENTICATED\x10\x06\x12\x1a\n" +
 	"\x16ERROR_CODE_UNAVAILABLE\x10\a\x12\x17\n" +
 	"\x13ERROR_CODE_INTERNAL\x10\b\x12\x17\n" +
-	"\x13ERROR_CODE_CONFLICT\x10\t2\x923\n" +
-	"\x13ControlPlaneService\x12h\n" +
-	"\x13GetTailscaleSharing\x12'.rementor.v1.GetTailscaleSharingRequest\x1a(.rementor.v1.GetTailscaleSharingResponse\x12h\n" +
-	"\x13SetTailscaleSharing\x12'.rementor.v1.SetTailscaleSharingRequest\x1a(.rementor.v1.SetTailscaleSharingResponse\x12t\n" +
-	"\x17PrepareTailscaleSharing\x12+.rementor.v1.PrepareTailscaleSharingRequest\x1a,.rementor.v1.PrepareTailscaleSharingResponse\x12k\n" +
+	"\x13ERROR_CODE_CONFLICT\x10\t2\xde'\n" +
+	"\x13ControlPlaneService\x12k\n" +
 	"\x14GetComputerFollowing\x12(.rementor.v1.GetComputerFollowingRequest\x1a).rementor.v1.GetComputerFollowingResponse\x12Y\n" +
 	"\x0eFollowComputer\x12\".rementor.v1.FollowComputerRequest\x1a#.rementor.v1.FollowComputerResponse\x12z\n" +
 	"\x19SyncComputerConfiguration\x12-.rementor.v1.SyncComputerConfigurationRequest\x1a..rementor.v1.SyncComputerConfigurationResponse\x12n\n" +
 	"\x15StopFollowingComputer\x12).rementor.v1.StopFollowingComputerRequest\x1a*.rementor.v1.StopFollowingComputerResponse\x12t\n" +
 	"\x17SetEnvironmentFollowing\x12+.rementor.v1.SetEnvironmentFollowingRequest\x1a,.rementor.v1.SetEnvironmentFollowingResponse\x12z\n" +
-	"\x19EditFollowedConfiguration\x12-.rementor.v1.EditFollowedConfigurationRequest\x1a..rementor.v1.EditFollowedConfigurationResponse\x12k\n" +
-	"\x14GetRoutingWorkspaces\x12(.rementor.v1.GetRoutingWorkspacesRequest\x1a).rementor.v1.GetRoutingWorkspacesResponse\x12_\n" +
-	"\x10GetSharedIngress\x12$.rementor.v1.GetSharedIngressRequest\x1a%.rementor.v1.GetSharedIngressResponse\x12h\n" +
-	"\x13CreateSharedIngress\x12'.rementor.v1.CreateSharedIngressRequest\x1a(.rementor.v1.CreateSharedIngressResponse\x12b\n" +
-	"\x11SaveSharedIngress\x12%.rementor.v1.SaveSharedIngressRequest\x1a&.rementor.v1.SaveSharedIngressResponse\x12b\n" +
-	"\x11JoinSharedIngress\x12%.rementor.v1.JoinSharedIngressRequest\x1a&.rementor.v1.JoinSharedIngressResponse\x12n\n" +
-	"\x15TransferSharedIngress\x12).rementor.v1.TransferSharedIngressRequest\x1a*.rementor.v1.TransferSharedIngressResponse\x12k\n" +
-	"\x14RecoverSharedIngress\x12(.rementor.v1.RecoverSharedIngressRequest\x1a).rementor.v1.RecoverSharedIngressResponse\x12h\n" +
-	"\x13CancelSharedIngress\x12'.rementor.v1.CancelSharedIngressRequest\x1a(.rementor.v1.CancelSharedIngressResponse\x12b\n" +
-	"\x11SyncSharedIngress\x12%.rementor.v1.SyncSharedIngressRequest\x1a&.rementor.v1.SyncSharedIngressResponse\x12\\\n" +
-	"\x0fGetPublicAccess\x12#.rementor.v1.GetPublicAccessRequest\x1a$.rementor.v1.GetPublicAccessResponse\x12_\n" +
-	"\x10SavePublicAccess\x12$.rementor.v1.SavePublicAccessRequest\x1a%.rementor.v1.SavePublicAccessResponse\x12S\n" +
+	"\x19EditFollowedConfiguration\x12-.rementor.v1.EditFollowedConfigurationRequest\x1a..rementor.v1.EditFollowedConfigurationResponse\x12S\n" +
 	"\fGetPeerState\x12 .rementor.v1.GetPeerStateRequest\x1a!.rementor.v1.GetPeerStateResponse\x12t\n" +
 	"\x17ConfigurePeerConnection\x12+.rementor.v1.ConfigurePeerConnectionRequest\x1a,.rementor.v1.ConfigurePeerConnectionResponse\x12k\n" +
 	"\x14CreatePeerInvitation\x12(.rementor.v1.CreatePeerInvitationRequest\x1a).rementor.v1.CreatePeerInvitationResponse\x12k\n" +
@@ -12937,512 +10461,411 @@ func file_rementor_v1_rementor_proto_rawDescGZIP() []byte {
 }
 
 var file_rementor_v1_rementor_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_rementor_v1_rementor_proto_msgTypes = make([]protoimpl.MessageInfo, 180)
+var file_rementor_v1_rementor_proto_msgTypes = make([]protoimpl.MessageInfo, 138)
 var file_rementor_v1_rementor_proto_goTypes = []any{
 	(RouteMode)(0),                            // 0: rementor.v1.RouteMode
 	(RouteOperationKind)(0),                   // 1: rementor.v1.RouteOperationKind
 	(ErrorCode)(0),                            // 2: rementor.v1.ErrorCode
-	(*PublicOrigin)(nil),                      // 3: rementor.v1.PublicOrigin
-	(*TailscalePublication)(nil),              // 4: rementor.v1.TailscalePublication
-	(*TailscaleSharingState)(nil),             // 5: rementor.v1.TailscaleSharingState
-	(*GetTailscaleSharingRequest)(nil),        // 6: rementor.v1.GetTailscaleSharingRequest
-	(*GetTailscaleSharingResponse)(nil),       // 7: rementor.v1.GetTailscaleSharingResponse
-	(*SetTailscaleSharingRequest)(nil),        // 8: rementor.v1.SetTailscaleSharingRequest
-	(*SetTailscaleSharingResponse)(nil),       // 9: rementor.v1.SetTailscaleSharingResponse
-	(*PrepareTailscaleSharingRequest)(nil),    // 10: rementor.v1.PrepareTailscaleSharingRequest
-	(*PrepareTailscaleSharingResponse)(nil),   // 11: rementor.v1.PrepareTailscaleSharingResponse
-	(*PublicOriginBinding)(nil),               // 12: rementor.v1.PublicOriginBinding
-	(*PublicDeviceSelection)(nil),             // 13: rementor.v1.PublicDeviceSelection
-	(*PublicAccessDocument)(nil),              // 14: rementor.v1.PublicAccessDocument
-	(*PublicAccessConfiguration)(nil),         // 15: rementor.v1.PublicAccessConfiguration
-	(*PublicIngressState)(nil),                // 16: rementor.v1.PublicIngressState
-	(*PublicAccessDevice)(nil),                // 17: rementor.v1.PublicAccessDevice
-	(*PublicWorkspaceHosts)(nil),              // 18: rementor.v1.PublicWorkspaceHosts
-	(*GetPublicAccessRequest)(nil),            // 19: rementor.v1.GetPublicAccessRequest
-	(*GetPublicAccessResponse)(nil),           // 20: rementor.v1.GetPublicAccessResponse
-	(*SavePublicAccessRequest)(nil),           // 21: rementor.v1.SavePublicAccessRequest
-	(*SavePublicAccessResponse)(nil),          // 22: rementor.v1.SavePublicAccessResponse
-	(*CanonicalApplicationRef)(nil),           // 23: rementor.v1.CanonicalApplicationRef
-	(*WorkspaceEnvironmentRef)(nil),           // 24: rementor.v1.WorkspaceEnvironmentRef
-	(*RouteVersion)(nil),                      // 25: rementor.v1.RouteVersion
-	(*RouteState)(nil),                        // 26: rementor.v1.RouteState
-	(*OperationMetadata)(nil),                 // 27: rementor.v1.OperationMetadata
-	(*StructuredError)(nil),                   // 28: rementor.v1.StructuredError
-	(*Application)(nil),                       // 29: rementor.v1.Application
-	(*Workspace)(nil),                         // 30: rementor.v1.Workspace
-	(*Routing)(nil),                           // 31: rementor.v1.Routing
-	(*EditFollowedConfigurationRequest)(nil),  // 32: rementor.v1.EditFollowedConfigurationRequest
-	(*EditFollowedConfigurationResponse)(nil), // 33: rementor.v1.EditFollowedConfigurationResponse
-	(*ApplicationConfigInput)(nil),            // 34: rementor.v1.ApplicationConfigInput
-	(*ListWorkspacesRequest)(nil),             // 35: rementor.v1.ListWorkspacesRequest
-	(*ListWorkspacesResponse)(nil),            // 36: rementor.v1.ListWorkspacesResponse
-	(*GetWorkspaceRequest)(nil),               // 37: rementor.v1.GetWorkspaceRequest
-	(*GetWorkspaceResponse)(nil),              // 38: rementor.v1.GetWorkspaceResponse
-	(*CreateWorkspaceRequest)(nil),            // 39: rementor.v1.CreateWorkspaceRequest
-	(*CreateWorkspaceResponse)(nil),           // 40: rementor.v1.CreateWorkspaceResponse
-	(*UpdateWorkspaceRequest)(nil),            // 41: rementor.v1.UpdateWorkspaceRequest
-	(*UpdateWorkspaceResponse)(nil),           // 42: rementor.v1.UpdateWorkspaceResponse
-	(*DeleteWorkspaceRequest)(nil),            // 43: rementor.v1.DeleteWorkspaceRequest
-	(*DeleteWorkspaceResponse)(nil),           // 44: rementor.v1.DeleteWorkspaceResponse
-	(*ListApplicationsRequest)(nil),           // 45: rementor.v1.ListApplicationsRequest
-	(*ListApplicationsResponse)(nil),          // 46: rementor.v1.ListApplicationsResponse
-	(*GetApplicationRequest)(nil),             // 47: rementor.v1.GetApplicationRequest
-	(*GetApplicationResponse)(nil),            // 48: rementor.v1.GetApplicationResponse
-	(*ResolveApplicationRequest)(nil),         // 49: rementor.v1.ResolveApplicationRequest
-	(*ResolveApplicationResponse)(nil),        // 50: rementor.v1.ResolveApplicationResponse
-	(*ResolveBrowserURLRequest)(nil),          // 51: rementor.v1.ResolveBrowserURLRequest
-	(*BrowserURLResolution)(nil),              // 52: rementor.v1.BrowserURLResolution
-	(*ResolveBrowserURLResponse)(nil),         // 53: rementor.v1.ResolveBrowserURLResponse
-	(*RegisterApplicationAliasRequest)(nil),   // 54: rementor.v1.RegisterApplicationAliasRequest
-	(*RegisterApplicationAliasResponse)(nil),  // 55: rementor.v1.RegisterApplicationAliasResponse
-	(*UpsertApplicationRequest)(nil),          // 56: rementor.v1.UpsertApplicationRequest
-	(*UpsertApplicationResponse)(nil),         // 57: rementor.v1.UpsertApplicationResponse
-	(*DeleteApplicationRequest)(nil),          // 58: rementor.v1.DeleteApplicationRequest
-	(*DeleteApplicationResponse)(nil),         // 59: rementor.v1.DeleteApplicationResponse
-	(*ToggleApplicationRequest)(nil),          // 60: rementor.v1.ToggleApplicationRequest
-	(*ToggleApplicationResponse)(nil),         // 61: rementor.v1.ToggleApplicationResponse
-	(*ToggleAllToRemoteRequest)(nil),          // 62: rementor.v1.ToggleAllToRemoteRequest
-	(*ToggleAllToRemoteResponse)(nil),         // 63: rementor.v1.ToggleAllToRemoteResponse
-	(*ToggleAllToLocalRequest)(nil),           // 64: rementor.v1.ToggleAllToLocalRequest
-	(*ToggleAllToLocalResponse)(nil),          // 65: rementor.v1.ToggleAllToLocalResponse
-	(*SyncWorkspaceRoutingRequest)(nil),       // 66: rementor.v1.SyncWorkspaceRoutingRequest
-	(*SyncWorkspaceRoutingResponse)(nil),      // 67: rementor.v1.SyncWorkspaceRoutingResponse
-	(*GetRoutePatternRequest)(nil),            // 68: rementor.v1.GetRoutePatternRequest
-	(*GetRoutePatternResponse)(nil),           // 69: rementor.v1.GetRoutePatternResponse
-	(*UpdateRoutePatternRequest)(nil),         // 70: rementor.v1.UpdateRoutePatternRequest
-	(*UpdateRoutePatternResponse)(nil),        // 71: rementor.v1.UpdateRoutePatternResponse
-	(*NormalizedRoute)(nil),                   // 72: rementor.v1.NormalizedRoute
-	(*RouteWarning)(nil),                      // 73: rementor.v1.RouteWarning
-	(*RouteConflict)(nil),                     // 74: rementor.v1.RouteConflict
-	(*RouteChange)(nil),                       // 75: rementor.v1.RouteChange
-	(*RoutePlan)(nil),                         // 76: rementor.v1.RoutePlan
-	(*RouteResolution)(nil),                   // 77: rementor.v1.RouteResolution
-	(*GetRouteRequest)(nil),                   // 78: rementor.v1.GetRouteRequest
-	(*GetRouteResponse)(nil),                  // 79: rementor.v1.GetRouteResponse
-	(*GetRouteConflictsRequest)(nil),          // 80: rementor.v1.GetRouteConflictsRequest
-	(*GetRouteConflictsResponse)(nil),         // 81: rementor.v1.GetRouteConflictsResponse
-	(*ResolveRouteRequest)(nil),               // 82: rementor.v1.ResolveRouteRequest
-	(*ResolveRouteResponse)(nil),              // 83: rementor.v1.ResolveRouteResponse
-	(*PlanRouteRequest)(nil),                  // 84: rementor.v1.PlanRouteRequest
-	(*PlanRouteResponse)(nil),                 // 85: rementor.v1.PlanRouteResponse
-	(*ApplyRouteRequest)(nil),                 // 86: rementor.v1.ApplyRouteRequest
-	(*ApplyRouteResponse)(nil),                // 87: rementor.v1.ApplyRouteResponse
-	(*SyncRouteRequest)(nil),                  // 88: rementor.v1.SyncRouteRequest
-	(*SyncRouteResponse)(nil),                 // 89: rementor.v1.SyncRouteResponse
-	(*WatchHealthRequest)(nil),                // 90: rementor.v1.WatchHealthRequest
-	(*WatchHealthResponse)(nil),               // 91: rementor.v1.WatchHealthResponse
-	(*RoutingSession)(nil),                    // 92: rementor.v1.RoutingSession
-	(*CreateRoutingSessionRequest)(nil),       // 93: rementor.v1.CreateRoutingSessionRequest
-	(*CreateRoutingSessionResponse)(nil),      // 94: rementor.v1.CreateRoutingSessionResponse
-	(*RefreshRoutingSessionRequest)(nil),      // 95: rementor.v1.RefreshRoutingSessionRequest
-	(*RefreshRoutingSessionResponse)(nil),     // 96: rementor.v1.RefreshRoutingSessionResponse
-	(*FleetTopology)(nil),                     // 97: rementor.v1.FleetTopology
-	(*FleetNode)(nil),                         // 98: rementor.v1.FleetNode
-	(*FleetOrigin)(nil),                       // 99: rementor.v1.FleetOrigin
-	(*FleetTarget)(nil),                       // 100: rementor.v1.FleetTarget
-	(*FleetRoute)(nil),                        // 101: rementor.v1.FleetRoute
-	(*FleetInstance)(nil),                     // 102: rementor.v1.FleetInstance
-	(*FleetRouteSelection)(nil),               // 103: rementor.v1.FleetRouteSelection
-	(*FleetConfiguration)(nil),                // 104: rementor.v1.FleetConfiguration
-	(*GetFleetConfigurationRequest)(nil),      // 105: rementor.v1.GetFleetConfigurationRequest
-	(*GetFleetConfigurationResponse)(nil),     // 106: rementor.v1.GetFleetConfigurationResponse
-	(*ReviewFleetConfigurationRequest)(nil),   // 107: rementor.v1.ReviewFleetConfigurationRequest
-	(*ReviewFleetConfigurationResponse)(nil),  // 108: rementor.v1.ReviewFleetConfigurationResponse
-	(*SaveFleetConfigurationRequest)(nil),     // 109: rementor.v1.SaveFleetConfigurationRequest
-	(*SaveFleetConfigurationResponse)(nil),    // 110: rementor.v1.SaveFleetConfigurationResponse
-	(*PairedComputer)(nil),                    // 111: rementor.v1.PairedComputer
-	(*GetPeerStateRequest)(nil),               // 112: rementor.v1.GetPeerStateRequest
-	(*GetPeerStateResponse)(nil),              // 113: rementor.v1.GetPeerStateResponse
-	(*ConfigurePeerConnectionRequest)(nil),    // 114: rementor.v1.ConfigurePeerConnectionRequest
-	(*CreatePeerInvitationRequest)(nil),       // 115: rementor.v1.CreatePeerInvitationRequest
-	(*CreatePeerInvitationResponse)(nil),      // 116: rementor.v1.CreatePeerInvitationResponse
-	(*CancelPeerInvitationRequest)(nil),       // 117: rementor.v1.CancelPeerInvitationRequest
-	(*CancelPeerInvitationResponse)(nil),      // 118: rementor.v1.CancelPeerInvitationResponse
-	(*InspectPeerInvitationRequest)(nil),      // 119: rementor.v1.InspectPeerInvitationRequest
-	(*InspectPeerInvitationResponse)(nil),     // 120: rementor.v1.InspectPeerInvitationResponse
-	(*PairComputerRequest)(nil),               // 121: rementor.v1.PairComputerRequest
-	(*PairComputerResponse)(nil),              // 122: rementor.v1.PairComputerResponse
-	(*UnpairComputerRequest)(nil),             // 123: rementor.v1.UnpairComputerRequest
-	(*CheckPeerConnectionRequest)(nil),        // 124: rementor.v1.CheckPeerConnectionRequest
-	(*CheckPeerConnectionResponse)(nil),       // 125: rementor.v1.CheckPeerConnectionResponse
-	(*ConfigurePeerConnectionResponse)(nil),   // 126: rementor.v1.ConfigurePeerConnectionResponse
-	(*UnpairComputerResponse)(nil),            // 127: rementor.v1.UnpairComputerResponse
-	(*PeerWorkspaceScope)(nil),                // 128: rementor.v1.PeerWorkspaceScope
-	(*PeerWorkspaceReference)(nil),            // 129: rementor.v1.PeerWorkspaceReference
-	(*PeerEndpoint)(nil),                      // 130: rementor.v1.PeerEndpoint
-	(*InheritedRouteSelection)(nil),           // 131: rementor.v1.InheritedRouteSelection
-	(*WorkspaceInheritance)(nil),              // 132: rementor.v1.WorkspaceInheritance
-	(*WorkspaceInheritanceStatus)(nil),        // 133: rementor.v1.WorkspaceInheritanceStatus
-	(*PeerWorkspaceSummary)(nil),              // 134: rementor.v1.PeerWorkspaceSummary
-	(*ListPeerWorkspacesRequest)(nil),         // 135: rementor.v1.ListPeerWorkspacesRequest
-	(*ListPeerWorkspacesResponse)(nil),        // 136: rementor.v1.ListPeerWorkspacesResponse
-	(*GetWorkspaceInheritanceRequest)(nil),    // 137: rementor.v1.GetWorkspaceInheritanceRequest
-	(*GetWorkspaceInheritanceResponse)(nil),   // 138: rementor.v1.GetWorkspaceInheritanceResponse
-	(*FollowPeerWorkspaceRequest)(nil),        // 139: rementor.v1.FollowPeerWorkspaceRequest
-	(*FollowPeerWorkspaceResponse)(nil),       // 140: rementor.v1.FollowPeerWorkspaceResponse
-	(*SyncPeerWorkspaceRequest)(nil),          // 141: rementor.v1.SyncPeerWorkspaceRequest
-	(*SyncPeerWorkspaceResponse)(nil),         // 142: rementor.v1.SyncPeerWorkspaceResponse
-	(*OverrideInheritedRouteRequest)(nil),     // 143: rementor.v1.OverrideInheritedRouteRequest
-	(*OverrideInheritedRouteResponse)(nil),    // 144: rementor.v1.OverrideInheritedRouteResponse
-	(*StopFollowingWorkspaceRequest)(nil),     // 145: rementor.v1.StopFollowingWorkspaceRequest
-	(*StopFollowingWorkspaceResponse)(nil),    // 146: rementor.v1.StopFollowingWorkspaceResponse
-	(*SharedIngressRecord)(nil),               // 147: rementor.v1.SharedIngressRecord
-	(*SharedIngressPending)(nil),              // 148: rementor.v1.SharedIngressPending
-	(*SharedIngressState)(nil),                // 149: rementor.v1.SharedIngressState
-	(*SharedIngressConfiguration)(nil),        // 150: rementor.v1.SharedIngressConfiguration
-	(*GetSharedIngressRequest)(nil),           // 151: rementor.v1.GetSharedIngressRequest
-	(*CreateSharedIngressRequest)(nil),        // 152: rementor.v1.CreateSharedIngressRequest
-	(*SaveSharedIngressRequest)(nil),          // 153: rementor.v1.SaveSharedIngressRequest
-	(*JoinSharedIngressRequest)(nil),          // 154: rementor.v1.JoinSharedIngressRequest
-	(*TransferSharedIngressRequest)(nil),      // 155: rementor.v1.TransferSharedIngressRequest
-	(*RecoverSharedIngressRequest)(nil),       // 156: rementor.v1.RecoverSharedIngressRequest
-	(*CancelSharedIngressRequest)(nil),        // 157: rementor.v1.CancelSharedIngressRequest
-	(*SyncSharedIngressRequest)(nil),          // 158: rementor.v1.SyncSharedIngressRequest
-	(*GetSharedIngressResponse)(nil),          // 159: rementor.v1.GetSharedIngressResponse
-	(*CreateSharedIngressResponse)(nil),       // 160: rementor.v1.CreateSharedIngressResponse
-	(*SaveSharedIngressResponse)(nil),         // 161: rementor.v1.SaveSharedIngressResponse
-	(*JoinSharedIngressResponse)(nil),         // 162: rementor.v1.JoinSharedIngressResponse
-	(*TransferSharedIngressResponse)(nil),     // 163: rementor.v1.TransferSharedIngressResponse
-	(*RecoverSharedIngressResponse)(nil),      // 164: rementor.v1.RecoverSharedIngressResponse
-	(*CancelSharedIngressResponse)(nil),       // 165: rementor.v1.CancelSharedIngressResponse
-	(*SyncSharedIngressResponse)(nil),         // 166: rementor.v1.SyncSharedIngressResponse
-	(*GetRoutingWorkspacesRequest)(nil),       // 167: rementor.v1.GetRoutingWorkspacesRequest
-	(*GetRoutingWorkspacesResponse)(nil),      // 168: rementor.v1.GetRoutingWorkspacesResponse
-	(*ComputerFollowingStatus)(nil),           // 169: rementor.v1.ComputerFollowingStatus
-	(*GetComputerFollowingRequest)(nil),       // 170: rementor.v1.GetComputerFollowingRequest
-	(*GetComputerFollowingResponse)(nil),      // 171: rementor.v1.GetComputerFollowingResponse
-	(*FollowComputerRequest)(nil),             // 172: rementor.v1.FollowComputerRequest
-	(*FollowComputerResponse)(nil),            // 173: rementor.v1.FollowComputerResponse
-	(*SyncComputerConfigurationRequest)(nil),  // 174: rementor.v1.SyncComputerConfigurationRequest
-	(*SyncComputerConfigurationResponse)(nil), // 175: rementor.v1.SyncComputerConfigurationResponse
-	(*StopFollowingComputerRequest)(nil),      // 176: rementor.v1.StopFollowingComputerRequest
-	(*StopFollowingComputerResponse)(nil),     // 177: rementor.v1.StopFollowingComputerResponse
-	(*SetEnvironmentFollowingRequest)(nil),    // 178: rementor.v1.SetEnvironmentFollowingRequest
-	(*SetEnvironmentFollowingResponse)(nil),   // 179: rementor.v1.SetEnvironmentFollowingResponse
-	nil,                                       // 180: rementor.v1.StructuredError.MetadataEntry
-	nil,                                       // 181: rementor.v1.FleetInstance.OverridesEntry
-	nil,                                       // 182: rementor.v1.WorkspaceInheritance.OverridesEntry
-	(*timestamppb.Timestamp)(nil),             // 183: google.protobuf.Timestamp
+	(*CanonicalApplicationRef)(nil),           // 3: rementor.v1.CanonicalApplicationRef
+	(*WorkspaceEnvironmentRef)(nil),           // 4: rementor.v1.WorkspaceEnvironmentRef
+	(*RouteVersion)(nil),                      // 5: rementor.v1.RouteVersion
+	(*RouteState)(nil),                        // 6: rementor.v1.RouteState
+	(*OperationMetadata)(nil),                 // 7: rementor.v1.OperationMetadata
+	(*StructuredError)(nil),                   // 8: rementor.v1.StructuredError
+	(*Application)(nil),                       // 9: rementor.v1.Application
+	(*Workspace)(nil),                         // 10: rementor.v1.Workspace
+	(*Routing)(nil),                           // 11: rementor.v1.Routing
+	(*EditFollowedConfigurationRequest)(nil),  // 12: rementor.v1.EditFollowedConfigurationRequest
+	(*EditFollowedConfigurationResponse)(nil), // 13: rementor.v1.EditFollowedConfigurationResponse
+	(*ApplicationConfigInput)(nil),            // 14: rementor.v1.ApplicationConfigInput
+	(*ListWorkspacesRequest)(nil),             // 15: rementor.v1.ListWorkspacesRequest
+	(*ListWorkspacesResponse)(nil),            // 16: rementor.v1.ListWorkspacesResponse
+	(*GetWorkspaceRequest)(nil),               // 17: rementor.v1.GetWorkspaceRequest
+	(*GetWorkspaceResponse)(nil),              // 18: rementor.v1.GetWorkspaceResponse
+	(*CreateWorkspaceRequest)(nil),            // 19: rementor.v1.CreateWorkspaceRequest
+	(*CreateWorkspaceResponse)(nil),           // 20: rementor.v1.CreateWorkspaceResponse
+	(*UpdateWorkspaceRequest)(nil),            // 21: rementor.v1.UpdateWorkspaceRequest
+	(*UpdateWorkspaceResponse)(nil),           // 22: rementor.v1.UpdateWorkspaceResponse
+	(*DeleteWorkspaceRequest)(nil),            // 23: rementor.v1.DeleteWorkspaceRequest
+	(*DeleteWorkspaceResponse)(nil),           // 24: rementor.v1.DeleteWorkspaceResponse
+	(*ListApplicationsRequest)(nil),           // 25: rementor.v1.ListApplicationsRequest
+	(*ListApplicationsResponse)(nil),          // 26: rementor.v1.ListApplicationsResponse
+	(*GetApplicationRequest)(nil),             // 27: rementor.v1.GetApplicationRequest
+	(*GetApplicationResponse)(nil),            // 28: rementor.v1.GetApplicationResponse
+	(*ResolveApplicationRequest)(nil),         // 29: rementor.v1.ResolveApplicationRequest
+	(*ResolveApplicationResponse)(nil),        // 30: rementor.v1.ResolveApplicationResponse
+	(*ResolveBrowserURLRequest)(nil),          // 31: rementor.v1.ResolveBrowserURLRequest
+	(*BrowserURLResolution)(nil),              // 32: rementor.v1.BrowserURLResolution
+	(*ResolveBrowserURLResponse)(nil),         // 33: rementor.v1.ResolveBrowserURLResponse
+	(*RegisterApplicationAliasRequest)(nil),   // 34: rementor.v1.RegisterApplicationAliasRequest
+	(*RegisterApplicationAliasResponse)(nil),  // 35: rementor.v1.RegisterApplicationAliasResponse
+	(*UpsertApplicationRequest)(nil),          // 36: rementor.v1.UpsertApplicationRequest
+	(*UpsertApplicationResponse)(nil),         // 37: rementor.v1.UpsertApplicationResponse
+	(*DeleteApplicationRequest)(nil),          // 38: rementor.v1.DeleteApplicationRequest
+	(*DeleteApplicationResponse)(nil),         // 39: rementor.v1.DeleteApplicationResponse
+	(*ToggleApplicationRequest)(nil),          // 40: rementor.v1.ToggleApplicationRequest
+	(*ToggleApplicationResponse)(nil),         // 41: rementor.v1.ToggleApplicationResponse
+	(*ToggleAllToRemoteRequest)(nil),          // 42: rementor.v1.ToggleAllToRemoteRequest
+	(*ToggleAllToRemoteResponse)(nil),         // 43: rementor.v1.ToggleAllToRemoteResponse
+	(*ToggleAllToLocalRequest)(nil),           // 44: rementor.v1.ToggleAllToLocalRequest
+	(*ToggleAllToLocalResponse)(nil),          // 45: rementor.v1.ToggleAllToLocalResponse
+	(*SyncWorkspaceRoutingRequest)(nil),       // 46: rementor.v1.SyncWorkspaceRoutingRequest
+	(*SyncWorkspaceRoutingResponse)(nil),      // 47: rementor.v1.SyncWorkspaceRoutingResponse
+	(*GetRoutePatternRequest)(nil),            // 48: rementor.v1.GetRoutePatternRequest
+	(*GetRoutePatternResponse)(nil),           // 49: rementor.v1.GetRoutePatternResponse
+	(*UpdateRoutePatternRequest)(nil),         // 50: rementor.v1.UpdateRoutePatternRequest
+	(*UpdateRoutePatternResponse)(nil),        // 51: rementor.v1.UpdateRoutePatternResponse
+	(*NormalizedRoute)(nil),                   // 52: rementor.v1.NormalizedRoute
+	(*RouteWarning)(nil),                      // 53: rementor.v1.RouteWarning
+	(*RouteConflict)(nil),                     // 54: rementor.v1.RouteConflict
+	(*RouteChange)(nil),                       // 55: rementor.v1.RouteChange
+	(*RoutePlan)(nil),                         // 56: rementor.v1.RoutePlan
+	(*RouteResolution)(nil),                   // 57: rementor.v1.RouteResolution
+	(*GetRouteRequest)(nil),                   // 58: rementor.v1.GetRouteRequest
+	(*GetRouteResponse)(nil),                  // 59: rementor.v1.GetRouteResponse
+	(*GetRouteConflictsRequest)(nil),          // 60: rementor.v1.GetRouteConflictsRequest
+	(*GetRouteConflictsResponse)(nil),         // 61: rementor.v1.GetRouteConflictsResponse
+	(*ResolveRouteRequest)(nil),               // 62: rementor.v1.ResolveRouteRequest
+	(*ResolveRouteResponse)(nil),              // 63: rementor.v1.ResolveRouteResponse
+	(*PlanRouteRequest)(nil),                  // 64: rementor.v1.PlanRouteRequest
+	(*PlanRouteResponse)(nil),                 // 65: rementor.v1.PlanRouteResponse
+	(*ApplyRouteRequest)(nil),                 // 66: rementor.v1.ApplyRouteRequest
+	(*ApplyRouteResponse)(nil),                // 67: rementor.v1.ApplyRouteResponse
+	(*SyncRouteRequest)(nil),                  // 68: rementor.v1.SyncRouteRequest
+	(*SyncRouteResponse)(nil),                 // 69: rementor.v1.SyncRouteResponse
+	(*WatchHealthRequest)(nil),                // 70: rementor.v1.WatchHealthRequest
+	(*WatchHealthResponse)(nil),               // 71: rementor.v1.WatchHealthResponse
+	(*RoutingSession)(nil),                    // 72: rementor.v1.RoutingSession
+	(*CreateRoutingSessionRequest)(nil),       // 73: rementor.v1.CreateRoutingSessionRequest
+	(*CreateRoutingSessionResponse)(nil),      // 74: rementor.v1.CreateRoutingSessionResponse
+	(*RefreshRoutingSessionRequest)(nil),      // 75: rementor.v1.RefreshRoutingSessionRequest
+	(*RefreshRoutingSessionResponse)(nil),     // 76: rementor.v1.RefreshRoutingSessionResponse
+	(*FleetTopology)(nil),                     // 77: rementor.v1.FleetTopology
+	(*FleetNode)(nil),                         // 78: rementor.v1.FleetNode
+	(*FleetOrigin)(nil),                       // 79: rementor.v1.FleetOrigin
+	(*FleetTarget)(nil),                       // 80: rementor.v1.FleetTarget
+	(*FleetRoute)(nil),                        // 81: rementor.v1.FleetRoute
+	(*FleetInstance)(nil),                     // 82: rementor.v1.FleetInstance
+	(*FleetRouteSelection)(nil),               // 83: rementor.v1.FleetRouteSelection
+	(*FleetConfiguration)(nil),                // 84: rementor.v1.FleetConfiguration
+	(*GetFleetConfigurationRequest)(nil),      // 85: rementor.v1.GetFleetConfigurationRequest
+	(*GetFleetConfigurationResponse)(nil),     // 86: rementor.v1.GetFleetConfigurationResponse
+	(*ReviewFleetConfigurationRequest)(nil),   // 87: rementor.v1.ReviewFleetConfigurationRequest
+	(*ReviewFleetConfigurationResponse)(nil),  // 88: rementor.v1.ReviewFleetConfigurationResponse
+	(*SaveFleetConfigurationRequest)(nil),     // 89: rementor.v1.SaveFleetConfigurationRequest
+	(*SaveFleetConfigurationResponse)(nil),    // 90: rementor.v1.SaveFleetConfigurationResponse
+	(*PairedComputer)(nil),                    // 91: rementor.v1.PairedComputer
+	(*GetPeerStateRequest)(nil),               // 92: rementor.v1.GetPeerStateRequest
+	(*GetPeerStateResponse)(nil),              // 93: rementor.v1.GetPeerStateResponse
+	(*ConfigurePeerConnectionRequest)(nil),    // 94: rementor.v1.ConfigurePeerConnectionRequest
+	(*CreatePeerInvitationRequest)(nil),       // 95: rementor.v1.CreatePeerInvitationRequest
+	(*CreatePeerInvitationResponse)(nil),      // 96: rementor.v1.CreatePeerInvitationResponse
+	(*CancelPeerInvitationRequest)(nil),       // 97: rementor.v1.CancelPeerInvitationRequest
+	(*CancelPeerInvitationResponse)(nil),      // 98: rementor.v1.CancelPeerInvitationResponse
+	(*InspectPeerInvitationRequest)(nil),      // 99: rementor.v1.InspectPeerInvitationRequest
+	(*InspectPeerInvitationResponse)(nil),     // 100: rementor.v1.InspectPeerInvitationResponse
+	(*PairComputerRequest)(nil),               // 101: rementor.v1.PairComputerRequest
+	(*PairComputerResponse)(nil),              // 102: rementor.v1.PairComputerResponse
+	(*UnpairComputerRequest)(nil),             // 103: rementor.v1.UnpairComputerRequest
+	(*CheckPeerConnectionRequest)(nil),        // 104: rementor.v1.CheckPeerConnectionRequest
+	(*CheckPeerConnectionResponse)(nil),       // 105: rementor.v1.CheckPeerConnectionResponse
+	(*ConfigurePeerConnectionResponse)(nil),   // 106: rementor.v1.ConfigurePeerConnectionResponse
+	(*UnpairComputerResponse)(nil),            // 107: rementor.v1.UnpairComputerResponse
+	(*PeerWorkspaceScope)(nil),                // 108: rementor.v1.PeerWorkspaceScope
+	(*PeerWorkspaceReference)(nil),            // 109: rementor.v1.PeerWorkspaceReference
+	(*PeerEndpoint)(nil),                      // 110: rementor.v1.PeerEndpoint
+	(*InheritedRouteSelection)(nil),           // 111: rementor.v1.InheritedRouteSelection
+	(*WorkspaceInheritance)(nil),              // 112: rementor.v1.WorkspaceInheritance
+	(*WorkspaceInheritanceStatus)(nil),        // 113: rementor.v1.WorkspaceInheritanceStatus
+	(*PeerWorkspaceSummary)(nil),              // 114: rementor.v1.PeerWorkspaceSummary
+	(*ListPeerWorkspacesRequest)(nil),         // 115: rementor.v1.ListPeerWorkspacesRequest
+	(*ListPeerWorkspacesResponse)(nil),        // 116: rementor.v1.ListPeerWorkspacesResponse
+	(*GetWorkspaceInheritanceRequest)(nil),    // 117: rementor.v1.GetWorkspaceInheritanceRequest
+	(*GetWorkspaceInheritanceResponse)(nil),   // 118: rementor.v1.GetWorkspaceInheritanceResponse
+	(*FollowPeerWorkspaceRequest)(nil),        // 119: rementor.v1.FollowPeerWorkspaceRequest
+	(*FollowPeerWorkspaceResponse)(nil),       // 120: rementor.v1.FollowPeerWorkspaceResponse
+	(*SyncPeerWorkspaceRequest)(nil),          // 121: rementor.v1.SyncPeerWorkspaceRequest
+	(*SyncPeerWorkspaceResponse)(nil),         // 122: rementor.v1.SyncPeerWorkspaceResponse
+	(*OverrideInheritedRouteRequest)(nil),     // 123: rementor.v1.OverrideInheritedRouteRequest
+	(*OverrideInheritedRouteResponse)(nil),    // 124: rementor.v1.OverrideInheritedRouteResponse
+	(*StopFollowingWorkspaceRequest)(nil),     // 125: rementor.v1.StopFollowingWorkspaceRequest
+	(*StopFollowingWorkspaceResponse)(nil),    // 126: rementor.v1.StopFollowingWorkspaceResponse
+	(*ComputerFollowingStatus)(nil),           // 127: rementor.v1.ComputerFollowingStatus
+	(*GetComputerFollowingRequest)(nil),       // 128: rementor.v1.GetComputerFollowingRequest
+	(*GetComputerFollowingResponse)(nil),      // 129: rementor.v1.GetComputerFollowingResponse
+	(*FollowComputerRequest)(nil),             // 130: rementor.v1.FollowComputerRequest
+	(*FollowComputerResponse)(nil),            // 131: rementor.v1.FollowComputerResponse
+	(*SyncComputerConfigurationRequest)(nil),  // 132: rementor.v1.SyncComputerConfigurationRequest
+	(*SyncComputerConfigurationResponse)(nil), // 133: rementor.v1.SyncComputerConfigurationResponse
+	(*StopFollowingComputerRequest)(nil),      // 134: rementor.v1.StopFollowingComputerRequest
+	(*StopFollowingComputerResponse)(nil),     // 135: rementor.v1.StopFollowingComputerResponse
+	(*SetEnvironmentFollowingRequest)(nil),    // 136: rementor.v1.SetEnvironmentFollowingRequest
+	(*SetEnvironmentFollowingResponse)(nil),   // 137: rementor.v1.SetEnvironmentFollowingResponse
+	nil,                                       // 138: rementor.v1.StructuredError.MetadataEntry
+	nil,                                       // 139: rementor.v1.FleetInstance.OverridesEntry
+	nil,                                       // 140: rementor.v1.WorkspaceInheritance.OverridesEntry
+	(*timestamppb.Timestamp)(nil),             // 141: google.protobuf.Timestamp
 }
 var file_rementor_v1_rementor_proto_depIdxs = []int32{
-	4,   // 0: rementor.v1.TailscaleSharingState.publications:type_name -> rementor.v1.TailscalePublication
-	5,   // 1: rementor.v1.GetTailscaleSharingResponse.state:type_name -> rementor.v1.TailscaleSharingState
-	5,   // 2: rementor.v1.SetTailscaleSharingResponse.state:type_name -> rementor.v1.TailscaleSharingState
-	14,  // 3: rementor.v1.PrepareTailscaleSharingResponse.document:type_name -> rementor.v1.PublicAccessDocument
-	3,   // 4: rementor.v1.PublicAccessDocument.origins:type_name -> rementor.v1.PublicOrigin
-	12,  // 5: rementor.v1.PublicAccessDocument.bindings:type_name -> rementor.v1.PublicOriginBinding
-	13,  // 6: rementor.v1.PublicAccessDocument.devices:type_name -> rementor.v1.PublicDeviceSelection
-	14,  // 7: rementor.v1.PublicAccessConfiguration.document:type_name -> rementor.v1.PublicAccessDocument
-	15,  // 8: rementor.v1.GetPublicAccessResponse.configuration:type_name -> rementor.v1.PublicAccessConfiguration
-	16,  // 9: rementor.v1.GetPublicAccessResponse.ingress:type_name -> rementor.v1.PublicIngressState
-	17,  // 10: rementor.v1.GetPublicAccessResponse.devices:type_name -> rementor.v1.PublicAccessDevice
-	18,  // 11: rementor.v1.GetPublicAccessResponse.workspaces:type_name -> rementor.v1.PublicWorkspaceHosts
-	14,  // 12: rementor.v1.SavePublicAccessRequest.document:type_name -> rementor.v1.PublicAccessDocument
-	15,  // 13: rementor.v1.SavePublicAccessResponse.configuration:type_name -> rementor.v1.PublicAccessConfiguration
-	0,   // 14: rementor.v1.RouteState.desired_mode:type_name -> rementor.v1.RouteMode
-	0,   // 15: rementor.v1.RouteState.effective_mode:type_name -> rementor.v1.RouteMode
-	25,  // 16: rementor.v1.RouteState.version:type_name -> rementor.v1.RouteVersion
-	183, // 17: rementor.v1.RouteState.verified_at:type_name -> google.protobuf.Timestamp
-	25,  // 18: rementor.v1.OperationMetadata.route_version:type_name -> rementor.v1.RouteVersion
-	183, // 19: rementor.v1.OperationMetadata.created_at:type_name -> google.protobuf.Timestamp
-	183, // 20: rementor.v1.OperationMetadata.completed_at:type_name -> google.protobuf.Timestamp
-	1,   // 21: rementor.v1.OperationMetadata.kind:type_name -> rementor.v1.RouteOperationKind
-	2,   // 22: rementor.v1.StructuredError.code:type_name -> rementor.v1.ErrorCode
-	180, // 23: rementor.v1.StructuredError.metadata:type_name -> rementor.v1.StructuredError.MetadataEntry
-	130, // 24: rementor.v1.Application.peer_endpoint:type_name -> rementor.v1.PeerEndpoint
-	23,  // 25: rementor.v1.Application.identity:type_name -> rementor.v1.CanonicalApplicationRef
-	24,  // 26: rementor.v1.Application.environment:type_name -> rementor.v1.WorkspaceEnvironmentRef
-	26,  // 27: rementor.v1.Application.route:type_name -> rementor.v1.RouteState
-	132, // 28: rementor.v1.Workspace.inheritance:type_name -> rementor.v1.WorkspaceInheritance
-	92,  // 29: rementor.v1.Workspace.session:type_name -> rementor.v1.RoutingSession
-	31,  // 30: rementor.v1.Workspace.routing:type_name -> rementor.v1.Routing
-	29,  // 31: rementor.v1.Workspace.applications:type_name -> rementor.v1.Application
-	24,  // 32: rementor.v1.Workspace.environment:type_name -> rementor.v1.WorkspaceEnvironmentRef
-	26,  // 33: rementor.v1.Workspace.route:type_name -> rementor.v1.RouteState
-	34,  // 34: rementor.v1.EditFollowedConfigurationRequest.application:type_name -> rementor.v1.ApplicationConfigInput
-	31,  // 35: rementor.v1.EditFollowedConfigurationRequest.routing:type_name -> rementor.v1.Routing
-	30,  // 36: rementor.v1.EditFollowedConfigurationResponse.workspace:type_name -> rementor.v1.Workspace
-	30,  // 37: rementor.v1.ListWorkspacesResponse.workspaces:type_name -> rementor.v1.Workspace
-	30,  // 38: rementor.v1.GetWorkspaceResponse.workspace:type_name -> rementor.v1.Workspace
-	34,  // 39: rementor.v1.CreateWorkspaceRequest.applications:type_name -> rementor.v1.ApplicationConfigInput
-	30,  // 40: rementor.v1.CreateWorkspaceResponse.workspace:type_name -> rementor.v1.Workspace
-	27,  // 41: rementor.v1.CreateWorkspaceResponse.operation:type_name -> rementor.v1.OperationMetadata
-	73,  // 42: rementor.v1.CreateWorkspaceResponse.warnings:type_name -> rementor.v1.RouteWarning
-	34,  // 43: rementor.v1.UpdateWorkspaceRequest.applications:type_name -> rementor.v1.ApplicationConfigInput
-	30,  // 44: rementor.v1.UpdateWorkspaceResponse.workspace:type_name -> rementor.v1.Workspace
-	27,  // 45: rementor.v1.UpdateWorkspaceResponse.operation:type_name -> rementor.v1.OperationMetadata
-	73,  // 46: rementor.v1.UpdateWorkspaceResponse.warnings:type_name -> rementor.v1.RouteWarning
-	27,  // 47: rementor.v1.DeleteWorkspaceResponse.operation:type_name -> rementor.v1.OperationMetadata
-	29,  // 48: rementor.v1.ListApplicationsResponse.applications:type_name -> rementor.v1.Application
-	29,  // 49: rementor.v1.GetApplicationResponse.application:type_name -> rementor.v1.Application
-	29,  // 50: rementor.v1.ResolveApplicationResponse.application:type_name -> rementor.v1.Application
-	0,   // 51: rementor.v1.BrowserURLResolution.desired_mode:type_name -> rementor.v1.RouteMode
-	0,   // 52: rementor.v1.BrowserURLResolution.effective_mode:type_name -> rementor.v1.RouteMode
-	25,  // 53: rementor.v1.BrowserURLResolution.route_version:type_name -> rementor.v1.RouteVersion
-	26,  // 54: rementor.v1.BrowserURLResolution.route:type_name -> rementor.v1.RouteState
-	23,  // 55: rementor.v1.BrowserURLResolution.identity:type_name -> rementor.v1.CanonicalApplicationRef
-	24,  // 56: rementor.v1.BrowserURLResolution.environment_ref:type_name -> rementor.v1.WorkspaceEnvironmentRef
-	27,  // 57: rementor.v1.BrowserURLResolution.operation:type_name -> rementor.v1.OperationMetadata
-	52,  // 58: rementor.v1.ResolveBrowserURLResponse.resolution:type_name -> rementor.v1.BrowserURLResolution
-	29,  // 59: rementor.v1.RegisterApplicationAliasResponse.application:type_name -> rementor.v1.Application
-	27,  // 60: rementor.v1.RegisterApplicationAliasResponse.operation:type_name -> rementor.v1.OperationMetadata
-	34,  // 61: rementor.v1.UpsertApplicationRequest.application:type_name -> rementor.v1.ApplicationConfigInput
-	29,  // 62: rementor.v1.UpsertApplicationResponse.application:type_name -> rementor.v1.Application
-	27,  // 63: rementor.v1.UpsertApplicationResponse.operation:type_name -> rementor.v1.OperationMetadata
-	73,  // 64: rementor.v1.UpsertApplicationResponse.warnings:type_name -> rementor.v1.RouteWarning
-	27,  // 65: rementor.v1.DeleteApplicationResponse.operation:type_name -> rementor.v1.OperationMetadata
-	29,  // 66: rementor.v1.ToggleApplicationResponse.application:type_name -> rementor.v1.Application
-	27,  // 67: rementor.v1.ToggleApplicationResponse.operation:type_name -> rementor.v1.OperationMetadata
-	27,  // 68: rementor.v1.ToggleAllToRemoteResponse.operation:type_name -> rementor.v1.OperationMetadata
-	27,  // 69: rementor.v1.ToggleAllToLocalResponse.operation:type_name -> rementor.v1.OperationMetadata
-	27,  // 70: rementor.v1.SyncWorkspaceRoutingResponse.operation:type_name -> rementor.v1.OperationMetadata
-	29,  // 71: rementor.v1.UpdateRoutePatternResponse.application:type_name -> rementor.v1.Application
-	27,  // 72: rementor.v1.UpdateRoutePatternResponse.operation:type_name -> rementor.v1.OperationMetadata
-	0,   // 73: rementor.v1.NormalizedRoute.desired_mode:type_name -> rementor.v1.RouteMode
-	0,   // 74: rementor.v1.NormalizedRoute.effective_mode:type_name -> rementor.v1.RouteMode
-	25,  // 75: rementor.v1.NormalizedRoute.version:type_name -> rementor.v1.RouteVersion
-	183, // 76: rementor.v1.NormalizedRoute.verified_at:type_name -> google.protobuf.Timestamp
-	72,  // 77: rementor.v1.RouteConflict.winning_route:type_name -> rementor.v1.NormalizedRoute
-	72,  // 78: rementor.v1.RouteConflict.shadowed_route:type_name -> rementor.v1.NormalizedRoute
-	72,  // 79: rementor.v1.RouteChange.before:type_name -> rementor.v1.NormalizedRoute
-	72,  // 80: rementor.v1.RouteChange.after:type_name -> rementor.v1.NormalizedRoute
-	25,  // 81: rementor.v1.RoutePlan.base_route_version:type_name -> rementor.v1.RouteVersion
-	0,   // 82: rementor.v1.RoutePlan.desired_mode:type_name -> rementor.v1.RouteMode
-	72,  // 83: rementor.v1.RoutePlan.before_routes:type_name -> rementor.v1.NormalizedRoute
-	72,  // 84: rementor.v1.RoutePlan.after_routes:type_name -> rementor.v1.NormalizedRoute
-	75,  // 85: rementor.v1.RoutePlan.changes:type_name -> rementor.v1.RouteChange
-	73,  // 86: rementor.v1.RoutePlan.warnings:type_name -> rementor.v1.RouteWarning
-	74,  // 87: rementor.v1.RoutePlan.conflicts:type_name -> rementor.v1.RouteConflict
-	72,  // 88: rementor.v1.RouteResolution.route:type_name -> rementor.v1.NormalizedRoute
-	25,  // 89: rementor.v1.GetRouteResponse.route_version:type_name -> rementor.v1.RouteVersion
-	72,  // 90: rementor.v1.GetRouteResponse.routes:type_name -> rementor.v1.NormalizedRoute
-	73,  // 91: rementor.v1.GetRouteResponse.warnings:type_name -> rementor.v1.RouteWarning
-	74,  // 92: rementor.v1.GetRouteResponse.conflicts:type_name -> rementor.v1.RouteConflict
-	25,  // 93: rementor.v1.GetRouteConflictsResponse.route_version:type_name -> rementor.v1.RouteVersion
-	74,  // 94: rementor.v1.GetRouteConflictsResponse.conflicts:type_name -> rementor.v1.RouteConflict
-	73,  // 95: rementor.v1.GetRouteConflictsResponse.warnings:type_name -> rementor.v1.RouteWarning
-	77,  // 96: rementor.v1.ResolveRouteResponse.resolution:type_name -> rementor.v1.RouteResolution
-	0,   // 97: rementor.v1.PlanRouteRequest.desired_mode:type_name -> rementor.v1.RouteMode
-	25,  // 98: rementor.v1.PlanRouteRequest.expected_route_version:type_name -> rementor.v1.RouteVersion
-	76,  // 99: rementor.v1.PlanRouteResponse.plan:type_name -> rementor.v1.RoutePlan
-	76,  // 100: rementor.v1.ApplyRouteRequest.plan:type_name -> rementor.v1.RoutePlan
-	25,  // 101: rementor.v1.ApplyRouteRequest.expected_route_version:type_name -> rementor.v1.RouteVersion
-	0,   // 102: rementor.v1.ApplyRouteRequest.desired_mode:type_name -> rementor.v1.RouteMode
-	76,  // 103: rementor.v1.ApplyRouteResponse.plan:type_name -> rementor.v1.RoutePlan
-	72,  // 104: rementor.v1.ApplyRouteResponse.routes:type_name -> rementor.v1.NormalizedRoute
-	27,  // 105: rementor.v1.ApplyRouteResponse.operation:type_name -> rementor.v1.OperationMetadata
-	25,  // 106: rementor.v1.SyncRouteResponse.desired_route_version:type_name -> rementor.v1.RouteVersion
-	25,  // 107: rementor.v1.SyncRouteResponse.effective_route_version:type_name -> rementor.v1.RouteVersion
-	72,  // 108: rementor.v1.SyncRouteResponse.routes:type_name -> rementor.v1.NormalizedRoute
-	73,  // 109: rementor.v1.SyncRouteResponse.warnings:type_name -> rementor.v1.RouteWarning
-	27,  // 110: rementor.v1.SyncRouteResponse.operation:type_name -> rementor.v1.OperationMetadata
-	183, // 111: rementor.v1.WatchHealthResponse.local_checked_at:type_name -> google.protobuf.Timestamp
-	183, // 112: rementor.v1.WatchHealthResponse.remote_checked_at:type_name -> google.protobuf.Timestamp
-	23,  // 113: rementor.v1.WatchHealthResponse.identity:type_name -> rementor.v1.CanonicalApplicationRef
-	24,  // 114: rementor.v1.WatchHealthResponse.environment:type_name -> rementor.v1.WorkspaceEnvironmentRef
-	183, // 115: rementor.v1.RoutingSession.created_at:type_name -> google.protobuf.Timestamp
-	30,  // 116: rementor.v1.CreateRoutingSessionResponse.workspace:type_name -> rementor.v1.Workspace
-	30,  // 117: rementor.v1.RefreshRoutingSessionResponse.workspace:type_name -> rementor.v1.Workspace
-	98,  // 118: rementor.v1.FleetTopology.nodes:type_name -> rementor.v1.FleetNode
-	99,  // 119: rementor.v1.FleetTopology.origins:type_name -> rementor.v1.FleetOrigin
-	100, // 120: rementor.v1.FleetTopology.targets:type_name -> rementor.v1.FleetTarget
-	101, // 121: rementor.v1.FleetTopology.routes:type_name -> rementor.v1.FleetRoute
-	102, // 122: rementor.v1.FleetTopology.instances:type_name -> rementor.v1.FleetInstance
-	181, // 123: rementor.v1.FleetInstance.overrides:type_name -> rementor.v1.FleetInstance.OverridesEntry
-	100, // 124: rementor.v1.FleetRouteSelection.endpoint:type_name -> rementor.v1.FleetTarget
-	97,  // 125: rementor.v1.FleetConfiguration.topology:type_name -> rementor.v1.FleetTopology
-	104, // 126: rementor.v1.GetFleetConfigurationResponse.configuration:type_name -> rementor.v1.FleetConfiguration
-	97,  // 127: rementor.v1.ReviewFleetConfigurationRequest.topology:type_name -> rementor.v1.FleetTopology
-	103, // 128: rementor.v1.ReviewFleetConfigurationResponse.before:type_name -> rementor.v1.FleetRouteSelection
-	103, // 129: rementor.v1.ReviewFleetConfigurationResponse.after:type_name -> rementor.v1.FleetRouteSelection
-	97,  // 130: rementor.v1.SaveFleetConfigurationRequest.topology:type_name -> rementor.v1.FleetTopology
-	104, // 131: rementor.v1.SaveFleetConfigurationResponse.configuration:type_name -> rementor.v1.FleetConfiguration
-	111, // 132: rementor.v1.GetPeerStateResponse.computers:type_name -> rementor.v1.PairedComputer
-	183, // 133: rementor.v1.CreatePeerInvitationResponse.expires_at:type_name -> google.protobuf.Timestamp
-	183, // 134: rementor.v1.InspectPeerInvitationResponse.expires_at:type_name -> google.protobuf.Timestamp
-	111, // 135: rementor.v1.PairComputerResponse.computer:type_name -> rementor.v1.PairedComputer
-	113, // 136: rementor.v1.ConfigurePeerConnectionResponse.state:type_name -> rementor.v1.GetPeerStateResponse
-	113, // 137: rementor.v1.UnpairComputerResponse.state:type_name -> rementor.v1.GetPeerStateResponse
-	128, // 138: rementor.v1.PeerWorkspaceReference.scope:type_name -> rementor.v1.PeerWorkspaceScope
-	129, // 139: rementor.v1.WorkspaceInheritance.source:type_name -> rementor.v1.PeerWorkspaceReference
-	182, // 140: rementor.v1.WorkspaceInheritance.overrides:type_name -> rementor.v1.WorkspaceInheritance.OverridesEntry
-	183, // 141: rementor.v1.WorkspaceInheritance.updated_at:type_name -> google.protobuf.Timestamp
-	132, // 142: rementor.v1.WorkspaceInheritanceStatus.inheritance:type_name -> rementor.v1.WorkspaceInheritance
-	183, // 143: rementor.v1.WorkspaceInheritanceStatus.checked_at:type_name -> google.protobuf.Timestamp
-	128, // 144: rementor.v1.PeerWorkspaceSummary.scope:type_name -> rementor.v1.PeerWorkspaceScope
-	134, // 145: rementor.v1.ListPeerWorkspacesResponse.workspaces:type_name -> rementor.v1.PeerWorkspaceSummary
-	133, // 146: rementor.v1.GetWorkspaceInheritanceResponse.status:type_name -> rementor.v1.WorkspaceInheritanceStatus
-	128, // 147: rementor.v1.FollowPeerWorkspaceRequest.scope:type_name -> rementor.v1.PeerWorkspaceScope
-	30,  // 148: rementor.v1.FollowPeerWorkspaceResponse.workspace:type_name -> rementor.v1.Workspace
-	27,  // 149: rementor.v1.FollowPeerWorkspaceResponse.operation:type_name -> rementor.v1.OperationMetadata
-	133, // 150: rementor.v1.FollowPeerWorkspaceResponse.status:type_name -> rementor.v1.WorkspaceInheritanceStatus
-	30,  // 151: rementor.v1.SyncPeerWorkspaceResponse.workspace:type_name -> rementor.v1.Workspace
-	27,  // 152: rementor.v1.SyncPeerWorkspaceResponse.operation:type_name -> rementor.v1.OperationMetadata
-	133, // 153: rementor.v1.SyncPeerWorkspaceResponse.status:type_name -> rementor.v1.WorkspaceInheritanceStatus
-	131, // 154: rementor.v1.OverrideInheritedRouteRequest.selection:type_name -> rementor.v1.InheritedRouteSelection
-	30,  // 155: rementor.v1.OverrideInheritedRouteResponse.workspace:type_name -> rementor.v1.Workspace
-	27,  // 156: rementor.v1.OverrideInheritedRouteResponse.operation:type_name -> rementor.v1.OperationMetadata
-	133, // 157: rementor.v1.OverrideInheritedRouteResponse.status:type_name -> rementor.v1.WorkspaceInheritanceStatus
-	30,  // 158: rementor.v1.StopFollowingWorkspaceResponse.workspace:type_name -> rementor.v1.Workspace
-	27,  // 159: rementor.v1.StopFollowingWorkspaceResponse.operation:type_name -> rementor.v1.OperationMetadata
-	133, // 160: rementor.v1.StopFollowingWorkspaceResponse.status:type_name -> rementor.v1.WorkspaceInheritanceStatus
-	14,  // 161: rementor.v1.SharedIngressRecord.policy:type_name -> rementor.v1.PublicAccessDocument
-	147, // 162: rementor.v1.SharedIngressPending.before:type_name -> rementor.v1.SharedIngressRecord
-	147, // 163: rementor.v1.SharedIngressPending.next:type_name -> rementor.v1.SharedIngressRecord
-	147, // 164: rementor.v1.SharedIngressState.record:type_name -> rementor.v1.SharedIngressRecord
-	148, // 165: rementor.v1.SharedIngressState.pending:type_name -> rementor.v1.SharedIngressPending
-	14,  // 166: rementor.v1.SharedIngressConfiguration.policy:type_name -> rementor.v1.PublicAccessDocument
-	150, // 167: rementor.v1.CreateSharedIngressRequest.configuration:type_name -> rementor.v1.SharedIngressConfiguration
-	150, // 168: rementor.v1.SaveSharedIngressRequest.configuration:type_name -> rementor.v1.SharedIngressConfiguration
-	149, // 169: rementor.v1.GetSharedIngressResponse.state:type_name -> rementor.v1.SharedIngressState
-	149, // 170: rementor.v1.CreateSharedIngressResponse.state:type_name -> rementor.v1.SharedIngressState
-	149, // 171: rementor.v1.SaveSharedIngressResponse.state:type_name -> rementor.v1.SharedIngressState
-	149, // 172: rementor.v1.JoinSharedIngressResponse.state:type_name -> rementor.v1.SharedIngressState
-	149, // 173: rementor.v1.TransferSharedIngressResponse.state:type_name -> rementor.v1.SharedIngressState
-	149, // 174: rementor.v1.RecoverSharedIngressResponse.state:type_name -> rementor.v1.SharedIngressState
-	149, // 175: rementor.v1.CancelSharedIngressResponse.state:type_name -> rementor.v1.SharedIngressState
-	149, // 176: rementor.v1.SyncSharedIngressResponse.state:type_name -> rementor.v1.SharedIngressState
-	18,  // 177: rementor.v1.GetRoutingWorkspacesResponse.workspaces:type_name -> rementor.v1.PublicWorkspaceHosts
-	183, // 178: rementor.v1.ComputerFollowingStatus.checked_at:type_name -> google.protobuf.Timestamp
-	169, // 179: rementor.v1.GetComputerFollowingResponse.state:type_name -> rementor.v1.ComputerFollowingStatus
-	169, // 180: rementor.v1.FollowComputerResponse.state:type_name -> rementor.v1.ComputerFollowingStatus
-	169, // 181: rementor.v1.SyncComputerConfigurationResponse.state:type_name -> rementor.v1.ComputerFollowingStatus
-	169, // 182: rementor.v1.StopFollowingComputerResponse.state:type_name -> rementor.v1.ComputerFollowingStatus
-	169, // 183: rementor.v1.SetEnvironmentFollowingResponse.state:type_name -> rementor.v1.ComputerFollowingStatus
-	131, // 184: rementor.v1.WorkspaceInheritance.OverridesEntry.value:type_name -> rementor.v1.InheritedRouteSelection
-	6,   // 185: rementor.v1.ControlPlaneService.GetTailscaleSharing:input_type -> rementor.v1.GetTailscaleSharingRequest
-	8,   // 186: rementor.v1.ControlPlaneService.SetTailscaleSharing:input_type -> rementor.v1.SetTailscaleSharingRequest
-	10,  // 187: rementor.v1.ControlPlaneService.PrepareTailscaleSharing:input_type -> rementor.v1.PrepareTailscaleSharingRequest
-	170, // 188: rementor.v1.ControlPlaneService.GetComputerFollowing:input_type -> rementor.v1.GetComputerFollowingRequest
-	172, // 189: rementor.v1.ControlPlaneService.FollowComputer:input_type -> rementor.v1.FollowComputerRequest
-	174, // 190: rementor.v1.ControlPlaneService.SyncComputerConfiguration:input_type -> rementor.v1.SyncComputerConfigurationRequest
-	176, // 191: rementor.v1.ControlPlaneService.StopFollowingComputer:input_type -> rementor.v1.StopFollowingComputerRequest
-	178, // 192: rementor.v1.ControlPlaneService.SetEnvironmentFollowing:input_type -> rementor.v1.SetEnvironmentFollowingRequest
-	32,  // 193: rementor.v1.ControlPlaneService.EditFollowedConfiguration:input_type -> rementor.v1.EditFollowedConfigurationRequest
-	167, // 194: rementor.v1.ControlPlaneService.GetRoutingWorkspaces:input_type -> rementor.v1.GetRoutingWorkspacesRequest
-	151, // 195: rementor.v1.ControlPlaneService.GetSharedIngress:input_type -> rementor.v1.GetSharedIngressRequest
-	152, // 196: rementor.v1.ControlPlaneService.CreateSharedIngress:input_type -> rementor.v1.CreateSharedIngressRequest
-	153, // 197: rementor.v1.ControlPlaneService.SaveSharedIngress:input_type -> rementor.v1.SaveSharedIngressRequest
-	154, // 198: rementor.v1.ControlPlaneService.JoinSharedIngress:input_type -> rementor.v1.JoinSharedIngressRequest
-	155, // 199: rementor.v1.ControlPlaneService.TransferSharedIngress:input_type -> rementor.v1.TransferSharedIngressRequest
-	156, // 200: rementor.v1.ControlPlaneService.RecoverSharedIngress:input_type -> rementor.v1.RecoverSharedIngressRequest
-	157, // 201: rementor.v1.ControlPlaneService.CancelSharedIngress:input_type -> rementor.v1.CancelSharedIngressRequest
-	158, // 202: rementor.v1.ControlPlaneService.SyncSharedIngress:input_type -> rementor.v1.SyncSharedIngressRequest
-	19,  // 203: rementor.v1.ControlPlaneService.GetPublicAccess:input_type -> rementor.v1.GetPublicAccessRequest
-	21,  // 204: rementor.v1.ControlPlaneService.SavePublicAccess:input_type -> rementor.v1.SavePublicAccessRequest
-	112, // 205: rementor.v1.ControlPlaneService.GetPeerState:input_type -> rementor.v1.GetPeerStateRequest
-	114, // 206: rementor.v1.ControlPlaneService.ConfigurePeerConnection:input_type -> rementor.v1.ConfigurePeerConnectionRequest
-	115, // 207: rementor.v1.ControlPlaneService.CreatePeerInvitation:input_type -> rementor.v1.CreatePeerInvitationRequest
-	117, // 208: rementor.v1.ControlPlaneService.CancelPeerInvitation:input_type -> rementor.v1.CancelPeerInvitationRequest
-	119, // 209: rementor.v1.ControlPlaneService.InspectPeerInvitation:input_type -> rementor.v1.InspectPeerInvitationRequest
-	121, // 210: rementor.v1.ControlPlaneService.PairComputer:input_type -> rementor.v1.PairComputerRequest
-	123, // 211: rementor.v1.ControlPlaneService.UnpairComputer:input_type -> rementor.v1.UnpairComputerRequest
-	124, // 212: rementor.v1.ControlPlaneService.CheckPeerConnection:input_type -> rementor.v1.CheckPeerConnectionRequest
-	135, // 213: rementor.v1.ControlPlaneService.ListPeerWorkspaces:input_type -> rementor.v1.ListPeerWorkspacesRequest
-	137, // 214: rementor.v1.ControlPlaneService.GetWorkspaceInheritance:input_type -> rementor.v1.GetWorkspaceInheritanceRequest
-	139, // 215: rementor.v1.ControlPlaneService.FollowPeerWorkspace:input_type -> rementor.v1.FollowPeerWorkspaceRequest
-	141, // 216: rementor.v1.ControlPlaneService.SyncPeerWorkspace:input_type -> rementor.v1.SyncPeerWorkspaceRequest
-	143, // 217: rementor.v1.ControlPlaneService.OverrideInheritedRoute:input_type -> rementor.v1.OverrideInheritedRouteRequest
-	145, // 218: rementor.v1.ControlPlaneService.StopFollowingWorkspace:input_type -> rementor.v1.StopFollowingWorkspaceRequest
-	105, // 219: rementor.v1.ControlPlaneService.GetFleetConfiguration:input_type -> rementor.v1.GetFleetConfigurationRequest
-	107, // 220: rementor.v1.ControlPlaneService.ReviewFleetConfiguration:input_type -> rementor.v1.ReviewFleetConfigurationRequest
-	109, // 221: rementor.v1.ControlPlaneService.SaveFleetConfiguration:input_type -> rementor.v1.SaveFleetConfigurationRequest
-	93,  // 222: rementor.v1.ControlPlaneService.CreateRoutingSession:input_type -> rementor.v1.CreateRoutingSessionRequest
-	95,  // 223: rementor.v1.ControlPlaneService.RefreshRoutingSession:input_type -> rementor.v1.RefreshRoutingSessionRequest
-	35,  // 224: rementor.v1.ControlPlaneService.ListWorkspaces:input_type -> rementor.v1.ListWorkspacesRequest
-	37,  // 225: rementor.v1.ControlPlaneService.GetWorkspace:input_type -> rementor.v1.GetWorkspaceRequest
-	39,  // 226: rementor.v1.ControlPlaneService.CreateWorkspace:input_type -> rementor.v1.CreateWorkspaceRequest
-	41,  // 227: rementor.v1.ControlPlaneService.UpdateWorkspace:input_type -> rementor.v1.UpdateWorkspaceRequest
-	43,  // 228: rementor.v1.ControlPlaneService.DeleteWorkspace:input_type -> rementor.v1.DeleteWorkspaceRequest
-	45,  // 229: rementor.v1.ControlPlaneService.ListApplications:input_type -> rementor.v1.ListApplicationsRequest
-	47,  // 230: rementor.v1.ControlPlaneService.GetApplication:input_type -> rementor.v1.GetApplicationRequest
-	49,  // 231: rementor.v1.ControlPlaneService.ResolveApplication:input_type -> rementor.v1.ResolveApplicationRequest
-	51,  // 232: rementor.v1.ControlPlaneService.ResolveBrowserURL:input_type -> rementor.v1.ResolveBrowserURLRequest
-	54,  // 233: rementor.v1.ControlPlaneService.RegisterApplicationAlias:input_type -> rementor.v1.RegisterApplicationAliasRequest
-	56,  // 234: rementor.v1.ControlPlaneService.UpsertApplication:input_type -> rementor.v1.UpsertApplicationRequest
-	58,  // 235: rementor.v1.ControlPlaneService.DeleteApplication:input_type -> rementor.v1.DeleteApplicationRequest
-	60,  // 236: rementor.v1.ControlPlaneService.ToggleApplication:input_type -> rementor.v1.ToggleApplicationRequest
-	62,  // 237: rementor.v1.ControlPlaneService.ToggleAllToRemote:input_type -> rementor.v1.ToggleAllToRemoteRequest
-	64,  // 238: rementor.v1.ControlPlaneService.ToggleAllToLocal:input_type -> rementor.v1.ToggleAllToLocalRequest
-	66,  // 239: rementor.v1.ControlPlaneService.SyncWorkspaceRouting:input_type -> rementor.v1.SyncWorkspaceRoutingRequest
-	68,  // 240: rementor.v1.ControlPlaneService.GetRoutePattern:input_type -> rementor.v1.GetRoutePatternRequest
-	70,  // 241: rementor.v1.ControlPlaneService.UpdateRoutePattern:input_type -> rementor.v1.UpdateRoutePatternRequest
-	78,  // 242: rementor.v1.ControlPlaneService.GetRoute:input_type -> rementor.v1.GetRouteRequest
-	80,  // 243: rementor.v1.ControlPlaneService.GetRouteConflicts:input_type -> rementor.v1.GetRouteConflictsRequest
-	82,  // 244: rementor.v1.ControlPlaneService.ResolveRoute:input_type -> rementor.v1.ResolveRouteRequest
-	84,  // 245: rementor.v1.ControlPlaneService.PlanRoute:input_type -> rementor.v1.PlanRouteRequest
-	86,  // 246: rementor.v1.ControlPlaneService.ApplyRoute:input_type -> rementor.v1.ApplyRouteRequest
-	88,  // 247: rementor.v1.ControlPlaneService.SyncRoute:input_type -> rementor.v1.SyncRouteRequest
-	90,  // 248: rementor.v1.ControlPlaneService.WatchHealth:input_type -> rementor.v1.WatchHealthRequest
-	7,   // 249: rementor.v1.ControlPlaneService.GetTailscaleSharing:output_type -> rementor.v1.GetTailscaleSharingResponse
-	9,   // 250: rementor.v1.ControlPlaneService.SetTailscaleSharing:output_type -> rementor.v1.SetTailscaleSharingResponse
-	11,  // 251: rementor.v1.ControlPlaneService.PrepareTailscaleSharing:output_type -> rementor.v1.PrepareTailscaleSharingResponse
-	171, // 252: rementor.v1.ControlPlaneService.GetComputerFollowing:output_type -> rementor.v1.GetComputerFollowingResponse
-	173, // 253: rementor.v1.ControlPlaneService.FollowComputer:output_type -> rementor.v1.FollowComputerResponse
-	175, // 254: rementor.v1.ControlPlaneService.SyncComputerConfiguration:output_type -> rementor.v1.SyncComputerConfigurationResponse
-	177, // 255: rementor.v1.ControlPlaneService.StopFollowingComputer:output_type -> rementor.v1.StopFollowingComputerResponse
-	179, // 256: rementor.v1.ControlPlaneService.SetEnvironmentFollowing:output_type -> rementor.v1.SetEnvironmentFollowingResponse
-	33,  // 257: rementor.v1.ControlPlaneService.EditFollowedConfiguration:output_type -> rementor.v1.EditFollowedConfigurationResponse
-	168, // 258: rementor.v1.ControlPlaneService.GetRoutingWorkspaces:output_type -> rementor.v1.GetRoutingWorkspacesResponse
-	159, // 259: rementor.v1.ControlPlaneService.GetSharedIngress:output_type -> rementor.v1.GetSharedIngressResponse
-	160, // 260: rementor.v1.ControlPlaneService.CreateSharedIngress:output_type -> rementor.v1.CreateSharedIngressResponse
-	161, // 261: rementor.v1.ControlPlaneService.SaveSharedIngress:output_type -> rementor.v1.SaveSharedIngressResponse
-	162, // 262: rementor.v1.ControlPlaneService.JoinSharedIngress:output_type -> rementor.v1.JoinSharedIngressResponse
-	163, // 263: rementor.v1.ControlPlaneService.TransferSharedIngress:output_type -> rementor.v1.TransferSharedIngressResponse
-	164, // 264: rementor.v1.ControlPlaneService.RecoverSharedIngress:output_type -> rementor.v1.RecoverSharedIngressResponse
-	165, // 265: rementor.v1.ControlPlaneService.CancelSharedIngress:output_type -> rementor.v1.CancelSharedIngressResponse
-	166, // 266: rementor.v1.ControlPlaneService.SyncSharedIngress:output_type -> rementor.v1.SyncSharedIngressResponse
-	20,  // 267: rementor.v1.ControlPlaneService.GetPublicAccess:output_type -> rementor.v1.GetPublicAccessResponse
-	22,  // 268: rementor.v1.ControlPlaneService.SavePublicAccess:output_type -> rementor.v1.SavePublicAccessResponse
-	113, // 269: rementor.v1.ControlPlaneService.GetPeerState:output_type -> rementor.v1.GetPeerStateResponse
-	126, // 270: rementor.v1.ControlPlaneService.ConfigurePeerConnection:output_type -> rementor.v1.ConfigurePeerConnectionResponse
-	116, // 271: rementor.v1.ControlPlaneService.CreatePeerInvitation:output_type -> rementor.v1.CreatePeerInvitationResponse
-	118, // 272: rementor.v1.ControlPlaneService.CancelPeerInvitation:output_type -> rementor.v1.CancelPeerInvitationResponse
-	120, // 273: rementor.v1.ControlPlaneService.InspectPeerInvitation:output_type -> rementor.v1.InspectPeerInvitationResponse
-	122, // 274: rementor.v1.ControlPlaneService.PairComputer:output_type -> rementor.v1.PairComputerResponse
-	127, // 275: rementor.v1.ControlPlaneService.UnpairComputer:output_type -> rementor.v1.UnpairComputerResponse
-	125, // 276: rementor.v1.ControlPlaneService.CheckPeerConnection:output_type -> rementor.v1.CheckPeerConnectionResponse
-	136, // 277: rementor.v1.ControlPlaneService.ListPeerWorkspaces:output_type -> rementor.v1.ListPeerWorkspacesResponse
-	138, // 278: rementor.v1.ControlPlaneService.GetWorkspaceInheritance:output_type -> rementor.v1.GetWorkspaceInheritanceResponse
-	140, // 279: rementor.v1.ControlPlaneService.FollowPeerWorkspace:output_type -> rementor.v1.FollowPeerWorkspaceResponse
-	142, // 280: rementor.v1.ControlPlaneService.SyncPeerWorkspace:output_type -> rementor.v1.SyncPeerWorkspaceResponse
-	144, // 281: rementor.v1.ControlPlaneService.OverrideInheritedRoute:output_type -> rementor.v1.OverrideInheritedRouteResponse
-	146, // 282: rementor.v1.ControlPlaneService.StopFollowingWorkspace:output_type -> rementor.v1.StopFollowingWorkspaceResponse
-	106, // 283: rementor.v1.ControlPlaneService.GetFleetConfiguration:output_type -> rementor.v1.GetFleetConfigurationResponse
-	108, // 284: rementor.v1.ControlPlaneService.ReviewFleetConfiguration:output_type -> rementor.v1.ReviewFleetConfigurationResponse
-	110, // 285: rementor.v1.ControlPlaneService.SaveFleetConfiguration:output_type -> rementor.v1.SaveFleetConfigurationResponse
-	94,  // 286: rementor.v1.ControlPlaneService.CreateRoutingSession:output_type -> rementor.v1.CreateRoutingSessionResponse
-	96,  // 287: rementor.v1.ControlPlaneService.RefreshRoutingSession:output_type -> rementor.v1.RefreshRoutingSessionResponse
-	36,  // 288: rementor.v1.ControlPlaneService.ListWorkspaces:output_type -> rementor.v1.ListWorkspacesResponse
-	38,  // 289: rementor.v1.ControlPlaneService.GetWorkspace:output_type -> rementor.v1.GetWorkspaceResponse
-	40,  // 290: rementor.v1.ControlPlaneService.CreateWorkspace:output_type -> rementor.v1.CreateWorkspaceResponse
-	42,  // 291: rementor.v1.ControlPlaneService.UpdateWorkspace:output_type -> rementor.v1.UpdateWorkspaceResponse
-	44,  // 292: rementor.v1.ControlPlaneService.DeleteWorkspace:output_type -> rementor.v1.DeleteWorkspaceResponse
-	46,  // 293: rementor.v1.ControlPlaneService.ListApplications:output_type -> rementor.v1.ListApplicationsResponse
-	48,  // 294: rementor.v1.ControlPlaneService.GetApplication:output_type -> rementor.v1.GetApplicationResponse
-	50,  // 295: rementor.v1.ControlPlaneService.ResolveApplication:output_type -> rementor.v1.ResolveApplicationResponse
-	53,  // 296: rementor.v1.ControlPlaneService.ResolveBrowserURL:output_type -> rementor.v1.ResolveBrowserURLResponse
-	55,  // 297: rementor.v1.ControlPlaneService.RegisterApplicationAlias:output_type -> rementor.v1.RegisterApplicationAliasResponse
-	57,  // 298: rementor.v1.ControlPlaneService.UpsertApplication:output_type -> rementor.v1.UpsertApplicationResponse
-	59,  // 299: rementor.v1.ControlPlaneService.DeleteApplication:output_type -> rementor.v1.DeleteApplicationResponse
-	61,  // 300: rementor.v1.ControlPlaneService.ToggleApplication:output_type -> rementor.v1.ToggleApplicationResponse
-	63,  // 301: rementor.v1.ControlPlaneService.ToggleAllToRemote:output_type -> rementor.v1.ToggleAllToRemoteResponse
-	65,  // 302: rementor.v1.ControlPlaneService.ToggleAllToLocal:output_type -> rementor.v1.ToggleAllToLocalResponse
-	67,  // 303: rementor.v1.ControlPlaneService.SyncWorkspaceRouting:output_type -> rementor.v1.SyncWorkspaceRoutingResponse
-	69,  // 304: rementor.v1.ControlPlaneService.GetRoutePattern:output_type -> rementor.v1.GetRoutePatternResponse
-	71,  // 305: rementor.v1.ControlPlaneService.UpdateRoutePattern:output_type -> rementor.v1.UpdateRoutePatternResponse
-	79,  // 306: rementor.v1.ControlPlaneService.GetRoute:output_type -> rementor.v1.GetRouteResponse
-	81,  // 307: rementor.v1.ControlPlaneService.GetRouteConflicts:output_type -> rementor.v1.GetRouteConflictsResponse
-	83,  // 308: rementor.v1.ControlPlaneService.ResolveRoute:output_type -> rementor.v1.ResolveRouteResponse
-	85,  // 309: rementor.v1.ControlPlaneService.PlanRoute:output_type -> rementor.v1.PlanRouteResponse
-	87,  // 310: rementor.v1.ControlPlaneService.ApplyRoute:output_type -> rementor.v1.ApplyRouteResponse
-	89,  // 311: rementor.v1.ControlPlaneService.SyncRoute:output_type -> rementor.v1.SyncRouteResponse
-	91,  // 312: rementor.v1.ControlPlaneService.WatchHealth:output_type -> rementor.v1.WatchHealthResponse
-	249, // [249:313] is the sub-list for method output_type
-	185, // [185:249] is the sub-list for method input_type
-	185, // [185:185] is the sub-list for extension type_name
-	185, // [185:185] is the sub-list for extension extendee
-	0,   // [0:185] is the sub-list for field type_name
+	0,   // 0: rementor.v1.RouteState.desired_mode:type_name -> rementor.v1.RouteMode
+	0,   // 1: rementor.v1.RouteState.effective_mode:type_name -> rementor.v1.RouteMode
+	5,   // 2: rementor.v1.RouteState.version:type_name -> rementor.v1.RouteVersion
+	141, // 3: rementor.v1.RouteState.verified_at:type_name -> google.protobuf.Timestamp
+	5,   // 4: rementor.v1.OperationMetadata.route_version:type_name -> rementor.v1.RouteVersion
+	141, // 5: rementor.v1.OperationMetadata.created_at:type_name -> google.protobuf.Timestamp
+	141, // 6: rementor.v1.OperationMetadata.completed_at:type_name -> google.protobuf.Timestamp
+	1,   // 7: rementor.v1.OperationMetadata.kind:type_name -> rementor.v1.RouteOperationKind
+	2,   // 8: rementor.v1.StructuredError.code:type_name -> rementor.v1.ErrorCode
+	138, // 9: rementor.v1.StructuredError.metadata:type_name -> rementor.v1.StructuredError.MetadataEntry
+	110, // 10: rementor.v1.Application.peer_endpoint:type_name -> rementor.v1.PeerEndpoint
+	3,   // 11: rementor.v1.Application.identity:type_name -> rementor.v1.CanonicalApplicationRef
+	4,   // 12: rementor.v1.Application.environment:type_name -> rementor.v1.WorkspaceEnvironmentRef
+	6,   // 13: rementor.v1.Application.route:type_name -> rementor.v1.RouteState
+	112, // 14: rementor.v1.Workspace.inheritance:type_name -> rementor.v1.WorkspaceInheritance
+	72,  // 15: rementor.v1.Workspace.session:type_name -> rementor.v1.RoutingSession
+	11,  // 16: rementor.v1.Workspace.routing:type_name -> rementor.v1.Routing
+	9,   // 17: rementor.v1.Workspace.applications:type_name -> rementor.v1.Application
+	4,   // 18: rementor.v1.Workspace.environment:type_name -> rementor.v1.WorkspaceEnvironmentRef
+	6,   // 19: rementor.v1.Workspace.route:type_name -> rementor.v1.RouteState
+	14,  // 20: rementor.v1.EditFollowedConfigurationRequest.application:type_name -> rementor.v1.ApplicationConfigInput
+	11,  // 21: rementor.v1.EditFollowedConfigurationRequest.routing:type_name -> rementor.v1.Routing
+	10,  // 22: rementor.v1.EditFollowedConfigurationResponse.workspace:type_name -> rementor.v1.Workspace
+	10,  // 23: rementor.v1.ListWorkspacesResponse.workspaces:type_name -> rementor.v1.Workspace
+	10,  // 24: rementor.v1.GetWorkspaceResponse.workspace:type_name -> rementor.v1.Workspace
+	14,  // 25: rementor.v1.CreateWorkspaceRequest.applications:type_name -> rementor.v1.ApplicationConfigInput
+	10,  // 26: rementor.v1.CreateWorkspaceResponse.workspace:type_name -> rementor.v1.Workspace
+	7,   // 27: rementor.v1.CreateWorkspaceResponse.operation:type_name -> rementor.v1.OperationMetadata
+	53,  // 28: rementor.v1.CreateWorkspaceResponse.warnings:type_name -> rementor.v1.RouteWarning
+	14,  // 29: rementor.v1.UpdateWorkspaceRequest.applications:type_name -> rementor.v1.ApplicationConfigInput
+	10,  // 30: rementor.v1.UpdateWorkspaceResponse.workspace:type_name -> rementor.v1.Workspace
+	7,   // 31: rementor.v1.UpdateWorkspaceResponse.operation:type_name -> rementor.v1.OperationMetadata
+	53,  // 32: rementor.v1.UpdateWorkspaceResponse.warnings:type_name -> rementor.v1.RouteWarning
+	7,   // 33: rementor.v1.DeleteWorkspaceResponse.operation:type_name -> rementor.v1.OperationMetadata
+	9,   // 34: rementor.v1.ListApplicationsResponse.applications:type_name -> rementor.v1.Application
+	9,   // 35: rementor.v1.GetApplicationResponse.application:type_name -> rementor.v1.Application
+	9,   // 36: rementor.v1.ResolveApplicationResponse.application:type_name -> rementor.v1.Application
+	0,   // 37: rementor.v1.BrowserURLResolution.desired_mode:type_name -> rementor.v1.RouteMode
+	0,   // 38: rementor.v1.BrowserURLResolution.effective_mode:type_name -> rementor.v1.RouteMode
+	5,   // 39: rementor.v1.BrowserURLResolution.route_version:type_name -> rementor.v1.RouteVersion
+	6,   // 40: rementor.v1.BrowserURLResolution.route:type_name -> rementor.v1.RouteState
+	3,   // 41: rementor.v1.BrowserURLResolution.identity:type_name -> rementor.v1.CanonicalApplicationRef
+	4,   // 42: rementor.v1.BrowserURLResolution.environment_ref:type_name -> rementor.v1.WorkspaceEnvironmentRef
+	7,   // 43: rementor.v1.BrowserURLResolution.operation:type_name -> rementor.v1.OperationMetadata
+	32,  // 44: rementor.v1.ResolveBrowserURLResponse.resolution:type_name -> rementor.v1.BrowserURLResolution
+	9,   // 45: rementor.v1.RegisterApplicationAliasResponse.application:type_name -> rementor.v1.Application
+	7,   // 46: rementor.v1.RegisterApplicationAliasResponse.operation:type_name -> rementor.v1.OperationMetadata
+	14,  // 47: rementor.v1.UpsertApplicationRequest.application:type_name -> rementor.v1.ApplicationConfigInput
+	9,   // 48: rementor.v1.UpsertApplicationResponse.application:type_name -> rementor.v1.Application
+	7,   // 49: rementor.v1.UpsertApplicationResponse.operation:type_name -> rementor.v1.OperationMetadata
+	53,  // 50: rementor.v1.UpsertApplicationResponse.warnings:type_name -> rementor.v1.RouteWarning
+	7,   // 51: rementor.v1.DeleteApplicationResponse.operation:type_name -> rementor.v1.OperationMetadata
+	9,   // 52: rementor.v1.ToggleApplicationResponse.application:type_name -> rementor.v1.Application
+	7,   // 53: rementor.v1.ToggleApplicationResponse.operation:type_name -> rementor.v1.OperationMetadata
+	7,   // 54: rementor.v1.ToggleAllToRemoteResponse.operation:type_name -> rementor.v1.OperationMetadata
+	7,   // 55: rementor.v1.ToggleAllToLocalResponse.operation:type_name -> rementor.v1.OperationMetadata
+	7,   // 56: rementor.v1.SyncWorkspaceRoutingResponse.operation:type_name -> rementor.v1.OperationMetadata
+	9,   // 57: rementor.v1.UpdateRoutePatternResponse.application:type_name -> rementor.v1.Application
+	7,   // 58: rementor.v1.UpdateRoutePatternResponse.operation:type_name -> rementor.v1.OperationMetadata
+	0,   // 59: rementor.v1.NormalizedRoute.desired_mode:type_name -> rementor.v1.RouteMode
+	0,   // 60: rementor.v1.NormalizedRoute.effective_mode:type_name -> rementor.v1.RouteMode
+	5,   // 61: rementor.v1.NormalizedRoute.version:type_name -> rementor.v1.RouteVersion
+	141, // 62: rementor.v1.NormalizedRoute.verified_at:type_name -> google.protobuf.Timestamp
+	52,  // 63: rementor.v1.RouteConflict.winning_route:type_name -> rementor.v1.NormalizedRoute
+	52,  // 64: rementor.v1.RouteConflict.shadowed_route:type_name -> rementor.v1.NormalizedRoute
+	52,  // 65: rementor.v1.RouteChange.before:type_name -> rementor.v1.NormalizedRoute
+	52,  // 66: rementor.v1.RouteChange.after:type_name -> rementor.v1.NormalizedRoute
+	5,   // 67: rementor.v1.RoutePlan.base_route_version:type_name -> rementor.v1.RouteVersion
+	0,   // 68: rementor.v1.RoutePlan.desired_mode:type_name -> rementor.v1.RouteMode
+	52,  // 69: rementor.v1.RoutePlan.before_routes:type_name -> rementor.v1.NormalizedRoute
+	52,  // 70: rementor.v1.RoutePlan.after_routes:type_name -> rementor.v1.NormalizedRoute
+	55,  // 71: rementor.v1.RoutePlan.changes:type_name -> rementor.v1.RouteChange
+	53,  // 72: rementor.v1.RoutePlan.warnings:type_name -> rementor.v1.RouteWarning
+	54,  // 73: rementor.v1.RoutePlan.conflicts:type_name -> rementor.v1.RouteConflict
+	52,  // 74: rementor.v1.RouteResolution.route:type_name -> rementor.v1.NormalizedRoute
+	5,   // 75: rementor.v1.GetRouteResponse.route_version:type_name -> rementor.v1.RouteVersion
+	52,  // 76: rementor.v1.GetRouteResponse.routes:type_name -> rementor.v1.NormalizedRoute
+	53,  // 77: rementor.v1.GetRouteResponse.warnings:type_name -> rementor.v1.RouteWarning
+	54,  // 78: rementor.v1.GetRouteResponse.conflicts:type_name -> rementor.v1.RouteConflict
+	5,   // 79: rementor.v1.GetRouteConflictsResponse.route_version:type_name -> rementor.v1.RouteVersion
+	54,  // 80: rementor.v1.GetRouteConflictsResponse.conflicts:type_name -> rementor.v1.RouteConflict
+	53,  // 81: rementor.v1.GetRouteConflictsResponse.warnings:type_name -> rementor.v1.RouteWarning
+	57,  // 82: rementor.v1.ResolveRouteResponse.resolution:type_name -> rementor.v1.RouteResolution
+	0,   // 83: rementor.v1.PlanRouteRequest.desired_mode:type_name -> rementor.v1.RouteMode
+	5,   // 84: rementor.v1.PlanRouteRequest.expected_route_version:type_name -> rementor.v1.RouteVersion
+	56,  // 85: rementor.v1.PlanRouteResponse.plan:type_name -> rementor.v1.RoutePlan
+	56,  // 86: rementor.v1.ApplyRouteRequest.plan:type_name -> rementor.v1.RoutePlan
+	5,   // 87: rementor.v1.ApplyRouteRequest.expected_route_version:type_name -> rementor.v1.RouteVersion
+	0,   // 88: rementor.v1.ApplyRouteRequest.desired_mode:type_name -> rementor.v1.RouteMode
+	56,  // 89: rementor.v1.ApplyRouteResponse.plan:type_name -> rementor.v1.RoutePlan
+	52,  // 90: rementor.v1.ApplyRouteResponse.routes:type_name -> rementor.v1.NormalizedRoute
+	7,   // 91: rementor.v1.ApplyRouteResponse.operation:type_name -> rementor.v1.OperationMetadata
+	5,   // 92: rementor.v1.SyncRouteResponse.desired_route_version:type_name -> rementor.v1.RouteVersion
+	5,   // 93: rementor.v1.SyncRouteResponse.effective_route_version:type_name -> rementor.v1.RouteVersion
+	52,  // 94: rementor.v1.SyncRouteResponse.routes:type_name -> rementor.v1.NormalizedRoute
+	53,  // 95: rementor.v1.SyncRouteResponse.warnings:type_name -> rementor.v1.RouteWarning
+	7,   // 96: rementor.v1.SyncRouteResponse.operation:type_name -> rementor.v1.OperationMetadata
+	141, // 97: rementor.v1.WatchHealthResponse.local_checked_at:type_name -> google.protobuf.Timestamp
+	141, // 98: rementor.v1.WatchHealthResponse.remote_checked_at:type_name -> google.protobuf.Timestamp
+	3,   // 99: rementor.v1.WatchHealthResponse.identity:type_name -> rementor.v1.CanonicalApplicationRef
+	4,   // 100: rementor.v1.WatchHealthResponse.environment:type_name -> rementor.v1.WorkspaceEnvironmentRef
+	141, // 101: rementor.v1.RoutingSession.created_at:type_name -> google.protobuf.Timestamp
+	10,  // 102: rementor.v1.CreateRoutingSessionResponse.workspace:type_name -> rementor.v1.Workspace
+	10,  // 103: rementor.v1.RefreshRoutingSessionResponse.workspace:type_name -> rementor.v1.Workspace
+	78,  // 104: rementor.v1.FleetTopology.nodes:type_name -> rementor.v1.FleetNode
+	79,  // 105: rementor.v1.FleetTopology.origins:type_name -> rementor.v1.FleetOrigin
+	80,  // 106: rementor.v1.FleetTopology.targets:type_name -> rementor.v1.FleetTarget
+	81,  // 107: rementor.v1.FleetTopology.routes:type_name -> rementor.v1.FleetRoute
+	82,  // 108: rementor.v1.FleetTopology.instances:type_name -> rementor.v1.FleetInstance
+	139, // 109: rementor.v1.FleetInstance.overrides:type_name -> rementor.v1.FleetInstance.OverridesEntry
+	80,  // 110: rementor.v1.FleetRouteSelection.endpoint:type_name -> rementor.v1.FleetTarget
+	77,  // 111: rementor.v1.FleetConfiguration.topology:type_name -> rementor.v1.FleetTopology
+	84,  // 112: rementor.v1.GetFleetConfigurationResponse.configuration:type_name -> rementor.v1.FleetConfiguration
+	77,  // 113: rementor.v1.ReviewFleetConfigurationRequest.topology:type_name -> rementor.v1.FleetTopology
+	83,  // 114: rementor.v1.ReviewFleetConfigurationResponse.before:type_name -> rementor.v1.FleetRouteSelection
+	83,  // 115: rementor.v1.ReviewFleetConfigurationResponse.after:type_name -> rementor.v1.FleetRouteSelection
+	77,  // 116: rementor.v1.SaveFleetConfigurationRequest.topology:type_name -> rementor.v1.FleetTopology
+	84,  // 117: rementor.v1.SaveFleetConfigurationResponse.configuration:type_name -> rementor.v1.FleetConfiguration
+	91,  // 118: rementor.v1.GetPeerStateResponse.computers:type_name -> rementor.v1.PairedComputer
+	141, // 119: rementor.v1.CreatePeerInvitationResponse.expires_at:type_name -> google.protobuf.Timestamp
+	141, // 120: rementor.v1.InspectPeerInvitationResponse.expires_at:type_name -> google.protobuf.Timestamp
+	91,  // 121: rementor.v1.PairComputerResponse.computer:type_name -> rementor.v1.PairedComputer
+	93,  // 122: rementor.v1.ConfigurePeerConnectionResponse.state:type_name -> rementor.v1.GetPeerStateResponse
+	93,  // 123: rementor.v1.UnpairComputerResponse.state:type_name -> rementor.v1.GetPeerStateResponse
+	108, // 124: rementor.v1.PeerWorkspaceReference.scope:type_name -> rementor.v1.PeerWorkspaceScope
+	109, // 125: rementor.v1.WorkspaceInheritance.source:type_name -> rementor.v1.PeerWorkspaceReference
+	140, // 126: rementor.v1.WorkspaceInheritance.overrides:type_name -> rementor.v1.WorkspaceInheritance.OverridesEntry
+	141, // 127: rementor.v1.WorkspaceInheritance.updated_at:type_name -> google.protobuf.Timestamp
+	112, // 128: rementor.v1.WorkspaceInheritanceStatus.inheritance:type_name -> rementor.v1.WorkspaceInheritance
+	141, // 129: rementor.v1.WorkspaceInheritanceStatus.checked_at:type_name -> google.protobuf.Timestamp
+	108, // 130: rementor.v1.PeerWorkspaceSummary.scope:type_name -> rementor.v1.PeerWorkspaceScope
+	114, // 131: rementor.v1.ListPeerWorkspacesResponse.workspaces:type_name -> rementor.v1.PeerWorkspaceSummary
+	113, // 132: rementor.v1.GetWorkspaceInheritanceResponse.status:type_name -> rementor.v1.WorkspaceInheritanceStatus
+	108, // 133: rementor.v1.FollowPeerWorkspaceRequest.scope:type_name -> rementor.v1.PeerWorkspaceScope
+	10,  // 134: rementor.v1.FollowPeerWorkspaceResponse.workspace:type_name -> rementor.v1.Workspace
+	7,   // 135: rementor.v1.FollowPeerWorkspaceResponse.operation:type_name -> rementor.v1.OperationMetadata
+	113, // 136: rementor.v1.FollowPeerWorkspaceResponse.status:type_name -> rementor.v1.WorkspaceInheritanceStatus
+	10,  // 137: rementor.v1.SyncPeerWorkspaceResponse.workspace:type_name -> rementor.v1.Workspace
+	7,   // 138: rementor.v1.SyncPeerWorkspaceResponse.operation:type_name -> rementor.v1.OperationMetadata
+	113, // 139: rementor.v1.SyncPeerWorkspaceResponse.status:type_name -> rementor.v1.WorkspaceInheritanceStatus
+	111, // 140: rementor.v1.OverrideInheritedRouteRequest.selection:type_name -> rementor.v1.InheritedRouteSelection
+	10,  // 141: rementor.v1.OverrideInheritedRouteResponse.workspace:type_name -> rementor.v1.Workspace
+	7,   // 142: rementor.v1.OverrideInheritedRouteResponse.operation:type_name -> rementor.v1.OperationMetadata
+	113, // 143: rementor.v1.OverrideInheritedRouteResponse.status:type_name -> rementor.v1.WorkspaceInheritanceStatus
+	10,  // 144: rementor.v1.StopFollowingWorkspaceResponse.workspace:type_name -> rementor.v1.Workspace
+	7,   // 145: rementor.v1.StopFollowingWorkspaceResponse.operation:type_name -> rementor.v1.OperationMetadata
+	113, // 146: rementor.v1.StopFollowingWorkspaceResponse.status:type_name -> rementor.v1.WorkspaceInheritanceStatus
+	141, // 147: rementor.v1.ComputerFollowingStatus.checked_at:type_name -> google.protobuf.Timestamp
+	127, // 148: rementor.v1.GetComputerFollowingResponse.state:type_name -> rementor.v1.ComputerFollowingStatus
+	127, // 149: rementor.v1.FollowComputerResponse.state:type_name -> rementor.v1.ComputerFollowingStatus
+	127, // 150: rementor.v1.SyncComputerConfigurationResponse.state:type_name -> rementor.v1.ComputerFollowingStatus
+	127, // 151: rementor.v1.StopFollowingComputerResponse.state:type_name -> rementor.v1.ComputerFollowingStatus
+	127, // 152: rementor.v1.SetEnvironmentFollowingResponse.state:type_name -> rementor.v1.ComputerFollowingStatus
+	111, // 153: rementor.v1.WorkspaceInheritance.OverridesEntry.value:type_name -> rementor.v1.InheritedRouteSelection
+	128, // 154: rementor.v1.ControlPlaneService.GetComputerFollowing:input_type -> rementor.v1.GetComputerFollowingRequest
+	130, // 155: rementor.v1.ControlPlaneService.FollowComputer:input_type -> rementor.v1.FollowComputerRequest
+	132, // 156: rementor.v1.ControlPlaneService.SyncComputerConfiguration:input_type -> rementor.v1.SyncComputerConfigurationRequest
+	134, // 157: rementor.v1.ControlPlaneService.StopFollowingComputer:input_type -> rementor.v1.StopFollowingComputerRequest
+	136, // 158: rementor.v1.ControlPlaneService.SetEnvironmentFollowing:input_type -> rementor.v1.SetEnvironmentFollowingRequest
+	12,  // 159: rementor.v1.ControlPlaneService.EditFollowedConfiguration:input_type -> rementor.v1.EditFollowedConfigurationRequest
+	92,  // 160: rementor.v1.ControlPlaneService.GetPeerState:input_type -> rementor.v1.GetPeerStateRequest
+	94,  // 161: rementor.v1.ControlPlaneService.ConfigurePeerConnection:input_type -> rementor.v1.ConfigurePeerConnectionRequest
+	95,  // 162: rementor.v1.ControlPlaneService.CreatePeerInvitation:input_type -> rementor.v1.CreatePeerInvitationRequest
+	97,  // 163: rementor.v1.ControlPlaneService.CancelPeerInvitation:input_type -> rementor.v1.CancelPeerInvitationRequest
+	99,  // 164: rementor.v1.ControlPlaneService.InspectPeerInvitation:input_type -> rementor.v1.InspectPeerInvitationRequest
+	101, // 165: rementor.v1.ControlPlaneService.PairComputer:input_type -> rementor.v1.PairComputerRequest
+	103, // 166: rementor.v1.ControlPlaneService.UnpairComputer:input_type -> rementor.v1.UnpairComputerRequest
+	104, // 167: rementor.v1.ControlPlaneService.CheckPeerConnection:input_type -> rementor.v1.CheckPeerConnectionRequest
+	115, // 168: rementor.v1.ControlPlaneService.ListPeerWorkspaces:input_type -> rementor.v1.ListPeerWorkspacesRequest
+	117, // 169: rementor.v1.ControlPlaneService.GetWorkspaceInheritance:input_type -> rementor.v1.GetWorkspaceInheritanceRequest
+	119, // 170: rementor.v1.ControlPlaneService.FollowPeerWorkspace:input_type -> rementor.v1.FollowPeerWorkspaceRequest
+	121, // 171: rementor.v1.ControlPlaneService.SyncPeerWorkspace:input_type -> rementor.v1.SyncPeerWorkspaceRequest
+	123, // 172: rementor.v1.ControlPlaneService.OverrideInheritedRoute:input_type -> rementor.v1.OverrideInheritedRouteRequest
+	125, // 173: rementor.v1.ControlPlaneService.StopFollowingWorkspace:input_type -> rementor.v1.StopFollowingWorkspaceRequest
+	85,  // 174: rementor.v1.ControlPlaneService.GetFleetConfiguration:input_type -> rementor.v1.GetFleetConfigurationRequest
+	87,  // 175: rementor.v1.ControlPlaneService.ReviewFleetConfiguration:input_type -> rementor.v1.ReviewFleetConfigurationRequest
+	89,  // 176: rementor.v1.ControlPlaneService.SaveFleetConfiguration:input_type -> rementor.v1.SaveFleetConfigurationRequest
+	73,  // 177: rementor.v1.ControlPlaneService.CreateRoutingSession:input_type -> rementor.v1.CreateRoutingSessionRequest
+	75,  // 178: rementor.v1.ControlPlaneService.RefreshRoutingSession:input_type -> rementor.v1.RefreshRoutingSessionRequest
+	15,  // 179: rementor.v1.ControlPlaneService.ListWorkspaces:input_type -> rementor.v1.ListWorkspacesRequest
+	17,  // 180: rementor.v1.ControlPlaneService.GetWorkspace:input_type -> rementor.v1.GetWorkspaceRequest
+	19,  // 181: rementor.v1.ControlPlaneService.CreateWorkspace:input_type -> rementor.v1.CreateWorkspaceRequest
+	21,  // 182: rementor.v1.ControlPlaneService.UpdateWorkspace:input_type -> rementor.v1.UpdateWorkspaceRequest
+	23,  // 183: rementor.v1.ControlPlaneService.DeleteWorkspace:input_type -> rementor.v1.DeleteWorkspaceRequest
+	25,  // 184: rementor.v1.ControlPlaneService.ListApplications:input_type -> rementor.v1.ListApplicationsRequest
+	27,  // 185: rementor.v1.ControlPlaneService.GetApplication:input_type -> rementor.v1.GetApplicationRequest
+	29,  // 186: rementor.v1.ControlPlaneService.ResolveApplication:input_type -> rementor.v1.ResolveApplicationRequest
+	31,  // 187: rementor.v1.ControlPlaneService.ResolveBrowserURL:input_type -> rementor.v1.ResolveBrowserURLRequest
+	34,  // 188: rementor.v1.ControlPlaneService.RegisterApplicationAlias:input_type -> rementor.v1.RegisterApplicationAliasRequest
+	36,  // 189: rementor.v1.ControlPlaneService.UpsertApplication:input_type -> rementor.v1.UpsertApplicationRequest
+	38,  // 190: rementor.v1.ControlPlaneService.DeleteApplication:input_type -> rementor.v1.DeleteApplicationRequest
+	40,  // 191: rementor.v1.ControlPlaneService.ToggleApplication:input_type -> rementor.v1.ToggleApplicationRequest
+	42,  // 192: rementor.v1.ControlPlaneService.ToggleAllToRemote:input_type -> rementor.v1.ToggleAllToRemoteRequest
+	44,  // 193: rementor.v1.ControlPlaneService.ToggleAllToLocal:input_type -> rementor.v1.ToggleAllToLocalRequest
+	46,  // 194: rementor.v1.ControlPlaneService.SyncWorkspaceRouting:input_type -> rementor.v1.SyncWorkspaceRoutingRequest
+	48,  // 195: rementor.v1.ControlPlaneService.GetRoutePattern:input_type -> rementor.v1.GetRoutePatternRequest
+	50,  // 196: rementor.v1.ControlPlaneService.UpdateRoutePattern:input_type -> rementor.v1.UpdateRoutePatternRequest
+	58,  // 197: rementor.v1.ControlPlaneService.GetRoute:input_type -> rementor.v1.GetRouteRequest
+	60,  // 198: rementor.v1.ControlPlaneService.GetRouteConflicts:input_type -> rementor.v1.GetRouteConflictsRequest
+	62,  // 199: rementor.v1.ControlPlaneService.ResolveRoute:input_type -> rementor.v1.ResolveRouteRequest
+	64,  // 200: rementor.v1.ControlPlaneService.PlanRoute:input_type -> rementor.v1.PlanRouteRequest
+	66,  // 201: rementor.v1.ControlPlaneService.ApplyRoute:input_type -> rementor.v1.ApplyRouteRequest
+	68,  // 202: rementor.v1.ControlPlaneService.SyncRoute:input_type -> rementor.v1.SyncRouteRequest
+	70,  // 203: rementor.v1.ControlPlaneService.WatchHealth:input_type -> rementor.v1.WatchHealthRequest
+	129, // 204: rementor.v1.ControlPlaneService.GetComputerFollowing:output_type -> rementor.v1.GetComputerFollowingResponse
+	131, // 205: rementor.v1.ControlPlaneService.FollowComputer:output_type -> rementor.v1.FollowComputerResponse
+	133, // 206: rementor.v1.ControlPlaneService.SyncComputerConfiguration:output_type -> rementor.v1.SyncComputerConfigurationResponse
+	135, // 207: rementor.v1.ControlPlaneService.StopFollowingComputer:output_type -> rementor.v1.StopFollowingComputerResponse
+	137, // 208: rementor.v1.ControlPlaneService.SetEnvironmentFollowing:output_type -> rementor.v1.SetEnvironmentFollowingResponse
+	13,  // 209: rementor.v1.ControlPlaneService.EditFollowedConfiguration:output_type -> rementor.v1.EditFollowedConfigurationResponse
+	93,  // 210: rementor.v1.ControlPlaneService.GetPeerState:output_type -> rementor.v1.GetPeerStateResponse
+	106, // 211: rementor.v1.ControlPlaneService.ConfigurePeerConnection:output_type -> rementor.v1.ConfigurePeerConnectionResponse
+	96,  // 212: rementor.v1.ControlPlaneService.CreatePeerInvitation:output_type -> rementor.v1.CreatePeerInvitationResponse
+	98,  // 213: rementor.v1.ControlPlaneService.CancelPeerInvitation:output_type -> rementor.v1.CancelPeerInvitationResponse
+	100, // 214: rementor.v1.ControlPlaneService.InspectPeerInvitation:output_type -> rementor.v1.InspectPeerInvitationResponse
+	102, // 215: rementor.v1.ControlPlaneService.PairComputer:output_type -> rementor.v1.PairComputerResponse
+	107, // 216: rementor.v1.ControlPlaneService.UnpairComputer:output_type -> rementor.v1.UnpairComputerResponse
+	105, // 217: rementor.v1.ControlPlaneService.CheckPeerConnection:output_type -> rementor.v1.CheckPeerConnectionResponse
+	116, // 218: rementor.v1.ControlPlaneService.ListPeerWorkspaces:output_type -> rementor.v1.ListPeerWorkspacesResponse
+	118, // 219: rementor.v1.ControlPlaneService.GetWorkspaceInheritance:output_type -> rementor.v1.GetWorkspaceInheritanceResponse
+	120, // 220: rementor.v1.ControlPlaneService.FollowPeerWorkspace:output_type -> rementor.v1.FollowPeerWorkspaceResponse
+	122, // 221: rementor.v1.ControlPlaneService.SyncPeerWorkspace:output_type -> rementor.v1.SyncPeerWorkspaceResponse
+	124, // 222: rementor.v1.ControlPlaneService.OverrideInheritedRoute:output_type -> rementor.v1.OverrideInheritedRouteResponse
+	126, // 223: rementor.v1.ControlPlaneService.StopFollowingWorkspace:output_type -> rementor.v1.StopFollowingWorkspaceResponse
+	86,  // 224: rementor.v1.ControlPlaneService.GetFleetConfiguration:output_type -> rementor.v1.GetFleetConfigurationResponse
+	88,  // 225: rementor.v1.ControlPlaneService.ReviewFleetConfiguration:output_type -> rementor.v1.ReviewFleetConfigurationResponse
+	90,  // 226: rementor.v1.ControlPlaneService.SaveFleetConfiguration:output_type -> rementor.v1.SaveFleetConfigurationResponse
+	74,  // 227: rementor.v1.ControlPlaneService.CreateRoutingSession:output_type -> rementor.v1.CreateRoutingSessionResponse
+	76,  // 228: rementor.v1.ControlPlaneService.RefreshRoutingSession:output_type -> rementor.v1.RefreshRoutingSessionResponse
+	16,  // 229: rementor.v1.ControlPlaneService.ListWorkspaces:output_type -> rementor.v1.ListWorkspacesResponse
+	18,  // 230: rementor.v1.ControlPlaneService.GetWorkspace:output_type -> rementor.v1.GetWorkspaceResponse
+	20,  // 231: rementor.v1.ControlPlaneService.CreateWorkspace:output_type -> rementor.v1.CreateWorkspaceResponse
+	22,  // 232: rementor.v1.ControlPlaneService.UpdateWorkspace:output_type -> rementor.v1.UpdateWorkspaceResponse
+	24,  // 233: rementor.v1.ControlPlaneService.DeleteWorkspace:output_type -> rementor.v1.DeleteWorkspaceResponse
+	26,  // 234: rementor.v1.ControlPlaneService.ListApplications:output_type -> rementor.v1.ListApplicationsResponse
+	28,  // 235: rementor.v1.ControlPlaneService.GetApplication:output_type -> rementor.v1.GetApplicationResponse
+	30,  // 236: rementor.v1.ControlPlaneService.ResolveApplication:output_type -> rementor.v1.ResolveApplicationResponse
+	33,  // 237: rementor.v1.ControlPlaneService.ResolveBrowserURL:output_type -> rementor.v1.ResolveBrowserURLResponse
+	35,  // 238: rementor.v1.ControlPlaneService.RegisterApplicationAlias:output_type -> rementor.v1.RegisterApplicationAliasResponse
+	37,  // 239: rementor.v1.ControlPlaneService.UpsertApplication:output_type -> rementor.v1.UpsertApplicationResponse
+	39,  // 240: rementor.v1.ControlPlaneService.DeleteApplication:output_type -> rementor.v1.DeleteApplicationResponse
+	41,  // 241: rementor.v1.ControlPlaneService.ToggleApplication:output_type -> rementor.v1.ToggleApplicationResponse
+	43,  // 242: rementor.v1.ControlPlaneService.ToggleAllToRemote:output_type -> rementor.v1.ToggleAllToRemoteResponse
+	45,  // 243: rementor.v1.ControlPlaneService.ToggleAllToLocal:output_type -> rementor.v1.ToggleAllToLocalResponse
+	47,  // 244: rementor.v1.ControlPlaneService.SyncWorkspaceRouting:output_type -> rementor.v1.SyncWorkspaceRoutingResponse
+	49,  // 245: rementor.v1.ControlPlaneService.GetRoutePattern:output_type -> rementor.v1.GetRoutePatternResponse
+	51,  // 246: rementor.v1.ControlPlaneService.UpdateRoutePattern:output_type -> rementor.v1.UpdateRoutePatternResponse
+	59,  // 247: rementor.v1.ControlPlaneService.GetRoute:output_type -> rementor.v1.GetRouteResponse
+	61,  // 248: rementor.v1.ControlPlaneService.GetRouteConflicts:output_type -> rementor.v1.GetRouteConflictsResponse
+	63,  // 249: rementor.v1.ControlPlaneService.ResolveRoute:output_type -> rementor.v1.ResolveRouteResponse
+	65,  // 250: rementor.v1.ControlPlaneService.PlanRoute:output_type -> rementor.v1.PlanRouteResponse
+	67,  // 251: rementor.v1.ControlPlaneService.ApplyRoute:output_type -> rementor.v1.ApplyRouteResponse
+	69,  // 252: rementor.v1.ControlPlaneService.SyncRoute:output_type -> rementor.v1.SyncRouteResponse
+	71,  // 253: rementor.v1.ControlPlaneService.WatchHealth:output_type -> rementor.v1.WatchHealthResponse
+	204, // [204:254] is the sub-list for method output_type
+	154, // [154:204] is the sub-list for method input_type
+	154, // [154:154] is the sub-list for extension type_name
+	154, // [154:154] is the sub-list for extension extendee
+	0,   // [0:154] is the sub-list for field type_name
 }
 
 func init() { file_rementor_v1_rementor_proto_init() }
@@ -13450,24 +10873,24 @@ func file_rementor_v1_rementor_proto_init() {
 	if File_rementor_v1_rementor_proto != nil {
 		return
 	}
-	file_rementor_v1_rementor_proto_msgTypes[26].OneofWrappers = []any{}
-	file_rementor_v1_rementor_proto_msgTypes[27].OneofWrappers = []any{}
-	file_rementor_v1_rementor_proto_msgTypes[29].OneofWrappers = []any{}
-	file_rementor_v1_rementor_proto_msgTypes[31].OneofWrappers = []any{}
-	file_rementor_v1_rementor_proto_msgTypes[38].OneofWrappers = []any{}
-	file_rementor_v1_rementor_proto_msgTypes[66].OneofWrappers = []any{}
-	file_rementor_v1_rementor_proto_msgTypes[73].OneofWrappers = []any{}
-	file_rementor_v1_rementor_proto_msgTypes[81].OneofWrappers = []any{}
-	file_rementor_v1_rementor_proto_msgTypes[83].OneofWrappers = []any{}
-	file_rementor_v1_rementor_proto_msgTypes[85].OneofWrappers = []any{}
-	file_rementor_v1_rementor_proto_msgTypes[128].OneofWrappers = []any{}
+	file_rementor_v1_rementor_proto_msgTypes[6].OneofWrappers = []any{}
+	file_rementor_v1_rementor_proto_msgTypes[7].OneofWrappers = []any{}
+	file_rementor_v1_rementor_proto_msgTypes[9].OneofWrappers = []any{}
+	file_rementor_v1_rementor_proto_msgTypes[11].OneofWrappers = []any{}
+	file_rementor_v1_rementor_proto_msgTypes[18].OneofWrappers = []any{}
+	file_rementor_v1_rementor_proto_msgTypes[46].OneofWrappers = []any{}
+	file_rementor_v1_rementor_proto_msgTypes[53].OneofWrappers = []any{}
+	file_rementor_v1_rementor_proto_msgTypes[61].OneofWrappers = []any{}
+	file_rementor_v1_rementor_proto_msgTypes[63].OneofWrappers = []any{}
+	file_rementor_v1_rementor_proto_msgTypes[65].OneofWrappers = []any{}
+	file_rementor_v1_rementor_proto_msgTypes[108].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_rementor_v1_rementor_proto_rawDesc), len(file_rementor_v1_rementor_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   180,
+			NumMessages:   138,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

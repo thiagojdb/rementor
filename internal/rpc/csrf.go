@@ -16,21 +16,12 @@ import (
 const CSRFHeader = "X-Rementor-CSRF"
 
 var mutatingProcedures = map[string]struct{}{
-	rementorv1connect.ControlPlaneServiceSetTailscaleSharingProcedure:       {},
 	rementorv1connect.ControlPlaneServiceEditFollowedConfigurationProcedure: {},
 	rementorv1connect.ControlPlaneServiceFollowComputerProcedure:            {},
 	rementorv1connect.ControlPlaneServiceSyncComputerConfigurationProcedure: {},
 	rementorv1connect.ControlPlaneServiceStopFollowingComputerProcedure:     {},
 	rementorv1connect.ControlPlaneServiceSetEnvironmentFollowingProcedure:   {},
-	rementorv1connect.ControlPlaneServiceCreateSharedIngressProcedure:       {},
-	rementorv1connect.ControlPlaneServiceSaveSharedIngressProcedure:         {},
-	rementorv1connect.ControlPlaneServiceJoinSharedIngressProcedure:         {},
-	rementorv1connect.ControlPlaneServiceTransferSharedIngressProcedure:     {},
-	rementorv1connect.ControlPlaneServiceRecoverSharedIngressProcedure:      {},
-	rementorv1connect.ControlPlaneServiceCancelSharedIngressProcedure:       {},
-	rementorv1connect.ControlPlaneServiceSyncSharedIngressProcedure:         {},
 
-	rementorv1connect.ControlPlaneServiceSavePublicAccessProcedure:        {},
 	rementorv1connect.ControlPlaneServiceFollowPeerWorkspaceProcedure:     {},
 	rementorv1connect.ControlPlaneServiceSyncPeerWorkspaceProcedure:       {},
 	rementorv1connect.ControlPlaneServiceOverrideInheritedRouteProcedure:  {},

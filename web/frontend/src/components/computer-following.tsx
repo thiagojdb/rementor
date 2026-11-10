@@ -78,11 +78,11 @@ export function ComputerFollowingSettings({ peers }: { peers: PairedComputer[] }
   const environments = ids.map((id) => workspaces.find((item) => item.id === id) ?? { id, name: id, type: 'routing' as const, applications: [] })
     .filter((workspace) => `${workspace.name} ${workspace.id}`.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => (a.name || a.id).localeCompare(b.name || b.id))
-  return <section className="space-y-4 rounded-lg border p-5">
+  return <section id="computer-following" className="space-y-4 rounded-lg border p-5">
     <h2 className="font-semibold">Follow a computer</h2>
     {state?.ownerFingerprint ? <>
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span>Following {name} · {state.environmentIds.length} environments</span>
+        <span>Following {name} · {state.environmentIds.length} environments · {workspaces.filter((workspace) => workspace.computerFollowed && workspace.session).length} sessions</span>
         <Badge variant={state.status === 'current' ? 'secondary' : 'outline'}>{state.status === 'current' ? 'Synced' : 'Cached configuration'}</Badge>
       </div>
       <Input aria-label="Find environment" placeholder="Find environment" value={search} onChange={(event) => setSearch(event.target.value)} />

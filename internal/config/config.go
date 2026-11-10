@@ -678,17 +678,6 @@ func readyDB() (*sql.DB, error) {
 
 func initDB(db *sql.DB) error {
 	stmts := []string{
-		`CREATE TABLE IF NOT EXISTS tailscale_sharing (id INTEGER PRIMARY KEY CHECK(id=1), version INTEGER NOT NULL, state_json TEXT NOT NULL)`,
-		`CREATE TABLE IF NOT EXISTS shared_ingress (
- id INTEGER PRIMARY KEY CHECK (id = 1),
- revision INTEGER NOT NULL,
- state_json TEXT NOT NULL
- )`,
-		`CREATE TABLE IF NOT EXISTS public_access_configuration (
- id INTEGER PRIMARY KEY CHECK (id = 1),
- revision INTEGER NOT NULL,
- document_json TEXT NOT NULL
- )`,
 		`CREATE TABLE IF NOT EXISTS fleet_configuration (
 			id INTEGER PRIMARY KEY CHECK (id = 1),
 			revision INTEGER NOT NULL,
